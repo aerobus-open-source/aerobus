@@ -260,6 +260,38 @@ int test_gcd() {
 	return 0;
 }
 
+int test_poly_mul() {
+	{
+		using A = polynomial<i32>::val<i32::val<1>, i32::val<-1>>;
+		using B = polynomial<i32>::val<i32::val<1>, i32::val<1>>;
+		using mul = polynomial<i32>::mul_t<A, B>;
+		using expected = polynomial<i32>::val<i32::val<1>, i32::zero, i32::val<-1>>;
+		if (!std::is_same<expected, mul>::value) {
+			return 1;
+		}
+	}
+	{
+		using A = polynomial<i32>::val<i32::val<1>, i32::val<1>>;
+		using B = polynomial<i32>::val<i32::val<1>, i32::val<1>>;
+		using mul = polynomial<i32>::mul_t<A, B>;
+		using expected = polynomial<i32>::val<i32::val<1>, i32::val<2>, i32::val<1>>;
+		if (!std::is_same<expected, mul>::value) {
+			return 1;
+		}
+	}
+	{
+		using A = polynomial<i32>::val<i32::val<1>, i32::val<1>>;
+		using B = polynomial<i32>::val<i32::val<2>>;
+		using mul = polynomial<i32>::mul_t<A, B>;
+		using expected = polynomial<i32>::val<i32::val<2>, i32::val<2>>;
+		if (!std::is_same<expected, mul>::value) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
 int main(int argc, char* argv[]) {
 	if (test_type_at() != 0) {
 		return 1;
@@ -273,7 +305,6 @@ int main(int argc, char* argv[]) {
 	if (test_poly_add_at() != 0) {
 		return 1;
 	}
-
 	if (test_poly_add() != 0) {
 		return 1;
 	}
@@ -284,6 +315,9 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 	if (test_gcd() != 0) {
+		return 1;
+	}
+	if (test_poly_mul() != 0) {
 		return 1;
 	}
 
