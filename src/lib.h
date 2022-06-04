@@ -152,6 +152,9 @@ struct poly_add_low;
 template <typename Ring, typename P1, typename P2, typename I>
 struct poly_sub_low;
 
+template <typename Ring, typename P1, typename P2, typename I>
+struct poly_mul_low;
+
 template<typename Ring, typename P1, typename P2>
 using poly_add_t = poly_simplify_t<Ring, typename poly_add_low<
 	Ring,
@@ -169,6 +172,15 @@ using poly_sub_t = poly_simplify_t<Ring, typename poly_sub_low<
 	make_index_sequence_reverse<
 	std::max(P1::degree, P2::degree) + 1
 	>>::type>;
+
+template<typename Ring, typename P1, typename P2>
+using poly_mul_t = typename poly_mul_low<
+	Ring,
+	P1,
+	P2,
+	make_index_sequence_reverse<
+	P1::degree + P2::degree + 1
+	>>::type;
 
 // coeffN x^N + ...
 template<typename Ring>
@@ -251,6 +263,42 @@ private:
 		using type = typename Ring::template eq_t<typename v1::aN, typename v2::aN>;
 	};
 
+	template<typename v1, typename v2, typename E = void>
+	struct lt_helper {};
+
+	template<typename v1, typename v2>
+	struct lt_helper<v1, v2, std::enable_if_t<(v1::degree < v2::degree)>> {
+		using type = std::true_type;
+	};
+
+	template<typename v1, typename v2>
+	struct lt_helper<v1, v2, std::enable_if_t<(v1::degree == v2::degree)>> {
+		using type = typename Ring::template lt_t<typename v1::aN, typename v2::aN>;
+	};
+
+	template<typename v1, typename v2>
+	struct lt_helper<v1, v2, std::enable_if_t<(v1::degree > v2::degree)>> {
+		using type = std::false_type;
+	};
+
+	template<typename v1, typename v2, typename E = void>
+	struct gt_helper {};
+
+	template<typename v1, typename v2>
+	struct gt_helper<v1, v2, std::enable_if_t<(v1::degree > v2::degree)>> {
+		using type = std::true_type;
+	};
+
+	template<typename v1, typename v2>
+	struct gt_helper<v1, v2, std::enable_if_t<(v1::degree == v2::degree)>> {
+		using type = typename Ring::template gt_t<typename v1::aN, typename v2::aN>;
+	};
+
+	template<typename v1, typename v2>
+	struct gt_helper<v1, v2, std::enable_if_t<(v1::degree < v2::degree)>> {
+		using type = std::false_type;
+	};
+
 public:
 	using zero = typename polynomial<Ring>::template val<typename Ring::zero>;
 	using one = typename polynomial<Ring>::template val<typename Ring::one>;
@@ -262,7 +310,16 @@ public:
 	using sub_t = poly_sub_t<Ring, v1, v2>;
 
 	template<typename v1, typename v2>
+	using mul_t = poly_mul_t<Ring, v1, v2>;
+
+	template<typename v1, typename v2>
 	using eq_t = typename eq_helper<v1, v2>::type;
+
+	template<typename v1, typename v2>
+	using lt_t = typename lt_helper<v1, v2>::type;
+
+	template<typename v1, typename v2>
+	using gt_t = typename gt_helper<v1, v2>::type;
 };
 
 template<typename Ring, typename P, typename E>
@@ -328,6 +385,45 @@ struct poly_sub_low<Ring, P1, P2, std::index_sequence<I...>> {
 	using type = typename polynomial<Ring>::template val<poly_sub_at_t<Ring, P1, P2, I>...>;
 };
 
+// multiplication at
+template<typename Ring, typename v1, typename v2, size_t k, size_t index, size_t stop>
+struct poly_mul_at_loop_helper {
+	using type = typename Ring::template add_t<
+		typename Ring::template mul_t<
+			typename v1::template coeff_at_t<index>,
+			typename v2::template coeff_at_t<k - index>
+		>,
+		typename poly_mul_at_loop_helper<Ring, v1, v2, k, index + 1, stop>::type
+	>;
+};
+
+template<typename Ring, typename v1, typename v2, size_t k, size_t stop>
+struct poly_mul_at_loop_helper <Ring, v1, v2, k, stop, stop> {
+	using type = typename Ring::template mul_t<typename v1::template coeff_at_t<stop>, typename v2::template coeff_at_t<0>>;
+};
+
+template <typename Ring, typename v1, typename v2, size_t k, typename E = void>
+struct poly_mul_at {};
+
+template<typename Ring, typename v1, typename v2, size_t k>
+struct poly_mul_at<Ring, v1, v2, k, std::enable_if_t<(k < 0) || (k > v1::degree + v2::degree)>> {
+	using type = Ring::zero;
+};
+
+template<typename Ring, typename v1, typename v2, size_t k>
+struct poly_mul_at<Ring, v1, v2, k, std::enable_if_t<(k >= 0) && (k <= v1::degree + v2::degree)>> {
+	using type = typename poly_mul_at_loop_helper<Ring, v1, v2, k, 0, k>::type;
+};
+
+template<typename Ring, typename P1, typename P2, size_t index>
+using poly_mul_at_t = typename poly_mul_at<Ring, P1, P2, index>::type;
+
+template<typename Ring, typename P1, typename P2, std::size_t... I>
+struct poly_mul_low<Ring, P1, P2, std::index_sequence<I...>> {
+	using type = typename polynomial<Ring>::template val<poly_mul_at_t<Ring, P1, P2, I>...>;
+};
+
+
 template<typename Ring>
 struct FractionField {
 	template<typename val1, typename val2>
@@ -338,6 +434,4 @@ struct FractionField {
 
 	using zero = val<typename Ring::zero, typename Ring::one>;
 	using one = val<typename Ring::one, typename Ring::one>;
-
-	// for operators, we need gcd
 };
