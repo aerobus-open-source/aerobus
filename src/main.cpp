@@ -1,22 +1,15 @@
 #include <cstdio>
-#include <typeinfo>
 
 #include "lib.h"
 
 int test_type_at() {
-	const char* a = typeid(type_at_t<0, float, int, long>).name();
-	const char* b = typeid(type_at_t<1, float, int, long>).name();
-	const char* c = typeid(type_at_t<2, float, int, long>).name();
-	if (strcmp(a, "float") != 0) {
-		printf("expected float, got %s\n", a);
+	if (!std::is_same<type_at_t<0, float, int, long>, float>::value) {
 		return 1;
 	}
-	if (strcmp(b, "int") != 0) {
-		printf("expected int, got %s\n", a);
+	if (!std::is_same<type_at_t<1, float, int, long>, int>::value) {
 		return 1;
 	}
-	if (strcmp(c, "long") != 0) {
-		printf("expected long, got %s\n", a);
+	if (!std::is_same<type_at_t<2, float, int, long>, long>::value) {
 		return 1;
 	}
 
@@ -26,15 +19,14 @@ int test_type_at() {
 int test_poly_simplify() {
 	using poly1 = polynomial<i32>::val<i32::val<0>, i32::val<1>, i32::val<2>>;
 	using simplified1 = poly_simplify_t<i32, poly1>;
-	if (strcmp(typeid(simplified1).name(), "struct polynomial<struct i32>::val<struct i32::val<1>,struct i32::val<2> >") != 0) {
-		printf("got %s\n", typeid(simplified1).name());
+	using expected1 = polynomial<i32>::val<i32::val<1>, i32::val<2>>;
+	if (!std::is_same<expected1, simplified1>::value) {
 		return 1;
 	}
 
 	using poly2 = polynomial<i32>::val<i32::val<12>>;
 	using simplified2 = poly_simplify_t<i32, poly2>;
-	if (strcmp(typeid(simplified2).name(), "struct polynomial<struct i32>::val<struct i32::val<12> >") != 0) {
-		printf("got %s\n", typeid(simplified2).name());
+	if (!std::is_same<poly2, simplified2>::value) {
 		return 1;
 	}
 
@@ -50,16 +42,19 @@ int test_coeff_at() {
 	using at2 = poly::coeff_at_t<2>;
 	using at3 = poly::coeff_at_t<3>;
 
-	if (strcmp(typeid(at0).name(), typeid(i32::val<1>).name()) != 0) {
+	if(!std::is_same<at0, i32::val<1>>::value) {
 		return 1;
 	}
-	if (strcmp(typeid(at1).name(), typeid(i32::val<2>).name()) != 0) {
+
+	if (!std::is_same<at1, i32::val<2>>::value) {
 		return 1;
 	}
-	if (strcmp(typeid(at2).name(), typeid(i32::val<3>).name()) != 0) {
+
+	if (!std::is_same<at2, i32::val<3>>::value) {
 		return 1;
 	}
-	if (strcmp(typeid(at3).name(), typeid(i32::zero).name()) != 0) {
+
+	if (!std::is_same<at3, i32::val<0>>::value) {
 		return 1;
 	}
 
@@ -291,14 +286,6 @@ int main(int argc, char* argv[]) {
 	if (test_gcd() != 0) {
 		return 1;
 	}
-	// 2 + x
-	/*using poly = polynomial<i32>::val<i32::val<0>, i32::val<1>, i32::val<2>>;
-	using simplified = poly_simplify_t<i32, poly>;
-	auto x = typeid(simplified).name();*/
 
-	//using at = simplified::coeff_at<1>;
-	//auto y = typeid(at).name();
-	//printf("%s\n", y); // struct i32::val<1>
-
-	//printf("%s\n", x); // struct polynomial<struct i32>::val<struct i32::val<1>,struct i32::val<1> >
+	return 0;
 }
