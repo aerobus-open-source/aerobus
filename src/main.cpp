@@ -102,6 +102,7 @@ int test_poly_add_at() {
 	return 0;
 }
 
+
 template<typename... coeffs>
 using IX = polynomial<i32>::val<coeffs...>;
 template<int32_t x>
@@ -119,7 +120,7 @@ int test_poly_add() {
 		// 1 + x + x^2
 		using P2 = IX<Int<1>, Int<1>, Int<1>>;
 		// 2 + 2x + x^2
-		using A = add_ix<P1, P2>;
+		using A = polynomial<i32>::add_t<P1, P2>;
 
 		if (A::coeff_at_t<0>::v != 2) {
 			return 1;
@@ -158,7 +159,6 @@ int test_poly_add() {
 
 	return 0;
 }
-
 
 int test_poly_sub() {
 	{
@@ -207,6 +207,64 @@ int test_poly_sub() {
 	return 0;
 }
 
+int test_poly_eq() {
+	{
+		using A = polynomial<i32>::val<i32::val<1>>;
+		using B = polynomial<i32>::val<i32::val<1>>;
+		if (!polynomial<i32>::eq_t<A, B>::value) {
+			return 1;
+		}
+	}
+	{
+		using A = polynomial<i32>::val<i32::val<1>>;
+		using B = polynomial<i32>::val<i32::val<2>>;
+		if (polynomial<i32>::eq_t<A, B>::value) {
+			return 1;
+		}
+	}
+	{
+		using A = polynomial<i32>::val<i32::val<1>, i32::val<1>>;
+		using B = polynomial<i32>::val<i32::val<1>, i32::val<1>>;
+		if (!polynomial<i32>::eq_t<A, B>::value) {
+			return 1;
+		}
+	}
+	{
+		using A = polynomial<i32>::val<i32::val<1>, i32::val<1>>;
+		using B = polynomial<i32>::val<i32::val<1>, i32::val<2>>;
+		if (polynomial<i32>::eq_t<A, B>::value) {
+			return 1;
+		}
+	}
+	{
+		using A = polynomial<i32>::val<i32::val<1>, i32::val<1>>;
+		using B = polynomial<i32>::val<i32::val<1>, i32::val<1>, i32::val<2>>;
+		if (polynomial<i32>::eq_t<A, B>::value) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+int test_gcd() {
+	using A = i32::gcd_t<i32::val<6>, i32::val<12>>;
+	if (A::v != 6) {
+		return 1;
+	}
+	using B = i32::gcd_t<i32::val<12>, i32::val<6>>;
+	if (B::v != 6) {
+		return 1;
+	}
+
+	using C = i32::gcd_t<i32::val<3>, i32::val<5>>;
+	if (C::v != 1) {
+		return 1;
+	}
+
+	return 0;
+}
+
 int main(int argc, char* argv[]) {
 	if (test_type_at() != 0) {
 		return 1;
@@ -225,6 +283,12 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 	if (test_poly_sub() != 0) {
+		return 1;
+	}
+	if (test_poly_eq() != 0) {
+		return 1;
+	}
+	if (test_gcd() != 0) {
 		return 1;
 	}
 	// 2 + x
