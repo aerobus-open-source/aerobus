@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <typeinfo>
 
 #include "lib.h"
 
@@ -292,6 +293,90 @@ int test_poly_mul() {
 	return 0;
 }
 
+int test_monomial() {
+	{
+		//2x^3 + 0 + 0 + 0
+		using A = polynomial<i32>::monomial_t<i32::val<2>, 3>;
+		if (A::coeff_at_t<3>::v != 2) {
+			return 1;
+		}
+		if (A::coeff_at_t<2>::v != 0) {
+			return 1;
+		}
+		if (A::coeff_at_t<1>::v != 0) {
+			return 1;
+		}
+		if (A::coeff_at_t<0>::v != 0) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+int test_poly_div() {
+	// divisibility
+	{
+		// x^2 - 1
+		using A = polynomial<i32>::val<i32::val<1>, i32::val<0>, i32::val<-1>>;
+		// x - 1
+		using B = polynomial<i32>::val<i32::val<1>, i32::val<-1>>;
+		// x + 1
+		using C = polynomial<i32>::div_t<A, B>;
+		if (C::degree != 1) {
+			return 1;
+		}
+		if (C::coeff_at_t<0>::v != 1) {
+			return 1;
+		}
+		if (C::coeff_at_t<1>::v != 1) {
+			return 1;
+		}
+
+		return 0;
+	}
+	// divide by constant
+	{
+		using A = polynomial<i32>::val<i32::val<2>, i32::val<2>, i32::val<2>>;
+		using B = polynomial<i32>::val<i32::val<2>>;
+		using C = polynomial<i32>::div_t<A, B>;
+		if (C::degree != 2) {
+			return 1;
+		}
+		if (C::coeff_at_t<0>::v != 1) {
+			return 1;
+		}
+		if (C::coeff_at_t<1>::v != 1) {
+			return 1;
+		}
+		if (C::coeff_at_t<2>::v != 1) {
+			return 1;
+		}
+
+		return 0;
+	}
+	// no divisibility
+	{
+		using A = polynomial<i32>::val<i32::val<1>, i32::val<1>, i32::val<1>>;
+		using B = polynomial<i32>::val<i32::val<1>, i32::val<1>>;
+		using C = polynomial<i32>::div_t<A, B>;
+		if (C::degree != 2) {
+			return 1;
+		}
+		if (C::coeff_at_t<0>::v != 1) {
+			return 1;
+		}
+		if (C::coeff_at_t<1>::v != 1) {
+			return 1;
+		}
+		if (C::coeff_at_t<2>::v != 1) {
+			return 1;
+		}
+
+		return 0;
+	}
+}
+
 int test_add_q32() {
 	{
 		using a = Q32::val<i32::val<1>, i32::val<2>>;
@@ -455,6 +540,7 @@ int test_div_q32() {
 
 	return 0;
 }
+
 int test_fraction_field_of_fraction_field () {
 	using qq32 = FractionField<Q32>;
 	if (!std::is_same<Q32, qq32>::value) {
@@ -490,6 +576,12 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 	if (test_poly_mul() != 0) {
+		return 1;
+	}
+	if (test_poly_div() != 0) {
+		return 1;
+	}
+	if (test_monomial() != 0) {
 		return 1;
 	}
 	if (test_add_q32() != 0) {
