@@ -292,6 +292,178 @@ int test_poly_mul() {
 	return 0;
 }
 
+int test_add_q32() {
+	{
+		using a = Q32::val<i32::val<1>, i32::val<2>>;
+		using b = Q32::val<i32::val<1>, i32::val<4>>;
+
+		using c = Q32::add_t<a, b>;
+
+		auto x = c::x::v;
+		auto y = c::y::v;
+		if (x != 3 || y != 4) {
+			return 1;
+		}
+	}
+	{
+		using a = Q32::val<i32::val<1>, i32::val<2>>;
+		using b = Q32::val<i32::val<1>, i32::val<3>>;
+
+		using c = Q32::add_t<a, b>;
+
+		auto x = c::x::v;
+		auto y = c::y::v;
+		if (x != 5 || y != 6) {
+			return 1;
+		}
+	}
+	{
+		using a = Q32::val<i32::val<-1>, i32::val<2>>;
+		using b = Q32::val<i32::val<1>, i32::val<2>>;
+
+		using c = Q32::add_t<a, b>;
+
+		auto x = c::x::v;
+		auto y = c::y::v;
+		if (x != 0 || y != 1) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+int test_sub_q32() {
+	{
+		using a = Q32::val<i32::val<1>, i32::val<2>>;
+		using b = Q32::val<i32::val<1>, i32::val<4>>;
+
+		using c = Q32::sub_t<a, b>;
+
+		auto x = c::x::v;
+		auto y = c::y::v;
+		if (x != 1 || y != 4) {
+			return 1;
+		}
+	}
+	{
+		using a = Q32::val<i32::val<1>, i32::val<2>>;
+		using b = Q32::val<i32::val<1>, i32::val<3>>;
+
+		using c = Q32::sub_t<a, b>;
+
+		auto x = c::x::v;
+		auto y = c::y::v;
+		if (x != 1 || y != 6) {
+			return 1;
+		}
+	}
+	{
+		using a = Q32::val<i32::val<1>, i32::val<2>>;
+		using b = Q32::val<i32::val<1>, i32::val<2>>;
+
+		using c = Q32::sub_t<a, b>;
+
+		auto x = c::x::v;
+		auto y = c::y::v;
+		if (x != 0 || y != 1) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+int test_mul_q32() {
+	{
+		using a = Q32::val<i32::val<1>, i32::val<2>>;
+		using b = Q32::val<i32::val<1>, i32::val<4>>;
+
+		using c = Q32::mul_t<a, b>;
+
+		auto x = c::x::v;
+		auto y = c::y::v;
+		if (x != 1 || y != 8) {
+			return 1;
+		}
+	}
+	{
+		using a = Q32::val<i32::val<1>, i32::val<2>>;
+		using b = Q32::val<i32::val<1>, i32::val<3>>;
+
+		using c = Q32::mul_t<a, b>;
+
+		auto x = c::x::v;
+		auto y = c::y::v;
+		if (x != 1 || y != 6) {
+			return 1;
+		}
+	}
+	{
+		using a = Q32::val<i32::val<1>, i32::val<2>>;
+		using b = Q32::val<i32::val<0>, i32::val<2>>;
+
+		using c = Q32::mul_t<a, b>;
+
+		auto x = c::x::v;
+		auto y = c::y::v;
+		if (x != 0 || y != 1) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+int test_div_q32() {
+	{
+		using a = Q32::val<i32::val<1>, i32::val<2>>;
+		using b = Q32::val<i32::val<1>, i32::val<4>>;
+
+		using c = Q32::div_t<a, b>;
+
+		auto x = c::x::v;
+		auto y = c::y::v;
+		if (x != 2 || y != 1) {
+			return 1;
+		}
+	}
+	{
+		using a = Q32::val<i32::val<1>, i32::val<2>>;
+		using b = Q32::val<i32::val<1>, i32::val<3>>;
+
+		using c = Q32::div_t<a, b>;
+
+		auto x = c::x::v;
+		auto y = c::y::v;
+		if (x != 3 || y != 2) {
+			return 1;
+		}
+	}
+	{
+		using a = Q32::val<i32::val<0>, i32::val<2>>;
+		using b = Q32::val<i32::val<1>, i32::val<2>>;
+
+		using c = Q32::div_t<a, b>;
+
+		auto x = c::x::v;
+		auto y = c::y::v;
+		if (x != 0 || y != 1) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+int test_fraction_field_of_fraction_field () {
+	using qq32 = FractionField<Q32>;
+	if (!std::is_same<Q32, qq32>::value) {
+		return 1;
+	}
+
+	return 0;
+}
+
 int main(int argc, char* argv[]) {
 	if (test_type_at() != 0) {
 		return 1;
@@ -318,6 +490,21 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 	if (test_poly_mul() != 0) {
+		return 1;
+	}
+	if (test_add_q32() != 0) {
+		return 1;
+	}
+	if (test_sub_q32() != 0) {
+		return 1;
+	}
+	if (test_mul_q32() != 0) {
+		return 1;
+	}
+	if (test_div_q32() != 0) {
+		return 1;
+	}
+	if (test_fraction_field_of_fraction_field() != 0) {
 		return 1;
 	}
 

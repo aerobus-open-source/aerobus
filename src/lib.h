@@ -35,8 +35,8 @@ struct gcd {
 	template<typename a, typename b>
 	struct gcd_helper<a, b, std::enable_if_t<
 		std::is_same<
-			typename Ring::template eq_t<a, b>,
-			std::true_type
+		typename Ring::template eq_t<a, b>,
+		std::true_type
 		>::value
 	>
 	> {
@@ -45,11 +45,18 @@ struct gcd {
 
 	template<typename a, typename b>
 	struct gcd_helper<a, b, std::enable_if_t<
+		std::is_same<a, typename Ring::zero>::value || std::is_same<b, typename Ring::zero>::value>> {
+		using type = Ring::zero;
+	};
+
+	template<typename a, typename b>
+	struct gcd_helper<a, b, std::enable_if_t<
 		std::is_same<
-			typename Ring::template gt_t<a, b>,
-			std::true_type
-		>::value
-	>
+		typename Ring::template gt_t<a, b>,
+		std::true_type
+		>::value &&
+		!std::is_same<a, typename Ring::zero>::value &&
+		!std::is_same<b, typename Ring::zero>::value>
 	> {
 		using type = typename gcd_helper<typename Ring::template sub_t<a, b>, b>::type;
 	};
@@ -57,10 +64,11 @@ struct gcd {
 	template<typename a, typename b>
 	struct gcd_helper<a, b, std::enable_if_t<
 		std::is_same<
-			typename Ring::template lt_t<a, b>,
-			std::true_type
-		>::value
-	>
+		typename Ring::template lt_t<a, b>,
+		std::true_type
+		>::value &&
+		!std::is_same<a, typename Ring::zero>::value &&
+		!std::is_same<b, typename Ring::zero>::value>
 	> {
 		using type = typename gcd_helper<a, typename Ring::template sub_t<b, a>>::type;
 	};
@@ -77,6 +85,7 @@ struct i32 {
 
 	using zero = val<0>;
 	using one = val<1>;
+	static constexpr bool is_field = false;
 
 private:
 	template<typename v1, typename v2>
@@ -185,6 +194,8 @@ using poly_mul_t = typename poly_mul_low<
 // coeffN x^N + ...
 template<typename Ring>
 struct polynomial {
+	static constexpr bool is_field = false;
+
 	template<typename coeffN, typename... coeffs>
 	struct val {
 		static constexpr size_t degree = sizeof...(coeffs);
@@ -243,23 +254,23 @@ private:
 
 	template<typename v1, typename v2>
 	struct eq_helper<v1, v2, std::enable_if_t<
-								v1::degree == v2::degree && 
-								v1::degree != 0 && 
-								std::is_same<
-									typename Ring::template eq_t<typename v1::aN, typename v2::aN>, 
-									std::true_type
-								>::value
-							  >
-	               > {
+		v1::degree == v2::degree &&
+		v1::degree != 0 &&
+		std::is_same<
+		typename Ring::template eq_t<typename v1::aN, typename v2::aN>,
+		std::true_type
+		>::value
+	>
+	> {
 		using type = typename eq_helper<typename v1::strip, typename v2::strip>::type;
 	};
 
 	template<typename v1, typename v2>
 	struct eq_helper<v1, v2, std::enable_if_t<
-								v1::degree == v1::degree && 
-								v1::degree == 0 
-							 >
-					> {
+		v1::degree == v1::degree &&
+		v1::degree == 0
+	>
+	> {
 		using type = typename Ring::template eq_t<typename v1::aN, typename v2::aN>;
 	};
 
@@ -332,10 +343,10 @@ struct poly_simplify<Ring, P, typename std::enable_if<
 	typename Ring::zero,
 	typename P::aN
 	>::value && (P::degree > 0)
->::type>
-{
-	using type = typename poly_simplify<Ring, typename P::strip>::type;
-};
+	>::type>
+	{
+		using type = typename poly_simplify<Ring, typename P::strip>::type;
+	};
 
 // otherwise : do nothing
 template<typename Ring, typename P>
@@ -359,7 +370,7 @@ struct poly_simplify<Ring, P, std::enable_if_t<P::degree == 0>> {
 template<typename Ring, typename P1, typename P2, size_t index>
 struct poly_add_at {
 	using type =
-		typename Ring::template add_t<P1::template coeff_at_t<index>, P2::template coeff_at_t<index>>;
+		typename Ring::template add_t<typename P1::template coeff_at_t<index>, typename P2::template coeff_at_t<index>>;
 };
 
 template<typename Ring, typename P1, typename P2, size_t index>
@@ -374,7 +385,7 @@ struct poly_add_low<Ring, P1, P2, std::index_sequence<I...>> {
 template<typename Ring, typename P1, typename P2, size_t index>
 struct poly_sub_at {
 	using type =
-		typename Ring::template sub_t<P1::template coeff_at_t<index>, P2::template coeff_at_t<index>>;
+		typename Ring::template sub_t<typename P1::template coeff_at_t<index>, typename P2::template coeff_at_t<index>>;
 };
 
 template<typename Ring, typename P1, typename P2, size_t index>
@@ -390,8 +401,8 @@ template<typename Ring, typename v1, typename v2, size_t k, size_t index, size_t
 struct poly_mul_at_loop_helper {
 	using type = typename Ring::template add_t<
 		typename Ring::template mul_t<
-			typename v1::template coeff_at_t<index>,
-			typename v2::template coeff_at_t<k - index>
+		typename v1::template coeff_at_t<index>,
+		typename v2::template coeff_at_t<k - index>
 		>,
 		typename poly_mul_at_loop_helper<Ring, v1, v2, k, index + 1, stop>::type
 	>;
@@ -423,9 +434,10 @@ struct poly_mul_low<Ring, P1, P2, std::index_sequence<I...>> {
 	using type = typename polynomial<Ring>::template val<poly_mul_at_t<Ring, P1, P2, I>...>;
 };
 
-
 template<typename Ring>
-struct FractionField {
+struct _FractionField {
+	static constexpr bool is_field = true;
+
 	template<typename val1, typename val2>
 	struct val {
 		using x = val1;
@@ -434,4 +446,103 @@ struct FractionField {
 
 	using zero = val<typename Ring::zero, typename Ring::one>;
 	using one = val<typename Ring::one, typename Ring::one>;
+
+private:
+	template<typename v, typename E = void>
+	struct simplify {};
+
+	template<typename v>
+	struct simplify<v, std::enable_if_t<v::x::v != 0>> {
+		using type = typename _FractionField<Ring>::template val<
+			typename Ring::template div_t<
+			typename v::x,
+			typename Ring::template gcd_t<typename v::x, typename v::y>>,
+			typename Ring::template div_t<
+			typename v::y,
+			typename Ring::template gcd_t<typename v::x, typename v::y>>>;
+	};
+
+	template<typename v>
+	struct simplify<v, std::enable_if_t<v::x::v == 0>> {
+		using type = typename _FractionField<Ring>::zero;
+	};
+
+	template<typename v>
+	using simplify_t = simplify<v>::type;
+
+	template<typename v1, typename v2>
+	struct add {
+	private:
+		using a = typename Ring::template mul_t<typename v1::x, typename v2::y>;
+		using b = typename Ring::template mul_t<typename v1::y, typename v2::x>;
+		using dividend = typename Ring::template add_t<a, b>;
+		using diviser = typename Ring::template mul_t<typename v1::y, typename v2::y>;
+		using g = typename Ring::template gcd_t<dividend, diviser>;
+
+	public:
+		using type = typename _FractionField<Ring>::template simplify_t<val<dividend, diviser>>;
+	};
+
+	template<typename v1, typename v2>
+	struct sub {
+	private:
+		using a = typename Ring::template mul_t<typename v1::x, typename v2::y>;
+		using b = typename Ring::template mul_t<typename v1::y, typename v2::x>;
+		using dividend = typename Ring::template sub_t<a, b>;
+		using diviser = typename Ring::template mul_t<typename v1::y, typename v2::y>;
+		using g = typename Ring::template gcd_t<dividend, diviser>;
+
+	public:
+		using type = typename _FractionField<Ring>::template simplify_t<val<dividend, diviser>>;
+	};
+
+	template<typename v1, typename v2>
+	struct mul {
+	private:
+		using a = typename Ring::template mul_t<typename v1::x, typename v2::x>;
+		using b = typename Ring::template mul_t<typename v1::y, typename v2::y>;
+
+	public:
+		using type = _FractionField<Ring>::template simplify_t<val<a, b>>;
+	};
+
+	template<typename v1, typename v2>
+	struct div {
+	private:
+		using a = typename Ring::template mul_t<typename v1::x, typename v2::y>;
+		using b = typename Ring::template mul_t<typename v1::y, typename v2::x>;
+
+	public:
+		using type = _FractionField<Ring>::template simplify_t<val<a, b>>;
+	};
+
+public:
+	template<typename v1, typename v2>
+	using add_t = typename add<v1, v2>::type;
+	template<typename v1, typename v2>
+	using sub_t = typename sub<v1, v2>::type;
+	template<typename v1, typename v2>
+	using mul_t = typename mul<v1, v2>::type;
+	template<typename v1, typename v2>
+	using div_t = typename div<v1, v2>::type;
 };
+
+template<typename Ring, typename E = void>
+struct FractionFieldImpl {};
+
+// fraction field of a field is the field itself
+template<typename Field>
+struct FractionFieldImpl<Field, std::enable_if_t<Field::is_field>> {
+	using type = Field;
+};
+
+// fraction field of a ring is the actual fraction field
+template<typename Ring>
+struct FractionFieldImpl<Ring, std::enable_if_t<!Ring::is_field>> {
+	using type = _FractionField<Ring>;
+};
+
+template<typename Ring>
+using FractionField = typename FractionFieldImpl<Ring>::type;
+
+using Q32 = FractionField<i32>;
