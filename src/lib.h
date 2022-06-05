@@ -191,6 +191,9 @@ using poly_mul_t = typename poly_mul_low<
 	P1::degree + P2::degree + 1
 	>>::type;
 
+template<typename Ring, typename A, typename B, typename Q, typename R, typename E = void>
+struct poly_div_helper;
+
 // coeffN x^N + ...
 template<typename Ring>
 struct polynomial {
@@ -310,9 +313,21 @@ private:
 		using type = std::false_type;
 	};
 
+	template<typename coeff, size_t deg>
+	struct monomial {
+		using type = poly_mul_t<Ring, typename polynomial<Ring>::X, typename monomial<coeff, deg - 1>::type>;
+	};
+
+	template<typename coeff>
+	struct monomial<coeff, 0> {
+		using type = val<coeff>;
+	};
+
+
 public:
 	using zero = typename polynomial<Ring>::template val<typename Ring::zero>;
 	using one = typename polynomial<Ring>::template val<typename Ring::one>;
+	using X = typename polynomial<Ring>::template val<typename Ring::one, typename Ring::zero>;
 
 	template<typename v1, typename v2>
 	using add_t = poly_add_t<Ring, v1, v2>;
@@ -331,6 +346,12 @@ public:
 
 	template<typename v1, typename v2>
 	using gt_t = typename gt_helper<v1, v2>::type;
+
+	template<typename v1, typename v2>
+	using div_t = typename poly_div_helper<Ring, v1, v2, zero, v1>::type;
+
+	template<typename coeff, size_t deg>
+	using monomial_t = typename monomial<coeff, deg>::type;
 };
 
 template<typename Ring, typename P, typename E>
@@ -364,6 +385,35 @@ struct poly_simplify<Ring, P, typename std::enable_if<
 template<typename Ring, typename P>
 struct poly_simplify<Ring, P, std::enable_if_t<P::degree == 0>> {
 	using type = P;
+};
+
+// division helper
+template<typename Ring, typename A, typename B, typename Q, typename R, typename E>
+struct poly_div_helper {};
+
+template<typename Ring, typename A, typename B, typename Q, typename R>
+struct poly_div_helper<Ring, A, B, Q, R, std::enable_if_t<
+	(R::degree < B::degree) ||
+	(R::degree == 0 && std::is_same<typename R::aN, typename Ring::zero>::value)>> {
+	using type = Q;
+};
+
+template<typename Ring, typename A, typename B, typename Q, typename R>
+struct poly_div_helper<Ring, A, B, Q, R, std::enable_if_t<
+	(R::degree >= B::degree) &&
+	!(R::degree == 0 && std::is_same<typename R::aN, typename Ring::zero>::value)>> {
+private:
+	using rN = typename R::aN;
+	using bN = typename B::aN;
+	using pT = typename polynomial<Ring>::template monomial_t<typename Ring::template div_t<rN, bN>, R::degree - B::degree>;
+
+public:
+	using type = typename poly_div_helper<
+		Ring,
+		A,
+		B,
+		typename polynomial<Ring>::template add_t<Q, pT>,
+		typename polynomial<Ring>::template sub_t<R, typename polynomial<Ring>::template mul_t<pT, B>>>::type;
 };
 
 // addition at
