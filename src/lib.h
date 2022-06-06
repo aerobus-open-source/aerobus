@@ -195,9 +195,8 @@ using poly_mul_t = typename poly_mul_low<
 template<typename Ring, typename A, typename B, typename Q, typename R, typename E = void>
 struct poly_div_helper;
 
-template<typename Ring, typename A, typename B, typename T, typename E = void>
-struct poly_gcd_helper;
-
+template<typename Ring, typename P>
+struct make_unit;
 
 // coeffN x^N + ...
 template<typename Ring>
@@ -335,7 +334,6 @@ private:
 		using type = val<coeff>;
 	};
 
-
 public:
 
 	template<typename v1, typename v2>
@@ -366,7 +364,13 @@ public:
 	using monomial_t = typename monomial<coeff, deg>::type;
 
 	template<typename v1, typename v2>
-	using gcd_t = typename gcd<polynomial<Ring>>::template type<v1, v2>;
+	using gcd_t = typename make_unit<Ring, typename gcd<polynomial<Ring>>::template type<v1, v2>>::type;
+};
+
+
+template<typename Ring, typename P>
+struct make_unit {
+	using type = typename polynomial<Ring>::template div_t<P, typename polynomial<Ring>::template val<typename P::aN>>;
 };
 
 template<typename Ring, typename P, typename E>
@@ -629,3 +633,4 @@ template<typename Ring>
 using FractionField = typename FractionFieldImpl<Ring>::type;
 
 using Q32 = FractionField<i32>;
+using FPQ32 = FractionField<polynomial<Q32>>;

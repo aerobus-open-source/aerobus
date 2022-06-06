@@ -447,18 +447,9 @@ int test_poly_gcd() {
 		using A = polynomial<Q32>::val<Q32::one, Q32::val<i32::val<2>, i32::val<1>>, Q32::one>;
 		// (x+1)*(x-1) :: x^2 - 1
 		using B = polynomial<Q32>::val<Q32::one, Q32::zero, Q32::val<i32::val<-1>, i32::val<1>>>;
-		// first iter
-		using K = polynomial<Q32>::div_t<A, B>;
-		using BB = polynomial<Q32>::sub_t<A, polynomial<Q32>::mul_t<B, K>>;
-		// second
-		using KK = polynomial<Q32>::div_t<B, BB>;
-		using BBB = polynomial<Q32>::sub_t<A, polynomial<Q32>::mul_t<BB, KK>>;
-		using KKK = polynomial<Q32>::div_t<BB, BBB>;
-		printf("KKK == \n%s\n", typeid(BBB).name());
-
-
-		using G = gcd<polynomial<Q32>>::type<A, B>;
-	/*	if (G::degree != 1) {
+		// x + 1
+		using G = polynomial<Q32>::gcd_t<A, B>;
+		if (G::degree != 1) {
 			return 1;
 		}
 		if (G::coeff_at_t<0>::x::v != 1 || G::coeff_at_t<0>::y::v != 1) {
@@ -466,7 +457,7 @@ int test_poly_gcd() {
 		}
 		if (G::coeff_at_t<1>::x::v != 1 || G::coeff_at_t<1>::y::v != 1) {
 			return 1;
-		}*/
+		}
 	}
 
 	return 0;
