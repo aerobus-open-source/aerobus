@@ -244,7 +244,7 @@ int test_poly_eq() {
 }
 
 int test_gcd() {
-	using A = i32::gcd_t<i32::val<6>, i32::val<12>>;
+	using A = i32::gcd_t<i32::val<12>, i32::val<6>>;
 	if (A::v != 6) {
 		return 1;
 	}
@@ -253,7 +253,7 @@ int test_gcd() {
 		return 1;
 	}
 
-	using C = i32::gcd_t<i32::val<3>, i32::val<5>>;
+	using C = i32::gcd_t<i32::val<5>, i32::val<3>>;
 	if (C::v != 1) {
 		return 1;
 	}
@@ -322,24 +322,30 @@ int test_poly_div() {
 		// x - 1
 		using B = polynomial<i32>::val<i32::val<1>, i32::val<-1>>;
 		// x + 1
-		using C = polynomial<i32>::div_t<A, B>;
-		if (C::degree != 1) {
+		using Q = polynomial<i32>::div_t<A, B>;
+		using R = polynomial<i32>::mod_t<A, B>;
+		if (!R::is_zero_t::value) {
 			return 1;
 		}
-		if (C::coeff_at_t<0>::v != 1) {
+		if (Q::degree != 1) {
 			return 1;
 		}
-		if (C::coeff_at_t<1>::v != 1) {
+		if (Q::coeff_at_t<0>::v != 1) {
 			return 1;
 		}
-
-		return 0;
+		if (Q::coeff_at_t<1>::v != 1) {
+			return 1;
+		}
 	}
 	// divide by constant
 	{
 		using A = polynomial<i32>::val<i32::val<2>, i32::val<2>, i32::val<2>>;
 		using B = polynomial<i32>::val<i32::val<2>>;
 		using C = polynomial<i32>::div_t<A, B>;
+		using R = polynomial<i32>::mod_t<A, B>;
+		if (!R::is_zero_t::value) {
+			return 1;
+		}
 		if (C::degree != 2) {
 			return 1;
 		}
@@ -352,29 +358,118 @@ int test_poly_div() {
 		if (C::coeff_at_t<2>::v != 1) {
 			return 1;
 		}
-
-		return 0;
 	}
 	// no divisibility
 	{
 		using A = polynomial<i32>::val<i32::val<1>, i32::val<1>, i32::val<1>>;
 		using B = polynomial<i32>::val<i32::val<1>, i32::val<1>>;
 		using C = polynomial<i32>::div_t<A, B>;
-		if (C::degree != 2) {
+		using R = polynomial<i32>::mod_t<A, B>;
+		if (C::degree != 1) {
 			return 1;
 		}
-		if (C::coeff_at_t<0>::v != 1) {
+		if (C::coeff_at_t<0>::v != 0) {
 			return 1;
 		}
 		if (C::coeff_at_t<1>::v != 1) {
 			return 1;
 		}
-		if (C::coeff_at_t<2>::v != 1) {
+		if (R::degree != 0) {
 			return 1;
 		}
-
-		return 0;
+		if (R::aN::v != 1) {
+			return 1;
+		}
 	}
+	// float divisibility
+	{
+		// x2 -1
+		using A = polynomial<Q32>::val<Q32::one, Q32::zero, Q32::val<i32::val<-1>, i32::val<1>>>;
+		// 2x + 2
+		using B = polynomial<Q32>::val<Q32::val<i32::val<2>, i32::one>, Q32::val<i32::val<2>, i32::one>>;
+		using Q = polynomial<Q32>::div_t<A, B>;
+
+		if (Q::degree != 1) {
+			return 1;
+		}
+		if (Q::coeff_at_t<0>::x::v != -1) {
+			return 1;
+		}
+		if (Q::coeff_at_t<0>::y::v != 2) {
+			return 1;
+		}
+		if (Q::coeff_at_t<1>::x::v != 1) {
+			return 1;
+		}
+		if (Q::coeff_at_t<1>::y::v != 2) {
+			return 1;
+		}
+	}
+	// float divisibility
+	{
+		// x2 -1
+		using A = polynomial<Q32>::val<Q32::one, Q32::one>;
+		// 2x + 2
+		using B = polynomial<Q32>::val<Q32::val<i32::val<2>, i32::one>, Q32::val<i32::val<2>, i32::one>>;
+		using Q = polynomial<Q32>::div_t<A, B>;
+		if (Q::degree != 0) {
+			return 1;
+		}
+		if (Q::coeff_at_t<0>::x::v != 1) {
+			return 1;
+		}
+		if (Q::coeff_at_t<0>::y::v != 2) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
+int test_poly_gcd() {
+	{
+		// (x+1)*(x+1)
+		using A = polynomial<Q32>::val<Q32::one, Q32::val<i32::val<2>, i32::val<1>>, Q32::one>;
+		// (x+1)
+		using B = polynomial<Q32>::val<Q32::one, Q32::one>;
+		using G = gcd<polynomial<Q32>>::type<A, B>;
+		if (G::degree != 1) {
+			return 1;
+		}
+		if (G::coeff_at_t<0>::x::v != 1 || G::coeff_at_t<0>::y::v != 1) {
+			return 1;
+		}
+		if (G::coeff_at_t<1>::x::v != 1 || G::coeff_at_t<1>::y::v != 1) {
+			return 1;
+		}
+	}
+	{
+		// (x+1)*(x+1)
+		using A = polynomial<Q32>::val<Q32::one, Q32::val<i32::val<2>, i32::val<1>>, Q32::one>;
+		// (x+1)*(x-1) :: x^2 - 1
+		using B = polynomial<Q32>::val<Q32::one, Q32::zero, Q32::val<i32::val<-1>, i32::val<1>>>;
+		// first iter
+		using K = polynomial<Q32>::div_t<A, B>;
+		using BB = polynomial<Q32>::sub_t<A, polynomial<Q32>::mul_t<B, K>>;
+		// second
+		using KK = polynomial<Q32>::div_t<B, BB>;
+		using BBB = polynomial<Q32>::sub_t<A, polynomial<Q32>::mul_t<BB, KK>>;
+		using KKK = polynomial<Q32>::div_t<BB, BBB>;
+		printf("KKK == \n%s\n", typeid(BBB).name());
+
+
+		using G = gcd<polynomial<Q32>>::type<A, B>;
+	/*	if (G::degree != 1) {
+			return 1;
+		}
+		if (G::coeff_at_t<0>::x::v != 1 || G::coeff_at_t<0>::y::v != 1) {
+			return 1;
+		}
+		if (G::coeff_at_t<1>::x::v != 1 || G::coeff_at_t<1>::y::v != 1) {
+			return 1;
+		}*/
+	}
+
+	return 0;
 }
 
 int test_add_q32() {
@@ -537,7 +632,53 @@ int test_div_q32() {
 			return 1;
 		}
 	}
+	{
+		using a = Q32::val<i32::val<1>, i32::val<1>>;
+		using b = Q32::val<i32::val<2>, i32::val<1>>;
 
+		using c = Q32::div_t<a, b>;
+
+		auto x = c::x::v;
+		auto y = c::y::v;
+		if (x != 1 || y != 2) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+int test_simplify_q32() {
+	using A = Q32::val<i32::val<2>, i32::val<2>>;
+	using B = Q32::val<i32::val<1>, i32::val<1>>;
+	using C = Q32::val<i32::val<-1>, i32::val<-1>>;
+	using D = Q32::val<i32::val<1>, i32::val<-2>>;
+	if (!Q32::eq_t<Q32::simplify_t<A>, Q32::one>::value) {
+		return 1;
+	}
+	if (!Q32::eq_t<Q32::simplify_t<B>, Q32::one>::value) {
+		return 1;
+	}
+	if (!Q32::eq_t<Q32::simplify_t<C>, Q32::one>::value) {
+		return 1;
+	}
+	if (!Q32::eq_t<Q32::simplify_t<D>, Q32::val<i32::val<-1>, i32::val<2>>>::value) {
+		return 1;
+	}
+
+	return 0;
+}
+
+int test_eq_q32() {
+	using A = Q32::val<i32::val<2>, i32::val<2>>;
+	using B = Q32::val<i32::val<1>, i32::val<1>>;
+	using C = Q32::val<i32::val<-1>, i32::val<-1>>;
+	if (!Q32::eq_t<A, B>::value) {
+		return 1;
+	}
+	if (!Q32::eq_t<A, C>::value) {
+		return 1;
+	}
 	return 0;
 }
 
@@ -584,6 +725,9 @@ int main(int argc, char* argv[]) {
 	if (test_monomial() != 0) {
 		return 1;
 	}
+	if (test_poly_gcd() != 0) {
+		return 1;
+	}
 	if (test_add_q32() != 0) {
 		return 1;
 	}
@@ -594,6 +738,9 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 	if (test_div_q32() != 0) {
+		return 1;
+	}
+	if (test_eq_q32() != 0) {
 		return 1;
 	}
 	if (test_fraction_field_of_fraction_field() != 0) {
