@@ -5,6 +5,7 @@
 #include <utility>
 #include <algorithm>
 #include <functional>
+#include <string>
 
 template <int64_t i, typename T, typename... Ts>
 struct type_at
@@ -45,7 +46,7 @@ struct gcd {
 	// B = 0, A < 0
 	template<typename A, typename B>
 	struct gcd_helper<A, B, std::enable_if_t<
-		((B::is_zero_t::value) && 
+		((B::is_zero_t::value) &&
 			!(Ring::template gt_t<A, typename Ring::zero>::value))>>
 	{
 		using type = typename Ring::template sub_t<typename Ring::zero, A>;
@@ -74,6 +75,9 @@ struct i32 {
 	struct val {
 		static constexpr int32_t v = x;
 		using is_zero_t = std::bool_constant<x == 0>;
+		static std::string to_string() {
+			return std::to_string(x);
+		}
 	};
 
 	using zero = val<0>;
@@ -103,7 +107,7 @@ private:
 
 	template<typename v1, typename v2>
 	struct remainder {
-		using type = val<v1::v % v2::v>;
+		using type = val<v1::v% v2::v>;
 	};
 
 	template<typename v1, typename v2>
@@ -195,6 +199,9 @@ using poly_mul_t = typename poly_mul_low<
 template<typename Ring, typename A, typename B, typename Q, typename R, typename E = void>
 struct poly_div_helper;
 
+template<typename Ring, typename coeff, typename... coeffs>
+struct poly_string_helper;
+
 template<typename Ring, typename P>
 struct make_unit;
 
@@ -225,6 +232,10 @@ struct polynomial {
 
 		template<size_t index>
 		using coeff_at_t = typename coeff_at<index>::type;
+
+		static std::string to_string() {
+			return poly_string_helper<Ring, coeffN, coeffs...>::func();
+		}
 	};
 
 	// specialization for constants
@@ -250,6 +261,10 @@ struct polynomial {
 
 		template<size_t index>
 		using coeff_at_t = typename coeff_at<index>::type;
+
+		static std::string to_string() {
+			return poly_string_helper<Ring, coeffN>::apply();
+		}
 	};
 
 
@@ -406,6 +421,36 @@ struct poly_simplify<Ring, P, std::enable_if_t<P::degree == 0>> {
 	using type = P;
 };
 
+// to string helper -- use for debugging
+template<typename Ring, typename coeff, typename... coeffs>
+struct poly_string_helper {
+	static std::string func() {
+		if (Ring::template eq_t<coeff, typename Ring::one>::value) {
+			if (sizeof...(coeffs) == 1) {
+				return "x + " + poly_string_helper<Ring, coeffs...>::func();
+			}
+			else {
+				return "x^" + std::to_string(sizeof...(coeffs)) + " + " + poly_string_helper<Ring, coeffs...>::func();
+			}
+		}
+		else {
+			if (sizeof...(coeffs) == 1) {
+				return coeff::to_string() + " x" + " + " + poly_string_helper<Ring, coeffs...>::func();
+			}
+			else {
+				return coeff::to_string() + " x^" + std::to_string(sizeof...(coeffs)) + " + " + poly_string_helper<Ring, coeffs...>::func();
+			}
+		}
+	}
+};
+
+template<typename Ring, typename coeff>
+struct poly_string_helper<Ring, coeff> {
+	static std::string func() {
+		return coeff::to_string();
+	}
+};
+
 // division helper
 template<typename Ring, typename A, typename B, typename Q, typename R, typename E>
 struct poly_div_helper {};
@@ -508,11 +553,45 @@ template<typename Ring>
 struct _FractionField {
 	static constexpr bool is_field = true;
 
+	template<typename val1, typename val2, typename E = void>
+	struct to_string_helper {};
+
+	template<typename val1, typename val2>
+	struct to_string_helper <val1, val2,
+		std::enable_if_t<
+		Ring::template eq_t<
+		val2, typename Ring::one
+		>::value
+		>
+	> {
+		static std::string func() {
+			return val1::to_string();
+		}
+	};
+
+	template<typename val1, typename val2>
+	struct to_string_helper<val1, val2,
+		std::enable_if_t<
+		!Ring::template eq_t<
+		val2,
+		typename Ring::one
+		>::value
+		>
+	> {
+		static std::string func() {
+			return "(" + val1::to_string() + ") / (" + val2::to_string() + ")";
+		}
+	};
+
 	template<typename val1, typename val2>
 	struct val {
 		using x = val1;
 		using y = val2;
 		using is_zero_t = std::bool_constant<x::is_zero_t::value>;
+
+		static std::string to_string() {
+			return to_string_helper<val1, val2>::func();
+		}
 	};
 
 	using zero = val<typename Ring::zero, typename Ring::one>;
@@ -531,7 +610,7 @@ private:
 	// x != 0
 	template<typename v>
 	struct simplify<v, std::enable_if_t<!v::x::is_zero_t::value>> {
-		
+
 	private:
 		using _gcd = typename Ring::template gcd_t<typename v::x, typename v::y>;
 		using newx = typename Ring::template div_t<typename v::x, _gcd>;
