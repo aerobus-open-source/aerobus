@@ -812,7 +812,7 @@ int test_bernouilli() {
 }
 
 int test_exp() {
-	using E = aerobus::exp<i32, 8>;
+	using E = aerobus::expm1<i64, 13>;
 	constexpr float e0 = E::eval(0.0F);
 	constexpr float e01 = E::eval(0.1F);
 	if (e0 != 1.0F) {

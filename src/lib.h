@@ -166,6 +166,100 @@ namespace aerobus {
 		using gcd_t = typename gcd<i32>::template type<v1, v2>;
 	};
 
+	struct i64 {
+		using inner_type = int64_t;
+		template<int64_t x>
+		struct val {
+			static constexpr int64_t v = x;
+
+			template<typename valueType>
+			static constexpr valueType get() { return static_cast<valueType>(x); }
+
+			using is_zero_t = std::bool_constant<x == 0>;
+			static std::string to_string() {
+				return std::to_string(x);
+			}
+
+			template<typename valueRing>
+			static constexpr valueRing eval(const valueRing& v) {
+				return static_cast<valueRing>(x);
+			}
+		};
+
+		using zero = val<0>;
+		using one = val<1>;
+		static constexpr bool is_field = false;
+
+	private:
+		template<typename v1, typename v2>
+		struct add {
+			using type = val<v1::v + v2::v>;
+		};
+
+		template<typename v1, typename v2>
+		struct sub {
+			using type = val<v1::v - v2::v>;
+		};
+
+		template<typename v1, typename v2>
+		struct mul {
+			using type = val<v1::v* v2::v>;
+		};
+
+		template<typename v1, typename v2>
+		struct div {
+			using type = val<v1::v / v2::v>;
+		};
+
+		template<typename v1, typename v2>
+		struct remainder {
+			using type = val<v1::v% v2::v>;
+		};
+
+		template<typename v1, typename v2>
+		struct gt {
+			using type = std::conditional_t<(v1::v > v2::v), std::true_type, std::false_type>;
+		};
+
+		template<typename v1, typename v2>
+		struct lt {
+			using type = std::conditional_t<(v1::v < v2::v), std::true_type, std::false_type>;
+		};
+
+		template<typename v1, typename v2>
+		struct eq {
+			using type = std::conditional_t<(v1::v == v2::v), std::true_type, std::false_type>;
+		};
+
+	public:
+		template<typename v1, typename v2>
+		using add_t = typename add<v1, v2>::type;
+
+		template<typename v1, typename v2>
+		using sub_t = typename sub<v1, v2>::type;
+
+		template<typename v1, typename v2>
+		using mul_t = typename mul<v1, v2>::type;
+
+		template<typename v1, typename v2>
+		using div_t = typename div<v1, v2>::type;
+
+		template<typename v1, typename v2>
+		using mod_t = typename remainder<v1, v2>::type;
+
+		template<typename v1, typename v2>
+		using gt_t = typename gt<v1, v2>::type;
+
+		template<typename v1, typename v2>
+		using lt_t = typename lt<v1, v2>::type;
+
+		template<typename v1, typename v2>
+		using eq_t = typename eq<v1, v2>::type;
+
+		template<typename v1, typename v2>
+		using gcd_t = typename gcd<i64>::template type<v1, v2>;
+	};
+
 	template<typename Ring, typename P, typename E = void>
 	struct poly_simplify;
 
@@ -868,13 +962,13 @@ namespace aerobus {
 	template<typename T, int k>
 	struct alternate<T, k, std::enable_if_t<k % 2 == 0>> {
 		using type = typename T::one;
-		static constexpr T::inner_type value = type::template get<typename T::inner_type>();
+		static constexpr typename T::inner_type value = type::template get<typename T::inner_type>();
 	};
 
 	template<typename T, int k>
 	struct alternate<T, k, std::enable_if_t<k % 2 != 0>> {
-		using type = T::template sub_t<T::zero, T::one>;
-		static constexpr T::inner_type value = type::template get<typename T::inner_type>();
+		using type = typename T::template sub_t<T::zero, T::one>;
+		static constexpr typename T::inner_type value = type::template get<typename T::inner_type>();
 	};
 
 
@@ -883,7 +977,7 @@ namespace aerobus {
 
 	template<typename T, template<typename, size_t> typename coeff_at, size_t... Is>
 	struct make_taylor_impl<T, coeff_at, std::integer_sequence<size_t, Is...>> {
-		using type = polynomial<FractionField<T>>::template val<typename coeff_at<T, Is>::type...>;
+		using type = typename polynomial<FractionField<T>>::template val<typename coeff_at<T, Is>::type...>;
 	};
 
 	// generic taylor serie, depending on coefficients
@@ -899,4 +993,9 @@ namespace aerobus {
 
 	template<typename T, size_t deg>
 	using exp = taylor<T, exp_coeff, deg>;
+
+	template<typename T, size_t deg>
+	using expm1 = typename polynomial<FractionField<T>>::template sub_t<
+		exp<T, deg>,
+		typename polynomial<FractionField<T>>::one>;
 }
