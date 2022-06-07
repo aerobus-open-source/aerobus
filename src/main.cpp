@@ -3,6 +3,8 @@
 
 #include "lib.h"
 
+using namespace aerobus;
+
 int test_type_at() {
 	if (!std::is_same<type_at_t<0, float, int, long>, float>::value) {
 		return 1;
@@ -753,6 +755,89 @@ int test_fraction_field_of_fraction_field () {
 	return 0;
 }
 
+int test_factorial() {
+	constexpr float x = factorial<i32, 3>::value;
+	if (x != 6.0f) {
+		return 1;
+	}
+
+	constexpr size_t y = factorial<i32, 0>::value;
+	if (y != 1) {
+		return 1;
+	}
+
+	return 0;
+}
+
+int test_combination() {
+	constexpr int x = combination<i32, 2, 4>::value;
+	if (x != 6) {
+		return 1;
+	}
+	constexpr int y = combination<i32, 0, 4>::value;
+	if (y != 1) {
+		return 1;
+	}
+	constexpr int z = combination<i32, 1, 4>::value;
+	if (z != 4) {
+		return 1;
+	}
+
+	constexpr int zz = combination<i32, 3, 4>::value;
+	if (zz != 4) {
+		return 1;
+	}
+	return 0;
+}
+
+int test_bernouilli() {
+	constexpr float b0 = bernouilli<i32, 0>::template value<float>;
+	if (b0 != 1.0f) {
+		return 1;
+	}
+	constexpr float b1 = bernouilli<i32, 1>::template value<float>;
+	if (b1 != -0.5f) {
+		return 1;
+	}
+	using B2 = bernouilli<i32, 2>::type;
+	if (B2::x::v != 1 || B2::y::v != 6) {
+		return 1;
+	}
+	constexpr double b3 = bernouilli<i32, 3>::template value<double>;
+	if (b3 != 0.0) {
+		return 1;
+	}
+
+	return 0;
+}
+
+int test_exp() {
+	using E = aerobus::exp<i32, 8>;
+	constexpr float e0 = E::eval(0.0F);
+	if (e0 != 1.0F) {
+		return 1;
+	}
+
+	return 0;
+}
+
+int test_alternate() {
+	constexpr int a0 = alternate<i32, 0>::value;
+	if (a0 != 1) {
+		return 1;
+	}
+	constexpr int a1 = alternate<i32, 1>::value;
+	if (a1 != -1) {
+		return 1;
+	}
+	constexpr int a2 = alternate<i32, 2>::value;
+	if (a2 != 1) {
+		return 1;
+	}
+
+	return 0;
+}
+
 int main(int argc, char* argv[]) {
 	if (test_type_at() != 0) {
 		return 1;
@@ -817,6 +902,20 @@ int main(int argc, char* argv[]) {
 	if (test_fraction_field_of_fraction_field() != 0) {
 		return 1;
 	}
-
+	if (test_factorial() != 0) {
+		return 1;
+	}
+	if (test_combination() != 0) {
+		return 1;
+	}
+	if (test_bernouilli() != 0) {
+		return 1;
+	}
+	if (test_alternate() != 0) {
+		return 1;
+	}
+	if (test_exp() != 0) {
+		return 1;
+	}
 	return 0;
 }
