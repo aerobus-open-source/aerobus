@@ -74,9 +74,18 @@ struct i32 {
 	template<int32_t x>
 	struct val {
 		static constexpr int32_t v = x;
+
+		template<typename valueType>
+		static constexpr valueType get() { return static_cast<valueType>(x); }
+
 		using is_zero_t = std::bool_constant<x == 0>;
 		static std::string to_string() {
 			return std::to_string(x);
+		}
+
+		template<typename valueRing>
+		static constexpr valueRing eval(const valueRing& v) {
+			return static_cast<valueRing>(x);
 		}
 	};
 
@@ -202,6 +211,9 @@ struct poly_div_helper;
 template<typename Ring, typename coeff, typename... coeffs>
 struct poly_string_helper;
 
+template<typename coeffRing, typename valueRing, typename P>
+struct poly_eval_helper;
+
 template<typename Ring, typename P>
 struct make_unit;
 
@@ -236,6 +248,11 @@ struct polynomial {
 		static std::string to_string() {
 			return poly_string_helper<Ring, coeffN, coeffs...>::func();
 		}
+
+		template<typename valueRing>
+		static constexpr valueRing eval(const valueRing& x) {
+			return poly_eval_helper<Ring, valueRing, val>::template inner<0, degree + 1>::func(static_cast<valueRing>(0), x);
+		}
 	};
 
 	// specialization for constants
@@ -265,8 +282,12 @@ struct polynomial {
 		static std::string to_string() {
 			return poly_string_helper<Ring, coeffN>::apply();
 		}
-	};
 
+		template<typename valueRing>
+		static constexpr valueRing eval(const valueRing& x) {
+			static_cast<valueRing>(aN::v);
+		}
+	};
 
 	using zero = typename polynomial<Ring>::template val<typename Ring::zero>;
 	using one = typename polynomial<Ring>::template val<typename Ring::one>;
@@ -380,6 +401,24 @@ public:
 
 	template<typename v1, typename v2>
 	using gcd_t = typename make_unit<Ring, typename gcd<polynomial<Ring>>::template type<v1, v2>>::type;
+};
+template<typename coeffRing, typename valueRing, typename P>
+struct poly_eval_helper
+{
+	template<size_t index, size_t stop>
+	struct inner {
+		static constexpr valueRing func(const valueRing& accum, const valueRing& x) {
+			constexpr valueRing coeff = static_cast<valueRing>(P::template coeff_at_t<P::degree - index>::template get<valueRing>());
+			return poly_eval_helper<coeffRing, valueRing, P>::template inner<index + 1, stop>::func(x * accum + coeff, x);
+		}
+	};
+
+	template<size_t stop>
+	struct inner<stop, stop> {
+		static constexpr valueRing func(const valueRing& accum, const valueRing& x) {
+			return accum;
+		}
+	};
 };
 
 
@@ -589,8 +628,16 @@ struct _FractionField {
 		using y = val2;
 		using is_zero_t = std::bool_constant<x::is_zero_t::value>;
 
+		template<typename valueType>
+		static constexpr valueType get() { return static_cast<valueType>(x::v) / static_cast<valueType>(y::v); }
+
 		static std::string to_string() {
 			return to_string_helper<val1, val2>::func();
+		}
+
+		template<typename valueRing>
+		static constexpr valueRing eval(const valueRing& v) {
+			return x::eval(v) / y::eval(v);
 		}
 	};
 

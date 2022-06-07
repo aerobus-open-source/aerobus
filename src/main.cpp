@@ -35,6 +35,66 @@ int test_poly_simplify() {
 	return 0;
 }
 
+int test_poly_eval() {
+	// 1 + 2x + 3x^2
+	using poly = polynomial<i32>::val<i32::val<3>, i32::val<2>, i32::val<1>>;
+	constexpr int v = poly::eval(1);
+	if (v != 6) {
+		return 1;
+	}
+	constexpr float vv = poly::eval(1.0f);
+	if (vv != 6.0f) {
+		return 1;
+	}
+
+	// 1/2 + 3x/2
+	using polyf = polynomial<Q32>::val<Q32::val<i32::val<3>, i32::val<2>>, Q32::val<i32::val<1>, i32::val<2>>>;
+	constexpr float vvv = polyf::eval(1.0f);
+	if (vvv != 2.0f) {
+		return 1;
+	}
+	constexpr double vvvv = polyf::eval(-1.0);
+	if (vvvv != -1.0) {
+		return 1;
+	}
+
+	return 0;
+}
+
+int test_fraction_field_eval() {
+	using half = Q32::val<i32::one, i32::val<2>>;
+	constexpr float x = half::eval(2.0f);
+	if (x != 0.5f) {
+		return 1;
+	}
+	using thirdhalf = Q32::val<i32::val<3>, i32::val<2>>;
+	constexpr float y = thirdhalf::eval(1.0f);
+	if (y != 1.5f) {
+		return 1;
+	}
+
+	// 3/2 + x / 2
+	using polyA = polynomial<Q32>::val<half, thirdhalf>;
+	constexpr float a = polyA::eval(2.0f);
+	if (a != 2.5F) {
+		return 1;
+	}
+	// 1/2 + x
+	using polyB = polynomial<Q32>::val<Q32::one, half>;
+	using F = FPQ32::val<polyA, polyB>;
+	constexpr float z = F::eval(2.0f);
+	if (z != 1.0f) {
+		return 1;
+	}
+	constexpr float zz = F::eval(-1.0f);
+	if (zz != -2.0f) {
+		return 1;
+	}
+
+
+	return 0;
+}
+
 int test_coeff_at() {
 	// 1 + 2x + 3x^2
 	using poly = polynomial<i32>::val<i32::val<3>, i32::val<2>, i32::val<1>>;
@@ -733,7 +793,13 @@ int main(int argc, char* argv[]) {
 	if (test_poly_gcd() != 0) {
 		return 1;
 	}
+	if (test_poly_eval() != 0) {
+		return 1;
+	}
 	if (test_add_q32() != 0) {
+		return 1;
+	}
+	if (test_fraction_field_eval() != 0) {
 		return 1;
 	}
 	if (test_sub_q32() != 0) {
