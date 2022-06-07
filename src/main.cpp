@@ -463,6 +463,17 @@ int test_poly_gcd() {
 	return 0;
 }
 
+int test_poly_to_string() {
+	using P32 = polynomial<Q32>;
+	using A = FPQ32::val<P32::val<Q32::one, Q32::one>, P32::val<Q32::val<i32::val<2>, i32::val<1>>, Q32::one>>;
+	auto rep = A::to_string();
+	if (strcmp(rep.c_str(), "(x + 1) / (2 x + 1)") != 0) {
+		return 1;
+	}
+
+	return 0;
+}
+
 int test_add_q32() {
 	{
 		using a = Q32::val<i32::val<1>, i32::val<2>>;
@@ -711,6 +722,9 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 	if (test_poly_div() != 0) {
+		return 1;
+	}
+	if (test_poly_to_string() != 0) {
 		return 1;
 	}
 	if (test_monomial() != 0) {
