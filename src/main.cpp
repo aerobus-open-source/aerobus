@@ -33,7 +33,6 @@ int test_poly_simplify() {
 		return 1;
 	}
 
-
 	return 0;
 }
 
@@ -811,8 +810,84 @@ int test_bernouilli() {
 	return 0;
 }
 
+int test_zpz () {
+	using Z2Z = zpz<2>;
+	if (Z2Z::template add_t<typename Z2Z::val<1>, typename Z2Z::val<1>>::v != 0) {
+		return 1;
+	}
+	if (!Z2Z::is_field) {
+		return 1;
+	}
+
+	using Z4Z = zpz<4>;
+	if (Z4Z::template add_t<typename Z4Z::val<4>, typename Z4Z::val<12>>::v != 0) {
+		return 1;
+	}
+	if (Z4Z::template add_t<typename Z4Z::val<5>, typename Z4Z::val<13>>::v == 0) {
+		return 1;
+	}
+	if (Z4Z::is_field) {
+		return 1;
+	}
+
+	// gcd
+	if (Z2Z::template gcd_t<typename Z2Z::val<1>, typename Z2Z::val<1>>::v != 1) {
+		return 1;
+	}
+	using Z5Z = zpz<5>;
+	if (Z5Z::template gcd_t<typename Z5Z::val<2>, typename Z5Z::val<3>>::v != 1) {
+		return 1;
+	}
+	if (Z5Z::template gcd_t<typename Z5Z::val<2>, typename Z5Z::val<4>>::v != 2) {
+		return 1;
+	}
+
+	return 0;
+}
+
+int test_is_prime() {
+	if (is_prime<1>::value) {
+		return 1;
+	}
+	if (!is_prime<2>::value) {
+		return 1;
+	}
+	if (!is_prime<3>::value) {
+		return 1;
+	}
+	if (is_prime<4>::value) {
+		return 1;
+	}
+	if (!is_prime<5>::value) {
+		return 1;
+	}
+	if (is_prime<6>::value) {
+		return 1;
+	}
+	if (!is_prime<7>::value) {
+		return 1;
+	}
+	if (is_prime<8>::value) {
+		return 1;
+	}
+	if (is_prime<9>::value) {
+		return 1;
+	}
+	if (is_prime<10>::value) {
+		return 1;
+	}
+	if (!is_prime<31>::value) {
+		return 1;
+	}
+	if (is_prime<100>::value) {
+		return 1;
+	}
+
+	return 0;
+}
+
 int test_exp() {
-	using E = aerobus::expm1<i64, 13>;
+	using E = aerobus::exp<i32, 12>;
 	constexpr float e0 = E::eval(0.0F);
 	constexpr float e01 = E::eval(0.1F);
 	if (e0 != 1.0F) {
@@ -920,6 +995,12 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 	if (test_exp() != 0) {
+		return 1;
+	}
+	if (test_is_prime() != 0) {
+		return 1;
+	}
+	if (test_zpz() != 0) {
 		return 1;
 	}
 	return 0;
