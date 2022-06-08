@@ -23,6 +23,41 @@ namespace aerobus {
 	template <size_t i, typename... Ts>
 	using type_at_t = typename type_at<i, Ts...>::type;
 
+
+	template<int32_t n, int32_t i, typename E = void>
+	struct _is_prime {};
+
+	template<int32_t n, int32_t i>
+	struct _is_prime<n, i, std::enable_if_t<(n == 2 || n == 3)>> : std::true_type {};
+
+	template<int32_t n, int32_t i>
+	struct _is_prime<n, i, std::enable_if_t<(n != 2 && n != 3) && (n <= 1 || n % 2 == 0 || n % 3 == 0)>> : std::false_type {};
+
+	struct _is_prime<n, i, std::enable_if_t<
+		(n > 1 && n % 2 != 0 && n % 3 != 0) &&
+		(i >= 5 && i * i <= n) &&
+		(n% i == 0 || n % (i + 2) == 0)>> : std::false_type {};
+
+
+	template<int32_t n, int32_t i>
+	struct _is_prime<n, i, std::enable_if_t<
+		(n > 1 && n % 2 != 0 && n % 3 != 0) &&
+		(i >= 5 && i * i <= n) &&
+		(n% i != 0 && n % (i + 2) != 0)>> {
+		static constexpr bool value = _is_prime<n, i + 6>::value;
+	};
+
+	template<int32_t n, int32_t i>
+	struct _is_prime<n, i, std::enable_if_t<
+		(n > 1 && n % 2 != 0 && n % 3 != 0) &&
+		(i >= 5 && i * i > n)>> : std::true_type {};
+
+
+	template<int32_t n>
+	struct is_prime {
+		static constexpr bool value = _is_prime<n, 5>::value;
+	};
+
 	template <std::size_t ... Is>
 	constexpr auto index_sequence_reverse(std::index_sequence<Is...> const&)
 		-> decltype(std::index_sequence<sizeof...(Is) - 1U - Is...>{});
@@ -31,8 +66,11 @@ namespace aerobus {
 	using make_index_sequence_reverse
 		= decltype(index_sequence_reverse(std::make_index_sequence<N>{}));
 
+	template<typename Ring, typename E = void>
+	struct gcd;
+
 	template<typename Ring>
-	struct gcd {
+	struct gcd<Ring, std::enable_if_t<Ring::is_integral_domain>> {
 		template<typename A, typename B, typename E = void>
 		struct gcd_helper {};
 
@@ -95,6 +133,7 @@ namespace aerobus {
 		using zero = val<0>;
 		using one = val<1>;
 		static constexpr bool is_field = false;
+		static constexpr bool is_integral_domain = true;
 
 	private:
 		template<typename v1, typename v2>
@@ -189,6 +228,7 @@ namespace aerobus {
 		using zero = val<0>;
 		using one = val<1>;
 		static constexpr bool is_field = false;
+		static constexpr bool is_integral_domain = true;
 
 	private:
 		template<typename v1, typename v2>
@@ -260,6 +300,102 @@ namespace aerobus {
 		using gcd_t = typename gcd<i64>::template type<v1, v2>;
 	};
 
+	template<int32_t p>
+	struct zpz {
+		using inner_type = int32_t;
+		template<int32_t x>
+		struct val {
+			static constexpr int32_t v = x % p;
+
+			template<typename valueType>
+			static constexpr valueType get() { return static_cast<valueType>(x % p); }
+
+			using is_zero_t = std::bool_constant<x% p == 0>;
+			static std::string to_string() {
+				return std::to_string(x % p);
+			}
+
+			template<typename valueRing>
+			static constexpr valueRing eval(const valueRing& v) {
+				return static_cast<valueRing>(x % p);
+			}
+		};
+
+		using zero = val<0>;
+		using one = val<1>;
+		static constexpr bool is_field = is_prime<p>::value;
+		static constexpr bool is_integral_domain = is_field;
+
+	private:
+		template<typename v1, typename v2>
+		struct add {
+			using type = val<(v1::v + v2::v) % p>;
+		};
+
+		template<typename v1, typename v2>
+		struct sub {
+			using type = val<(v1::v - v2::v) % p>;
+		};
+
+		template<typename v1, typename v2>
+		struct mul {
+			using type = val<(v1::v* v2::v) % p>;
+		};
+
+		template<typename v1, typename v2>
+		struct div {
+			using type = val<(v1::v% p) / (v2::v % p)>;
+		};
+
+		template<typename v1, typename v2>
+		struct remainder {
+			using type = val<(v1::v% v2::v) % p>;
+		};
+
+		template<typename v1, typename v2>
+		struct gt {
+			using type = std::conditional_t<(v1::v% p > v2::v% p), std::true_type, std::false_type>;
+		};
+
+		template<typename v1, typename v2>
+		struct lt {
+			using type = std::conditional_t<(v1::v% p < v2::v% p), std::true_type, std::false_type>;
+		};
+
+		template<typename v1, typename v2>
+		struct eq {
+			using type = std::conditional_t<(v1::v% p == v2::v % p), std::true_type, std::false_type>;
+		};
+
+	public:
+		template<typename v1, typename v2>
+		using add_t = typename add<v1, v2>::type;
+
+		template<typename v1, typename v2>
+		using sub_t = typename sub<v1, v2>::type;
+
+		template<typename v1, typename v2>
+		using mul_t = typename mul<v1, v2>::type;
+
+		template<typename v1, typename v2>
+		using div_t = typename div<v1, v2>::type;
+
+		template<typename v1, typename v2>
+		using mod_t = typename remainder<v1, v2>::type;
+
+		template<typename v1, typename v2>
+		using gt_t = typename gt<v1, v2>::type;
+
+		template<typename v1, typename v2>
+		using lt_t = typename lt<v1, v2>::type;
+
+		template<typename v1, typename v2>
+		using eq_t = typename eq<v1, v2>::type;
+
+		template<typename v1, typename v2>
+		using gcd_t = typename gcd<i32>::template type<v1, v2>;
+	};
+
 	template<typename Ring, typename P, typename E = void>
 	struct poly_simplify;
 
@@ -318,6 +454,7 @@ namespace aerobus {
 	template<typename Ring>
 	struct polynomial {
 		static constexpr bool is_field = false;
+		static constexpr bool is_integral_domain = Ring::is_integral_domain;
 
 		template<typename coeffN, typename... coeffs>
 		struct val {
@@ -468,7 +605,6 @@ namespace aerobus {
 		};
 
 	public:
-
 		template<typename v1, typename v2>
 		using add_t = poly_add_t<Ring, v1, v2>;
 
@@ -488,7 +624,7 @@ namespace aerobus {
 		using gt_t = typename gt_helper<v1, v2>::type;
 
 		template<typename v1, typename v2>
-		using div_t = typename poly_div_helper<Ring, v1, v2, zero, v1>::q_type;
+		using div_t = std::conditional_t<Ring::is_integral_domain, typename poly_div_helper<Ring, v1, v2, zero, v1>::q_type, void>;
 
 		template<typename v1, typename v2>
 		using mod_t = typename poly_div_helper<Ring, v1, v2, zero, v1>::mod_type;
@@ -497,7 +633,10 @@ namespace aerobus {
 		using monomial_t = typename monomial<coeff, deg>::type;
 
 		template<typename v1, typename v2>
-		using gcd_t = typename make_unit<Ring, typename gcd<polynomial<Ring>>::template type<v1, v2>>::type;
+		using gcd_t = std::conditional_t<
+			Ring::is_integral_domain,
+			typename make_unit<Ring, typename gcd<polynomial<Ring>>::template type<v1, v2>>::type,
+			void>;
 	};
 
 	template<typename coeffRing, typename valueRing, typename P>
@@ -686,9 +825,14 @@ namespace aerobus {
 		using type = typename polynomial<Ring>::template val<poly_mul_at_t<Ring, P1, P2, I>...>;
 	};
 
+	template<typename Ring, typename E = void>
+	struct _FractionField {};
+
 	template<typename Ring>
-	struct _FractionField {
+	struct _FractionField<Ring, std::enable_if_t<Ring::is_integral_domain>>
+	{
 		static constexpr bool is_field = true;
+		static constexpr bool is_integral_domain = true;
 
 		template<typename val1, typename val2, typename E = void>
 		struct to_string_helper {};
@@ -807,7 +951,7 @@ namespace aerobus {
 			using b = typename Ring::template mul_t<typename v1::y, typename v2::y>;
 
 		public:
-			using type = _FractionField<Ring>::template simplify_t<val<a, b>>;
+			using type = typename _FractionField<Ring>::template simplify_t<val<a, b>>;
 		};
 
 		template<typename v1, typename v2>
@@ -817,7 +961,7 @@ namespace aerobus {
 			using b = typename Ring::template mul_t<typename v1::y, typename v2::x>;
 
 		public:
-			using type = _FractionField<Ring>::template simplify_t<val<a, b>>;
+			using type = typename _FractionField<Ring>::template simplify_t<val<a, b>>;
 		};
 
 		template<typename v1, typename v2>
@@ -971,6 +1115,14 @@ namespace aerobus {
 		static constexpr typename T::inner_type value = type::template get<typename T::inner_type>();
 	};
 
+	template<typename T, auto p, auto n>
+	struct pow { 
+		using type = typename T::template mul_t<typename T::template val<p>, typename pow<T, p, n-1>::type>;
+	};
+
+	template<typename T, auto p>
+	struct pow<T, p, 0> { using type = typename T::one; };
+
 
 	template<typename, template<typename, size_t> typename, class>
 	struct make_taylor_impl;
@@ -981,21 +1133,245 @@ namespace aerobus {
 	};
 
 	// generic taylor serie, depending on coefficients
-	// TODO: use that for all series below
 	template<typename T, template<typename, size_t index> typename coeff_at, size_t deg>
 	using taylor = typename make_taylor_impl<T, coeff_at, make_index_sequence_reverse<deg + 1>>::type;
-
 
 	template<typename T, size_t i>
 	struct exp_coeff {
 		using type = typename FractionField<T>::template val<typename T::one, typename factorial<T, i>::type>;
 	};
 
+	template<typename T, size_t i, typename E = void>
+	struct sin_coeff_helper {};
+
+	template<typename T, size_t i>
+	struct sin_coeff_helper<T, i, typename std::enable_if<(i & 1) == 0>::type> {
+		using type = typename FractionField<T>::zero;
+	};
+
+	template<typename T, size_t i>
+	struct sin_coeff_helper<T, i, typename std::enable_if<(i & 1) == 1>::type> {
+		using type = typename FractionField<T>::template val<typename alternate<T, i / 2>::type, typename factorial<T, i>::type>;
+	};
+
+	template<typename T, size_t i>
+	struct sin_coeff {
+		using type = typename sin_coeff_helper<T, i>::type;
+	};
+
+	template<typename T, size_t i, typename E = void>
+	struct sh_coeff_helper {};
+
+	template<typename T, size_t i>
+	struct sh_coeff_helper<T, i, typename std::enable_if<(i & 1) == 0>::type> {
+		using type = typename FractionField<T>::zero;
+	};
+
+	template<typename T, size_t i>
+	struct sh_coeff_helper<T, i, typename std::enable_if<(i & 1) == 1>::type> {
+		using type = typename FractionField<T>::template val<typename T::one, typename factorial<T, i>::type>;
+	};
+
+	template<typename T, size_t i>
+	struct sh_coeff {
+		using type = typename sh_coeff_helper<T, i>::type;
+	};
+
+	template<typename T, size_t i, typename E = void>
+	struct cos_coeff_helper {};
+
+	template<typename T, size_t i>
+	struct cos_coeff_helper<T, i, typename std::enable_if<(i & 1) == 1>::type> {
+		using type = typename FractionField<T>::zero;
+	};
+
+	template<typename T, size_t i>
+	struct cos_coeff_helper<T, i, typename std::enable_if<(i & 1) == 0>::type> {
+		using type = typename FractionField<T>::template val<typename alternate<T, i / 2>::type, typename factorial<T, i>::type>;
+	};
+
+	template<typename T, size_t i>
+	struct cos_coeff {
+		using type = typename cos_coeff_helper<T, i>::type;
+	};
+
+	template<typename T, size_t i, typename E = void>
+	struct cosh_coeff_helper {};
+
+	template<typename T, size_t i>
+	struct cosh_coeff_helper<T, i, typename std::enable_if<(i & 1) == 1>::type> {
+		using type = typename FractionField<T>::zero;
+	};
+
+	template<typename T, size_t i>
+	struct cosh_coeff_helper<T, i, typename std::enable_if<(i & 1) == 0>::type> {
+		using type = typename FractionField<T>::template val<typename T::one, typename factorial<T, i>::type>;
+	};
+
+	template<typename T, size_t i>
+	struct cosh_coeff {
+		using type = typename cosh_coeff_helper<T, i>::type;
+	};
+
+	template<typename T, size_t i>
+	struct geom_coeff { using type = typename FractionField<T>::one; };
+
+
+	template<typename T, size_t i, typename E = void>
+	struct atan_coeff_helper;
+
+	template<typename T, size_t i>
+	struct atan_coeff_helper<T, i, typename std::enable_if<(i & 1) == 1>::type> {
+		using type = typename FractionField<T>::template val<alternate<T, i / 2>::type, typename T::template val<i>>;
+	};
+
+	template<typename T, size_t i>
+	struct atan_coeff_helper<T, i, typename std::enable_if<(i & 1) == 0>::type> {
+		using type = typename FractionField<T>::zero;
+	};
+
+	template<typename T, size_t i>
+	struct atan_coeff { using type = typename atan_coeff_helper<T, i>::type; };
+
+	template<typename T, size_t i, typename E = void>
+	struct asin_coeff_helper;
+
+	template<typename T, size_t i>
+	struct asin_coeff_helper<T, i, typename std::enable_if<(i & 1) == 1>::type>
+	{
+		using type = typename FractionField<T>::template val<
+			typename factorial<T, i - 1>::type,
+			typename T::template mul_t<
+				typename T::template val<i>,
+					typename T::template mul_t<
+						typename pow<T, 4, i / 2>::type,
+						pow<T, factorial<T, i / 2>::value, 2>
+			>>>;
+	};
+
+	template<typename T, size_t i>
+	struct asin_coeff_helper<T, i, typename std::enable_if<(i & 1) == 0>::type>
+	{
+		using type = typename FractionField<T>::zero;
+	};
+
+	template<typename T, size_t i>
+	struct asin_coeff { 
+		using type = typename asin_coeff_helper<T, i>::type;
+	};
+
+	template<typename T, size_t i>
+	struct lnp1_coeff { 
+		using type = typename FractionField<T>::template val<
+			typename alternate<T, i + 1>::type,
+			typename T::template val<i>>;
+	};
+
+	template<typename T>
+	struct lnp1_coeff<T, 0> { using type = typename FractionField<T>::zero; };
+
+	template<typename T, size_t i, typename E = void>
+	struct asinh_coeff_helper;
+
+	template<typename T, size_t i>
+	struct asinh_coeff_helper<T, i, typename std::enable_if<(i & 1) == 1>::type>
+	{
+		using type = typename FractionField<T>::template val<
+			typename T::template mul_t<
+				typename alternate<T, i/2>::type,
+				typename factorial<T, i-1>::type
+			>,
+			typename T::template mul_t<
+				typename T::template mul_t<
+					typename T::template val<i>,
+					typename pow<T, (factorial<T, i/2>::value), 2>::type
+				>,
+				typename pow<T, 4, i/2>::type
+			>
+		>;
+	};
+
+	template<typename T, size_t i>
+	struct asinh_coeff_helper<T, i, typename std::enable_if<(i & 1) == 0>::type>
+	{
+		using type = typename FractionField<T>::zero;
+	};
+
+	template<typename T, size_t i>
+	struct asinh_coeff { 
+		using type = typename asinh_coeff_helper<T, i>::type; 
+	};
+
+	template<typename T, size_t i, typename E = void>
+	struct atanh_coeff_helper;
+
+	template<typename T, size_t i>
+	struct atanh_coeff_helper<T, i, typename std::enable_if<(i & 1) == 1>::type>
+	{
+		// 1/i
+		using type = typename FractionField<T>:: template val<
+			typename T::one, 
+			typename T::template val<static_cast<typename T::inner_type>(i)>>;
+	};
+
+	template<typename T, size_t i>
+	struct atanh_coeff_helper<T, i, typename std::enable_if<(i & 1) == 0>::type>
+	{
+		using type = typename FractionField<T>::zero;
+	};
+
+	template<typename T, size_t i>
+	struct atanh_coeff {
+		using type = typename asinh_coeff_helper<T, i>::type; 
+	};
+
+	// e^x
 	template<typename T, size_t deg>
 	using exp = taylor<T, exp_coeff, deg>;
 
+	// e^x - 1
 	template<typename T, size_t deg>
 	using expm1 = typename polynomial<FractionField<T>>::template sub_t<
 		exp<T, deg>,
 		typename polynomial<FractionField<T>>::one>;
+
+	/// ln(1+x)
+	template<typename T, size_t deg>
+	using lnp1 = taylor<T, lnp1_coeff, deg>;
+
+	/// atan(x);
+	template<typename T, size_t deg>
+	using atan = taylor<T, atan_coeff, deg>;
+
+	/// sin(x)
+	template<typename T, size_t deg>
+	using sin = taylor<T, sin_coeff, deg>;
+
+	/// sh(x)
+	template<typename T, size_t deg>
+	using sinh = taylor<T, sh_coeff, deg>;
+
+	/// ch(x)
+	template<typename T, size_t deg>
+	using cosh = taylor<T, cosh_coeff, deg>;
+
+	/// cos(x)
+	template<typename T, size_t deg>
+	using cos = taylor<T, cos_coeff, deg>;
+
+	/// 1 / (1-x)
+	template<typename T, size_t deg>
+	using geometric_sum = taylor<T, geom_coeff, deg>;
+
+	/// asin(x)
+	template<typename T, size_t deg>
+	using asin = taylor<T, asin_coeff, deg>;
+
+	/// asinh(x)
+	template<typename T, size_t deg>
+	using asinh = taylor<T, asinh_coeff, deg>;
+
+	/// atanh(x)
+	template<typename T, size_t deg>
+	using atanh = taylor<T, atanh_coeff, deg>;
 }
