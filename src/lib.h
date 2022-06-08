@@ -7,6 +7,15 @@
 #include <functional>
 #include <string>
 
+
+#ifdef _MSC_VER
+#define ALIGNED(x) __declspec(align(x))
+#define INLINED __forceinline 
+#else 
+#define ALIGNED(x) __attribute__((aligned(x)))
+#define INLINED __attribute__((always_inline))  
+#endif
+
 namespace aerobus {
 
 	template <int64_t i, typename T, typename... Ts>
@@ -520,7 +529,7 @@ namespace aerobus {
 
 			template<typename valueRing>
 			static constexpr valueRing eval(const valueRing& x) {
-				static_cast<valueRing>(aN::v);
+				return static_cast<valueRing>(aN::template get<valueRing>());
 			}
 		};
 
@@ -1004,11 +1013,13 @@ namespace aerobus {
 	using Q32 = FractionField<i32>;
 	using FPQ32 = FractionField<polynomial<Q32>>;
 
+	template<typename T, auto x, typename E = void>
+	struct factorial {};
 
 	template<typename T, auto x>
-	struct factorial {
+	struct factorial<T, x, std::enable_if_t<(x > 0)>> {
 	private:
-		template<typename, auto>
+		template<typename, auto, typename>
 		friend struct factorial;
 	public:
 		using type = typename T::template mul_t<typename T::template val<x>, typename factorial<T, x - 1>::type>;
@@ -1017,9 +1028,6 @@ namespace aerobus {
 
 	template<typename T>
 	struct factorial<T, 0> {
-	private:
-		template<typename, auto>
-		friend struct factorial;
 	public:
 		using type = typename T::one;
 		static constexpr typename T::inner_type value = type::template get<typename T::inner_type>();
@@ -1112,13 +1120,13 @@ namespace aerobus {
 
 	template<typename T, int k>
 	struct alternate<T, k, std::enable_if_t<k % 2 != 0>> {
-		using type = typename T::template sub_t<T::zero, T::one>;
+		using type = typename T::template sub_t<typename T::zero, typename T::one>;
 		static constexpr typename T::inner_type value = type::template get<typename T::inner_type>();
 	};
 
 	template<typename T, auto p, auto n>
-	struct pow { 
-		using type = typename T::template mul_t<typename T::template val<p>, typename pow<T, p, n-1>::type>;
+	struct pow {
+		using type = typename T::template mul_t<typename T::template val<p>, typename pow<T, p, n - 1>::type>;
 	};
 
 	template<typename T, auto p>
@@ -1243,10 +1251,10 @@ namespace aerobus {
 		using type = typename FractionField<T>::template val<
 			typename factorial<T, i - 1>::type,
 			typename T::template mul_t<
-				typename T::template val<i>,
-					typename T::template mul_t<
-						typename pow<T, 4, i / 2>::type,
-						pow<T, factorial<T, i / 2>::value, 2>
+			typename T::template val<i>,
+			typename T::template mul_t<
+			typename pow<T, 4, i / 2>::type,
+			pow<T, factorial<T, i / 2>::value, 2>
 			>>>;
 	};
 
@@ -1257,12 +1265,12 @@ namespace aerobus {
 	};
 
 	template<typename T, size_t i>
-	struct asin_coeff { 
+	struct asin_coeff {
 		using type = typename asin_coeff_helper<T, i>::type;
 	};
 
 	template<typename T, size_t i>
-	struct lnp1_coeff { 
+	struct lnp1_coeff {
 		using type = typename FractionField<T>::template val<
 			typename alternate<T, i + 1>::type,
 			typename T::template val<i>>;
@@ -1279,15 +1287,15 @@ namespace aerobus {
 	{
 		using type = typename FractionField<T>::template val<
 			typename T::template mul_t<
-				typename alternate<T, i/2>::type,
-				typename factorial<T, i-1>::type
+			typename alternate<T, i / 2>::type,
+			typename factorial<T, i - 1>::type
 			>,
 			typename T::template mul_t<
-				typename T::template mul_t<
-					typename T::template val<i>,
-					typename pow<T, (factorial<T, i/2>::value), 2>::type
-				>,
-				typename pow<T, 4, i/2>::type
+			typename T::template mul_t<
+			typename T::template val<i>,
+			typename pow<T, (factorial<T, i / 2>::value), 2>::type
+			>,
+			typename pow<T, 4, i / 2>::type
 			>
 		>;
 	};
@@ -1299,8 +1307,8 @@ namespace aerobus {
 	};
 
 	template<typename T, size_t i>
-	struct asinh_coeff { 
-		using type = typename asinh_coeff_helper<T, i>::type; 
+	struct asinh_coeff {
+		using type = typename asinh_coeff_helper<T, i>::type;
 	};
 
 	template<typename T, size_t i, typename E = void>
@@ -1311,7 +1319,7 @@ namespace aerobus {
 	{
 		// 1/i
 		using type = typename FractionField<T>:: template val<
-			typename T::one, 
+			typename T::one,
 			typename T::template val<static_cast<typename T::inner_type>(i)>>;
 	};
 
@@ -1323,7 +1331,7 @@ namespace aerobus {
 
 	template<typename T, size_t i>
 	struct atanh_coeff {
-		using type = typename asinh_coeff_helper<T, i>::type; 
+		using type = typename asinh_coeff_helper<T, i>::type;
 	};
 
 	// e^x
