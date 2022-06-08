@@ -33,6 +33,7 @@ namespace aerobus {
 	template<int32_t n, int32_t i>
 	struct _is_prime<n, i, std::enable_if_t<(n != 2 && n != 3) && (n <= 1 || n % 2 == 0 || n % 3 == 0)>> : std::false_type {};
 
+	template<int32_t n, int32_t i>
 	struct _is_prime<n, i, std::enable_if_t<
 		(n > 1 && n % 2 != 0 && n % 3 != 0) &&
 		(i >= 5 && i * i <= n) &&
