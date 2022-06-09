@@ -920,7 +920,13 @@ int test_alternate() {
 	return 0;
 }
 
+int test_tan() {
+	using T = aerobus::tan<i64, 11>;
+	printf(" tan(x) ~ %s\n", T::to_string().c_str());
+	return 0;
+}
 
+/*
 INLINED
 double expm1_12(const double x) {
 	using V = aerobus::expm1<aerobus::i64, 13>;
@@ -954,9 +960,7 @@ void bench_expm1() {
 	printf("time : %lf\n", best);
 	double GFLOP = ((double)N) * 12.0 * 14.0E-9;
 	printf("GFlops : %lf\n", GFLOP / best);
-}
-
-
+}*/
 
 int main(int argc, char* argv[]) {
 	// do not run on windows -- somehow it's slow as f*** -- DIG into compile options
@@ -1043,6 +1047,9 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 	if (test_zpz() != 0) {
+		return 1;
+	}
+	if (test_tan() != 0) {
 		return 1;
 	}
 	return 0;

@@ -717,7 +717,15 @@ namespace aerobus {
 		template<typename Ring, typename coeff, typename... coeffs>
 		struct poly_string_helper {
 			static std::string func() {
-				if (Ring::template eq_t<coeff, typename Ring::one>::value) {
+				if (Ring::template eq_t<coeff, typename Ring::zero>::value) {
+					if (sizeof...(coeffs) == 1) {
+						return poly_string_helper<Ring, coeffs...>::func();
+					}
+					else {
+						return poly_string_helper<Ring, coeffs...>::func();
+					}
+				}
+				else if (Ring::template eq_t<coeff, typename Ring::one>::value) {
 					if (sizeof...(coeffs) == 1) {
 						return "x + " + poly_string_helper<Ring, coeffs...>::func();
 					}
@@ -902,6 +910,9 @@ namespace aerobus {
 			using zero = val<typename Ring::zero, typename Ring::one>;
 			using one = val<typename Ring::one, typename Ring::one>;
 
+			template<typename v>
+			using inject_t = val<v, typename Ring::one>;
+
 		private:
 			template<typename v, typename E = void>
 			struct simplify {};
@@ -1005,6 +1016,8 @@ namespace aerobus {
 		template<typename Field>
 		struct FractionFieldImpl<Field, std::enable_if_t<Field::is_field>> {
 			using type = Field;
+			template<typename v>
+			using inject_t = v;
 		};
 
 		// fraction field of a ring is the actual fraction field
@@ -1041,39 +1054,39 @@ namespace aerobus {
 	};
 
 	namespace internal {
-		template<typename T, auto k, auto n, typename E = void>
+		template<typename T, size_t k, size_t n, typename E = void>
 		struct combination_helper {};
 
-		template<typename T, auto k, auto n>
+		template<typename T, size_t k, size_t n>
 		struct combination_helper<T, k, n, std::enable_if_t<(n >= 0 && k <= (n / 2) && k > 0)>> {
 			using type = typename FractionField<T>::template mul_t<
 				typename combination_helper<T, k - 1, n - 1>::type,
 				typename FractionField<T>::template val<typename T::template val<n>, typename T::template val<k>>>;
 		};
 
-		template<typename T, auto k, auto n>
+		template<typename T, size_t k, size_t n>
 		struct combination_helper<T, k, n, std::enable_if_t<(n >= 0 && k > (n / 2) && k > 0)>> {
 			using type = typename combination_helper<T, n - k, n>::type;
 		};
 
-		template<typename T, auto n>
+		template<typename T, size_t n>
 		struct combination_helper<T, 0, n> {
 			using type = typename FractionField<T>::one;
 		};
 	}
 
-	template<typename T, auto k, auto n>
+	template<typename T, size_t k, size_t n>
 	struct combination {
 		using type = typename internal::combination_helper<T, k, n>::type::x;
 		static constexpr typename T::inner_type value = internal::combination_helper<T, k, n>::type::template get<typename T::inner_type>();
 	};
 
 
-	template<typename T, auto m>
+	template<typename T, size_t m>
 	struct bernouilli;
 
 	namespace internal {
-		template<typename T, typename accum, auto k, auto m>
+		template<typename T, typename accum, size_t k, size_t m>
 		struct bernouilli_helper {
 			using type = typename bernouilli_helper<
 				T,
@@ -1091,14 +1104,14 @@ namespace aerobus {
 			>::type;
 		};
 
-		template<typename T, typename accum, auto m>
+		template<typename T, typename accum, size_t m>
 		struct bernouilli_helper<T, accum, m, m>
 		{
 			using type = accum;
 		};
 	}
 
-	template<typename T, auto m>
+	template<typename T, size_t m>
 	struct bernouilli {
 		using type = typename FractionField<T>::template mul_t<
 			typename internal::bernouilli_helper<T, typename FractionField<T>::zero, 0, m>::type,
@@ -1346,6 +1359,71 @@ namespace aerobus {
 		struct atanh_coeff {
 			using type = typename asinh_coeff_helper<T, i>::type;
 		};
+
+		template<typename T, size_t i, typename E = void>
+		struct tan_coeff_helper;
+
+		template<typename T, size_t i>
+		struct tan_coeff_helper<T, i, typename std::enable_if_t<(i % 2) == 0>> {
+			using type = typename FractionField<T>::zero;
+		};
+
+		template<typename T, size_t i>
+		struct tan_coeff_helper<T, i, typename std::enable_if_t<(i % 2) != 0>> {
+		private:
+			using _4p = typename FractionField<T>::template inject_t<typename pow<T, 4, (i + 1) / 2>::type>;
+			using _4pm1 = typename FractionField<T>::template sub_t<_4p, typename FractionField<T>::one>;
+			using altp = typename FractionField<T>::template inject_t<typename alternate<T, (i - 1) / 2>::type>;
+			using dividend = typename FractionField<T>::template mul_t<
+				altp,
+				typename FractionField<T>::template mul_t<
+				_4p,
+				typename FractionField<T>::template mul_t<
+				_4pm1,
+				typename bernouilli<T, (i + 1)>::type
+				>
+				>
+			>;
+		public:
+			using type = typename FractionField<T>::template div_t<dividend,
+				typename FractionField<T>::template inject_t<typename factorial<T, i + 1>::type>>;
+		};
+
+		template<typename T, size_t i>
+		struct tan_coeff {
+			using type = typename tan_coeff_helper<T, i>::type;
+		};
+
+		template<typename T, size_t i, typename E = void>
+		struct tanh_coeff_helper;
+
+		template<typename T, size_t i>
+		struct tanh_coeff_helper<T, i, typename std::enable_if_t<(i % 2) == 0>> {
+			using type = typename FractionField<T>::zero;
+		};
+
+		template<typename T, size_t i>
+		struct tanh_coeff_helper<T, i, typename std::enable_if_t<(i % 2) != 0>> {
+		private:
+			using _4p = typename FractionField<T>::template inject_t<typename pow<T, 4, (i + 1) / 2>::type>;
+			using _4pm1 = typename FractionField<T>::template sub_t<_4p, typename FractionField<T>::one>;
+			using dividend =
+				typename FractionField<T>::template mul_t<
+				_4p,
+				typename FractionField<T>::template mul_t<
+				_4pm1,
+				typename bernouilli<T, (i + 1)>::type
+				>
+				>::type;
+		public:
+			using type = typename FractionField<T>::template div_t<dividend,
+				typename FractionField<T>::template inject_t<typename factorial<T, i + 1>::type>>;
+		};
+
+		template<typename T, size_t i>
+		struct tanh_coeff {
+			using type = typename tanh_coeff_helper<T, i>::type;
+		};
 	}
 
 	// e^x
@@ -1397,4 +1475,12 @@ namespace aerobus {
 	/// atanh(x)
 	template<typename T, size_t deg>
 	using atanh = taylor<T, internal::atanh_coeff, deg>;
+
+	/// tan(x)
+	template<typename T, size_t deg>
+	using tan = taylor<T, internal::tan_coeff, deg>;
+
+	/// tanh(x)
+	template<typename T, size_t deg>
+	using tanh = taylor<T, internal::tanh_coeff, deg>;
 }
