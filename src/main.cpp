@@ -1,9 +1,13 @@
 #include <cstdio>
 #include <typeinfo>
 #include <array>
+#include <cmath>
 #include <chrono>
 
 #include "lib.h"
+
+
+// conformance : https://godbolt.org/z/5chqjYEEs
 
 using namespace aerobus;
 
@@ -928,7 +932,7 @@ int test_derive() {
 	return 0;
 }
 
-/*
+
 INLINED
 double expm1_12(const double x) {
 	using V = aerobus::expm1<aerobus::i64, 13>;
@@ -942,27 +946,6 @@ void vexpm1_12(const std::vector<double>& in, std::vector<double>& out) {
 		out[i] = expm1_12(in[i]);
 	}
 }
-#include <chrono>
-void bench_expm1() {
-	constexpr int N = 10000000;
-	std::vector<double> in(N, 0.1);
-	std::vector<double> out(N, 0.0);
-
-	using Clock = std::chrono::steady_clock;
-	double best = 1.0E9;
-	for (int i = 0; i < 10; ++i) {
-		auto t1 = Clock::now();
-		vexpm1_12(in, out);
-		auto t2 = Clock::now();
-		std::chrono::duration<double> time = t2 - t1;
-		if (time.count() < best) {
-			best = time.count();
-		}
-	}
-	printf("time : %lf\n", best);
-	double GFLOP = ((double)N) * 12.0 * 14.0E-9;
-	printf("GFlops : %lf\n", GFLOP / best);
-}*/
 
 int main(int argc, char* argv[]) {
 	// do not run on windows -- somehow it's slow as f*** -- DIG into compile options

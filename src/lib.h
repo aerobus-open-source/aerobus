@@ -1073,13 +1073,13 @@ namespace aerobus {
 	using Q32 = FractionField<i32>;
 	using FPQ32 = FractionField<polynomial<Q32>>;
 
-	template<typename T, auto x, typename E = void>
+	template<typename T, size_t x, typename E = void>
 	struct factorial {};
 
-	template<typename T, auto x>
+	template<typename T, size_t x>
 	struct factorial<T, x, std::enable_if_t<(x > 0)>> {
 	private:
-		template<typename, auto, typename>
+		template<typename, size_t, typename>
 		friend struct factorial;
 	public:
 		using type = typename T::template mul_t<typename T::template val<x>, typename factorial<T, x - 1>::type>;
