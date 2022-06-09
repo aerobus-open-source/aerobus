@@ -8,13 +8,13 @@
 using namespace aerobus;
 
 int test_type_at() {
-	if (!std::is_same<type_at_t<0, float, int, long>, float>::value) {
+	if (!std::is_same<internal::type_at_t<0, float, int, long>, float>::value) {
 		return 1;
 	}
-	if (!std::is_same<type_at_t<1, float, int, long>, int>::value) {
+	if (!std::is_same<internal::type_at_t<1, float, int, long>, int>::value) {
 		return 1;
 	}
-	if (!std::is_same<type_at_t<2, float, int, long>, long>::value) {
+	if (!std::is_same<internal::type_at_t<2, float, int, long>, long>::value) {
 		return 1;
 	}
 
@@ -23,14 +23,14 @@ int test_type_at() {
 
 int test_poly_simplify() {
 	using poly1 = polynomial<i32>::val<i32::val<0>, i32::val<1>, i32::val<2>>;
-	using simplified1 = poly_simplify_t<i32, poly1>;
+	using simplified1 = internal::poly_simplify_t<i32, poly1>;
 	using expected1 = polynomial<i32>::val<i32::val<1>, i32::val<2>>;
 	if (!std::is_same<expected1, simplified1>::value) {
 		return 1;
 	}
 
 	using poly2 = polynomial<i32>::val<i32::val<12>>;
-	using simplified2 = poly_simplify_t<i32, poly2>;
+	using simplified2 = internal::poly_simplify_t<i32, poly2>;
 	if (!std::is_same<poly2, simplified2>::value) {
 		return 1;
 	}
@@ -129,9 +129,9 @@ int test_poly_add_at() {
 	{
 		using P1 = polynomial<i32>::val<i32::val<1>, i32::val<2>>;
 		using P2 = polynomial<i32>::val<i32::val<2>, i32::val<3>>;
-		using add0 = poly_add_at_t<i32, P1, P2, 0>;
-		using add1 = poly_add_at_t<i32, P1, P2, 1>;
-		using add2 = poly_add_at_t<i32, P1, P2, 2>;
+		using add0 = internal::poly_add_at_t<i32, P1, P2, 0>;
+		using add1 = internal::poly_add_at_t<i32, P1, P2, 1>;
+		using add2 = internal::poly_add_at_t<i32, P1, P2, 2>;
 		{
 			auto expected = 5;
 			auto actual = add0::v;
@@ -168,9 +168,9 @@ template<int32_t x>
 using Int = i32::val<x>;
 
 template<typename P1, typename P2>
-using add_ix = poly_add_t<i32, P1, P2>;
+using add_ix = internal::poly_add_t<i32, P1, P2>;
 template<typename P1, typename P2>
-using sub_ix = poly_sub_t<i32, P1, P2>;
+using sub_ix = internal::poly_sub_t<i32, P1, P2>;
 
 int test_poly_add() {
 	{
@@ -201,7 +201,7 @@ int test_poly_add() {
 		// 1 + x + x^2
 		using P2 = polynomial<i32>::val<i32::val<1>, i32::val<1>, i32::val<1>>;
 		// 2 + 2x
-		using A = poly_add_t<i32, P1, P2>;
+		using A = internal::poly_add_t<i32, P1, P2>;
 		if (A::coeff_at_t<0>::v != 2) {
 			return 1;
 		}
@@ -248,7 +248,7 @@ int test_poly_sub() {
 		// 1 + x + x^2
 		using P2 = polynomial<i32>::val<i32::val<1>, i32::val<1>, i32::val<1>>;
 		// 0
-		using A = poly_sub_t<i32, P2, P1>;
+		using A = internal::poly_sub_t<i32, P2, P1>;
 		if (A::coeff_at_t<0>::v != 0) {
 			return 1;
 		}
@@ -494,7 +494,7 @@ int test_poly_gcd() {
 		using A = polynomial<Q32>::val<Q32::one, Q32::val<i32::val<2>, i32::val<1>>, Q32::one>;
 		// (x+1)
 		using B = polynomial<Q32>::val<Q32::one, Q32::one>;
-		using G = gcd<polynomial<Q32>>::type<A, B>;
+		using G = internal::gcd<polynomial<Q32>>::type<A, B>;
 		if (G::degree != 1) {
 			return 1;
 		}
@@ -922,7 +922,7 @@ int test_alternate() {
 
 
 INLINED
-float expm1_12(const double x) {
+double expm1_12(const double x) {
 	using V = aerobus::expm1<aerobus::i64, 13>;
 	return V::eval(V::eval(V::eval(V::eval(V::eval(V::eval(
 		V::eval(V::eval(V::eval(V::eval(V::eval(V::eval(x))))))))))));
