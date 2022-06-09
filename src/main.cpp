@@ -920,9 +920,11 @@ int test_alternate() {
 	return 0;
 }
 
-int test_tan() {
-	using T = aerobus::tan<i64, 11>;
-	printf(" tan(x) ~ %s\n", T::to_string().c_str());
+int test_derive() {
+	using SIN = aerobus::sin<i32, 6>;
+	printf("SIN(x) ~ %s\n", SIN::to_string().c_str());
+	using COS = polynomial<Q32>::derive_t<SIN>;
+	printf("SIN'(x) ~ %s\n", COS::to_string().c_str());
 	return 0;
 }
 
@@ -1049,7 +1051,7 @@ int main(int argc, char* argv[]) {
 	if (test_zpz() != 0) {
 		return 1;
 	}
-	if (test_tan() != 0) {
+	if (test_derive() != 0) {
 		return 1;
 	}
 	return 0;

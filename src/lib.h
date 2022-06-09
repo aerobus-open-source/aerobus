@@ -147,6 +147,8 @@ namespace aerobus {
 		using one = val<1>;
 		static constexpr bool is_field = false;
 		static constexpr bool is_integral_domain = true;
+		template<auto x>
+		using inject_constant_t = val<static_cast<int32_t>(x)>;
 
 	private:
 		template<typename v1, typename v2>
@@ -238,6 +240,8 @@ namespace aerobus {
 			}
 		};
 
+		template<auto x>
+		using inject_constant_t = val<static_cast<int64_t>(x)>;
 		using zero = val<0>;
 		using one = val<1>;
 		static constexpr bool is_field = false;
@@ -333,6 +337,9 @@ namespace aerobus {
 				return static_cast<valueRing>(x % p);
 			}
 		};
+
+		template<auto x>
+		using inject_constant_t = val<static_cast<int32_t>(x)>;
 
 		using zero = val<0>;
 		using one = val<1>;
@@ -543,6 +550,38 @@ namespace aerobus {
 		using X = typename polynomial<Ring>::template val<typename Ring::one, typename Ring::zero>;
 
 	private:
+		template<typename coeff, size_t deg>
+		struct monomial {
+			using type = internal::poly_mul_t<Ring, typename polynomial<Ring>::X, typename monomial<coeff, deg - 1>::type>;
+		};
+
+		template<typename coeff>
+		struct monomial<coeff, 0> {
+			using type = val<coeff>;
+		};
+
+		template<typename v, typename E = void>
+		struct derive_helper {};
+
+		template<typename v>
+		struct derive_helper<v, std::enable_if_t<v::degree == 0>> {
+			using type = typename polynomial::template val<typename Ring::zero>;
+		};
+
+		template<typename v>
+		struct derive_helper<v, std::enable_if_t<v::degree != 0>> {
+			using type = typename internal::poly_add_t<Ring,
+				typename derive_helper<typename v::strip>::type,
+				typename polynomial<Ring>::template monomial<
+				typename Ring::template mul_t<
+				typename v::aN,
+				typename Ring::template inject_constant_t<(v::degree)>
+				>,
+				v::degree - 1
+				>::type
+			>;
+		};
+
 		template<typename v1, typename v2, typename E = void>
 		struct eq_helper {};
 
@@ -609,16 +648,6 @@ namespace aerobus {
 			using type = std::false_type;
 		};
 
-		template<typename coeff, size_t deg>
-		struct monomial {
-			using type = internal::poly_mul_t<Ring, typename polynomial<Ring>::X, typename monomial<coeff, deg - 1>::type>;
-		};
-
-		template<typename coeff>
-		struct monomial<coeff, 0> {
-			using type = val<coeff>;
-		};
-
 	public:
 		template<typename v1, typename v2>
 		using add_t = internal::poly_add_t<Ring, v1, v2>;
@@ -647,11 +676,17 @@ namespace aerobus {
 		template<typename coeff, size_t deg>
 		using monomial_t = typename monomial<coeff, deg>::type;
 
+		template<typename v>
+		using derive_t = typename derive_helper<v>::type;
+
 		template<typename v1, typename v2>
 		using gcd_t = std::conditional_t<
 			Ring::is_integral_domain,
 			typename internal::make_unit<Ring, typename internal::gcd<polynomial<Ring>>::template type<v1, v2>>::type,
 			void>;
+
+		template<auto x>
+		using inject_constant_t = val<typename Ring::template inject_constant_t<x>>;
 	};
 
 	namespace internal {
@@ -912,6 +947,11 @@ namespace aerobus {
 
 			template<typename v>
 			using inject_t = val<v, typename Ring::one>;
+
+			template<auto x>
+			using inject_constant_t = val<typename Ring::template inject_constant_t<x>, typename Ring::one>;
+
+			using ring_type = Ring;
 
 		private:
 			template<typename v, typename E = void>
@@ -1371,8 +1411,11 @@ namespace aerobus {
 		template<typename T, size_t i>
 		struct tan_coeff_helper<T, i, typename std::enable_if_t<(i % 2) != 0>> {
 		private:
+			// 4^((i+1)/2)
 			using _4p = typename FractionField<T>::template inject_t<typename pow<T, 4, (i + 1) / 2>::type>;
+			// 4^((i+1)/2) - 1
 			using _4pm1 = typename FractionField<T>::template sub_t<_4p, typename FractionField<T>::one>;
+			// (-1)^((i-1)/2)
 			using altp = typename FractionField<T>::template inject_t<typename alternate<T, (i - 1) / 2>::type>;
 			using dividend = typename FractionField<T>::template mul_t<
 				altp,
