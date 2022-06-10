@@ -16,7 +16,7 @@ affiliations:
  - name: COMUA (Conception, Machines et Usinage d'Aucamville)
    index: 1
 date: 10 June 2022
-bibliography: paper.bib
+# bibliography: paper.bib
 
 
 # Summary
@@ -74,7 +74,7 @@ and refer to \autoref{eq:fourier} from text.
 # Citations
 
 Citations to entries in paper.bib should be in
-[rMarkdown](http://rmarkdown.rstudio.com/authoring_bibliographies_and_citations.html)
+# [rMarkdown](http://rmarkdown.rstudio.com/authoring_bibliographies_and_citations.html)
 format.
 
 If you want to cite a software repository URL (e.g. something on GitHub without a preferred
