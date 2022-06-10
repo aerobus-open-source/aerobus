@@ -1,5 +1,5 @@
 ---
-title: 'Aerobus: a C++ template library for polynomials algebra'
+title: 'Aerobus: a C++ template library for polynomials algebra over discrete integral domains'
 tags:
   - Polynomials
   - Mathematics
@@ -8,12 +8,23 @@ tags:
   - Rings
   - Fields
 authors:
-  - name: Regis Portalez
-    orcid:  0000-0002-6291-3345 
-    affiliation: 1 
+  - name: Adrian M. Price-Whelan
+    orcid: 0000-0000-0000-0000
+    equal-contrib: true
+    affiliation: "1, 2" # (Multiple affiliations must be quoted)
+  - name: Author Without ORCID
+    equal-contrib: true # (This is how you can denote equal contributions between multiple authors)
+    affiliation: 2
+  - name: Author with no affiliation
+    corresponding: true # (This is how to denote the corresponding author)
+    affiliation: 3
 affiliations:
- - name: Independant Researcher, France
+ - name: Lyman Spitzer, Jr. Fellow, Princeton University, USA
    index: 1
+ - name: Institution Name, Country
+   index: 2
+ - name: Independent Researcher, Country
+   index: 3
 date: 10 June 2022
 # bibliography: paper.bib
 
