@@ -1,19 +1,20 @@
 ---
-title: 'Gala: A Python package for galactic dynamics'
+title: 'Aerobus: a C++ template library for polynomials algebra over discrete integral domains'
 tags:
-  - Python
-  - astronomy
-  - dynamics
-  - galactic dynamics
-  - milky way
+  - Polynomials
+  - Mathematics
+  - metaprogramming
+  - Integral Domains
+  - Rings
+  - Fields
 authors:
-  - name: Adrian M. Price-Whelan
-    orcid: 0000-0003-0872-7098
+  - name: Regis Portalez
+    orcid: 0000-0002-6291-3345 
     affiliation: 1
 affiliations:
- - name: Lyman Spitzer, Jr. Fellow, Princeton University
+ - name: Independant Researcher, France
    index: 1
-date: 13 August 2017
+date: 10 June 2022
 bibliography: paper.bib
 ---
 
