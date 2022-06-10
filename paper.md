@@ -48,7 +48,7 @@ An `integral domain` is a ring with one additional property. For every elements 
 or $b = c$. Such a ring is not always a field, such as $\mathbb{Z}$ shows it. 
 
 For such an integral domain, we can build two important structures : 
-- the polynomials $\mathbb{A}\[X\]$, wich is in turn an integral domain when given usual operations ;
+- the polynomials $\mathbb{A}[X]$, wich is in turn an integral domain when given usual operations ;
 - the fraction field, which is the smallest field containg $\mathbb{A}$. Canonical example is $\mathbb{Q}, the set of 
 rational numbers. 
 
