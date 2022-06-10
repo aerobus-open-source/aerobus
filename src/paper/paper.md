@@ -26,7 +26,7 @@ affiliations:
  - name: Independent Researcher, Country
    index: 3
 date: 10 June 2022
-# bibliography: paper.bib
+bibliography: paper.bib
 
 
 # Summary
