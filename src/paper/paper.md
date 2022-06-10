@@ -10,10 +10,9 @@ tags:
 authors:
   - name: Regis Portalez
     orcid:  0000-0002-6291-3345 
-    equal-contrib: true
     affiliation: 1 
 affiliations:
- - name: COMUA (Conception, Machines et Usinage d'Aucamville)
+ - name: Independant Researcher, France
    index: 1
 date: 10 June 2022
 # bibliography: paper.bib
