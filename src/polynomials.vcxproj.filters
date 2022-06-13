@@ -30,7 +30,10 @@
   <ItemGroup>
     <None Include=".gitignore" />
     <None Include="Makefile" />
-    <None Include="paper.md">
+    <None Include="..\paper.bib">
+      <Filter>joss</Filter>
+    </None>
+    <None Include="..\paper.md">
       <Filter>joss</Filter>
     </None>
   </ItemGroup>

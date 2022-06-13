@@ -153,9 +153,10 @@
     <ClInclude Include="lib.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\paper.bib" />
+    <None Include="..\paper.md" />
     <None Include=".gitignore" />
     <None Include="Makefile" />
-    <None Include="paper.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
