@@ -19,6 +19,13 @@
 namespace aerobus {
 
 	namespace internal {
+		
+		template<template<typename...> typename TT, typename T>
+		struct is_instantiation_of : std::false_type { };
+
+		template<template<typename...> typename TT, typename... Ts>
+		struct is_instantiation_of<TT, TT<Ts...>> : std::true_type { };
+
 		template <int64_t i, typename T, typename... Ts>
 		struct type_at
 		{
@@ -1072,7 +1079,6 @@ namespace aerobus {
 
 	using Q32 = FractionField<i32>;
 	using FPQ32 = FractionField<polynomial<Q32>>;
-
 	using Q64 = FractionField<i64>;
 	using FPQ64 = FractionField<polynomial<Q64>>;
 
@@ -1540,8 +1546,6 @@ namespace aerobus {
 			static std::string to_string() {
 				return val::to_string();
 			}
-
-			using val0 = val;
 		};
 
 		template<typename val>
@@ -1556,7 +1560,6 @@ namespace aerobus {
 			static std::string to_string() {
 				return "exp(x)";
 			}
-			using val0 = typename Q64::one;
 		};
 
 		using exp_t = exp::type;
@@ -1568,8 +1571,6 @@ namespace aerobus {
 			static std::string to_string() {
 				return "x^(" + deg::to_string() + ")";
 			}
-
-			using val0 = std::conditional_t<deg::is_zero_t::value, typename Q64::one, typename Q64::zero>;
 		};
 
 		template<typename deg>
@@ -1598,8 +1599,6 @@ namespace aerobus {
 			static std::string to_string() {
 				return "cos(x)";
 			}
-
-			using val0 = typename Q64::one;
 		};
 
 		using cos_t = typename cos::type;
@@ -1695,7 +1694,7 @@ namespace aerobus {
 		using atanh_t = atanh::type;
 
 		// operations
-		template<typename f, typename g>
+		template<typename f, typename g, typename E = void>
 		struct add {
 			using type = add<f, g>;
 
@@ -1704,10 +1703,10 @@ namespace aerobus {
 			}
 		};
 
-		template<typename f, typename g>
-		using add_t = typename add<f, g>::type;
+		template<typename f, typename g, typename E = void>
+		using add_t = typename add<f, g, E>::type;
 
-		template<typename f, typename g>
+		template<typename f, typename g, typename E = void>
 		struct sub {
 			using type = sub<f, g>;
 
@@ -1716,10 +1715,10 @@ namespace aerobus {
 			}
 		};
 
-		template<typename f, typename g>
-		using sub_t = typename sub<f, g>::type;
+		template<typename f, typename g, typename E = void>
+		using sub_t = typename sub<f, g, E>::type;
 
-		template<typename f>
+		template<typename f, typename E = void>
 		struct minus {
 			using type = minus<f>;
 			static std::string to_string() {
@@ -1727,26 +1726,26 @@ namespace aerobus {
 			}
 		};
 
-		template<typename f>
-		using minus_t = typename minus<f>::type;
+		template<typename f, typename E = void>
+		using minus_t = typename minus<f, E>::type;
 
 		template<typename f>
 		struct minus<minus<f>> {
 			using type = TYPE(f);
 		};
 
-		template<typename f, typename g>
+		template<typename f, typename g, typename E = void>
 		struct compose {
 			using type = compose<f, g>;
 			static std::string to_string() {
-				return "(" + f::to_string() + ") o (" + g::to_string() + ")";
+				return f::to_string() + " ° " + g::to_string();
 			}
 		};
 
-		template<typename f, typename g>
-		using compose_t = typename compose<f, g>::type;
+		template<typename f, typename g, typename E = void>
+		using compose_t = typename compose<f, g, E>::type;
 
-		template<typename f, typename g>
+		template<typename f, typename g, typename E = void>
 		struct mul {
 			using type = mul<f, g>;
 			static std::string to_string() {
@@ -1754,8 +1753,8 @@ namespace aerobus {
 			}
 		};
 
-		template<typename f, typename g>
-		using mul_t = typename mul<f, g>::type;
+		template<typename f, typename g, typename E = void>
+		using mul_t = typename mul<f, g, E>::type;
 
 		template<typename f>
 		using square = mul<f, f>;
@@ -1763,7 +1762,7 @@ namespace aerobus {
 		template<typename f>
 		using square_t = mul_t<TYPE(f), TYPE(f)>;
 
-		template<typename f, typename g>
+		template<typename f, typename g, typename E = void>
 		struct div {
 			using type = div<f, g>;
 			static std::string to_string() {
@@ -1780,28 +1779,99 @@ namespace aerobus {
 
 		using square_root_t = TYPE(square_root);
 
-		template<typename f, typename g>
-		using div_t = typename div<f, g>::type;
+		template<typename f, typename g, typename E = void>
+		using div_t = typename div<f, g, E>::type;
+
+		// multiplication by zero and one
+		template<typename f>
+		struct mul<zero_t, f> {
+			using type = zero_t;
+		};
+
+		template<typename f>
+		struct mul<f, zero_t, std::enable_if_t<!std::is_same<f, zero_t>::value>> {
+			using type = zero_t;
+		};
+
+		template<typename f>
+		struct mul<one_t, f> {
+			using type = TYPE(f);
+		};
+
+		template<typename f>
+		struct mul<f, one_t, std::enable_if_t<!std::is_same<f, one_t>::value>> {
+			using type = TYPE(f);
+		};
+
+		// simplify constants multiplication
+		template<typename val1, typename val2>
+		struct mul<constant<val1>, constant<val2>, std::enable_if_t<
+			!val1::is_zero::value && 
+			!val2::is_zero::value &&
+			!std::is_same<typename Q64::one, val1>::value &&
+			!std::is_same<typename Q64::one, val2>::value 
+		>> {
+			using type = constant_t<Q64::mul_t<val1, val2>>;
+		};
+
+		// propagate constants to the left
+		template<typename val1, typename val2, typename f>
+		struct mul<constant<val1>, mul<constant<val2>, f>, std::enable_if_t<
+			!val1::is_zero::value && 
+			!val2::is_zero::value&&
+			!std::is_same<typename Q64::one, val1>::value &&
+			!std::is_same<typename Q64::one, val2>::value 
+		>> {
+			using type = mul_t<mul_t<constant<val1>, constant<val2>>, TYPE(f)>;
+		};
+
+		// propagate constants to the left
+		template<typename val, typename f>
+		struct mul<f, constant<val>, std::enable_if_t<
+			!std::is_same<zero_t, f>::value &&
+			!std::is_same<one_t, f>::value && 
+			!internal::is_instantiation_of<constant, f>::value 
+		>> {
+			using type = mul_t<constant<val>, TYPE(f)>;
+		};
 
 		// distributivity (left)
 		template<typename f, typename g, typename h>
-		struct mul<f, add<g, h>> {
+		struct mul<f, add<g, h>, 
+				std::enable_if_t<
+						!std::is_same<TYPE(f), zero_t>::value && 
+						!std::is_same<TYPE(f), one_t>::value && 
+						!internal::is_instantiation_of<minus, TYPE(f)>::value &&
+						!internal::is_instantiation_of<sub, TYPE(f)>::value &&
+						!internal::is_instantiation_of<add, TYPE(f)>::value>> {
 			using type = add_t<mul_t<TYPE(f), TYPE(g)>, mul_t<TYPE(f), TYPE(h)>>;
 		};
 
 		// distributivity (right)
 		template<typename f, typename g, typename h>
-		struct mul<add<f, g>, h> {
+		struct mul<add<f, g>, h, 
+				std::enable_if_t<
+						!std::is_same<TYPE(h), zero_t>::value && 
+						!std::is_same<TYPE(h), one_t>::value && 
+						!internal::is_instantiation_of<minus, TYPE(h)>::value &&
+						!internal::is_instantiation_of<sub, TYPE(h)>::value &&
+						!internal::is_instantiation_of<add, TYPE(h)>::value>> {
 			using type = add_t<mul_t<TYPE(f), typename h::type>, mul_t<TYPE(g), TYPE(h)>>;
 		};
 
 		template<typename f, typename g>
-		struct mul<f, minus<g>> {
+		struct mul<f, minus<g>, std::enable_if_t<
+						!internal::is_instantiation_of<minus, TYPE(f)>::value &&
+						!std::is_same<TYPE(f), one_t>::value &&
+						!std::is_same<TYPE(f), zero_t>::value>> {
 			using type = minus_t<mul_t<TYPE(f), TYPE(g)>>;
 		};
 
 		template<typename f, typename g>
-		struct mul<minus<f>, g> {
+		struct mul<minus<f>, g, std::enable_if_t<
+						!internal::is_instantiation_of<minus, TYPE(g)>::value &&
+						!std::is_same<TYPE(g), one_t>::value &&
+						!std::is_same<TYPE(g), zero_t>::value>> {
 			using type = minus_t<mul_t<TYPE(f), TYPE(g)>>;
 		};
 
@@ -1810,23 +1880,19 @@ namespace aerobus {
 			using type = mul_t<TYPE(f), TYPE(g)>;
 		};
 
+		// division simplification
+		template<>
+		struct div<zero_t, zero_t> {
+			using type = one_t;
+		};
+
 		template<typename f>
-		struct mul<zero_t, f> {
+		struct div<zero_t, f, std::enable_if_t<!std::is_same<TYPE(f), zero_t>::value>> {
 			using type = zero_t;
 		};
 
 		template<typename f>
-		struct mul<f, zero_t> {
-			using type = zero_t;
-		};
-
-		template<typename f>
-		struct div<zero_t, f> {
-			using type = zero_t;
-		};
-
-		template<typename f>
-		struct div<f, f> {
+		struct div<f, f, std::enable_if_t<!std::is_same<TYPE(f), zero_t>::value>> {
 			using type = one_t;
 		};
 
@@ -1892,24 +1958,22 @@ namespace aerobus {
 
 		// distributivity (left)
 		template<typename f, typename g, typename h>
-		struct mul<f, sub<g, h>> {
+		struct mul<f, sub<g, h>, std::enable_if_t<
+			!std::is_same<TYPE(f), zero_t>::value &&
+			!std::is_same<TYPE(f), one_t>::value &&
+			!internal::is_instantiation_of<sub, f>::value
+		>> {
 			using type = sub_t<mul_t<TYPE(f), TYPE(g)>, mul_t<TYPE(f), typename h::type>>;
 		};
 
 		// distributivity (right)
 		template<typename f, typename g, typename h>
-		struct mul<sub<f, g>, h> {
+		struct mul<sub<f, g>, h, std::enable_if_t<
+			!std::is_same<TYPE(h), zero_t>::value &&
+			!std::is_same<TYPE(h), one_t>::value &&
+			!internal::is_instantiation_of<sub, h>::value
+		>> {
 			using type = sub_t<mul_t<TYPE(f), typename h::type>, mul_t<TYPE(g), typename h::type>>;
-		};
-
-		template<typename val1, typename val2>
-		struct mul<constant<val1>, constant<val2>> {
-			using type = constant<Q64::mul_t<val1, val2>>;
-		};
-
-		template<typename val1, typename val2, typename f>
-		struct mul<constant<val1>, mul<constant<val2>, f>> {
-			using type = mul_t<constant<Q64::mul_t<val1, val2>>, TYPE(f)>;
 		};
 
 		template<typename f, typename g>
@@ -1918,13 +1982,27 @@ namespace aerobus {
 		};
 
 		template<typename f, typename g>
-		struct sub<f, minus<g>> {
+		struct sub<f, minus<g>, std::enable_if_t<
+			!internal::is_instantiation_of<minus, f>::value
+		>> {
 			using type = add_t<f, g>;
 		};
 
 		template<typename f, typename g>
-		struct sub<minus<f>, g> {
+		struct sub<minus<f>, g, std::enable_if_t<
+			!internal::is_instantiation_of<minus, g>::value
+		>> {
 			using type = minus_t<add_t<f, g>>;
+		};
+
+		template<typename f>
+		struct sub<f, f, std::enable_if_t<!std::is_same<f, zero_t>::value && !std::is_same<f, one_t>::value>> {
+			using type = zero_t;
+		};
+		
+		template<typename f>
+		struct add<f, f, std::enable_if_t<!std::is_same<f, zero_t>::value && !std::is_same<f, one_t>::value>> {
+			using type = mul_t<constant_t<Q64::inject_constant_t<2>>, f>;
 		};
 
 		template<>
@@ -2211,24 +2289,36 @@ namespace aerobus {
 
 		struct tan {
 			using type = div<sin, cos>;
+			static std::string to_string() {
+				return "tan(x)";
+			}
 		};
 
 		using tan_t = TYPE(tan);
 
 		struct tanh {
 			using type = div<sinh, cosh>;
+			static std::string to_string() {
+				return "atanh(x)";
+			}
 		};
 
 		using tanh_t = TYPE(tanh);
 
 		struct cotan {
 			using type = div<cos, sin>;
+			static std::string to_string() {
+				return "cotan(x)";
+			}
 		};
 
 		using cotan_t = TYPE(cotan);
 
 		struct cotanh {
 			using type = div<cosh, sinh>;
+			static std::string to_string() {
+				return "cotanh(x)";
+			}
 		};
 
 		using cotanh_t = TYPE(cotanh);

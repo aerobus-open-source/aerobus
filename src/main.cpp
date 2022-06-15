@@ -924,102 +924,73 @@ int test_alternate() {
 	return 0;
 }
 
+int test_aad_simplification_rules() {
+	{
+		using x = Q64::mul_t<Q64::inject_constant_t<2>, Q64::inject_constant_t<3>>;
+		printf("%s\n", typeid(x).name());
+		using a = aad::constant<Q64::inject_constant_t<2>>;
+		using b = aad::constant<Q64::inject_constant_t<3>>;
+		using c = aad::mul_t<a, b>;
+		using expected = aad::constant_t<Q64::inject_constant_t<6>>;
+		if (!std::is_same<c, expected>::value) {
+			printf("got %s instead of %s\n", c::to_string().c_str(), expected::to_string().c_str());
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
 int test_aad_simple() {
 	using b = aad::derive_n_t<aad::pow_t<Q64::inject_constant_t<8>>, 8>;
 	if (!std::is_same<aad::constant<Q64::inject_constant_t<40320>>, b>::value) {
+		printf("%s\b", b::to_string().c_str());
 		return 1;
 	}
 
 	return 0;
 }
 
+int test_aad_simple2() {
+	using func = aad::compose<aad::sinh, aad::add<aad::div<aad::constant<Q64::one>, aad::add<aad::exp, aad::constant<Q64::one>>>, aad::constant<Q64::one>>>;
+	using b = aad::derive_n_t<func, 1>;
+	printf("%s\n", b::to_string().c_str());
+
+	return 0;
+}
+
+#define RUN_TEST(test_name) if (test_name() != 0) { printf("%s failed\n", #test_name); return 1; }
+
 int main(int argc, char* argv[]) {
-	if (test_aad_simple() != 0) {
-		return 1;
-	}
-	if (test_type_at() != 0) {
-		return 1;
-	}
-	if (test_poly_simplify() != 0) {
-		return 1;
-	}
-	if (test_coeff_at() != 0) {
-		return 1;
-	}
-	if (test_poly_add_at() != 0) {
-		return 1;
-	}
-	if (test_poly_add() != 0) {
-		return 1;
-	}
-	if (test_poly_sub() != 0) {
-		return 1;
-	}
-	if (test_poly_eq() != 0) {
-		return 1;
-	}
-	if (test_gcd() != 0) {
-		return 1;
-	}
-	if (test_poly_mul() != 0) {
-		return 1;
-	}
-	if (test_poly_div() != 0) {
-		return 1;
-	}
-	if (test_poly_to_string() != 0) {
-		return 1;
-	}
-	if (test_monomial() != 0) {
-		return 1;
-	}
-	if (test_poly_gcd() != 0) {
-		return 1;
-	}
-	if (test_poly_eval() != 0) {
-		return 1;
-	}
-	if (test_add_q32() != 0) {
-		return 1;
-	}
-	if (test_fraction_field_eval() != 0) {
-		return 1;
-	}
-	if (test_sub_q32() != 0) {
-		return 1;
-	}
-	if (test_mul_q32() != 0) {
-		return 1;
-	}
-	if (test_div_q32() != 0) {
-		return 1;
-	}
-	if (test_eq_q32() != 0) {
-		return 1;
-	}
-	if (test_fraction_field_of_fraction_field() != 0) {
-		return 1;
-	}
-	if (test_factorial() != 0) {
-		return 1;
-	}
-	if (test_combination() != 0) {
-		return 1;
-	}
-	if (test_bernouilli() != 0) {
-		return 1;
-	}
-	if (test_alternate() != 0) {
-		return 1;
-	}
-	if (test_exp() != 0) {
-		return 1;
-	}
-	if (test_is_prime() != 0) {
-		return 1;
-	}
-	if (test_zpz() != 0) {
-		return 1;
-	}
+	RUN_TEST(test_aad_simplification_rules)
+	RUN_TEST(test_aad_simple)
+	RUN_TEST(test_aad_simple2)
+	RUN_TEST(test_type_at)
+	RUN_TEST(test_poly_simplify)
+	RUN_TEST(test_coeff_at)
+	RUN_TEST(test_poly_add_at)
+	RUN_TEST(test_poly_add)
+	RUN_TEST(test_poly_sub)
+	RUN_TEST(test_poly_eq)
+	RUN_TEST(test_gcd)
+	RUN_TEST(test_poly_mul)
+	RUN_TEST(test_poly_to_string)
+	RUN_TEST(test_monomial)
+	RUN_TEST(test_poly_gcd)
+	RUN_TEST(test_poly_eval)
+	RUN_TEST(test_add_q32)
+	RUN_TEST(test_fraction_field_eval)
+	RUN_TEST(test_sub_q32)
+	RUN_TEST(test_mul_q32)
+	RUN_TEST(test_div_q32)
+	RUN_TEST(test_eq_q32)
+	RUN_TEST(test_fraction_field_of_fraction_field)
+	RUN_TEST(test_factorial)
+	RUN_TEST(test_combination)
+	RUN_TEST(test_bernouilli)
+	RUN_TEST(test_alternate)
+	RUN_TEST(test_exp)
+	RUN_TEST(test_is_prime)
+	RUN_TEST(test_zpz)
 	return 0;
 }
