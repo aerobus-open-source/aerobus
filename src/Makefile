@@ -1,8 +1,10 @@
 clean:
-	rm -f a.out
+	rm -f main.exe
 
 build:
-	clang++ -I. -O3 -mavx2 -mfma -fopenmp main.cpp
+	clang++ -I. -std=c++20 -O3 -mavx2 -mfma -fopenmp main.cpp -o main.exe
 
 run: 
-	./a.exe
+	./main.exe
+
+all: clean build run

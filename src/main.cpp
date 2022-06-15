@@ -2,7 +2,7 @@
 #include <typeinfo>
 #include <array>
 #include <cmath>
-#include <chrono>
+#include <cstdlib>
 
 #include "lib.h"
 
@@ -924,32 +924,19 @@ int test_alternate() {
 	return 0;
 }
 
-int test_derive() {
-	using SIN = aerobus::sin<i32, 6>;
-	printf("SIN(x) ~ %s\n", SIN::to_string().c_str());
-	using COS = polynomial<Q32>::derive_t<SIN>;
-	printf("SIN'(x) ~ %s\n", COS::to_string().c_str());
+int test_aad_simple() {
+	using b = aad::derive_n_t<aad::pow_t<Q64::inject_constant_t<8>>, 8>;
+	if (!std::is_same<aad::constant<Q64::inject_constant_t<40320>>, b>::value) {
+		return 1;
+	}
+
 	return 0;
 }
 
-
-INLINED
-double expm1_12(const double x) {
-	using V = aerobus::expm1<aerobus::i64, 13>;
-	return V::eval(V::eval(V::eval(V::eval(V::eval(V::eval(
-		V::eval(V::eval(V::eval(V::eval(V::eval(V::eval(x))))))))))));
-}
-
-void vexpm1_12(const std::vector<double>& in, std::vector<double>& out) {
-#pragma omp parallel for
-	for (int i = 0; i < in.size(); ++i) {
-		out[i] = expm1_12(in[i]);
-	}
-}
-
 int main(int argc, char* argv[]) {
-	// do not run on windows -- somehow it's slow as f*** -- DIG into compile options
-	// bench_expm1();
+	if (test_aad_simple() != 0) {
+		return 1;
+	}
 	if (test_type_at() != 0) {
 		return 1;
 	}
@@ -1032,9 +1019,6 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 	if (test_zpz() != 0) {
-		return 1;
-	}
-	if (test_derive() != 0) {
 		return 1;
 	}
 	return 0;
