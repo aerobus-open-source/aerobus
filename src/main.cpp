@@ -926,8 +926,6 @@ int test_alternate() {
 
 int test_aad_simplification_rules() {
 	{
-		using x = Q64::mul_t<Q64::inject_constant_t<2>, Q64::inject_constant_t<3>>;
-		printf("%s\n", typeid(x).name());
 		using a = aad::constant<Q64::inject_constant_t<2>>;
 		using b = aad::constant<Q64::inject_constant_t<3>>;
 		using c = aad::mul_t<a, b>;
@@ -937,6 +935,48 @@ int test_aad_simplification_rules() {
 			return 1;
 		}
 	}
+	{
+		using a = aad::constant<MAKE_Q64(2)>;
+		using b = aad::constant<MAKE_Q64(3)>;
+		using c = aad::mul_t<a, aad::mul_t<b, aad::sinh>>;
+		using expected = aad::mul_t<aad::constant_t<MAKE_Q64(6)>, aad::sinh>;
+		if (!std::is_same<c, expected>::value) {
+			printf("got %s instead of %s\n", c::to_string().c_str(), expected::to_string().c_str());
+			return 1;
+		}
+	}
+	{
+		using a = aad::constant<Q64::inject_constant_t<2>>;
+		using b = aad::constant<Q64::inject_constant_t<3>>;
+		using c = aad::mul_t<a, aad::mul_t<aad::sinh, b>>;
+		using expected = aad::mul_t<aad::constant_t<Q64::inject_constant_t<6>>, aad::sinh>;
+		if (!std::is_same<c, expected>::value) {
+			printf("got %s instead of %s\n", c::to_string().c_str(), expected::to_string().c_str());
+			return 1;
+		}
+	}
+	{
+		using a = aad::sinh;
+		using b = aad::asinh;
+		using c = aad::compose_t<a, b>;
+		using expected = aad::x_t;
+		if (!std::is_same<c, expected>::value) {
+			printf("got %s instead of %s\n", c::to_string().c_str(), expected::to_string().c_str());
+			return 1;
+		}
+	}
+	{
+		using a = aad::sinh;
+		using b = aad::asinh;
+		using c = aad::tan_t;
+		using d = aad::mul_t<a, aad::add_t<b, c>>;
+		using expected = aad::add_t<aad::mul_t<a, b>, aad::mul_t<a, c>>;
+		if (!std::is_same<d, expected>::value) {
+			printf("got %s instead of %s\n", d::to_string().c_str(), expected::to_string().c_str());
+			return 1;
+		}
+	}
+
 
 	return 0;
 }
@@ -951,20 +991,11 @@ int test_aad_simple() {
 	return 0;
 }
 
-int test_aad_simple2() {
-	using func = aad::compose<aad::sinh, aad::add<aad::div<aad::constant<Q64::one>, aad::add<aad::exp, aad::constant<Q64::one>>>, aad::constant<Q64::one>>>;
-	using b = aad::derive_n_t<func, 1>;
-	printf("%s\n", b::to_string().c_str());
-
-	return 0;
-}
-
 #define RUN_TEST(test_name) if (test_name() != 0) { printf("%s failed\n", #test_name); return 1; }
 
 int main(int argc, char* argv[]) {
 	RUN_TEST(test_aad_simplification_rules)
 	RUN_TEST(test_aad_simple)
-	RUN_TEST(test_aad_simple2)
 	RUN_TEST(test_type_at)
 	RUN_TEST(test_poly_simplify)
 	RUN_TEST(test_coeff_at)
@@ -992,5 +1023,6 @@ int main(int argc, char* argv[]) {
 	RUN_TEST(test_exp)
 	RUN_TEST(test_is_prime)
 	RUN_TEST(test_zpz)
+	printf("ALL TESTS OK\n");
 	return 0;
 }
