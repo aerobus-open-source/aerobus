@@ -1998,7 +1998,7 @@ namespace aerobus {
 		
 		template<typename f>
 		struct add<f, f, std::enable_if_t<!std::is_same<f, zero_t>::value && !std::is_same<f, one_t>::value>> {
-			using type = mul_t<constant_t<Q64::inject_constant_t<2>>, f>;
+			using type = mul_t<constant_t<MAKE_Q64(2)>, f>;
 		};
 
 		template<>
@@ -2018,7 +2018,7 @@ namespace aerobus {
 
 		template<>
 		struct sub<mul<sinh, sinh>, mul<cosh, cosh>> {
-			using type = constant_t<Q64::inject_constant_t<-1>>;
+			using type = constant_t<MAKE_Q64(-1)>;
 		};
 
 		template<typename val, typename f>
@@ -2162,7 +2162,7 @@ namespace aerobus {
 
 		template<>
 		struct derive<square_root> {
-			using type = div_t<one_t, mul_t<constant_t<Q64::inject_constant_t<2>>, square_root_t>>;
+			using type = div_t<one_t, mul_t<constant_t<MAKE_Q64(2)>, square_root_t>>;
 		};
 
 		template<>
@@ -2209,12 +2209,12 @@ namespace aerobus {
 		template<>
 		struct derive<acos> {
 			using type = div_t<
-					constant_t<Q64::inject_constant_t<-1>>, 
+					constant_t<MAKE_Q64(-1)>, 
 					compose_t<
 						square_root_t, 
 						sub_t<
 							one_t, 
-							pow_t<Q64::inject_constant_t<2>>
+							pow_t<MAKE_Q64(2)>
 						
 						>
 					>
@@ -2228,7 +2228,7 @@ namespace aerobus {
 					compose_t<
 						square_root_t, 
 						sub_t<
-							pow_t<Q64::inject_constant_t<2>>,
+							pow_t<MAKE_Q64(2)>,
 							one_t
 						>
 					>
@@ -2243,7 +2243,7 @@ namespace aerobus {
 					compose_t<
 						square_root_t, 
 						add_t<
-							pow_t<Q64::inject_constant_t<2>>,
+							pow_t<MAKE_Q64(2)>,
 							one_t
 						>
 					>
@@ -2256,7 +2256,7 @@ namespace aerobus {
 					one_t,
 					add_t<
 						one_t,
-						pow_t<Q64::inject_constant_t<2>>
+						pow_t<MAKE_Q64(2)>
 					>
 			>;
 		};
@@ -2268,7 +2268,7 @@ namespace aerobus {
 					one_t,
 					sub_t<
 						one_t,
-						pow_t<Q64::inject_constant_t<2>>
+						pow_t<MAKE_Q64(2)>
 					>
 			>;
 		};
