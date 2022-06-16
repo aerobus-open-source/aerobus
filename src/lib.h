@@ -1081,6 +1081,7 @@ namespace aerobus {
 	using FPQ32 = FractionField<polynomial<Q32>>;
 	using Q64 = FractionField<i64>;
 	using FPQ64 = FractionField<polynomial<Q64>>;
+	#define MAKE_Q64(x) Q64::inject_constant_t<x>
 
 	template<typename T, size_t x, typename E = void>
 	struct factorial {};
@@ -1738,7 +1739,7 @@ namespace aerobus {
 		struct compose {
 			using type = compose<f, g>;
 			static std::string to_string() {
-				return f::to_string() + " ° " + g::to_string();
+				return f::to_string() + " o " + g::to_string();
 			}
 		};
 
@@ -1806,8 +1807,8 @@ namespace aerobus {
 		// simplify constants multiplication
 		template<typename val1, typename val2>
 		struct mul<constant<val1>, constant<val2>, std::enable_if_t<
-			!val1::is_zero::value && 
-			!val2::is_zero::value &&
+			!val1::is_zero_t::value && 
+			!val2::is_zero_t::value &&
 			!std::is_same<typename Q64::one, val1>::value &&
 			!std::is_same<typename Q64::one, val2>::value 
 		>> {
@@ -1817,22 +1818,17 @@ namespace aerobus {
 		// propagate constants to the left
 		template<typename val1, typename val2, typename f>
 		struct mul<constant<val1>, mul<constant<val2>, f>, std::enable_if_t<
-			!val1::is_zero::value && 
-			!val2::is_zero::value&&
-			!std::is_same<typename Q64::one, val1>::value &&
-			!std::is_same<typename Q64::one, val2>::value 
+			!internal::is_instantiation_of<constant, f>::value 
 		>> {
-			using type = mul_t<mul_t<constant<val1>, constant<val2>>, TYPE(f)>;
+			using type = mul_t<constant_t<Q64::mul_t<val1, val2>>, TYPE(f)>;
 		};
 
 		// propagate constants to the left
 		template<typename val, typename f>
 		struct mul<f, constant<val>, std::enable_if_t<
-			!std::is_same<zero_t, f>::value &&
-			!std::is_same<one_t, f>::value && 
 			!internal::is_instantiation_of<constant, f>::value 
 		>> {
-			using type = mul_t<constant<val>, TYPE(f)>;
+			using type = mul_t<constant_t<val>, TYPE(f)>;
 		};
 
 		// distributivity (left)
