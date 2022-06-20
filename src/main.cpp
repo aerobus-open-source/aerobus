@@ -497,7 +497,9 @@ int test_poly_to_string() {
 	using P32 = polynomial<Q32>;
 	using A = FPQ32::val<P32::val<Q32::one, Q32::one>, P32::val<Q32::val<i32::val<2>, i32::val<1>>, Q32::one>>;
 	auto rep = A::to_string();
-	if (strcmp(rep.c_str(), "(x + 1) / (2 x + 1)") != 0) {
+	const char* expected = "(x + 1) / (2 x + 1)";
+	if (strcmp(rep.c_str(),expected) != 0) {
+		printf("expected %s got %s\n", "(x + 1) / (2 x + 1)", rep.c_str());
 		return 1;
 	}
 
@@ -889,29 +891,26 @@ int test_alternate() {
 
 int test_taylor_expansion() {
 	using c = aad::SinExpression<aad::TExpression<Q64::one, 1>>;
-	printf("%s\n", aad::taylor_coeff_t<c, 0>::to_string().c_str());
-	printf("%s\n", aad::taylor_coeff_t<c, 1>::to_string().c_str());
-	printf("%s\n", aad::taylor_coeff_t<c, 2>::to_string().c_str());
-	printf("%s\n", aad::taylor_coeff_t<c, 3>::to_string().c_str());
-	printf("%s\n", aad::taylor_coeff_t<c, 4>::to_string().c_str());
-	printf("%s\n", aad::taylor_coeff_t<c, 5>::to_string().c_str());
-	printf("%s\n", typeid(aad::taylor_coeff_t<c, 5>).name());
+	using t = aad::taylor_expansion_t<c, 6>;
+	auto repr = t::to_string();
+	auto expected = "(1) / (120) t^5 + (-1) / (6) t^3 + t";
+	if (strcmp(repr.c_str(), expected) != 0) {
+		printf("expected %s got %s\n", expected, repr.c_str());
+		return 1;
+	}
 	return 0;
 }
 
-int test() {
-	// des polynomes en t avec coefficients fraction rationnelles en x
-	using FPQ64X = FractionField<polynomial<Q64>>;
-	using PPP = polynomial<FPQ64X>;
-	using X = PPP::template monomial_t<FPQ64X::inject_constant_t<1>, 2>;
-	printf("%s\n", X::to_string().c_str()); 
+int test_tchebychev_generator_function() {
+	using B0 = Tchebychev::at<5>;
+	printf("%s\n", B0::to_string().c_str());
 	return 0;
 }
 
 #define RUN_TEST(test_name) if (test_name() != 0) { printf("%s failed\n", #test_name); return 1; }
 
 int main(int argc, char* argv[]) {
-	RUN_TEST(test)
+	RUN_TEST(test_tchebychev_generator_function)
 	RUN_TEST(test_taylor_expansion)
 	RUN_TEST(test_type_at)
 	RUN_TEST(test_poly_simplify)

@@ -1,6 +1,6 @@
 namespace aerobus {
     // coeffN x^N + ...
-	template<typename Ring>
+	template<typename Ring, char variable_name = 'x'>
 	struct polynomial {
 		static constexpr bool is_field = false;
 		static constexpr bool is_integral_domain = Ring::is_integral_domain;
@@ -9,7 +9,7 @@ namespace aerobus {
 		struct val {
 			static constexpr size_t degree = sizeof...(coeffs);
 			using aN = coeffN;
-			using strip = polynomial<Ring>::template val<coeffs...>;
+			using strip = val<coeffs...>;
 			using is_zero_t = std::bool_constant<(degree == 0) && (aN::is_zero_t::value)>;
 
 			template<size_t index, typename E = void>
@@ -72,9 +72,9 @@ namespace aerobus {
 			}
 		};
 
-		using zero = typename polynomial<Ring>::template val<typename Ring::zero>;
-		using one = typename polynomial<Ring>::template val<typename Ring::one>;
-		using X = typename polynomial<Ring>::template val<typename Ring::one, typename Ring::zero>;
+		using zero = val<typename Ring::zero>;
+		using one = val<typename Ring::one>;
+		using X = val<typename Ring::one, typename Ring::zero>;
 
 	private:
 		template<typename P, typename E = void>
@@ -382,37 +382,44 @@ namespace aerobus {
 		template<typename coeff, typename... coeffs>
 		struct string_helper {
 			static std::string func() {
+				std::string tail = string_helper<coeffs...>::func();
+				std::string result = "";
 				if (Ring::template eq_t<coeff, typename Ring::zero>::value) {
-					if (sizeof...(coeffs) == 1) {
-						return string_helper<coeffs...>::func();
-					}
-					else {
-						return string_helper<coeffs...>::func();
-					}
+					return tail;
 				}
 				else if (Ring::template eq_t<coeff, typename Ring::one>::value) {
 					if (sizeof...(coeffs) == 1) {
-						return "x + " + string_helper<coeffs...>::func();
+						result += std::string(1, variable_name);
 					}
 					else {
-						return "x^" + std::to_string(sizeof...(coeffs)) + " + " + string_helper<coeffs...>::func();
+						result += std::string(1, variable_name) + "^" + std::to_string(sizeof...(coeffs));
 					}
 				}
 				else {
 					if (sizeof...(coeffs) == 1) {
-						return coeff::to_string() + " x" + " + " + string_helper<coeffs...>::func();
+						result += coeff::to_string() + " " + std::string(1, variable_name);
 					}
 					else {
-						return coeff::to_string() + " x^" + std::to_string(sizeof...(coeffs)) + " + " + string_helper<coeffs...>::func();
+						result += coeff::to_string() + " " + std::string(1, variable_name) + "^" + std::to_string(sizeof...(coeffs));
 					}
 				}
+
+				if(!tail.empty()) {
+					result += " + " + tail;
+				}
+
+				return result;
 			}
 		};
 
 		template<typename coeff>
 		struct string_helper<coeff> {
 			static std::string func() {
-				return coeff::to_string();
+				if(!std::is_same<coeff, typename Ring::zero>::value) {
+					return coeff::to_string();
+				} else {
+					return "";
+				}
 			}
 		};
 
@@ -456,7 +463,7 @@ namespace aerobus {
 		template<typename v1, typename v2>
 		using gcd_t = std::conditional_t<
 			Ring::is_integral_domain,
-			typename make_unit<typename internal::gcd<polynomial<Ring>>::template type<v1, v2>>::type,
+			typename make_unit<typename internal::gcd<polynomial<Ring, variable_name>>::template type<v1, v2>>::type,
 			void>;
 
 		template<auto x>
