@@ -102,27 +102,27 @@ namespace aerobus {
                 static std::string _to_string() {
                     return "exp(" + E::to_string() + ")";
                 }
+        }; 
+        
+        template<typename E>
+        struct SinExpression : Expression<SinExpression<E>> {
+            template<typename>
+            friend struct Expression;
+            private:
+                static std::string _to_string() {
+                    return "sin(" + E::to_string() + ")";
+                }
         };
-
-        // template<typename E1, typename E2>
-        // struct ComposeExpression: Expression<ComposeExpression<E1, E2>> {
-        //     template<typename>
-        //     friend struct Expression;
-        //     private:
-        //         static std::string _to_string() {
-        //             return E1::to_string() + "(" + E2::to_string() + ")";
-        //         }
-        //     public:
-        //         using _derive_t = MulExpression<
-        //             ComposeExpression<typename E1::derive_t, E2>,
-        //             typename E2::derive_t
-        //         >;
-        //         using _derive_x = MulExpression<
-        //             ComposeExpression<typename E1::derive_x, E2>,
-        //             typename E2::derive_t
-        //         >;
-        // };
-
+        
+        template<typename E>
+        struct CosExpression : Expression<CosExpression<E>> {
+            template<typename>
+            friend struct Expression;
+            private:
+                static std::string _to_string() {
+                    return "cos(" + E::to_string() + ")";
+                }
+        };
 
         // base_traits specialization and simplification rules
         template<typename val>
@@ -209,6 +209,20 @@ namespace aerobus {
             using derive_t = MulExpression<typename base_traits<E>::derive_t, ExpExpression<E>>;
             using derive_x = MulExpression<typename base_traits<E>::derive_x, ExpExpression<E>>;
         };
+        
+        template<typename E>
+        struct base_traits<SinExpression<E>> {
+            using value_at_t0 = typename FPQ64::zero; // TODO: check that E::value_at_0 == 0
+            using derive_t = MulExpression<typename base_traits<E>::derive_t, CosExpression<E>>;
+            using derive_x = MulExpression<typename base_traits<E>::derive_x, CosExpression<E>>;
+        };
+        
+        template<typename E>
+        struct base_traits<CosExpression<E>> {
+            using value_at_t0 = typename FPQ64::one; // TODO: check that E::value_at_0 == 0
+            using derive_t = MulExpression<typename base_traits<E>::derive_t, SubExpression<ConstantExpression<Q64::zero>, SinExpression<E>>>;
+            using derive_x = MulExpression<typename base_traits<E>::derive_x, SubExpression<ConstantExpression<Q64::zero>, SinExpression<E>>>;
+        };
 
         template<typename E, size_t k>
         struct taylor_coeff_helper {
@@ -222,19 +236,6 @@ namespace aerobus {
         };
 
         template<typename E, size_t k>
-        using taylor_coeff_t = typename taylor_coeff_helper<E, k>::type;
-
-        template<typename E, size_t k>
-        struct taylor_expansion_helper {
-            using type = FPQ64::template add_t<taylor_coeff_t<E, k>, typename taylor_expansion_helper<E, k-1>::type>;
-        };
-
-        template<typename E>
-        struct taylor_expansion_helper<E, 0> {
-            using type = taylor_coeff_t<E, 0>;
-        };
-
-        template<typename E, size_t k>
-        using taylor_expansion_t = typename taylor_expansion_helper<E, k>::type;
+        using taylor_coeff_t =  typename taylor_coeff_helper<E, k>::type;
     }
 }
