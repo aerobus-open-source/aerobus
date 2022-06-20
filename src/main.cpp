@@ -924,110 +924,31 @@ int test_alternate() {
 	return 0;
 }
 
-// int test_aad_simplification_rules() {
-// 	{
-// 		using a = aad::constant<Q64::inject_constant_t<2>>;
-// 		using b = aad::constant<Q64::inject_constant_t<3>>;
-// 		using c = aad::mul_t<a, b>;
-// 		using expected = aad::constant_t<Q64::inject_constant_t<6>>;
-// 		if (!std::is_same<c, expected>::value) {
-// 			printf("got %s instead of %s\n", c::to_string().c_str(), expected::to_string().c_str());
-// 			return 1;
-// 		}
-// 	}
-// 	{
-// 		using a = aad::constant<MAKE_Q64(2)>;
-// 		using b = aad::constant<MAKE_Q64(3)>;
-// 		using c = aad::mul_t<a, aad::mul_t<b, aad::sinh>>;
-// 		using expected = aad::mul_t<aad::constant_t<MAKE_Q64(6)>, aad::sinh>;
-// 		if (!std::is_same<c, expected>::value) {
-// 			printf("got %s instead of %s\n", c::to_string().c_str(), expected::to_string().c_str());
-// 			return 1;
-// 		}
-// 	}
-// 	{
-// 		using a = aad::constant<Q64::inject_constant_t<2>>;
-// 		using b = aad::constant<Q64::inject_constant_t<3>>;
-// 		using c = aad::mul_t<a, aad::mul_t<aad::sinh, b>>;
-// 		using expected = aad::mul_t<aad::constant_t<Q64::inject_constant_t<6>>, aad::sinh>;
-// 		if (!std::is_same<c, expected>::value) {
-// 			printf("got %s instead of %s\n", c::to_string().c_str(), expected::to_string().c_str());
-// 			return 1;
-// 		}
-// 	}
-// 	{
-// 		using a = aad::sinh;
-// 		using b = aad::asinh;
-// 		using c = aad::compose_t<a, b>;
-// 		using expected = aad::t_t;
-// 		if (!std::is_same<c, expected>::value) {
-// 			printf("got %s instead of %s\n", c::to_string().c_str(), expected::to_string().c_str());
-// 			return 1;
-// 		}
-// 	}
-// 	{
-// 		using a = aad::sinh;
-// 		using b = aad::asinh;
-// 		using c = aad::tan_t;
-// 		using d = aad::mul_t<a, aad::add_t<b, c>>;
-// 		using expected = aad::add_t<aad::mul_t<a, b>, aad::mul_t<a, c>>;
-// 		if (!std::is_same<d, expected>::value) {
-// 			printf("got %s instead of %s\n", d::to_string().c_str(), expected::to_string().c_str());
-// 			return 1;
-// 		}
-// 	}
-
-
-// 	return 0;
-// }
-
-// int test_aad_simple() {
-// 	using b = aad::derive_n_t<aad::pow_t<Q64::inject_constant_t<8>>, 8>;
-// 	if (!std::is_same<aad::constant<Q64::inject_constant_t<40320>>, b>::value) {
-// 		printf("%s\n", b::to_string().c_str());
-// 		return 1;
-// 	}
-
-// 	return 0;
-// }
-
-// int test_is_zero() {
-// 	using zero = aad::zero_t;
-// 	using z = aad::constant<typename Q64::template val<i64::val<0>, i64::val<1>>>;
-// 	if (!std::is_same<zero, z>::value) {
-// 		return 1;
-// 	}
-
-// 	return 0;
-// }
-
-// int test_generating_function() {
-// 	using a = aad::mul_t<
-// 					aad::t_t, 
-// 					aad::compose_t<
-// 						aad::exp, aad::mul<aad::X_t<1>, aad::t_t>
-// 					>>;
-// 	using d = aad::derive_t<a>;
-// 	printf("%s\n", d::to_string().c_str());
-// 	//printf("%s\n", a::typev<Q64::zero>::to_string().c_str());
-// 	return 0;
-// }
-
 int test_taylor_expansion() {
-	// e^(tx)
-	using a = aad::ExpExpression<aad::MulExpression<aad::XExpression<Q64::one, 1>, aad::TExpression<Q64::one, 1>>>;
-	// expand with respect to t
-	printf("taylor_expansion of %s is %s\n", a::to_string().c_str(), aad::taylor_expansion_t<a, 3>::to_string().c_str());
+	using c = aad::SinExpression<aad::TExpression<Q64::one, 1>>;
+	printf("%s\n", aad::taylor_coeff_t<c, 0>::to_string().c_str());
+	printf("%s\n", aad::taylor_coeff_t<c, 1>::to_string().c_str());
+	printf("%s\n", aad::taylor_coeff_t<c, 2>::to_string().c_str());
+	printf("%s\n", aad::taylor_coeff_t<c, 3>::to_string().c_str());
+	printf("%s\n", aad::taylor_coeff_t<c, 4>::to_string().c_str());
+	printf("%s\n", aad::taylor_coeff_t<c, 5>::to_string().c_str());
+	printf("%s\n", typeid(aad::taylor_coeff_t<c, 5>).name());
+	return 1;
+}
+
+int test() {
+	// des polynomes en t avec coefficients fraction rationnelles en x
+	using FPQ64X = FractionField<polynomial<Q64>>;
+	using PPP = polynomial<FPQ64X>;
+	using X = PPP::template monomial_t<FPQ64X::inject_constant_t<1>, 2>;
+	printf("%s\n", X::to_string().c_str()); 
 	return 1;
 }
 
 #define RUN_TEST(test_name) if (test_name() != 0) { printf("%s failed\n", #test_name); return 1; }
 
 int main(int argc, char* argv[]) {
-	// RUN_TEST(test_is_zero)
-	// RUN_TEST(test_aad_simplification_rules)
-	// RUN_TEST(test_generating_function)
-	// RUN_TEST(test_aad_simple)
+	RUN_TEST(test)
 	RUN_TEST(test_taylor_expansion)
 	RUN_TEST(test_type_at)
 	RUN_TEST(test_poly_simplify)

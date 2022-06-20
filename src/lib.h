@@ -1102,7 +1102,11 @@ namespace aerobus {
 
 			template<typename v1, typename v2>
 			struct eq {
-				using type = std::conditional_t<(simplify_t<v1>::x::v == simplify_t<v2>::x::v) && (simplify_t<v1>::y::v == simplify_t<v2>::y::v), std::true_type, std::false_type>;
+				using type = std::conditional_t<
+						std::is_same<typename simplify_t<v1>::x, typename simplify_t<v2>::x>::value &&
+						std::is_same<typename simplify_t<v1>::y, typename simplify_t<v2>::y>::value,
+					std::true_type, 
+					std::false_type>;
 			};
 
 		public:
