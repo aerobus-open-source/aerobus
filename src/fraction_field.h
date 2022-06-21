@@ -217,4 +217,28 @@ namespace aerobus {
 
 	template<typename Ring>
 	using FractionField = typename internal::FractionFieldImpl<Ring>::type;
+
+	template<typename Ring, char variable_name = 'x'>
+	struct RationalFraction: FractionField<polynomial<Ring, variable_name>> {
+		static_assert(Ring::is_field, "invalid ring for rational fractions");
+
+		private:
+		template<typename v>
+		struct remove_divisor {
+			using type = std::conditional_t<v::y::degree == 0, 
+				typename FractionField<polynomial<Ring, variable_name>>::template val<
+					typename polynomial<Ring>::template div_t<
+						typename v::x, 
+						typename polynomial<Ring, variable_name>::template val<typename v::y::aN>
+					>,
+					typename polynomial<Ring, variable_name>::one
+				>,
+				v
+			>;
+		};
+
+		public:
+		template<typename v>
+		using remove_divisor_t = typename remove_divisor<v>::type;
+	};
 }

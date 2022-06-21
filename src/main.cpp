@@ -902,16 +902,104 @@ int test_taylor_expansion() {
 }
 
 int test_tchebychev_generator_function() {
-	using B0 = Tchebychev::at<5>;
-	printf("%s\n", B0::to_string().c_str());
+	using B0 = Tchebychev1::at<6>;
+	if(B0::coeff_at_t<6>::template get<int>() != 32) {
+		return 1;
+	}
+	if(B0::coeff_at_t<5>::template get<int>() != 0) {
+		return 1;
+	}
+	if(B0::coeff_at_t<4>::template get<int>() != -48) {
+		return 1;
+	}
+	if(B0::coeff_at_t<3>::template get<int>() != 0) {
+		return 1;
+	}
+	if(B0::coeff_at_t<2>::template get<int>() != 18) {
+		return 1;
+	}
+	if(B0::coeff_at_t<1>::template get<int>() != 0) {
+		return 1;
+	}
+	if(B0::coeff_at_t<0>::template get<int>() != -1) {
+		return 1;
+	}
 	return 0;
 }
+
+
+int test_tchebychev_2() {
+	using B0 = Tchebychev2::at<6>;
+	if(B0::coeff_at_t<6>::template get<int>() != 64) {
+		return 1;
+	}
+	if(B0::coeff_at_t<5>::template get<int>() != 0) {
+		return 1;
+	}
+	if(B0::coeff_at_t<4>::template get<int>() != -80) {
+		return 1;
+	}
+	if(B0::coeff_at_t<3>::template get<int>() != 0) {
+		return 1;
+	}
+	if(B0::coeff_at_t<2>::template get<int>() != 24) {
+		return 1;
+	}
+	if(B0::coeff_at_t<1>::template get<int>() != 0) {
+		return 1;
+	}
+	if(B0::coeff_at_t<0>::template get<int>() != -1) {
+		return 1;
+	}
+	return 0;
+}
+
+int test_poly_euler() {
+	using B0 = Euler::at<4>;
+	if(B0::coeff_at_t<0>::template get<int>() != 0) {
+		return 1;
+	}
+	if(B0::coeff_at_t<1>::template get<int>() != 1) {
+		return 1;
+	}
+	if(B0::coeff_at_t<2>::template get<int>() != 0) {
+		return 1;
+	}
+	if(B0::coeff_at_t<3>::template get<int>() != -2) {
+		return 1;
+	}
+	if(B0::coeff_at_t<4>::template get<int>() != 1) {
+		return 1;
+	}
+	return 0;
+}
+
+int test_poly_bernstein() {
+	using B0 = Bernstein<3>::at<1>;
+	if(B0::coeff_at_t<0>::template get<int>() != 0) {
+		return 1;
+	}
+	if(B0::coeff_at_t<1>::template get<int>() != 3) {
+		return 1;
+	}
+	if(B0::coeff_at_t<2>::template get<int>() != -6) {
+		return 1;
+	}
+	if(B0::coeff_at_t<3>::template get<int>() != 3) {
+		return 1;
+	}
+	return 0;
+}
+
 
 #define RUN_TEST(test_name) if (test_name() != 0) { printf("%s failed\n", #test_name); return 1; }
 
 int main(int argc, char* argv[]) {
 	RUN_TEST(test_tchebychev_generator_function)
+	RUN_TEST(test_tchebychev_2)
 	RUN_TEST(test_taylor_expansion)
+	RUN_TEST(test_poly_euler);
+	RUN_TEST(test_poly_bernstein)
 	RUN_TEST(test_type_at)
 	RUN_TEST(test_poly_simplify)
 	RUN_TEST(test_coeff_at)

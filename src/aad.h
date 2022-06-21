@@ -1,8 +1,9 @@
 #pragma once
 
 namespace aerobus {
-    using FPQ64X = FractionField<polynomial<Q64, 'x'>>;
-    using P64T = polynomial<FPQ64X, 't'>;
+    using P64X = polynomial<Q64, 'x'>;
+    using FPQ64X = RationalFraction<Q64, 'x'>;
+    using P64T = polynomial<P64X, 't'>;
 
     namespace aad {
         template <typename derived_t, typename E = void> 
@@ -234,8 +235,8 @@ namespace aerobus {
 
         template<typename E, size_t k>
         struct taylor_coeff_helper {
-            using type = FPQ64X::template div_t<typename taylor_coeff_helper<typename base_traits<E>::derive_t, k-1>::type,
-                                                FPQ64X::inject_constant_t<k>> ;
+            using type = FPQ64X::remove_divisor_t<FPQ64X::template div_t<typename taylor_coeff_helper<typename base_traits<E>::derive_t, k-1>::type,
+                                                FPQ64X::inject_constant_t<k>>>;
         };
 
         template<typename E>
@@ -244,7 +245,7 @@ namespace aerobus {
         };
 
         template<typename E, size_t k>
-        using taylor_coeff_t =  typename taylor_coeff_helper<E, k>::type;
+        using taylor_coeff_t =  typename taylor_coeff_helper<E, k>::type::x;
 
 
         template<typename E, typename I>
@@ -257,5 +258,10 @@ namespace aerobus {
 
         template<typename E, size_t k>
         using taylor_expansion_t = typename taylor_low<E, internal::make_index_sequence_reverse<k>>::type;
+
+        using T = aad::TExpression<Q64::one, 1>;
+        using X = aad::XExpression<Q64::one, 1>;
+        using XT = aad::MulExpression<X, T>;
+        using ONE = aad::ConstantExpression<Q64::one>;
     }
 }
