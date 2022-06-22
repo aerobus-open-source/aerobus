@@ -91,4 +91,38 @@ namespace aerobus {
         template<size_t k>
         using at = typename inner<k, m-k>::type;
     };
+
+    template<size_t k>
+    struct Hermite {
+        private:
+        using B0 = aad::ExpExpression<
+                aad::SubExpression<
+                    aad::ConstantExpression<typename Q64::zero>,
+                    aad::MulExpression<
+                        aad::T,
+                        aad::T
+                    >
+                >
+            >;
+
+        using B1 = aad::ExpExpression<
+                    aad::MulExpression<
+                        aad::T,
+                        aad::T
+                    >
+            >;
+
+        template<size_t m, bool dummy = true>
+        struct inner {
+            using type = typename inner<m-1, dummy>::type::derive_t;
+        };
+
+        template<bool dummy>
+        struct inner<0, dummy> {
+            using type = B0;
+        };
+
+    public:
+        using at = aad::MulExpression<B1, typename inner<k>::type>;
+    };
 }
