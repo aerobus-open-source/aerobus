@@ -147,17 +147,6 @@ namespace aerobus {
                 }
         };
 
-        template<typename E1>
-        struct MinusExpression: Expression<MinusExpression<E1>> {
-            template<typename>
-            friend struct Expression;
-            using v = E;
-            private: 
-                static std::string _to_string() {
-                    return "((" + E1::to_string() + ") / (" + E2::to_string() + "))";
-                }
-        };
-
         // can't exist by itself but by composition
         template<typename E>
         struct ExpExpression : Expression<ExpExpression<E>> {
@@ -247,17 +236,11 @@ namespace aerobus {
                                         TExpression<Q64::mul_t<a, Q64::inject_constant_t<k>>, k-1>>>;
             using derive_x = ConstantExpression<typename Q64::zero>;
         };
-        
-        template<typename E>
-        struct base_traits<MinusExpression<E>> {
-            using type = MinusExpression<E>;
-            using value_at_t0 = FPQ64X::sub_t<typename FPQ64X::zero, typename base_traits<simplify_t<E>>::value_at_t0>; 
-            using derive_t = MinusExpression<typename base_traits<simplify_t<E>>::derive_t>;
-            using derive_x = MinusExpression<typename base_traits<simplify_t<E>>::derive_x>;
-        };
 
         template<typename E>
-        struct base_traits<ExpExpression<E>> {
+        struct base_traits<ExpExpression<E>, 
+            std::enable_if_t<!eq_t<ConstantExpression<typename Q64::zero>, simplify_t<E>>::value>
+        > {
             using type = ExpExpression<E>;
             using value_at_t0 = typename FPQ64X::one; // TODO: check that E::value_at_0 == 0
             using derive_t = MulExpression<typename base_traits<E>::derive_t, ExpExpression<simplify_t<E>>>;
@@ -345,10 +328,10 @@ namespace aerobus {
         > : std::true_type {};
 
         template<typename E>
-        struct eq_helper<MinusExpression<MinusExpression<E>>, E>: std::true_type {};
+        struct eq_helper<MinExpression<MinExpression<E>>, E>: std::true_type {};
 
         template<typename E>
-        struct eq_helper<E, MinusExpression<MinusExpression<E>>>: std::true_type {};
+        struct eq_helper<E, MinExpression<MinExpression<E>>>: std::true_type {};
 
         template<template<typename E> typename expr, typename E1, typename E2>
         struct eq_helper<
@@ -377,10 +360,16 @@ namespace aerobus {
 
             template<typename E1, typename E2>
             using right_min_left = std::conjunction<
-                eq_t<MinExpression<simplify_t<E1>>, simplify_t<E2>>,
-                std::negation<
-                    internal::is_instantiation_of<ConstantExpression, simplify_t<E1>>
-                    >
+                internal::is_instantiation_of<MinExpression, E2>,
+                eq_t<E2, MinExpression<E1>>,
+                std::negation<internal::is_instantiation_of<ConstantExpression, simplify_t<E1>>>
+            >;
+            
+            template<typename E1, typename E2>
+            using left_min_right = std::conjunction<
+                internal::is_instantiation_of<MinExpression, E1>,
+                eq_t<E1, MinExpression<E2>>,
+                std::negation<internal::is_instantiation_of<ConstantExpression, simplify_t<E2>>>
             >;
 
             template<typename E1, typename E2>
@@ -388,6 +377,13 @@ namespace aerobus {
                 std::conjunction<
                     internal::is_instantiation_of<ConstantExpression, simplify_t<E1>>,
                     internal::is_instantiation_of<ConstantExpression, simplify_t<E2>>
+                >;
+
+            template<typename E1, typename E2>
+            using two_exp = 
+                std::conjunction<
+                    internal::is_instantiation_of<ExpExpression, simplify_t<E1>>,
+                    internal::is_instantiation_of<ExpExpression, simplify_t<E2>>
                 >;
 
             template<typename E1, typename E2>
@@ -446,7 +442,8 @@ namespace aerobus {
                         zero_right<E1, E2>,
                         two_constants<E1, E2>,
                         same<E1, E2>,
-                        right_min_left<E1, E2>
+                        right_min_left<E1, E2>,
+                        left_min_right<E1, E2>
                     >
                 >;
 
@@ -461,10 +458,16 @@ namespace aerobus {
                     sub_left<E1, E2>,
                     sub_right<E1, E2>,
                     add_right<E1, E2>,
-                    add_left<E1, E2>
+                    add_left<E1, E2>,
+                    two_exp<E1, E2>
                 >>;
-
         };
+
+        // e^0
+        template<typename E>
+        struct base_traits<ExpExpression<E>, 
+                std::enable_if_t<eq_t<ZERO, simplify_t<E>>::value>
+        > : base_traits<ONE> {};
 
         // x + y
         template<typename E1, typename E2>
@@ -532,6 +535,12 @@ namespace aerobus {
                     std::enable_if_t<simplification_rules::template two_constants<E1, E2>::value>
         > : base_traits<ConstantExpression<Q64::mul_t<typename simplify_t<E1>::v, typename simplify_t<E2>::v>>> {};
 
+        // e^x * e^y
+        template<typename E1, typename E2>
+        struct base_traits<MulExpression<E1, E2>,
+                    std::enable_if_t<simplification_rules::template two_exp<E1, E2>::value>
+        > : base_traits<ExpExpression<AddExpression<typename simplify_t<E1>::v, typename simplify_t<E2>::v>>> {};
+
         // x + x
         template<typename E1, typename E2>
         struct base_traits<AddExpression<E1, E2>,
@@ -542,6 +551,12 @@ namespace aerobus {
         template<typename E1, typename E2>
         struct base_traits<AddExpression<E1, E2>,
                 std::enable_if_t<simplification_rules::template right_min_left<E1, E2>::value>
+        > : base_traits<ZERO> {};
+        
+        // -x + x
+        template<typename E1, typename E2>
+        struct base_traits<AddExpression<E1, E2>,
+                std::enable_if_t<simplification_rules::template left_min_right<E1, E2>::value>
         > : base_traits<ZERO> {};
 
         // x + 0 
