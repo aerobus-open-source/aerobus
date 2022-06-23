@@ -889,92 +889,6 @@ int test_alternate() {
 	return 0;
 }
 
-int test_taylor_expansion() {
-	using c = aad::SinExpression<aad::TExpression<Q64::one, 1>>;
-	using t = aad::taylor_expansion_t<c, 6>;
-	auto repr = t::to_string();
-	auto expected = "(1) / (120) t^5 + (-1) / (6) t^3 + t";
-	if (strcmp(repr.c_str(), expected) != 0) {
-		printf("expected %s got %s\n", expected, repr.c_str());
-		return 1;
-	}
-	return 0;
-}
-
-int test_tchebychev_generator_function() {
-	using B0 = Tchebychev1::at<2>;
-	if (B0::degree != 2) {
-		return 1;
-	}
-	if(B0::coeff_at_t<2>::template get<int>() != 2) {
-		return 1;
-	}
-	if(B0::coeff_at_t<1>::template get<int>() != 0) {
-		return 1;
-	}
-	if(B0::coeff_at_t<0>::template get<int>() != -1) {
-		return 1;
-	}
-	return 0;
-}
-
-int test_tchebychev_2() {
-	using B0 = Tchebychev2::at<2>;
-	if (B0::degree != 2) {
-		return 1;
-	}
-	if(B0::coeff_at_t<2>::template get<int>() != 4) {
-		return 1;
-	}
-	if(B0::coeff_at_t<1>::template get<int>() != 0) {
-		return 1;
-	}
-	if(B0::coeff_at_t<0>::template get<int>() != -1) {
-		return 1;
-	}
-	return 0;
-}
-
-int test_poly_euler() {
-	using B0 = Euler::at<2>;
-	if(B0::degree != 2) {
-		return 1;
-	}
-	if(B0::coeff_at_t<0>::template get<int>() != 0) {
-		return 1;
-	}
-	if(B0::coeff_at_t<1>::template get<int>() != -1) {
-		return 1;
-	}
-	if(B0::coeff_at_t<2>::template get<int>() != 1) {
-		return 1;
-	}
-
-	return 0;
-}
-
-int test_poly_bernstein() {
-	using B0 = Bernstein<3>::at<1>;
-	if(B0::coeff_at_t<0>::template get<int>() != 0) {
-		return 1;
-	}
-	if(B0::coeff_at_t<1>::template get<int>() != 3) {
-		return 1;
-	}
-	if(B0::coeff_at_t<2>::template get<int>() != -6) {
-		return 1;
-	}
-	if(B0::coeff_at_t<3>::template get<int>() != 3) {
-		return 1;
-	}
-	return 0;
-}
-
-int test_poly_hermite() {
-	using B0 = Hermite<2>;
-	printf("%s\n", B0::at::to_string().c_str());
-	return 0;
-}
 
 int test_expression_simplify() {
 	int exprid = 0;
@@ -1283,6 +1197,110 @@ int test_expression_simplify() {
 		}
 	}
 
+    if (!std::is_same<aad::ExpExpression<aad::ZERO>::type, aad::ONE>::value) {
+		return 1;
+	}
+
+	// e^x * e^-x = 1
+	{
+		using A = typename aad::MulExpression<
+								aad::ExpExpression<aad::X>,
+								aad::ExpExpression<aad::MinExpression<aad::X>>
+		>::type;
+		
+		if (!std::is_same<A, aad::ONE>::value) {
+			printf("%d -- %s instead of %s\n", exprid++, A::to_string().c_str(), aad::ONE::to_string().c_str());
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+int test_taylor_expansion() {
+	using c = aad::SinExpression<aad::TExpression<Q64::one, 1>>;
+	using t = aad::taylor_expansion_t<c, 6>;
+	auto repr = t::to_string();
+	auto expected = "(1) / (120) t^5 + (-1) / (6) t^3 + t";
+	if (strcmp(repr.c_str(), expected) != 0) {
+		printf("expected %s got %s\n", expected, repr.c_str());
+		return 1;
+	}
+	return 0;
+}
+
+int test_tchebychev_generator_function() {
+	using B0 = Tchebychev1::at<2>;
+	if (B0::degree != 2) {
+		return 1;
+	}
+	if(B0::coeff_at_t<2>::template get<int>() != 2) {
+		return 1;
+	}
+	if(B0::coeff_at_t<1>::template get<int>() != 0) {
+		return 1;
+	}
+	if(B0::coeff_at_t<0>::template get<int>() != -1) {
+		return 1;
+	}
+	return 0;
+}
+
+int test_tchebychev_2() {
+	using B0 = Tchebychev2::at<2>;
+	if (B0::degree != 2) {
+		return 1;
+	}
+	if(B0::coeff_at_t<2>::template get<int>() != 4) {
+		return 1;
+	}
+	if(B0::coeff_at_t<1>::template get<int>() != 0) {
+		return 1;
+	}
+	if(B0::coeff_at_t<0>::template get<int>() != -1) {
+		return 1;
+	}
+	return 0;
+}
+
+int test_poly_euler() {
+	using B0 = Euler::at<2>;
+	if(B0::degree != 2) {
+		return 1;
+	}
+	if(B0::coeff_at_t<0>::template get<int>() != 0) {
+		return 1;
+	}
+	if(B0::coeff_at_t<1>::template get<int>() != -1) {
+		return 1;
+	}
+	if(B0::coeff_at_t<2>::template get<int>() != 1) {
+		return 1;
+	}
+
+	return 0;
+}
+
+int test_poly_bernstein() {
+	using B0 = Bernstein<3>::at<1>;
+	if(B0::coeff_at_t<0>::template get<int>() != 0) {
+		return 1;
+	}
+	if(B0::coeff_at_t<1>::template get<int>() != 3) {
+		return 1;
+	}
+	if(B0::coeff_at_t<2>::template get<int>() != -6) {
+		return 1;
+	}
+	if(B0::coeff_at_t<3>::template get<int>() != 3) {
+		return 1;
+	}
+	return 0;
+}
+
+int test_poly_hermite() {
+	using B0 = Hermite<2>;
+	printf("%s\n", B0::at::to_string().c_str());
 	return 0;
 }
 
