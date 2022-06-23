@@ -889,186 +889,181 @@ int test_alternate() {
 	return 0;
 }
 
-// int test_taylor_expansion() {
-// 	using c = aad::SinExpression<aad::TExpression<Q64::one, 1>>;
-// 	using t = aad::taylor_expansion_t<c, 6>;
-// 	auto repr = t::to_string();
-// 	auto expected = "(1) / (120) t^5 + (-1) / (6) t^3 + t";
-// 	if (strcmp(repr.c_str(), expected) != 0) {
-// 		printf("expected %s got %s\n", expected, repr.c_str());
-// 		return 1;
-// 	}
-// 	return 0;
-// }
+int test_taylor_expansion() {
+	using c = aad::SinExpression<aad::TExpression<Q64::one, 1>>;
+	using t = aad::taylor_expansion_t<c, 6>;
+	auto repr = t::to_string();
+	auto expected = "(1) / (120) t^5 + (-1) / (6) t^3 + t";
+	if (strcmp(repr.c_str(), expected) != 0) {
+		printf("expected %s got %s\n", expected, repr.c_str());
+		return 1;
+	}
+	return 0;
+}
 
-// int test_tchebychev_generator_function() {
-// 	using B0 = Tchebychev1::at<6>;
-// 	if(B0::coeff_at_t<6>::template get<int>() != 32) {
-// 		return 1;
-// 	}
-// 	if(B0::coeff_at_t<5>::template get<int>() != 0) {
-// 		return 1;
-// 	}
-// 	if(B0::coeff_at_t<4>::template get<int>() != -48) {
-// 		return 1;
-// 	}
-// 	if(B0::coeff_at_t<3>::template get<int>() != 0) {
-// 		return 1;
-// 	}
-// 	if(B0::coeff_at_t<2>::template get<int>() != 18) {
-// 		return 1;
-// 	}
-// 	if(B0::coeff_at_t<1>::template get<int>() != 0) {
-// 		return 1;
-// 	}
-// 	if(B0::coeff_at_t<0>::template get<int>() != -1) {
-// 		return 1;
-// 	}
-// 	return 0;
-// }
+int test_tchebychev_generator_function() {
+	using B0 = Tchebychev1::at<2>;
+	if (B0::degree != 2) {
+		return 1;
+	}
+	if(B0::coeff_at_t<2>::template get<int>() != 2) {
+		return 1;
+	}
+	if(B0::coeff_at_t<1>::template get<int>() != 0) {
+		return 1;
+	}
+	if(B0::coeff_at_t<0>::template get<int>() != -1) {
+		return 1;
+	}
+	return 0;
+}
 
+int test_tchebychev_2() {
+	using B0 = Tchebychev2::at<2>;
+	if (B0::degree != 2) {
+		return 1;
+	}
+	if(B0::coeff_at_t<2>::template get<int>() != 4) {
+		return 1;
+	}
+	if(B0::coeff_at_t<1>::template get<int>() != 0) {
+		return 1;
+	}
+	if(B0::coeff_at_t<0>::template get<int>() != -1) {
+		return 1;
+	}
+	return 0;
+}
 
-// int test_tchebychev_2() {
-// 	using B0 = Tchebychev2::at<6>;
-// 	if(B0::coeff_at_t<6>::template get<int>() != 64) {
-// 		return 1;
-// 	}
-// 	if(B0::coeff_at_t<5>::template get<int>() != 0) {
-// 		return 1;
-// 	}
-// 	if(B0::coeff_at_t<4>::template get<int>() != -80) {
-// 		return 1;
-// 	}
-// 	if(B0::coeff_at_t<3>::template get<int>() != 0) {
-// 		return 1;
-// 	}
-// 	if(B0::coeff_at_t<2>::template get<int>() != 24) {
-// 		return 1;
-// 	}
-// 	if(B0::coeff_at_t<1>::template get<int>() != 0) {
-// 		return 1;
-// 	}
-// 	if(B0::coeff_at_t<0>::template get<int>() != -1) {
-// 		return 1;
-// 	}
-// 	return 0;
-// }
+int test_poly_euler() {
+	using B0 = Euler::at<2>;
+	if(B0::degree != 2) {
+		return 1;
+	}
+	if(B0::coeff_at_t<0>::template get<int>() != 0) {
+		return 1;
+	}
+	if(B0::coeff_at_t<1>::template get<int>() != -1) {
+		return 1;
+	}
+	if(B0::coeff_at_t<2>::template get<int>() != 1) {
+		return 1;
+	}
 
-// int test_poly_euler() {
-// 	using B0 = Euler::at<4>;
-// 	if(B0::coeff_at_t<0>::template get<int>() != 0) {
-// 		return 1;
-// 	}
-// 	if(B0::coeff_at_t<1>::template get<int>() != 1) {
-// 		return 1;
-// 	}
-// 	if(B0::coeff_at_t<2>::template get<int>() != 0) {
-// 		return 1;
-// 	}
-// 	if(B0::coeff_at_t<3>::template get<int>() != -2) {
-// 		return 1;
-// 	}
-// 	if(B0::coeff_at_t<4>::template get<int>() != 1) {
-// 		return 1;
-// 	}
-// 	return 0;
-// }
+	return 0;
+}
 
-// int test_poly_bernstein() {
-// 	using B0 = Bernstein<3>::at<1>;
-// 	if(B0::coeff_at_t<0>::template get<int>() != 0) {
-// 		return 1;
-// 	}
-// 	if(B0::coeff_at_t<1>::template get<int>() != 3) {
-// 		return 1;
-// 	}
-// 	if(B0::coeff_at_t<2>::template get<int>() != -6) {
-// 		return 1;
-// 	}
-// 	if(B0::coeff_at_t<3>::template get<int>() != 3) {
-// 		return 1;
-// 	}
-// 	return 0;
-// }
+int test_poly_bernstein() {
+	using B0 = Bernstein<3>::at<1>;
+	if(B0::coeff_at_t<0>::template get<int>() != 0) {
+		return 1;
+	}
+	if(B0::coeff_at_t<1>::template get<int>() != 3) {
+		return 1;
+	}
+	if(B0::coeff_at_t<2>::template get<int>() != -6) {
+		return 1;
+	}
+	if(B0::coeff_at_t<3>::template get<int>() != 3) {
+		return 1;
+	}
+	return 0;
+}
+
+int test_poly_hermite() {
+	using B0 = Hermite<2>;
+	printf("%s\n", B0::at::to_string().c_str());
+	return 0;
+}
 
 int test_expression_simplify() {
-	// x+0 -> x
+	int exprid = 0;
+	// x + 0 -> x
 	{
-		using A = typename aad::AddExpression<aad::T, aad::ConstantExpression<typename Q64::zero>>::type;
+		using A = typename aad::AddExpression<aad::T, aad::ZERO>::type;
 		using B = typename aad::T::type;
 		if (!std::is_same<A, B>::value) {
-			printf("0 -- %s instead of %s\n", A::to_string().c_str(), B::to_string().c_str());
+			printf("%d -- %s instead of %s\n", exprid++, A::to_string().c_str(), B::to_string().c_str());
 			return 1;
 		}
 	}
 
-	// 0+x -> x
+	// 0 + x -> x
 	{
-		using A = typename aad::AddExpression<aad::ConstantExpression<typename Q64::zero>, aad::T>::type;
+		using A = typename aad::AddExpression<aad::ZERO, aad::T>::type;
 		using B = typename aad::T::type;
 		if (!std::is_same<A, B>::value) {
-			printf("1 -- %s instead of %s\n", A::to_string().c_str(), B::to_string().c_str());
+			printf("%d -- %s instead of %s\n", exprid++, A::to_string().c_str(), B::to_string().c_str());
 			return 1;
 		}
 	}
 
-	// 0+0 -> 0
+	// 0 + 0 -> 0
 	{
-		using A = typename aad::AddExpression<aad::ConstantExpression<typename Q64::zero>, aad::ConstantExpression<typename Q64::zero>>::type;
-		using B = aad::ConstantExpression<typename Q64::zero>;
+		using A = typename aad::AddExpression<aad::ZERO, aad::ZERO>::type;
+		using B = aad::ZERO;
 		if (!std::is_same<A, B>::value) {
-			printf("2 -- %s instead of %s\n", A::to_string().c_str(), B::to_string().c_str());
+			printf("%d -- %s instead of %s\n", exprid++, A::to_string().c_str(), B::to_string().c_str());
 			return 1;
 		}
 	}
 
-	// 1+1 -> 0
+	// 1 + 1 -> 2
 	{
-		using A = typename aad::AddExpression<aad::ConstantExpression<typename Q64::one>, aad::ConstantExpression<typename Q64::one>>::type;
+		using A = typename aad::AddExpression<aad::ONE, aad::ONE>::type;
 		using B = aad::ConstantExpression<Q64::inject_constant_t<2>>;
 		if (!std::is_same<A, B>::value) {
-			printf("3 -- %s instead of %s\n", A::to_string().c_str(), B::to_string().c_str());
+			printf("%d -- %s instead of %s\n", exprid++, A::to_string().c_str(), B::to_string().c_str());
 			return 1;
 		}
 	}
 
 
 
-	// x*0 -> 0
+	// x * 0 -> 0
 	{
-		using A = typename aad::MulExpression<aad::T, aad::ConstantExpression<typename Q64::zero>>::type;
-		using B = typename aad::ConstantExpression<typename Q64::zero>::type;
+		using A = typename aad::MulExpression<aad::T, aad::ZERO>::type;
+		using B = typename aad::ZERO::type;
 		if (!std::is_same<A, B>::value) {
-			printf("4 -- %s instead of %s\n", A::to_string().c_str(), B::to_string().c_str());
+			printf("%d -- %s instead of %s\n", exprid++, A::to_string().c_str(), B::to_string().c_str());
 			return 1;
 		}
 	}
 
-	// 0*0 -> 0
+	// 0 * 0 -> 0
 	{
-		using A = typename aad::MulExpression<aad::ConstantExpression<typename Q64::zero>, aad::ConstantExpression<typename Q64::zero>>::type;
-		using B = typename aad::ConstantExpression<typename Q64::zero>::type;
+		using A = typename aad::MulExpression<aad::ZERO, aad::ZERO>::type;
+		using B = typename aad::ZERO::type;
 		if (!std::is_same<A, B>::value) {
-			printf("5 -- %s instead of %s\n", A::to_string().c_str(), B::to_string().c_str());
+			printf("%d -- %s instead of %s\n", exprid++, A::to_string().c_str(), B::to_string().c_str());
 			return 1;
 		}
 	}
 
-	// x*1 -> x
+	// x * 1 -> x
 	{
-		using A = typename aad::MulExpression<aad::T, aad::ConstantExpression<typename Q64::one>>::type;
+		using A = typename aad::MulExpression<aad::T, aad::ONE>::type;
 		if (!std::is_same<A, aad::T>::value) {
-			printf("6 -- %s instead of %s\n", A::to_string().c_str(), aad::T::to_string().c_str());
+			printf("%d -- %s instead of %s\n", exprid++, A::to_string().c_str(), aad::T::to_string().c_str());
 			return 1;
 		}
 	}
 
-	// 0*x -> 0
+	// 1 * x -> x
 	{
-		using A = typename aad::MulExpression<aad::ConstantExpression<typename Q64::zero>, aad::T>::type;
-		using B = typename aad::ConstantExpression<typename Q64::zero>::type;
+		using A = typename aad::MulExpression<aad::ONE, aad::T>::type;
+		if (!std::is_same<A, aad::T>::value) {
+			printf("%d -- %s instead of %s\n", exprid++, A::to_string().c_str(), aad::T::to_string().c_str());
+			return 1;
+		}
+	}
+
+	// 0 * x -> 0
+	{
+		using A = typename aad::MulExpression<aad::ZERO, aad::T>::type;
+		using B = typename aad::ZERO::type;
 		if (!std::is_same<A, B>::value) {
-			printf("7 -- %s instead of %s\n", A::to_string().c_str(), B::to_string().c_str());
+			printf("%d -- %s instead of %s\n", exprid++, A::to_string().c_str(), B::to_string().c_str());
 			return 1;
 		}
 	}
@@ -1080,7 +1075,7 @@ int test_expression_simplify() {
 								aad::ConstantExpression<Q64::inject_constant_t<3>>>::type;
 		using B = typename aad::ConstantExpression<Q64::inject_constant_t<6>>::type;
 		if (!std::is_same<A, B>::value) {
-			printf("8 -- %s instead of %s\n", A::to_string().c_str(), B::to_string().c_str());
+			printf("%d -- %s instead of %s\n", exprid++, A::to_string().c_str(), B::to_string().c_str());
 			return 1;
 		}
 	}
@@ -1092,7 +1087,7 @@ int test_expression_simplify() {
 								aad::ConstantExpression<Q64::inject_constant_t<0>>>::type;
 		using B = typename aad::ConstantExpression<Q64::inject_constant_t<0>>::type;
 		if (!std::is_same<A, B>::value) {
-			printf("9 -- %s instead of %s\n", A::to_string().c_str(), B::to_string().c_str());
+			printf("%d -- %s instead of %s\n", exprid++, A::to_string().c_str(), B::to_string().c_str());
 			return 1;
 		}
 	}
@@ -1110,7 +1105,7 @@ int test_expression_simplify() {
 			aad::MulExpression<aad::T, aad::X>
 		>::type;
 		if (!std::is_same<A, B>::value) {
-			printf("10 -- %s instead of %s\n", A::to_string().c_str(), B::to_string().c_str());
+			printf("%d -- %s instead of %s\n", exprid++, A::to_string().c_str(), B::to_string().c_str());
 			return 1;
 		}
 	}
@@ -1128,7 +1123,7 @@ int test_expression_simplify() {
 			aad::MulExpression<aad::T, aad::X>
 		>::type;
 		if (!std::is_same<A, B>::value) {
-			printf("11 -- %s instead of %s\n", A::to_string().c_str(), B::to_string().c_str());
+			printf("%d -- %s instead of %s\n", exprid++, A::to_string().c_str(), B::to_string().c_str());
 			return 1;
 		}
 	}
@@ -1146,7 +1141,144 @@ int test_expression_simplify() {
 			aad::MulExpression<aad::X, aad::T>
 		>::type;
 		if (!std::is_same<A, B>::value) {
-			printf("12 -- %s instead of %s\n", A::to_string().c_str(), B::to_string().c_str());
+			printf("%d -- %s instead of %s\n", exprid++, A::to_string().c_str(), B::to_string().c_str());
+			return 1;
+		}
+	}
+
+	// a * (y - z) = a*y - a*z
+	{
+		using A = typename aad::MulExpression<
+								aad::TWO,
+								aad::SubExpression<
+									aad::T,
+									aad::X
+								>>::type;
+		using B = typename aad::SubExpression<
+			aad::MulExpression<aad::TWO, aad::T>,
+			aad::MulExpression<aad::TWO, aad::X>
+		>::type;
+		if (!std::is_same<A, B>::value) {
+			printf("%d -- %s instead of %s\n", exprid++, A::to_string().c_str(), B::to_string().c_str());
+			return 1;
+		}
+	}
+
+	// y - y = 0
+	{
+		using A = typename aad::SubExpression<
+									aad::X,
+									aad::X>::type;
+		using B = typename aad::ZERO;
+		if (!std::is_same<A, B>::value) {
+			printf("%d -- %s instead of %s\n", exprid++, A::to_string().c_str(), B::to_string().c_str());
+			return 1;
+		}
+	}
+
+	// x * (y - y) = 0
+	{
+		using A = typename aad::MulExpression<
+								aad::X,
+								aad::SubExpression<
+									aad::X,
+									aad::X>>::type;
+		using B = typename aad::ZERO;
+		if (!std::is_same<A, B>::value) {
+			printf("%d -- %s instead of %s\n", exprid++, A::to_string().c_str(), B::to_string().c_str());
+			return 1;
+		}
+	}
+
+	// a - a = 0
+	{
+		using A = typename aad::SubExpression<
+									aad::ONE,
+									aad::ONE>::type;
+		using B = typename aad::ZERO;
+		if (!std::is_same<A, B>::value) {
+			printf("%d -- %s instead of %s\n", exprid++, A::to_string().c_str(), B::to_string().c_str());
+			return 1;
+		}
+	}
+
+	// x - 0 = x
+	{
+		using A = typename aad::SubExpression<
+									aad::X,
+									aad::ZERO>::type;
+		using B = typename aad::X;
+		if (!std::is_same<A, B>::value) {
+			printf("%d -- %s instead of %s\n", exprid++, A::to_string().c_str(), B::to_string().c_str());
+			return 1;
+		}
+	}
+
+	// x + 0 = x
+	{
+		using A = typename aad::AddExpression<
+									aad::X,
+									aad::ZERO>::type;
+		using B = typename aad::X;
+		if (!std::is_same<A, B>::value) {
+			printf("%d -- %s instead of %s\n", exprid++, A::to_string().c_str(), B::to_string().c_str());
+			return 1;
+		}
+	}
+
+	// x + x = 2x
+	{
+		using A = typename aad::AddExpression<
+								aad::T,
+								aad::T
+								>::type;
+		using B = typename aad::MulExpression<aad::TWO, aad::T>::type;
+		if (!std::is_same<A, B>::value) {
+			printf("%d -- %s instead of %s\n", exprid++, A::to_string().c_str(), B::to_string().c_str());
+			return 1;
+		}
+	}
+	
+	// (x - y) * z
+	{
+		using A = typename aad::MulExpression<
+						aad::SubExpression<
+							aad::TWO,
+							aad::X
+						>,
+						aad::T>::type;
+		using B = typename aad::SubExpression<aad::MulExpression<aad::TWO, aad::T>, aad::MulExpression<aad::X, aad::T>>::type;
+		if (!std::is_same<A, B>::value) {
+			printf("%d -- %s instead of %s\n", exprid++, A::to_string().c_str(), B::to_string().c_str());
+			return 1;
+		}
+	}
+
+	// x * y + y * x = 2 * x * y
+	{
+		using A = typename aerobus::aad::AddExpression<
+			aerobus::aad::MulExpression<
+				aerobus::aad::X,
+				aerobus::aad::T>,
+			aerobus::aad::MulExpression<
+				aerobus::aad::T,
+				aerobus::aad::X>>::type;
+		using B = typename aad::MulExpression<aad::TWO, aad::MulExpression<aad::T, aad::X>>::type;
+		if (!aad::eq_t<A, B>::value) {
+			printf("%d -- %s instead of %s\n", exprid++, A::to_string().c_str(), B::to_string().c_str());
+			return 1;
+		}
+	}
+
+	// xt + -tx = 0
+	{
+		using A = typename aad::AddExpression<
+			aad::XT,
+			aad::MinExpression<aad::MulExpression<aad::T, aad::X>>
+		>::type;
+
+		if (!aad::eq_t<A, aad::ZERO>::value) {
+			printf("%d -- %s instead of %s\n", exprid++, A::to_string().c_str(), aad::ZERO::to_string().c_str());
 			return 1;
 		}
 	}
@@ -1154,21 +1286,15 @@ int test_expression_simplify() {
 	return 0;
 }
 
-// int test_poly_hermite() {
-// 	using B0 = Hermite<2>;
-// 	printf("%s\n", B0::at::to_string().c_str());
-// 	return 0;
-// }
-
 #define RUN_TEST(test_name) if (test_name() != 0) { printf("%s failed\n", #test_name); return 1; }
 
 int main(int argc, char* argv[]) {
-	// RUN_TEST(test_taylor_expansion)
-	// RUN_TEST(test_tchebychev_generator_function)
-	// RUN_TEST(test_tchebychev_2)
-	// RUN_TEST(test_poly_euler)
-	// RUN_TEST(test_poly_bernstein)
-	// RUN_TEST(test_poly_hermite)
+	RUN_TEST(test_taylor_expansion)
+	RUN_TEST(test_tchebychev_generator_function)
+	RUN_TEST(test_tchebychev_2)
+	RUN_TEST(test_poly_euler)
+	RUN_TEST(test_poly_bernstein)
+	RUN_TEST(test_poly_hermite)
 	RUN_TEST(test_expression_simplify)
 	RUN_TEST(test_type_at)
 	RUN_TEST(test_poly_simplify)

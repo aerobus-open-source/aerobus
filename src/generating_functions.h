@@ -123,6 +123,6 @@ namespace aerobus {
         };
 
     public:
-        using at = aad::MulExpression<B1, typename inner<k>::type>;
+        using at = typename aad::MulExpression<typename inner<k>::type, B1>::type;
     };
 }
