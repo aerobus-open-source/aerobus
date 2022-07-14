@@ -2,7 +2,7 @@ clean:
 	rm -f *.exe
 
 build:
-	clang++ -I. -ftemplate-depth=30000 -std=c++20 -O0 main.cpp -o main.exe 
+	clang++ -I. -ftemplate-depth=30000 -std=c++20 -ftemplate-backtrace-limit=0 -O0 main.cpp -o main.exe 
 
 run: 
 	./main.exe
