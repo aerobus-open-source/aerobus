@@ -99,15 +99,19 @@ namespace aerobus {
                 }
         };
 
-        template<typename E1, typename E2>
-        struct AddExpression : Expression<AddExpression<E1, E2>> {
+        template<typename... Operands>
+        struct AddExpression : Expression<AddExpression<Operands...>> {
             template<typename>
             friend struct Expression;
-            using left = E1;
-            using right = E2;
+
+            static constexpr size_t op_count = sizeof...(Operands);
+
+            template<size_t i>
+            using at = internal::type_at_t<i, Operands...>;
+
             private:
                 static std::string _to_string() {
-                    return "((" + E1::to_string() + ") + (" + E2::to_string() + "))";
+                    return "toto";
                 }
         };
 
@@ -123,15 +127,19 @@ namespace aerobus {
                 }
         };
         
-        template<typename E1, typename E2>
-        struct MulExpression : Expression<MulExpression<E1, E2>> {
+        template<typename... Operands>
+        struct MulExpression : Expression<MulExpression<Operands...>> {
             template<typename>
             friend struct Expression;
-            using left = E1;
-            using right = E2;
+
+            static constexpr size_t op_count = sizeof...(Operands);
+
+            template<size_t i>
+            using at = internal::type_at_t<i, Operands...>;
+
             private:
                 static std::string _to_string() {
-                    return "((" + E1::to_string() + ") * (" + E2::to_string() + "))";
+                    return "tata";
                 }
         };
 
@@ -403,20 +411,10 @@ namespace aerobus {
             >;
 
             template<typename E1, typename E2>
-            using add_right = std::conjunction<
-                internal::is_instantiation_of<AddExpression, simplify_t<E2>>,
-                std::negation<one_left<E1, E2>>,
-                std::negation<zero_left<E1, E2>>
-            >;
+            using add_left = internal::is_instantiation_of<AddExpression, simplify_t<E1>>;
 
             template<typename E1, typename E2>
-            using add_left = std::conjunction<
-                internal::is_instantiation_of<AddExpression, simplify_t<E1>>,
-                std::negation<internal::is_instantiation_of<AddExpression, simplify_t<E2>>>,
-                std::negation<sub_right<E1, E2>>,
-                std::negation<one_right<E1, E2>>,
-                std::negation<zero_right<E1, E2>>
-            >;
+            using add_right = internal::is_instantiation_of<AddExpression, simplify_t<E2>>;
 
             template<typename E1, typename E2>
             using same = std::conjunction<
@@ -438,12 +436,8 @@ namespace aerobus {
             using add_general = 
                 std::negation<
                     std::disjunction<
-                        zero_left<E1, E2>,
-                        zero_right<E1, E2>,
-                        two_constants<E1, E2>,
-                        same<E1, E2>,
-                        right_min_left<E1, E2>,
-                        left_min_right<E1, E2>
+                        add_left<E1, E2>,
+                        add_right<E1, E2>
                     >
                 >;
 
@@ -470,14 +464,13 @@ namespace aerobus {
         > : base_traits<ONE> {};
 
         // x + y
-        template<typename E1, typename E2>
-        struct base_traits<AddExpression<E1, E2>, 
-            std::enable_if_t<simplification_rules::template add_general<E1, E2>::value>>
+        template<typename... Operands>
+        struct base_traits<AddExpression<Operands...>>
         {
-            using type = AddExpression<E1, E2>;
-            using value_at_t0 = FPQ64X::template add_t<typename base_traits<E1>::value_at_t0, typename base_traits<E2>::value_at_t0>;
-            using derive_t = AddExpression<typename base_traits<E1>::derive_t, typename base_traits<E2>::derive_t>;
-            using derive_x = AddExpression<typename base_traits<E1>::derive_x, typename base_traits<E2>::derive_x>;
+            using type = AddExpression<Operands...>;
+            using value_at_t0 = typename FPQ64X::zero;// FPQ64X::template vadd_t<typename base_traits<Operands>::value_at_t0...>;
+            using derive_t = ConstantExpression<Q64::zero>; // simplify_t<AddExpression<typename base_traits<Operands>::derive_t...>>;
+            using derive_x = ConstantExpression<Q64::zero>; //simplify_t<AddExpression<typename base_traits<Operands>::derive_x...>>;
         };
 
         // x - y
@@ -501,10 +494,23 @@ namespace aerobus {
         };
 
         // x * y
+        template<typename Op1, typename Op2, typename Op3, typename... Ops>
+        struct base_traits<MulExpression<Op1, Op2, Op3, Ops...>>
+        {
+            using type = MulExpression<Op1, Op2, Op3, Ops...>;
+            using value_at_t0 = FPQ64X::template vmul_t<
+                                    typename base_traits<Op1>::value_at_t0, 
+                                    typename base_traits<Op2>::value_at_t0, 
+                                    typename base_traits<Op3>::value_at_t0, 
+                                    typename base_traits<Ops>::value_at_t0...>;
+            using derive_t = typename base_traits<MulExpression<Op1>, MulExpression<Op2, Op3, Ops...>>::derive_t;
+            using derive_x = typename base_traits<MulExpression<Op1>, MulExpression<Op2, Op3, Ops...>>::derive_x;
+        };
+
         template<typename E1, typename E2>
-        struct base_traits<
-                MulExpression<E1, E2>, std::enable_if_t<simplification_rules::template mul_general<E1, E2>::value>
-            > {
+        struct base_traits<MulExpression<E1, E2>, 
+                std::enable_if_t<
+                    simplification_rules::template mul_general<E1, E2>::value>> {
             using type = MulExpression<E1, E2>;
             using value_at_t0 = FPQ64X::template mul_t<typename base_traits<E1>::value_at_t0, typename base_traits<E2>::value_at_t0>;
             using derive_t = AddExpression<
@@ -515,19 +521,35 @@ namespace aerobus {
                             MulExpression<typename base_traits<E1>::derive_x, E2>,
                             MulExpression<E1, typename base_traits<E2>::derive_x>>;
         };
-        
-        // simplification rules
-        // a + b
-        template<typename E1, typename E2>
-        struct base_traits<AddExpression<E1, E2>,
-                    std::enable_if_t<simplification_rules::template two_constants<E1, E2>::value>
-        > : base_traits<ConstantExpression<Q64::add_t<typename simplify_t<E1>::v, typename simplify_t<E2>::v>>> {};
 
         // a - b
         template<typename E1, typename E2>
         struct base_traits<SubExpression<E1, E2>,
                     std::enable_if_t<simplification_rules::template two_constants<E1, E2>::value>
         > : base_traits<ConstantExpression<Q64::sub_t<typename simplify_t<E1>::v, typename simplify_t<E2>::v>>> {};
+
+
+        // x - x
+        template<typename E1, typename E2>
+        struct base_traits<SubExpression<E1, E2>, std::enable_if_t<simplification_rules::template same<E1, E2>::value>> : base_traits<ZERO> {};
+
+        // x - 0
+        template<typename E1, typename E2>
+        struct base_traits<SubExpression<E1, E2>, std::enable_if_t<simplification_rules::template zero_right<E1, E2>::value>> : base_traits<E1> {};
+
+         // 0 - x
+        template<typename E1, typename E2>
+        struct base_traits<SubExpression<E1, E2>, std::enable_if_t<simplification_rules::template zero_left<E1, E2>::value>> : base_traits<MinExpression<E2>> {};
+        
+        // x * (y - z)
+        template<typename E1, typename E2, typename E3>
+        struct base_traits<MulExpression<E1, SubExpression<E2, E3>>
+        > : base_traits<SubExpression<MulExpression<simplify_t<E1>, simplify_t<E2>>, MulExpression<simplify_t<E1>, simplify_t<E3>>>> {};
+
+        // (x - y) * z
+        template<typename E1, typename E2, typename E3>
+        struct base_traits<MulExpression<SubExpression<E1, E2>, E3>
+        > : base_traits<SubExpression<MulExpression<simplify_t<E1>, simplify_t<E3>>, MulExpression<simplify_t<E2>, simplify_t<E3>>>> {};
 
         // a * b
         template<typename E1, typename E2>
@@ -541,91 +563,22 @@ namespace aerobus {
                     std::enable_if_t<simplification_rules::template two_exp<E1, E2>::value>
         > : base_traits<ExpExpression<AddExpression<typename simplify_t<E1>::v, typename simplify_t<E2>::v>>> {};
 
-        // x + x
-        template<typename E1, typename E2>
-        struct base_traits<AddExpression<E1, E2>,
-                    std::enable_if_t<simplification_rules::template same<E1, E2>::value>
-        > : base_traits<MulExpression<TWO, E2>> {};
-
-        // x + (-x)
-        template<typename E1, typename E2>
-        struct base_traits<AddExpression<E1, E2>,
-                std::enable_if_t<simplification_rules::template right_min_left<E1, E2>::value>
-        > : base_traits<ZERO> {};
+        // x * (y + ... + z)
+        template<typename E1, typename... AddOps>
+        struct base_traits<MulExpression<E1, AddExpression<AddOps...>>> : base_traits<
+                AddExpression<
+                    MulExpression<simplify_t<E1>, AddOps>...
+                >
+            > {};
         
-        // -x + x
-        template<typename E1, typename E2>
-        struct base_traits<AddExpression<E1, E2>,
-                std::enable_if_t<simplification_rules::template left_min_right<E1, E2>::value>
-        > : base_traits<ZERO> {};
-
-        // x + 0 
-        template<typename E1, typename E2>
-        struct base_traits<AddExpression<E1, E2>,
-                    std::enable_if_t<simplification_rules::template zero_right<E1, E2>::value>
-        > : base_traits<E1> {};
-
-        // x * 0
-         template<typename E1, typename E2>
-        struct base_traits<MulExpression<E1, E2>,
-                    std::enable_if_t<simplification_rules::template zero_right<E1, E2>::value>
-        > : base_traits<ZERO> {};
-
-        // x - x
-        template<typename E1, typename E2>
-        struct base_traits<SubExpression<E1, E2>, std::enable_if_t<simplification_rules::template same<E1, E2>::value>> : base_traits<ZERO> {};
-
-        // x - 0
-        template<typename E1, typename E2>
-        struct base_traits<SubExpression<E1, E2>, std::enable_if_t<simplification_rules::template zero_right<E1, E2>::value>> : base_traits<E1> {};
-
-         // 0 - x
-        template<typename E1, typename E2>
-        struct base_traits<SubExpression<E1, E2>, std::enable_if_t<simplification_rules::template zero_left<E1, E2>::value>> : base_traits<MinExpression<E2>> {};
-
-        // 0 + x
-        template<typename E1, typename E2>
-        struct base_traits<AddExpression<E1, E2>,
-                    std::enable_if_t<simplification_rules::template zero_left<E1, E2>::value>
-        > : base_traits<E2> {};
-        
-        // 0 * x
-        template<typename E1, typename E2>
-        struct base_traits<MulExpression<E1, E2>,
-                    std::enable_if_t<simplification_rules::template zero_left<E1, E2>::value>
-        > : base_traits<ZERO> {};
-
-        // 1 * x
-        template<typename E1, typename E2>
-        struct base_traits<MulExpression<E1, E2>,
-                    std::enable_if_t<simplification_rules::template one_left<E1, E2>::value>
-        > : base_traits<E2> {};
-
-        // x * 1
-        template<typename E1, typename E2>
-        struct base_traits<MulExpression<E1, E2>,
-                    std::enable_if_t<simplification_rules::template one_right<E1, E2>::value>
-        > : base_traits<E1> {};
-
-        // x * (y - z)
-        template<typename E1, typename E2>
-        struct base_traits<MulExpression<E1, E2>, std::enable_if_t<simplification_rules::template sub_right<E1, E2>::value>
-        > : base_traits<SubExpression<MulExpression<simplify_t<E1>, typename simplify_t<E2>::left>, MulExpression<simplify_t<E1>, typename simplify_t<E2>::right>>> {};
-
-        // (x - y) * z
-        template<typename E1, typename E2>
-        struct base_traits<MulExpression<E1, E2>, std::enable_if_t<simplification_rules::template sub_left<E1, E2>::value>
-        > : base_traits<SubExpression<MulExpression<typename simplify_t<E1>::left, simplify_t<E2>>, MulExpression<typename simplify_t<E1>::right, simplify_t<E2>>>> {};
-
-        // x * (y + z)
-        template<typename E1, typename E2>
-        struct base_traits<MulExpression<E1, E2>, std::enable_if_t<simplification_rules::template add_right<E1, E2>::value>
-        > : base_traits<AddExpression<MulExpression<simplify_t<E1>, typename simplify_t<E2>::left>, MulExpression<simplify_t<E1>, typename simplify_t<E2>::right>>> {};
-        
-        // (x + y) * z
-        template<typename E1, typename E2>
-        struct base_traits<MulExpression<E1, E2>, std::enable_if_t<simplification_rules::template add_left<E1, E2>::value>
-        > : base_traits<AddExpression<MulExpression<typename simplify_t<E1>::left, simplify_t<E2>>, MulExpression<typename simplify_t<E1>::right, simplify_t<E2>>>> {};
+        // (x + ... + y) * z
+        template<typename E1, typename... AddOps>
+        struct base_traits<MulExpression<AddExpression<AddOps...>, E1>> : 
+            base_traits<
+                AddExpression<
+                    MulExpression<AddOps, simplify_t<E1>>...
+                >
+            > {};
 
         template<typename E, size_t k>
         struct taylor_coeff_helper {

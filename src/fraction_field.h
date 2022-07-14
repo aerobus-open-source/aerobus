@@ -182,9 +182,40 @@ namespace aerobus {
 					std::false_type>;
 			};
 
+			template<typename... vals>
+			struct vadd {};
+
+			template<typename v1, typename... vals>
+			struct vadd<v1, vals...> {
+				using type = typename add<v1, typename vadd<vals...>::type>::type;
+			};
+
+			template<typename v1>
+			struct vadd<v1> {
+				using type = v1;
+			};
+
+			template<typename... vals>
+			struct vmul {};
+
+			template<typename v1, typename... vals>
+			struct vmul<v1, vals...> {
+				using type = typename mul<v1, typename vmul<vals...>::type>::type;
+			};
+
+			template<typename v1>
+			struct vmul<v1> {
+				using type = v1;
+			};
+		
+
 		public:
 			template<typename v1, typename v2>
 			using add_t = typename add<v1, v2>::type;
+			template<typename... vs>
+			using vadd_t = typename vadd<vs...>::type;
+			template<typename... vs>
+			using vmul_t = typename vmul<vs...>::type;
 			template<typename v1, typename v2>
 			using sub_t = typename sub<v1, v2>::type;
 			template<typename v1, typename v2>
