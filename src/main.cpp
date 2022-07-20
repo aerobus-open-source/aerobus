@@ -890,31 +890,96 @@ int test_alternate() {
 }
 
 
-// int test_expression_simplify() {
-// 	int exprid = 0;
-// 	// x + 0 -> x
-// 	{
-// 		using A = typename aad::AddExpression<aad::T, aad::ZERO>::type;
-// 		using B = typename aad::T::type;
-// 		if (!std::is_same<A, B>::value) {
-// 			printf("%d -- %s instead of %s\n", exprid++, A::to_string().c_str(), B::to_string().c_str());
-// 			return 1;
-// 		}
-// 	}
+int test_type_list () {
+	using A = type_list<int, float>;
+	if (A::length != 2) {
+		return 1;
+	}
+	if (typeid(A::at<0>) != typeid(int)) {
+		return 1;
+	}
+	if (typeid(A::at<1>) != typeid(float)) {
+		return 1;
+	}
 
-// 	// 0 + x -> x
-// 	{
-// 		using A = typename aad::AddExpression<aad::ZERO, aad::T>::type;
-// 		using B = typename aad::T::type;
-// 		if (!std::is_same<A, B>::value) {
-// 			printf("%d -- %s instead of %s\n", exprid++, A::to_string().c_str(), B::to_string().c_str());
-// 			return 1;
-// 		}
-// 	}
+	using B = A::push_back<double>;
+	if (B::length != 3) {
+		return 1;
+	}
+	if(typeid(B::at<2>) != typeid(double)) {
+		return 1;
+	}
+
+	using C = B::pop_front;
+	if(typeid(C::type) != typeid(int)) {
+		return 1;
+	}
+	if(C::tail::length != 2) {
+		return 1;
+	}
+	if (typeid(C::tail::at<0>) != typeid(float)) {
+		return 1;
+	}
+	using D = C::tail::split<1>;
+	if(D::head::length != 1 || D::tail::length != 1) {
+		return 1;
+	}
+	if(typeid(D::head::at<0>) != typeid(float) || typeid(D::tail::at<0>) != typeid(double)) {
+		return 1;
+	}
+
+	return 0;
+}
+
+
+int test_expression_simplify() {
+	int exprid = 0;
+	// 0 + t -> t
+	{
+		using AddE = aad::simplify_t<aad::AddExpression<type_list<aad::ZERO, aad::T>>>;
+		if(AddE::op_count != 1) {
+			printf("%s\n", typeid(AddE).name());
+			return 1;
+		}
+		if(!std::is_same_v<AddE, aad::T>) {
+			return 1;
+		}
+	}
+
+	// 1 + 1 -> 2
+	{
+		using A = aad::simplify_t<typename aad::AddExpression<type_list<aad::ONE, aad::ONE>>>;
+		using B = aad::ConstantExpression<Q64::inject_constant_t<2>>;
+		if (!std::is_same<A, B>::value) {
+			printf("%d -- %s instead of %s\n", exprid++, A::to_string().c_str(), B::to_string().c_str());
+			return 1;
+		}
+	}
+	
+	// 1 + x -> 1 + x
+	{
+		using A = aad::AddExpression<type_list<aad::ONE, aad::X>>;
+		using B = aad::simplify_t<A>;
+		if (!std::is_same<A, B>::value) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+// 	// 1 + x + -1 -> x
+// 	// {
+// 	// 	using A = aad::simplify_t<typename aad::AddExpression<type_list<aad::ONE, aad::X, aad::MinExpression<aad::ONE>>>>;
+// 	// 	using B = typename aad::T::type;
+// 	// 	if (!std::is_same<aad::simplify_t<A>, B>::value) {
+// 	// 		printf("%d -- %s instead of %s\n", exprid++, A::to_string().c_str(), B::to_string().c_str());
+// 	// 		return 1;
+// 	// 	}
+// 	// }
 
 // 	// 0 + 0 -> 0
 // 	{
-// 		using A = typename aad::AddExpression<aad::ZERO, aad::ZERO>::type;
+// 		using A = aad::simplify_t<typename aad::AddExpression<type_list<aad::ZERO, aad::ZERO>>>;
 // 		using B = aad::ZERO;
 // 		if (!std::is_same<A, B>::value) {
 // 			printf("%d -- %s instead of %s\n", exprid++, A::to_string().c_str(), B::to_string().c_str());
@@ -924,13 +989,14 @@ int test_alternate() {
 
 // 	// 1 + 1 -> 2
 // 	{
-// 		using A = typename aad::AddExpression<aad::ONE, aad::ONE>::type;
+// 		using A = aad::simplify_t<typename aad::AddExpression<type_list<aad::ONE, aad::ONE>>>;
 // 		using B = aad::ConstantExpression<Q64::inject_constant_t<2>>;
-// 		if (!std::is_same<A, B>::value) {
+// 		if (!std::is_same<aad::simplify_t<A>, B>::value) {
 // 			printf("%d -- %s instead of %s\n", exprid++, A::to_string().c_str(), B::to_string().c_str());
 // 			return 1;
 // 		}
 // 	}
+// }
 
 // 	// x * 0 -> 0
 // 	// {
@@ -1320,7 +1386,8 @@ int main(int argc, char* argv[]) {
 	// RUN_TEST(test_poly_euler)
 	// RUN_TEST(test_poly_bernstein)
 	// RUN_TEST(test_poly_hermite)
-	//RUN_TEST(test_expression_simplify)
+	RUN_TEST(test_expression_simplify)
+	RUN_TEST(test_type_list)
 	RUN_TEST(test_type_at)
 	RUN_TEST(test_poly_simplify)
 	RUN_TEST(test_coeff_at)

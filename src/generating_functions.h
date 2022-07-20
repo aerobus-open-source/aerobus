@@ -7,10 +7,10 @@ namespace aerobus {
                 // 1 - xt
                 aad::SubExpression<aad::ONE, aad::XT>,
                 // 1 - 2xt + t^2
-                aad::AddExpression<
+                aad::AddExpression<type_list<
                     // 1 - 2xt
-                    aad::SubExpression<aad::ONE, aad::MulExpression<TWO, aad::XT>>,
-                    aad::TExpression<Q64::one, 2>
+                    aad::SubExpression<aad::ONE, aad::MulExpression<type_list<TWO, aad::XT>>>,
+                    aad::TExpression<Q64::one, 2>>
                 >
             >;
 
@@ -26,10 +26,10 @@ namespace aerobus {
             // 1 
             aad::ONE,
             // 1 - 2xt + t^2
-            aad::AddExpression<
-                aad::SubExpression<aad::ONE, aad::MulExpression<TWO, aad::XT>>,
+            aad::AddExpression<type_list<
+                aad::SubExpression<aad::ONE, aad::MulExpression<type_list<TWO, aad::XT>>>,
                 aad::TExpression<Q64::one, 2>
-            >
+            >>
         >;
 
         public:
@@ -41,14 +41,14 @@ namespace aerobus {
         private:
             using TWO = aad::ConstantExpression<Q64::inject_constant_t<2>>;
             using B0 = aad::DivExpression<
-                aad::MulExpression<
+                aad::MulExpression<type_list<
                     TWO,
                     aad::ExpExpression<aad::XT>
-                >,
-                aad::AddExpression<
+                >>,
+                aad::AddExpression<type_list<
                     aad::ExpExpression<aad::T>,
                     aad::ONE
-                >
+                >>
             >;
         using P = polynomial<Q64, 'x'>;
         public:
@@ -98,18 +98,18 @@ namespace aerobus {
         using B0 = aad::ExpExpression<
                 aad::SubExpression<
                     aad::ConstantExpression<typename Q64::zero>,
-                    aad::MulExpression<
+                    aad::MulExpression<type_list<
                         aad::T,
                         aad::T
-                    >
+                    >>
                 >
             >;
 
         using B1 = aad::ExpExpression<
-                    aad::MulExpression<
+                    aad::MulExpression<type_list<
                         aad::T,
                         aad::T
-                    >
+                    >>
             >;
 
         template<size_t m, bool dummy = true>
@@ -123,6 +123,6 @@ namespace aerobus {
         };
 
     public:
-        using at = typename aad::MulExpression<typename inner<k>::type, B1>::type;
+        using at = typename aad::MulExpression<type_list<typename inner<k>::type, B1>>::type;
     };
 }

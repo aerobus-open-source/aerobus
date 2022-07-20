@@ -6,14 +6,18 @@
 #define ALIGNED(x) __attribute__((aligned(x)))
 #define INLINED __attribute__((always_inline))  
 #endif
-
 namespace aerobus {
-	namespace internal {
+
+	namespace internal
+	{
 		template<template<typename...> typename TT, typename T>
 		struct is_instantiation_of : std::false_type { };
 
 		template<template<typename...> typename TT, typename... Ts>
 		struct is_instantiation_of<TT, TT<Ts...>> : std::true_type { };
+
+		template<template<typename...> typename TT, typename T>
+		inline constexpr bool is_instantiation_of_v = is_instantiation_of<TT, T>::value;
 
 		template <int64_t i, typename T, typename... Ts>
 		struct type_at
@@ -66,7 +70,7 @@ namespace aerobus {
 	};
 
 	namespace internal {
-		template <std::size_t ... Is>
+		template <std::size_t... Is>
 		constexpr auto index_sequence_reverse(std::index_sequence<Is...> const&)
 			-> decltype(std::index_sequence<sizeof...(Is) - 1U - Is...>{});
 
