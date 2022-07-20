@@ -182,17 +182,19 @@ namespace aerobus {
 					std::false_type>;
 			};
 
-			template<typename... vals>
+			template<typename TL, typename E = void>
 			struct vadd {};
 
-			template<typename v1, typename... vals>
-			struct vadd<v1, vals...> {
-				using type = typename add<v1, typename vadd<vals...>::type>::type;
+			template<typename TL>
+			struct vadd<TL, std::enable_if_t<(TL::length > 1)>> {
+				using head = typename TL::pop_front::type;
+				using tail = typename TL::pop_front::tail;
+				using type = typename add<head, typename vadd<tail>::type>::type;
 			};
 
-			template<typename v1>
-			struct vadd<v1> {
-				using type = v1;
+			template<typename TL>
+			struct vadd<TL, std::enable_if_t<(TL::length == 1)>> {
+				using type = typename TL::template at<0>;
 			};
 
 			template<typename... vals>

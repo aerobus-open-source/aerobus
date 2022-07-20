@@ -1,6 +1,5 @@
 #ifndef __DEF_TYPE_LIST__
 #define __DEF_TYPE_LIST__
-#include <cstdint>
 
 namespace aerobus
 {
@@ -58,6 +57,7 @@ namespace aerobus
             using type = typename left::template concat<rr>;
         };
     }
+
     template <typename... Ts>
     struct type_list
     {
@@ -129,4 +129,5 @@ namespace aerobus
         using insert = type_list<T>;
     };
 }
+
 #endif
