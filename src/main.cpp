@@ -699,6 +699,9 @@ int test_simplify_q32() {
 	if (!Q32::eq_t<Q32::simplify_t<D>, Q32::val<i32::val<-1>, i32::val<2>>>::value) {
 		return 1;
 	}
+	if(!Q32::eq_t<Q32::simplify_t<Q32::sub_t<Q32::zero, Q32::zero>>, Q32::zero>::value) {
+		return 1;
+	}
 
 	return 0;
 }
@@ -965,48 +968,82 @@ int test_expression_simplify() {
 		}
 	}
 
-	return 0;
-}
-// 	// 1 + x + -1 -> x
-// 	// {
-// 	// 	using A = aad::simplify_t<typename aad::AddExpression<type_list<aad::ONE, aad::X, aad::MinExpression<aad::ONE>>>>;
-// 	// 	using B = typename aad::T::type;
-// 	// 	if (!std::is_same<aad::simplify_t<A>, B>::value) {
-// 	// 		printf("%d -- %s instead of %s\n", exprid++, A::to_string().c_str(), B::to_string().c_str());
-// 	// 		return 1;
-// 	// 	}
-// 	// }
+	// -0 -> 0
+	{
+		using A = aad::ZERO;
+		using B = aad::MinExpression<aad::ZERO>;
+		using C = typename aad::base_traits<B>::type;
+		if(!std::is_same_v<A, C>) {
+			return 1;
+		}
+	}
 
-// 	// 0 + 0 -> 0
-// 	{
-// 		using A = aad::simplify_t<typename aad::AddExpression<type_list<aad::ZERO, aad::ZERO>>>;
-// 		using B = aad::ZERO;
-// 		if (!std::is_same<A, B>::value) {
-// 			printf("%d -- %s instead of %s\n", exprid++, A::to_string().c_str(), B::to_string().c_str());
-// 			return 1;
-// 		}
-// 	}
+	// x + (-x) -> 0
+	{
+		using TL = type_list<aad::X, aad::MinExpression<aad::X>>;
+		using A = aad::AddExpression<TL>;
+
+		constexpr uint64_t c = TL::length;
+		constexpr uint64_t d = A::op_count;
+ 
+		using B = aad::simplify_t<A>;
+	    using C = typename aad::ZERO;
+		if (!std::is_same_v<B, C>) {
+			return 1;
+		}
+	}
+
+
+	// 0 + 0 -> 0
+	{
+		using A = aad::simplify_t<typename aad::AddExpression<type_list<aad::ZERO, aad::ZERO>>>;
+		using B = aad::ZERO;
+		if (!std::is_same<A, B>::value) {
+			return 1;
+		}
+	}
 
 // 	// 1 + 1 -> 2
-// 	{
-// 		using A = aad::simplify_t<typename aad::AddExpression<type_list<aad::ONE, aad::ONE>>>;
-// 		using B = aad::ConstantExpression<Q64::inject_constant_t<2>>;
-// 		if (!std::is_same<aad::simplify_t<A>, B>::value) {
-// 			printf("%d -- %s instead of %s\n", exprid++, A::to_string().c_str(), B::to_string().c_str());
-// 			return 1;
-// 		}
-// 	}
-// }
+	{
+		using A = aad::simplify_t<typename aad::AddExpression<type_list<aad::ONE, aad::ONE>>>;
+		using B = aad::ConstantExpression<Q64::inject_constant_t<2>>;
+		if (!std::is_same<aad::simplify_t<A>, B>::value) {
+			return 1;
+		}
+	}
 
-// 	// x * 0 -> 0
-// 	// {
-// 	// 	using A = typename aad::MulExpression<aad::T, aad::ZERO>::type;
-// 	// 	using B = typename aad::ZERO::type;
-// 	// 	if (!std::is_same<A, B>::value) {
-// 	// 		printf("%d -- %s instead of %s\n", exprid++, A::to_string().c_str(), B::to_string().c_str());
-// 	// 		return 1;
-// 	// 	}
-// 	// }
+	// x + 1 + (-x) -> 1
+	{
+		using A = aad::AddExpression<type_list<aad::X, aad::ONE, aad::MinExpression<aad::X>>>;
+		using B = aad::ONE;
+		using C = aad::simplify_t<A>;
+		if(!std::is_same_v<B, C>) {
+			return 1;
+		}
+	}
+
+	// x + 1 + 2 +(-x) -> 3
+	{
+		using A = aad::AddExpression<type_list<aad::X, aad::ONE, aad::ConstantExpression<Q64::inject_constant_t<2>>, aad::MinExpression<aad::X>>>;
+		using B = aad::ConstantExpression<Q64::inject_constant_t<3>>;
+		using C = aad::simplify_t<A>;
+		if(!std::is_same_v<B, C>) {
+			return 1;
+		}
+	}
+
+	// x * 0 -> 0
+	// {
+	// 	using A = aad::simplify_t<aad::MulExpression<type_list<aad::T, aad::ZERO>>>;
+	// 	using B = typename aad::ZERO::type;
+	// 	if (!std::is_same<A, B>::value) {
+	// 		printf("%d -- %s instead of %s\n", exprid++, A::to_string().c_str(), B::to_string().c_str());
+	// 		return 1;
+	// 	}
+	// }
+
+	return 0;
+}
 
 // 	// 0 * 0 -> 0
 // 	{

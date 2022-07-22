@@ -70,6 +70,8 @@ namespace aerobus {
             template<typename>
             friend struct Expression;
 
+            using v = XExpression;
+
             private:
                 static constexpr uint64_t _op_count = 1;
                 static std::string _to_string() {
@@ -90,6 +92,9 @@ namespace aerobus {
         struct TExpression: Expression<TExpression<a, k>> {
             template<typename>
             friend struct Expression;
+            
+            
+            using v = TExpression;
 
             private:
                 static constexpr uint64_t _op_count = 1;
@@ -316,9 +321,21 @@ namespace aerobus {
             using derive_x = SubExpression<typename base_traits<E1>::derive_x, typename base_traits<E2>::derive_x>;
         };
 
+        // -c
+        template<typename E>
+        struct base_traits<MinExpression<E>,
+                std::enable_if_t<
+                    internal::is_instantiation_of_v<ConstantExpression, E>
+                >
+            >  : base_traits<ConstantExpression<typename Q64::sub_t<typename Q64::zero, typename E::v>>> {};
+
         // -x
         template<typename E>
-        struct base_traits<MinExpression<E>> {
+        struct base_traits<MinExpression<E>,
+                std::enable_if_t<
+                    !internal::is_instantiation_of_v<ConstantExpression, E>
+                >
+            > {
             using type = MinExpression<E>;
             using value_at_t0 = FPQ64X::sub_t<typename FPQ64X::zero, typename base_traits<E>::value_at_t0>;
             using derive_t = MinExpression<typename base_traits<E>::derive_t>;
@@ -365,9 +382,9 @@ namespace aerobus {
         template<typename E1, typename E2>
         struct simplify_binary_add<E1, E2, 
                 std::enable_if_t<
-                    // two constants
-                     (internal::is_instantiation_of<ConstantExpression, simplify_t<E1>>::value && 
-                      internal::is_instantiation_of<ConstantExpression, simplify_t<E2>>::value)
+                     // two constants
+                     (internal::is_instantiation_of_v<ConstantExpression, simplify_t<E1>> && 
+                      internal::is_instantiation_of_v<ConstantExpression, simplify_t<E2>>)
                 >
             > {
             using type = ConstantExpression<typename Q64::add_t<typename simplify_t<E1>::v, typename simplify_t<E2>::v>>;
@@ -399,17 +416,12 @@ namespace aerobus {
         struct simplify_binary_add<E1, E2, 
                 std::enable_if_t<
                     // x + -x or -x + x
-                    ((internal::is_instantiation_of<MinExpression, simplify_t<E1>>::value && std::is_same_v<typename simplify_t<E1>::v, simplify_t<E2>>) ||
-                    (internal::is_instantiation_of<MinExpression, simplify_t<E2>>::value && std::is_same_v<typename simplify_t<E2>::v, simplify_t<E1>>))
+                    ((internal::is_instantiation_of_v<MinExpression, simplify_t<E1>> && std::is_same_v<typename simplify_t<E1>::v, simplify_t<E2>>) ||
+                    (internal::is_instantiation_of_v<MinExpression, simplify_t<E2>> && std::is_same_v<typename simplify_t<E2>::v, simplify_t<E1>>))
                 >
             > {
             using type = ZERO;
         };
-
-        // template<>
-        // struct simplify_binary_add<ONE, X> {
-        //     using type = AddExpression<type_list<ONE, X>>;
-        // };
 
         template<typename E1, typename E2>
         struct simplify_binary_add<E1, E2, 
@@ -432,17 +444,24 @@ namespace aerobus {
 
         template<template<typename> typename AddE, typename TL, uint64_t op_count>
         struct simplify_add_h {
+            template<uint64_t i, uint64_t j, typename E = void>
+            struct inner;
+            
             template<uint64_t i, uint64_t j>
-            struct inner {
+            struct inner<i, j, 
+                    std::enable_if_t<(simplify_binary_add<typename TL::template at<i>, typename TL::template at<j>>::type::op_count == 2)>> {
+                using type = typename inner<i, j+1>::type;
+            };
+
+            template<uint64_t i, uint64_t j>
+            struct inner<i, j,std::enable_if_t<(simplify_binary_add<typename TL::template at<i>, typename TL::template at<j>>::type::op_count < 2)>> {
                 using si = typename TL::template at<i>;
                 using sj = typename TL::template at<j>;
                 using ss = typename simplify_binary_add<si, sj>::type;
-                using type = std::conditional_t<
-                    (ss::op_count < 2),
-                    // then remove i and j and replace i by simplification
-                    typename simplify_add_h<AddE, typename TL::template remove<j>::template remove<i>::template insert<i, ss>, op_count-1>::template inner<i, j>::type,
-                    typename inner<i, j+1>::type
-                >;
+                using type = 
+                    typename simplify_add_h<
+                                AddE, 
+                                typename TL::template remove<j>::template remove<i>::template insert<i, ss>, op_count-1>::type;
             };
 
             template<uint64_t i>
@@ -465,12 +484,12 @@ namespace aerobus {
 
         template<template<typename> typename AddE, typename TL>
         struct simplify_add_h<AddE, TL, 1> {
-            using type = AddE<TL>;
+            using type = TL;
         };
         
         template<template<typename> typename AddE, typename TL>
         struct simplify_add_h<AddE, TL, 0> {
-            using type = AddE<TL>;
+            using type = TL;
         };
 
 
@@ -514,7 +533,6 @@ namespace aerobus {
 
         template<typename E, size_t k>
         using taylor_coeff_t =  typename taylor_coeff_helper<E, k>::type::x;
-
 
         template<typename E, typename I>
         struct taylor_low {};
