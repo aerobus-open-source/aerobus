@@ -21,5 +21,3 @@ namespace aerobus {
 	using FPQ64 = FractionField<polynomial<Q64>>;
 }
 #include "common_functions.h"
-#include "aad.h"
-#include "generating_functions.h"
