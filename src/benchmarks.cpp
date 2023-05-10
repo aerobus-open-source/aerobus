@@ -22,8 +22,8 @@ void vexpm1_12(double * in, double * out, size_t N) {
 
 int main() {
 	const size_t N = 100000000;
-	double* in = static_cast<double*>(_aligned_malloc(N * sizeof(double), 64));
-	double* out = static_cast<double*>(_aligned_malloc(N * sizeof(double), 64));
+	double* in = static_cast<double*>(aligned_alloc(64, N * sizeof(double)));
+	double* out = static_cast<double*>(aligned_alloc(64, N * sizeof(double)));
 	for(int i = 0; i < N; ++i) {
 		in[i] = 0.1;
 	}
