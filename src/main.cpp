@@ -892,7 +892,6 @@ int test_alternate() {
 	return 0;
 }
 
-
 int test_type_list () {
 	using A = type_list<int, float>;
 	if (A::length != 2) {
@@ -938,7 +937,7 @@ int test_type_list () {
 
 int main(int argc, char* argv[]) {
 	RUN_TEST(test_type_list)
-	RUN_TEST(test_type_at)
+	RUN_TEST(test_type_at) 
 	RUN_TEST(test_poly_simplify)
 	RUN_TEST(test_coeff_at)
 	RUN_TEST(test_poly_add)
