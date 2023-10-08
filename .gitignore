@@ -2,5 +2,7 @@
 .vscode/dryrun.log
 .vscode/configurationCache.log
 .vscode/targets.log
-
-.exe
+**/*.exe
+.vs
+x64
+main.exe
