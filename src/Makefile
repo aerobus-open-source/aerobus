@@ -8,7 +8,7 @@ run:
 	./main.exe
 
 benchmarks: clean
-	g++ -I. -std=c++20 -O3 -mavx2 -mfma -fopenmp benchmarks.cpp -o benchmarks.exe
+	g++ -I. -ftemplate-depth=30000 -std=c++20 -ftemplate-backtrace-limit=0 -O3 -mavx2 -mfma -fopenmp benchmarks.cpp -o benchmarks.exe
 	./benchmarks.exe
 
 all: clean build run
