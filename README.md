@@ -8,7 +8,9 @@ It allows definition of polynomials over any discrete integral domain (and there
 It provides definition for Integers (32 or 64 bits) as types, therefore rationals (field of fractions) and modular arithmetic (Z/pZ).
 Polynomial with integer or rational coefficients are exposed as types, and so are rational fractions (field of fractions of polynomials). 
 
-As an interesting application, it provides predefined polynomials, such as taylor series of usual functions. Given polynomials can then be evaluated at floating point values, aerobus therefore define compile time versions of usual functions, and very efficient implementations for runtime. 
+As an interesting application, it provides predefined polynomials, such as taylor series of usual functions. Given polynomials can then be evaluated at floating point values, aerobus therefore define compile time versions of usual functions, and very efficient implementations for runtime.
+
+Unlike most of competing libraries, it's quite easy to add a custom function as aerobus provides mechanisms to easily define coefficients and taylor series. 
 
 ## examples
 ### pure compile time
@@ -215,6 +217,41 @@ compute_expm1(unsigned long, double const*, double*):
 	/// tanh(x)
 	template<typename T, size_t deg>
 	using tanh = taylor<T, internal::tanh_coeff, deg>;
+```
+
+### extend
+To define another taylor serie, it's just needed to provide an implementation for coefficients. 
+Aerobus already exposes usual integers (bernouilli, factorial, alternate, pow) to help user extend the library. 
+
+For example, here is the code of the sin function (at zero) : 
+
+```C++
+namespace aerobus 
+{
+    namespace internal 
+    {
+        template<typename T, size_t i, typename E = void>
+        struct sin_coeff_helper {};
+
+        template<typename T, size_t i>
+        struct sin_coeff_helper<T, i, typename std::enable_if<(i & 1) == 0>::type> {
+            using type = typename FractionField<T>::zero;
+        };
+
+        template<typename T, size_t i>
+        struct sin_coeff_helper<T, i, typename std::enable_if<(i & 1) == 1>::type> {
+            using type = typename FractionField<T>::template val<typename alternate<T, i / 2>::type, typename factorial<T, i>::type>;
+        };
+
+        template<typename T, size_t i>
+        struct sin_coeff {
+            using type = typename sin_coeff_helper<T, i>::type;
+        };
+    }
+
+    template<typename T, size_t deg>
+    using sin = taylor<T, internal::sin_coeff, deg>;
+}
 ```
 
 ## HOW TO
