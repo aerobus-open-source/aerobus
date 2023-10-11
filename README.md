@@ -3,7 +3,12 @@ Aerobus is a C++20 template library which expresses algebra concepts in types
 
 It defines some concepts, such a Ring, IntegralDomain or Field which can be used to construct the field of fractions of a Ring, polynomials with coefficients in such a set or rational fractions, all at compile time. 
 
-In addition, it provides predefined polynomials, such as taylor series of usual functions. Given polynomials can then be evaluated at floating point values, aerobus therefore define compile time versions of usual functions, and very efficient implementations for runtime. 
+It allows definition of polynomials over any discrete integral domain (and therefor the corresponding field of fractions), as long as your Ring implementation satisfies the IsIntegralDomain concept. 
+
+It provides definition for Integers (32 or 64 bits) as types, therefore rationals (field of fractions) and modular arithmetic (Z/pZ).
+Polynomial with integer or rational coefficients are exposed as types, and so are rational fractions (field of fractions of polynomials). 
+
+As an interesting application, it provides predefined polynomials, such as taylor series of usual functions. Given polynomials can then be evaluated at floating point values, aerobus therefore define compile time versions of usual functions, and very efficient implementations for runtime. 
 
 ## examples
 ### pure compile time
@@ -15,7 +20,7 @@ int main() {
     printf("%lf\n", xx);
 }
 ```
-V AND xx are completely compiled at compile time, yielding the following assembly (clang 17)
+V AND xx are computed at compile time, yielding the following assembly (clang 17)
 
 ```assembly
 .LCPI0_0:
