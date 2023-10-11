@@ -3,7 +3,7 @@ Aerobus is a C++20 template library which expresses algebra concepts in types
 
 It defines some concepts, such a Ring, IntegralDomain or Field which can be used to construct the field of fractions of a Ring, polynomials with coefficients in such a set or rational fractions, all at compile time. 
 
-It allows definition of polynomials over any discrete integral domain (and therefor the corresponding field of fractions), as long as your Ring implementation satisfies the IsIntegralDomain concept. 
+It allows definition of polynomials over any discrete integral domain (and therefore the corresponding field of fractions), as long as your Ring implementation satisfies the IsIntegralDomain concept. 
 
 It provides definition for Integers (32 or 64 bits) as types, therefore rationals (field of fractions) and modular arithmetic (Z/pZ).
 Polynomial with integer or rational coefficients are exposed as types, and so are rational fractions (field of fractions of polynomials). 
@@ -17,8 +17,8 @@ Unlike most of competing libraries, it's quite easy to add a custom function as 
 Lets consider the folliwing program, featuring function exp - 1, with 13 64 bits coefficients
 ```c++
 int main() {
-	using V = aerobus::expm1<aerobus::i64, 13>;
-	static constexpr double xx = V::eval(0.1);
+    using V = aerobus::expm1<aerobus::i64, 13>;
+    static constexpr double xx = V::eval(0.1);
     printf("%lf\n", xx);
 }
 ```
@@ -44,8 +44,8 @@ On the other hand, one might want to define a runtime function this way :
 
 ```c++
 double expm1(const double x) {
-	using V = aerobus::expm1<aerobus::i64, 13>;
-	return V::eval(x);
+    using V = aerobus::expm1<aerobus::i64, 13>;
+    return V::eval(x);
 }
 ```
 again, coefficients are all computed compile time, yielding following assembly (given processor supports fused multiply add) : 
@@ -100,7 +100,7 @@ If applied to a vector of data, with proper compiler hints, gcc can easily gener
 
 ```c++
 double compute_expm1(const size_t N, const double* const __restrict in, double* const __restrict out) {
-	using V = aerobus::expm1<aerobus::i64, 13>;
+    using V = aerobus::expm1<aerobus::i64, 13>;
     for (size_t i = 0; i < N; ++i) {
         out[i] = V::eval(in[i]);
     }
@@ -161,62 +161,62 @@ compute_expm1(unsigned long, double const*, double*):
 ## predefined functions
 ```C++
 // e^x
-	template<typename T, size_t deg>
-	using exp = taylor<T, internal::exp_coeff, deg>;
+template<typename T, size_t deg>
+using exp = taylor<T, internal::exp_coeff, deg>;
 
-	// e^x - 1
-	template<typename T, size_t deg>
-	using expm1 = typename polynomial<FractionField<T>>::template sub_t<
-		exp<T, deg>,
-		typename polynomial<FractionField<T>>::one>;
+// e^x - 1
+template<typename T, size_t deg>
+using expm1 = typename polynomial<FractionField<T>>::template sub_t<
+        exp<T, deg>,
+        typename polynomial<FractionField<T>>::one>;
 
-	/// ln(1+x)
-	template<typename T, size_t deg>
-	using lnp1 = taylor<T, internal::lnp1_coeff, deg>;
+/// ln(1+x)
+template<typename T, size_t deg>
+using lnp1 = taylor<T, internal::lnp1_coeff, deg>;
 
-	/// atan(x);
-	template<typename T, size_t deg>
-	using atan = taylor<T, internal::atan_coeff, deg>;
+/// atan(x);
+template<typename T, size_t deg>
+using atan = taylor<T, internal::atan_coeff, deg>;
 
-	/// sin(x)
-	template<typename T, size_t deg>
-	using sin = taylor<T, internal::sin_coeff, deg>;
+/// sin(x)
+template<typename T, size_t deg>
+using sin = taylor<T, internal::sin_coeff, deg>;
 
-	/// sh(x)
-	template<typename T, size_t deg>
-	using sinh = taylor<T, internal::sh_coeff, deg>;
+/// sh(x)
+template<typename T, size_t deg>
+using sinh = taylor<T, internal::sh_coeff, deg>;
 
-	/// ch(x)
-	template<typename T, size_t deg>
-	using cosh = taylor<T, internal::cosh_coeff, deg>;
+/// ch(x)
+template<typename T, size_t deg>
+using cosh = taylor<T, internal::cosh_coeff, deg>;
 
-	/// cos(x)
-	template<typename T, size_t deg>
-	using cos = taylor<T, internal::cos_coeff, deg>;
+/// cos(x)
+template<typename T, size_t deg>
+using cos = taylor<T, internal::cos_coeff, deg>;
 
-	/// 1 / (1-x)
-	template<typename T, size_t deg>
-	using geometric_sum = taylor<T, internal::geom_coeff, deg>;
+/// 1 / (1-x)
+template<typename T, size_t deg>
+using geometric_sum = taylor<T, internal::geom_coeff, deg>;
 
-	/// asin(x)
-	template<typename T, size_t deg>
-	using asin = taylor<T, internal::asin_coeff, deg>;
+/// asin(x)
+template<typename T, size_t deg>
+using asin = taylor<T, internal::asin_coeff, deg>;
 
-	/// asinh(x)
-	template<typename T, size_t deg>
-	using asinh = taylor<T, internal::asinh_coeff, deg>;
+/// asinh(x)
+template<typename T, size_t deg>
+using asinh = taylor<T, internal::asinh_coeff, deg>;
 
-	/// atanh(x)
-	template<typename T, size_t deg>
-	using atanh = taylor<T, internal::atanh_coeff, deg>;
+/// atanh(x)
+template<typename T, size_t deg>
+using atanh = taylor<T, internal::atanh_coeff, deg>;
 
-	/// tan(x)
-	template<typename T, size_t deg>
-	using tan = taylor<T, internal::tan_coeff, deg>;
+/// tan(x)
+template<typename T, size_t deg>
+using tan = taylor<T, internal::tan_coeff, deg>;
 
-	/// tanh(x)
-	template<typename T, size_t deg>
-	using tanh = taylor<T, internal::tanh_coeff, deg>;
+/// tanh(x)
+template<typename T, size_t deg>
+using tanh = taylor<T, internal::tanh_coeff, deg>;
 ```
 
 ### extend
