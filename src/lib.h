@@ -143,6 +143,11 @@ namespace aerobus {
 		using make_index_sequence_reverse
 			= decltype(index_sequence_reverse(std::make_index_sequence<N>{}));
 
+		/**
+		 * computes the greatest common divisor 
+		 * exposes it in gcd<A, B>::type
+		 * as long as Ring type is an integral domain
+		*/
 		template<typename Ring, typename E = void>
 		struct gcd;
 
@@ -437,6 +442,9 @@ namespace aerobus {
 
 // i64
 namespace aerobus {
+	/**
+	 * 64 bits signed integers, seen as a algebraic ring with related operations
+	*/
     struct i64 {
 		using inner_type = int64_t;
 		template<int64_t x>
@@ -548,6 +556,10 @@ namespace aerobus {
 }
 
 namespace aerobus {
+	/**
+	 * congruence classes of integers for a modulus
+	 * if p is prime, zpz is a field, otherwise an integral domain with all related operations
+	*/
     template<int32_t p>
 	struct zpz {
 		using inner_type = int32_t;
@@ -659,6 +671,10 @@ namespace aerobus {
 // polynomial
 namespace aerobus {
     // coeffN x^N + ...
+	/**
+	 * polynomial with coefficients in Ring
+	 * Ring must be an integral domain
+	*/
 	template<typename Ring, char variable_name = 'x'>
 	requires IsIntegralDomain<Ring>
 	struct polynomial {
@@ -1397,38 +1413,17 @@ namespace aerobus {
 	template<typename Ring>
 	requires IsIntegralDomain<Ring>
 	using FractionField = typename internal::FractionFieldImpl<Ring>::type;
-
-	template<typename Ring, char variable_name = 'x'>
-	requires IsIntegralDomain<Ring>
-	struct RationalFraction: FractionField<polynomial<Ring, variable_name>> {
-		static_assert(Ring::is_field, "invalid ring for rational fractions");
-
-		private:
-		template<typename v>
-		struct remove_divisor {
-			using type = std::conditional_t<v::y::degree == 0, 
-				typename FractionField<polynomial<Ring, variable_name>>::template val<
-					typename polynomial<Ring>::template div_t<
-						typename v::x, 
-						typename polynomial<Ring, variable_name>::template val<typename v::y::aN>
-					>,
-					typename polynomial<Ring, variable_name>::one
-				>,
-				v
-			>;
-		};
-
-		public:
-		template<typename v>
-		using remove_divisor_t = typename remove_divisor<v>::type;
-	};
 }
 
 
 namespace aerobus {
+	/// @brief 32 bits rationals
 	using q32 = FractionField<i32>;
+	/// @brief polynomial with 32 bits rational coefficients
 	using fpq32 = FractionField<polynomial<q32>>;
+	/// @brief 64 bits rationals
 	using q64 = FractionField<i64>;
+	/// @brief polynomial with 64 bits rational coefficients
 	using fpq64 = FractionField<polynomial<q64>>;
 }
 
