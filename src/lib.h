@@ -1426,14 +1426,14 @@ namespace aerobus {
 
 
 namespace aerobus {
-	using Q32 = FractionField<i32>;
-	using FPQ32 = FractionField<polynomial<Q32>>;
-	using Q64 = FractionField<i64>;
-	using FPQ64 = FractionField<polynomial<Q64>>;
+	using q32 = FractionField<i32>;
+	using fpq32 = FractionField<polynomial<q32>>;
+	using q64 = FractionField<i64>;
+	using fpq64 = FractionField<polynomial<q64>>;
 }
 
 namespace aerobus {
-    #define MAKE_Q64(x) Q64::inject_constant_t<x>
+    #define MAKE_Q64(x) q64::inject_constant_t<x>
 
 	template<typename T, size_t x, typename E = void>
 	struct factorial {};
