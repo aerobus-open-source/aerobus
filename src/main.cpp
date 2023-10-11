@@ -55,7 +55,7 @@ int test_poly_eval() {
 	}
 
 	// 1/2 + 3x/2
-	using polyf = polynomial<Q32>::val<Q32::val<i32::val<3>, i32::val<2>>, Q32::val<i32::val<1>, i32::val<2>>>;
+	using polyf = polynomial<q32>::val<q32::val<i32::val<3>, i32::val<2>>, q32::val<i32::val<1>, i32::val<2>>>;
 	constexpr float vvv = polyf::eval(1.0f);
 	if (vvv != 2.0f) {
 		return 1;
@@ -69,26 +69,26 @@ int test_poly_eval() {
 }
 
 int test_fraction_field_eval() {
-	using half = Q32::val<i32::one, i32::val<2>>;
+	using half = q32::val<i32::one, i32::val<2>>;
 	constexpr float x = half::eval(2.0f);
 	if (x != 0.5f) {
 		return 1;
 	}
-	using thirdhalf = Q32::val<i32::val<3>, i32::val<2>>;
+	using thirdhalf = q32::val<i32::val<3>, i32::val<2>>;
 	constexpr float y = thirdhalf::eval(1.0f);
 	if (y != 1.5f) {
 		return 1;
 	}
 
 	// 3/2 + x / 2
-	using polyA = polynomial<Q32>::val<half, thirdhalf>;
+	using polyA = polynomial<q32>::val<half, thirdhalf>;
 	constexpr float a = polyA::eval(2.0f);
 	if (a != 2.5F) {
 		return 1;
 	}
 	// 1/2 + x
-	using polyB = polynomial<Q32>::val<Q32::one, half>;
-	using F = FPQ32::val<polyA, polyB>;
+	using polyB = polynomial<q32>::val<q32::one, half>;
+	using F = fpq32::val<polyA, polyB>;
 	constexpr float z = F::eval(2.0f);
 	if (z != 1.0f) {
 		return 1;
@@ -414,10 +414,10 @@ int test_poly_div() {
 	// float divisibility
 	{
 		// x2 -1
-		using A = polynomial<Q32>::val<Q32::one, Q32::zero, Q32::val<i32::val<-1>, i32::val<1>>>;
+		using A = polynomial<q32>::val<q32::one, q32::zero, q32::val<i32::val<-1>, i32::val<1>>>;
 		// 2x + 2
-		using B = polynomial<Q32>::val<Q32::val<i32::val<2>, i32::one>, Q32::val<i32::val<2>, i32::one>>;
-		using Q = polynomial<Q32>::div_t<A, B>;
+		using B = polynomial<q32>::val<q32::val<i32::val<2>, i32::one>, q32::val<i32::val<2>, i32::one>>;
+		using Q = polynomial<q32>::div_t<A, B>;
 
 		if (Q::degree != 1) {
 			return 1;
@@ -438,10 +438,10 @@ int test_poly_div() {
 	// float divisibility
 	{
 		// x2 -1
-		using A = polynomial<Q32>::val<Q32::one, Q32::one>;
+		using A = polynomial<q32>::val<q32::one, q32::one>;
 		// 2x + 2
-		using B = polynomial<Q32>::val<Q32::val<i32::val<2>, i32::one>, Q32::val<i32::val<2>, i32::one>>;
-		using Q = polynomial<Q32>::div_t<A, B>;
+		using B = polynomial<q32>::val<q32::val<i32::val<2>, i32::one>, q32::val<i32::val<2>, i32::one>>;
+		using Q = polynomial<q32>::div_t<A, B>;
 		if (Q::degree != 0) {
 			return 1;
 		}
@@ -458,10 +458,10 @@ int test_poly_div() {
 int test_poly_gcd() {
 	{
 		// (x+1)*(x+1)
-		using A = polynomial<Q32>::val<Q32::one, Q32::val<i32::val<2>, i32::val<1>>, Q32::one>;
+		using A = polynomial<q32>::val<q32::one, q32::val<i32::val<2>, i32::val<1>>, q32::one>;
 		// (x+1)
-		using B = polynomial<Q32>::val<Q32::one, Q32::one>;
-		using G = internal::gcd<polynomial<Q32>>::type<A, B>;
+		using B = polynomial<q32>::val<q32::one, q32::one>;
+		using G = internal::gcd<polynomial<q32>>::type<A, B>;
 		if (G::degree != 1) {
 			return 1;
 		}
@@ -474,11 +474,11 @@ int test_poly_gcd() {
 	}
 	{
 		// (x+1)*(x+1)
-		using A = polynomial<Q32>::val<Q32::one, Q32::val<i32::val<2>, i32::val<1>>, Q32::one>;
+		using A = polynomial<q32>::val<q32::one, q32::val<i32::val<2>, i32::val<1>>, q32::one>;
 		// (x+1)*(x-1) :: x^2 - 1
-		using B = polynomial<Q32>::val<Q32::one, Q32::zero, Q32::val<i32::val<-1>, i32::val<1>>>;
+		using B = polynomial<q32>::val<q32::one, q32::zero, q32::val<i32::val<-1>, i32::val<1>>>;
 		// x + 1
-		using G = polynomial<Q32>::gcd_t<A, B>;
+		using G = polynomial<q32>::gcd_t<A, B>;
 		if (G::degree != 1) {
 			return 1;
 		}
@@ -494,8 +494,8 @@ int test_poly_gcd() {
 }
 
 int test_poly_to_string() {
-	using P32 = polynomial<Q32>;
-	using A = FPQ32::val<P32::val<Q32::one, Q32::one>, P32::val<Q32::val<i32::val<2>, i32::val<1>>, Q32::one>>;
+	using P32 = polynomial<q32>;
+	using A = fpq32::val<P32::val<q32::one, q32::one>, P32::val<q32::val<i32::val<2>, i32::val<1>>, q32::one>>;
 	auto rep = A::to_string();
 	const char* expected = "(x + 1) / (2 x + 1)";
 	if (strcmp(rep.c_str(),expected) != 0) {
@@ -508,10 +508,10 @@ int test_poly_to_string() {
 
 int test_add_q32() {
 	{
-		using a = Q32::val<i32::val<1>, i32::val<2>>;
-		using b = Q32::val<i32::val<1>, i32::val<4>>;
+		using a = q32::val<i32::val<1>, i32::val<2>>;
+		using b = q32::val<i32::val<1>, i32::val<4>>;
 
-		using c = Q32::add_t<a, b>;
+		using c = q32::add_t<a, b>;
 
 		auto x = c::x::v;
 		auto y = c::y::v;
@@ -520,10 +520,10 @@ int test_add_q32() {
 		}
 	}
 	{
-		using a = Q32::val<i32::val<1>, i32::val<2>>;
-		using b = Q32::val<i32::val<1>, i32::val<3>>;
+		using a = q32::val<i32::val<1>, i32::val<2>>;
+		using b = q32::val<i32::val<1>, i32::val<3>>;
 
-		using c = Q32::add_t<a, b>;
+		using c = q32::add_t<a, b>;
 
 		auto x = c::x::v;
 		auto y = c::y::v;
@@ -532,10 +532,10 @@ int test_add_q32() {
 		}
 	}
 	{
-		using a = Q32::val<i32::val<-1>, i32::val<2>>;
-		using b = Q32::val<i32::val<1>, i32::val<2>>;
+		using a = q32::val<i32::val<-1>, i32::val<2>>;
+		using b = q32::val<i32::val<1>, i32::val<2>>;
 
-		using c = Q32::add_t<a, b>;
+		using c = q32::add_t<a, b>;
 
 		auto x = c::x::v;
 		auto y = c::y::v;
@@ -549,10 +549,10 @@ int test_add_q32() {
 
 int test_sub_q32() {
 	{
-		using a = Q32::val<i32::val<1>, i32::val<2>>;
-		using b = Q32::val<i32::val<1>, i32::val<4>>;
+		using a = q32::val<i32::val<1>, i32::val<2>>;
+		using b = q32::val<i32::val<1>, i32::val<4>>;
 
-		using c = Q32::sub_t<a, b>;
+		using c = q32::sub_t<a, b>;
 
 		auto x = c::x::v;
 		auto y = c::y::v;
@@ -561,10 +561,10 @@ int test_sub_q32() {
 		}
 	}
 	{
-		using a = Q32::val<i32::val<1>, i32::val<2>>;
-		using b = Q32::val<i32::val<1>, i32::val<3>>;
+		using a = q32::val<i32::val<1>, i32::val<2>>;
+		using b = q32::val<i32::val<1>, i32::val<3>>;
 
-		using c = Q32::sub_t<a, b>;
+		using c = q32::sub_t<a, b>;
 
 		auto x = c::x::v;
 		auto y = c::y::v;
@@ -573,10 +573,10 @@ int test_sub_q32() {
 		}
 	}
 	{
-		using a = Q32::val<i32::val<1>, i32::val<2>>;
-		using b = Q32::val<i32::val<1>, i32::val<2>>;
+		using a = q32::val<i32::val<1>, i32::val<2>>;
+		using b = q32::val<i32::val<1>, i32::val<2>>;
 
-		using c = Q32::sub_t<a, b>;
+		using c = q32::sub_t<a, b>;
 
 		auto x = c::x::v;
 		auto y = c::y::v;
@@ -590,10 +590,10 @@ int test_sub_q32() {
 
 int test_mul_q32() {
 	{
-		using a = Q32::val<i32::val<1>, i32::val<2>>;
-		using b = Q32::val<i32::val<1>, i32::val<4>>;
+		using a = q32::val<i32::val<1>, i32::val<2>>;
+		using b = q32::val<i32::val<1>, i32::val<4>>;
 
-		using c = Q32::mul_t<a, b>;
+		using c = q32::mul_t<a, b>;
 
 		auto x = c::x::v;
 		auto y = c::y::v;
@@ -602,10 +602,10 @@ int test_mul_q32() {
 		}
 	}
 	{
-		using a = Q32::val<i32::val<1>, i32::val<2>>;
-		using b = Q32::val<i32::val<1>, i32::val<3>>;
+		using a = q32::val<i32::val<1>, i32::val<2>>;
+		using b = q32::val<i32::val<1>, i32::val<3>>;
 
-		using c = Q32::mul_t<a, b>;
+		using c = q32::mul_t<a, b>;
 
 		auto x = c::x::v;
 		auto y = c::y::v;
@@ -614,10 +614,10 @@ int test_mul_q32() {
 		}
 	}
 	{
-		using a = Q32::val<i32::val<1>, i32::val<2>>;
-		using b = Q32::val<i32::val<0>, i32::val<2>>;
+		using a = q32::val<i32::val<1>, i32::val<2>>;
+		using b = q32::val<i32::val<0>, i32::val<2>>;
 
-		using c = Q32::mul_t<a, b>;
+		using c = q32::mul_t<a, b>;
 
 		auto x = c::x::v;
 		auto y = c::y::v;
@@ -631,10 +631,10 @@ int test_mul_q32() {
 
 int test_div_q32() {
 	{
-		using a = Q32::val<i32::val<1>, i32::val<2>>;
-		using b = Q32::val<i32::val<1>, i32::val<4>>;
+		using a = q32::val<i32::val<1>, i32::val<2>>;
+		using b = q32::val<i32::val<1>, i32::val<4>>;
 
-		using c = Q32::div_t<a, b>;
+		using c = q32::div_t<a, b>;
 
 		auto x = c::x::v;
 		auto y = c::y::v;
@@ -643,10 +643,10 @@ int test_div_q32() {
 		}
 	}
 	{
-		using a = Q32::val<i32::val<1>, i32::val<2>>;
-		using b = Q32::val<i32::val<1>, i32::val<3>>;
+		using a = q32::val<i32::val<1>, i32::val<2>>;
+		using b = q32::val<i32::val<1>, i32::val<3>>;
 
-		using c = Q32::div_t<a, b>;
+		using c = q32::div_t<a, b>;
 
 		auto x = c::x::v;
 		auto y = c::y::v;
@@ -655,10 +655,10 @@ int test_div_q32() {
 		}
 	}
 	{
-		using a = Q32::val<i32::val<0>, i32::val<2>>;
-		using b = Q32::val<i32::val<1>, i32::val<2>>;
+		using a = q32::val<i32::val<0>, i32::val<2>>;
+		using b = q32::val<i32::val<1>, i32::val<2>>;
 
-		using c = Q32::div_t<a, b>;
+		using c = q32::div_t<a, b>;
 
 		auto x = c::x::v;
 		auto y = c::y::v;
@@ -667,10 +667,10 @@ int test_div_q32() {
 		}
 	}
 	{
-		using a = Q32::val<i32::val<1>, i32::val<1>>;
-		using b = Q32::val<i32::val<2>, i32::val<1>>;
+		using a = q32::val<i32::val<1>, i32::val<1>>;
+		using b = q32::val<i32::val<2>, i32::val<1>>;
 
-		using c = Q32::div_t<a, b>;
+		using c = q32::div_t<a, b>;
 
 		auto x = c::x::v;
 		auto y = c::y::v;
@@ -683,23 +683,23 @@ int test_div_q32() {
 }
 
 int test_simplify_q32() {
-	using A = Q32::val<i32::val<2>, i32::val<2>>;
-	using B = Q32::val<i32::val<1>, i32::val<1>>;
-	using C = Q32::val<i32::val<-1>, i32::val<-1>>;
-	using D = Q32::val<i32::val<1>, i32::val<-2>>;
-	if (!Q32::eq_t<Q32::simplify_t<A>, Q32::one>::value) {
+	using A = q32::val<i32::val<2>, i32::val<2>>;
+	using B = q32::val<i32::val<1>, i32::val<1>>;
+	using C = q32::val<i32::val<-1>, i32::val<-1>>;
+	using D = q32::val<i32::val<1>, i32::val<-2>>;
+	if (!q32::eq_t<q32::simplify_t<A>, q32::one>::value) {
 		return 1;
 	}
-	if (!Q32::eq_t<Q32::simplify_t<B>, Q32::one>::value) {
+	if (!q32::eq_t<q32::simplify_t<B>, q32::one>::value) {
 		return 1;
 	}
-	if (!Q32::eq_t<Q32::simplify_t<C>, Q32::one>::value) {
+	if (!q32::eq_t<q32::simplify_t<C>, q32::one>::value) {
 		return 1;
 	}
-	if (!Q32::eq_t<Q32::simplify_t<D>, Q32::val<i32::val<-1>, i32::val<2>>>::value) {
+	if (!q32::eq_t<q32::simplify_t<D>, q32::val<i32::val<-1>, i32::val<2>>>::value) {
 		return 1;
 	}
-	if(!Q32::eq_t<Q32::simplify_t<Q32::sub_t<Q32::zero, Q32::zero>>, Q32::zero>::value) {
+	if(!q32::eq_t<q32::simplify_t<q32::sub_t<q32::zero, q32::zero>>, q32::zero>::value) {
 		return 1;
 	}
 
@@ -707,21 +707,21 @@ int test_simplify_q32() {
 }
 
 int test_eq_q32() {
-	using A = Q32::val<i32::val<2>, i32::val<2>>;
-	using B = Q32::val<i32::val<1>, i32::val<1>>;
-	using C = Q32::val<i32::val<-1>, i32::val<-1>>;
-	if (!Q32::eq_t<A, B>::value) {
+	using A = q32::val<i32::val<2>, i32::val<2>>;
+	using B = q32::val<i32::val<1>, i32::val<1>>;
+	using C = q32::val<i32::val<-1>, i32::val<-1>>;
+	if (!q32::eq_t<A, B>::value) {
 		return 1;
 	}
-	if (!Q32::eq_t<A, C>::value) {
+	if (!q32::eq_t<A, C>::value) {
 		return 1;
 	}
 	return 0;
 }
 
 int test_fraction_field_of_fraction_field () {
-	using qq32 = FractionField<Q32>;
-	if (!std::is_same<Q32, qq32>::value) {
+	using qq32 = FractionField<q32>;
+	if (!std::is_same<q32, qq32>::value) {
 		return 1;
 	}
 
@@ -937,10 +937,10 @@ int test_concept_ring() {
 	static_assert(aerobus::IsRing<i32>);
 	static_assert(aerobus::IsRing<i64>);
 	static_assert(aerobus::IsRing<zpz<3>>);
-	static_assert(aerobus::IsRing<Q32>);
-	static_assert(aerobus::IsField<Q32>);
-	static_assert(aerobus::IsRing<polynomial<i32>>);
-	static_assert(aerobus::IsField<FractionField<polynomial<i32>>>);
+	static_assert(aerobus::IsRing<aerobus::q32>);
+	static_assert(aerobus::IsField<aerobus::q32>);
+	static_assert(aerobus::IsRing<aerobus::polynomial<i32>>);
+	static_assert(aerobus::IsField<aerobus::FractionField<aerobus::polynomial<i32>>>);
 	return 0;
 }
 
