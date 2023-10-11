@@ -261,5 +261,21 @@ include "lib.h" in code
 
 Compile with -std=c++20 (at least)
 
+## benchmarks
+install (or clone) [VML](https://github.com/intel/VML) in the parent directory
+
+then run `make benchmarks`
+
+results on my laptop : 
+
+```
+[aerobus] time for 33554432 sin  (compound 12 times) : 0.132519
+[aerobus] achieved Gflops : 39.499793
+[std::math] time for 33554432 sin (compound 12 times) : 0.527655
+[std::math] achieved Gflops : 9.920292
+[vml] time for 33554432 sin  (compound 12 times) : 0.278653
+[vml] achieved Gflops : 18.784980
+```
+
 
 [![DOI](https://zenodo.org/badge/499577459.svg)](https://zenodo.org/badge/latestdoi/499577459)
