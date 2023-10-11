@@ -933,9 +933,21 @@ int test_type_list () {
 	return 0;
 }
 
+int test_concept_ring() {
+	static_assert(aerobus::IsRing<i32>);
+	static_assert(aerobus::IsRing<i64>);
+	static_assert(aerobus::IsRing<zpz<3>>);
+	static_assert(aerobus::IsRing<Q32>);
+	static_assert(aerobus::IsField<Q32>);
+	static_assert(aerobus::IsRing<polynomial<i32>>);
+	static_assert(aerobus::IsField<FractionField<polynomial<i32>>>);
+	return 0;
+}
+
 #define RUN_TEST(test_name) if (test_name() != 0) { printf("%s failed\n", #test_name); return 1; }
 
 int main(int argc, char* argv[]) {
+	RUN_TEST(test_concept_ring)
 	RUN_TEST(test_type_list)
 	RUN_TEST(test_type_at) 
 	RUN_TEST(test_poly_simplify)
