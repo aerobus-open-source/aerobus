@@ -1,3 +1,5 @@
+// -*- lsst-c++ -*-
+
 #include <cstdint> // NOLINT(clang-diagnostic-pragma-pack)
 #include <cstddef>
 #include <cstring>
@@ -6,6 +8,7 @@
 #include <algorithm>
 #include <functional>
 #include <string>
+#include <concepts>
 
 
 #ifdef _MSC_VER
@@ -16,8 +19,14 @@
 #define INLINED __attribute__((always_inline))  
 #endif
 
-
+// aligned allocation
 namespace aerobus {
+	/**
+	 * aligned allocation of count elements of type T
+	 * @tparam T the type of elements to store
+	 * @param count the number of elements
+	 * @param alignment alignment boundary
+	*/
 	template<typename T>
 	T* aligned_malloc(size_t count, size_t alignment) {
 		#ifdef _MSC_VER
@@ -28,9 +37,36 @@ namespace aerobus {
 	}
 }
 
+// concepts
+namespace aerobus
+{
+	template <typename R>
+	concept IsRing = requires {
+		typename R::one;
+		typename R::zero;
+		typename R::template add_t<typename R::one, typename R::one>;
+		typename R::template sub_t<typename R::one, typename R::one>;
+		typename R::template mul_t<typename R::one, typename R::one>;
+	};
+	
+	template <typename R>
+	concept IsIntegralDomain = IsRing<R> && requires {
+		typename R::template div_t<typename R::one, typename R::one>;
+		typename R::template mod_t<typename R::one, typename R::one>;
+		typename R::template gcd_t<typename R::one, typename R::one>;
+		typename R::template eq_t<typename R::one, typename R::one>;
+		typename R::template pos_t<typename R::one>;
+		R::is_integral_domain == true;
+	};
+
+	template<typename R>
+	concept IsField = IsIntegralDomain<R> && requires {
+		R::is_field == true;
+	};
+}
+
 // utilities
 namespace aerobus {
-
 	namespace internal
 	{
 		template<template<typename...> typename TT, typename T>
@@ -87,8 +123,14 @@ namespace aerobus {
 			(i >= 5 && i * i > n)>> : std::true_type {};
 	}
 
+	/**
+	 * check if integer is prime or not
+	 * 
+	 * @tparam n integer to check
+	*/
 	template<int32_t n>
 	struct is_prime {
+		/// @brief true iff n is prime
 		static constexpr bool value = internal::_is_prime<n, 5>::value;
 	};
 
@@ -150,6 +192,9 @@ namespace aerobus {
 // type_list
 namespace aerobus
 {
+	/**
+	 * Empty pure template struct to handle type lists
+	*/
     template <typename... Ts>
     struct type_list;
 
@@ -279,6 +324,9 @@ namespace aerobus
 
 // i32
 namespace aerobus {
+	/**
+	 * 32 bits signed integers, seen as a algebraic ring with related operations
+	*/
     struct i32 {
 		using inner_type = int32_t;
 		template<int32_t x>
@@ -331,7 +379,7 @@ namespace aerobus {
 
 		template<typename v1, typename v2>
 		struct remainder {
-			using type = val<v1::v% v2::v>;
+			using type = val<v1::v % v2::v>;
 		};
 
 		template<typename v1, typename v2>
@@ -527,7 +575,7 @@ namespace aerobus {
 		using zero = val<0>;
 		using one = val<1>;
 		static constexpr bool is_field = is_prime<p>::value;
-		static constexpr bool is_integral_domain = is_field;
+		static constexpr bool is_integral_domain = true;
 
 	private:
 		template<typename v1, typename v2>
@@ -608,11 +656,11 @@ namespace aerobus {
 	};
 }
 
-
 // polynomial
 namespace aerobus {
     // coeffN x^N + ...
 	template<typename Ring, char variable_name = 'x'>
+	requires IsIntegralDomain<Ring>
 	struct polynomial {
 		static constexpr bool is_field = false;
 		static constexpr bool is_integral_domain = Ring::is_integral_domain;
@@ -1090,9 +1138,11 @@ namespace aerobus {
 namespace aerobus {
     namespace internal {
         template<typename Ring, typename E = void>
+		requires IsIntegralDomain<Ring>
 		struct _FractionField {};
 
 		template<typename Ring>
+		requires IsIntegralDomain<Ring>
 		struct _FractionField<Ring, std::enable_if_t<Ring::is_integral_domain>>
 		{
 			static constexpr bool is_field = true;
@@ -1303,6 +1353,10 @@ namespace aerobus {
 		public:
 			template<typename v1, typename v2>
 			using add_t = typename add<v1, v2>::type;
+			template<typename v1, typename v2>
+			using mod_t = zero;
+			template<typename v1, typename v2>
+			using gcd_t = v1;
 			template<typename... vs>
 			using vadd_t = typename vadd<vs...>::type;
 			template<typename... vs>
@@ -1320,10 +1374,12 @@ namespace aerobus {
 		};
 
 		template<typename Ring, typename E = void>
+		requires IsIntegralDomain<Ring>
 		struct FractionFieldImpl {};
 
 		// fraction field of a field is the field itself
 		template<typename Field>
+		requires IsIntegralDomain<Field>
 		struct FractionFieldImpl<Field, std::enable_if_t<Field::is_field>> {
 			using type = Field;
 			template<typename v>
@@ -1332,15 +1388,18 @@ namespace aerobus {
 
 		// fraction field of a ring is the actual fraction field
 		template<typename Ring>
+		requires IsIntegralDomain<Ring>
 		struct FractionFieldImpl<Ring, std::enable_if_t<!Ring::is_field>> {
 			using type = _FractionField<Ring>;
 		};
     }
 
 	template<typename Ring>
+	requires IsIntegralDomain<Ring>
 	using FractionField = typename internal::FractionFieldImpl<Ring>::type;
 
 	template<typename Ring, char variable_name = 'x'>
+	requires IsIntegralDomain<Ring>
 	struct RationalFraction: FractionField<polynomial<Ring, variable_name>> {
 		static_assert(Ring::is_field, "invalid ring for rational fractions");
 
