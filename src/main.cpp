@@ -944,9 +944,37 @@ int test_concept_ring() {
 	return 0;
 }
 
+int test_continued_fraction() {
+	// A001203
+	constexpr double A_PI = PI_fraction::val;
+	if(::fabs(A_PI - M_PI) > 0) {
+		return 1;
+	}
+
+	// A003417
+	constexpr double A_E = E_fraction::val;
+	if(::fabs(A_E - M_E) > 0) {
+		return 1;
+	}
+
+	constexpr double A_SQRT2 = SQRT2_fraction::val;
+	if(::fabs(A_SQRT2 - M_SQRT2) > 0) {
+		return 1;
+	}
+
+	constexpr double A_SQRT3 = SQRT3_fraction::val;
+	if(::fabs(A_SQRT3 - 1.7320508075688772935) > 0) {
+		::printf("%.17g", A_SQRT3);
+		return 1;
+	}
+
+	return 0;
+}
+
 #define RUN_TEST(test_name) if (test_name() != 0) { printf("%s failed\n", #test_name); return 1; }
 
 int main(int argc, char* argv[]) {
+	RUN_TEST(test_continued_fraction)
 	RUN_TEST(test_concept_ring)
 	RUN_TEST(test_type_list)
 	RUN_TEST(test_type_at) 
