@@ -50,17 +50,17 @@ namespace aerobus
 	};
 	
 	template <typename R>
-	concept IsIntegralDomain = IsRing<R> && requires {
+	concept IsEuclideanDomain = IsRing<R> && requires {
 		typename R::template div_t<typename R::one, typename R::one>;
 		typename R::template mod_t<typename R::one, typename R::one>;
 		typename R::template gcd_t<typename R::one, typename R::one>;
 		typename R::template eq_t<typename R::one, typename R::one>;
 		typename R::template pos_t<typename R::one>;
-		R::is_integral_domain == true;
+		R::is_euclidean_domain == true;
 	};
 
 	template<typename R>
-	concept IsField = IsIntegralDomain<R> && requires {
+	concept IsField = IsEuclideanDomain<R> && requires {
 		R::is_field == true;
 	};
 }
@@ -152,7 +152,7 @@ namespace aerobus {
 		struct gcd;
 
 		template<typename Ring>
-		struct gcd<Ring, std::enable_if_t<Ring::is_integral_domain>> {
+		struct gcd<Ring, std::enable_if_t<Ring::is_euclidean_domain>> {
 			template<typename A, typename B, typename E = void>
 			struct gcd_helper {};
 
@@ -192,6 +192,9 @@ namespace aerobus {
 			using type = typename gcd_helper<A, B>::type;
 		};
 	}
+
+	template<typename T, typename A, typename B>
+	using gcd_t = typename internal::gcd<T>::template type<A, B>;
 }
 
 // type_list
@@ -355,7 +358,7 @@ namespace aerobus {
 		using zero = val<0>;
 		using one = val<1>;
 		static constexpr bool is_field = false;
-		static constexpr bool is_integral_domain = true;
+		static constexpr bool is_euclidean_domain = true;
 		template<auto x>
 		using inject_constant_t = val<static_cast<int32_t>(x)>;
 		template<typename v>
@@ -433,7 +436,7 @@ namespace aerobus {
 		using eq_t = typename eq<v1, v2>::type;
 
 		template<typename v1, typename v2>
-		using gcd_t = typename internal::gcd<i32>::template type<v1, v2>;
+		using gcd_t = gcd_t<i32, v1, v2>;
 
 		template<typename v>
 		using pos_t = typename pos<v>::type;
@@ -474,7 +477,7 @@ namespace aerobus {
 		using zero = val<0>;
 		using one = val<1>;
 		static constexpr bool is_field = false;
-		static constexpr bool is_integral_domain = true;
+		static constexpr bool is_euclidean_domain = true;
 
 	private:
 		template<typename v1, typename v2>
@@ -548,7 +551,7 @@ namespace aerobus {
 		using eq_t = typename eq<v1, v2>::type;
 
 		template<typename v1, typename v2>
-		using gcd_t = typename internal::gcd<i64>::template type<v1, v2>;
+		using gcd_t = gcd_t<i64, v1, v2>;
 
 		template<typename v>
 		using pos_t = typename pos<v>::type;
@@ -588,7 +591,7 @@ namespace aerobus {
 		using zero = val<0>;
 		using one = val<1>;
 		static constexpr bool is_field = is_prime<p>::value;
-		static constexpr bool is_integral_domain = true;
+		static constexpr bool is_euclidean_domain = true;
 
 	private:
 		template<typename v1, typename v2>
@@ -662,7 +665,7 @@ namespace aerobus {
 		using eq_t = typename eq<v1, v2>::type;
 
 		template<typename v1, typename v2>
-		using gcd_t = typename internal::gcd<i32>::template type<v1, v2>;
+		using gcd_t = gcd_t<i32, v1, v2>;
 
 		template<typename v1>
 		using pos_t = typename pos<v1>::type;
@@ -677,10 +680,10 @@ namespace aerobus {
 	 * Ring must be an integral domain
 	*/
 	template<typename Ring, char variable_name = 'x'>
-	requires IsIntegralDomain<Ring>
+	requires IsEuclideanDomain<Ring>
 	struct polynomial {
 		static constexpr bool is_field = false;
-		static constexpr bool is_integral_domain = Ring::is_integral_domain;
+		static constexpr bool is_euclidean_domain = Ring::is_euclidean_domain;
 
 		template<typename coeffN, typename... coeffs>
 		struct val {
@@ -1016,7 +1019,7 @@ namespace aerobus {
 
 		template<typename A, typename B>
 		struct div {
-			static_assert(Ring::is_integral_domain, "cannot divide in that type of Ring");
+			static_assert(Ring::is_euclidean_domain, "cannot divide in that type of Ring");
 			using q_type = typename div_helper<A, B, zero, A>::q_type;
 			using m_type = typename div_helper<A, B, zero, A>::mod_type;
 		};
@@ -1139,8 +1142,8 @@ namespace aerobus {
 
 		template<typename v1, typename v2>
 		using gcd_t = std::conditional_t<
-			Ring::is_integral_domain,
-			typename make_unit<typename internal::gcd<polynomial<Ring, variable_name>>::template type<v1, v2>>::type,
+			Ring::is_euclidean_domain,
+			typename make_unit<gcd_t<polynomial<Ring, variable_name>, v1, v2>>::type,
 			void>;
 
 		template<auto x>
@@ -1155,15 +1158,15 @@ namespace aerobus {
 namespace aerobus {
     namespace internal {
         template<typename Ring, typename E = void>
-		requires IsIntegralDomain<Ring>
+		requires IsEuclideanDomain<Ring>
 		struct _FractionField {};
 
 		template<typename Ring>
-		requires IsIntegralDomain<Ring>
-		struct _FractionField<Ring, std::enable_if_t<Ring::is_integral_domain>>
+		requires IsEuclideanDomain<Ring>
+		struct _FractionField<Ring, std::enable_if_t<Ring::is_euclidean_domain>>
 		{
 			static constexpr bool is_field = true;
-			static constexpr bool is_integral_domain = true;
+			static constexpr bool is_euclidean_domain = true;
 
 			template<typename val1, typename val2, typename E = void>
 			struct to_string_helper {};
@@ -1391,12 +1394,12 @@ namespace aerobus {
 		};
 
 		template<typename Ring, typename E = void>
-		requires IsIntegralDomain<Ring>
+		requires IsEuclideanDomain<Ring>
 		struct FractionFieldImpl {};
 
 		// fraction field of a field is the field itself
 		template<typename Field>
-		requires IsIntegralDomain<Field>
+		requires IsEuclideanDomain<Field>
 		struct FractionFieldImpl<Field, std::enable_if_t<Field::is_field>> {
 			using type = Field;
 			template<typename v>
@@ -1405,14 +1408,14 @@ namespace aerobus {
 
 		// fraction field of a ring is the actual fraction field
 		template<typename Ring>
-		requires IsIntegralDomain<Ring>
+		requires IsEuclideanDomain<Ring>
 		struct FractionFieldImpl<Ring, std::enable_if_t<!Ring::is_field>> {
 			using type = _FractionField<Ring>;
 		};
     }
 
 	template<typename Ring>
-	requires IsIntegralDomain<Ring>
+	requires IsEuclideanDomain<Ring>
 	using FractionField = typename internal::FractionFieldImpl<Ring>::type;
 }
 
