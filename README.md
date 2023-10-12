@@ -261,6 +261,8 @@ include "lib.h" in code
 
 Compile with -std=c++20 (at least)
 
+see [conformance view](https://godbolt.org/z/z6Wbdr15s)
+
 ## benchmarks
 install (or clone) [VML](https://github.com/intel/VML) in the parent directory
 
