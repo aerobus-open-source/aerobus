@@ -12,9 +12,9 @@ authors:
     orcid: 0000-0002-6291-3345 
     affiliation: 1
 affiliations:
- - name: Independant Researcher, France
+ - name: COMUA, France
    index: 1
-date: 10 June 2022
+date: 12 October 2023
 bibliography: paper.bib
 ---
 
@@ -24,7 +24,7 @@ C++ comes with high compile-time computations capability, also known as metaprog
 Templates are a language-in-the-language which is Turing-complete, meaning we can run every computation at compile time instead of runtime, as long as input data is known at compile time. 
 
 Using these capabilities, vastly extended with latest versions of the standard, we implemented a library 
-for polynomials over any discrete euclidean domain, such $\mathbb{Z}$. We  also provide a way to generate the fraction field of such rings (e.g. $\mathbb{Q}$). 
+for discrete euclidean domain, such $\mathbb{Z}$. We also provide a way to generate the fraction field of such rings (e.g. $\mathbb{Q}$). 
 
 We also implemented polynomials over such a discrete ring or field (e.g. $\mathbb{Q}[X]$). Since polynomials are also a ring, same implementation as above gives us rational fractions as field of fractions of polynomials.
 
