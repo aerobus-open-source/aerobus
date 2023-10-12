@@ -66,12 +66,12 @@ $$a_0 + a_1X + \ldots + a_nX^n$$
 
 where $a_n \neq 0$ if $n \neq 0$. 
 
-$(a_i)$, the coefficients, are elements of $A$. Theory states that if $A$ is a field, then $A[X]$ is euclidean. That means notions like division of gcd have a meaning, yielding an arithmetic of polynomials. 
+$(a_i)$, the coefficients, are elements of $\mathbb{A}$. Theory states that if $A$ is a field, then $\mathbb{A}[X]$ is euclidean. That means notions like division of gcd have a meaning, yielding an arithmetic of polynomials. 
 
 
 ## Field of fractions
-If $A$ is euclidean, we can build it's field of fractions: the smallest field containg $\mathbb{A}$. 
-We construct is a congruences classes of $A\times A$ with respect to the relation $(p,q) \sim (pp, qq)\  \mathrm{iff}\ p*qq = q*pp$. Basic algebra shows that this is a field (every element has an inverse). Canonical example is $\mathbb{Q}$, the set of rational numbers. 
+If $\mathbb{A}$ is euclidean, we can build it's field of fractions: the smallest field containg $\mathbb{A}$. 
+We construct is a congruences classes of $\mathbb{A}\times \mathbb{A}$ with respect to the relation $(p,q) \sim (pp, qq)\  \mathrm{iff}\ p*qq = q*pp$. Basic algebra shows that this is a field (every element has an inverse). Canonical example is $\mathbb{Q}$, the set of rational numbers. 
 
 Given polynomials over a field form an euclidean ring, we can do the same construction and get rational fractions $P(x) / Q(X)$ where $P$ and $Q$ are polynomials. 
 
@@ -111,7 +111,7 @@ concept IsEuclideanDomain = IsRing<R> && requires {
   R::is_euclidean_domain == true;
 };
 ```
-which express the algebraic objects described above. Then, as long as a type satisfies the IsEuclideanDomain concept, we can calculate greated common divisor of two values of this type using euclidean algorithm. As stated above, this algorithm operates on types instead of values and does not depend on the Ring, making possible for user to implement another kind of discrete integral domain without worring about that kind of algorithm :
+which express the algebraic objects described above. Then, as long as a type satisfies the IsEuclideanDomain concept, we can calculate greatest common divisor of two values of this type using euclidean algorithm. As stated above, this algorithm operates on types instead of values and does not depend on the Ring, making possible for user to implement another kind of discrete euclidean domain without worrying about that kind of algorithm :
 
 ```C++
 template<typename Ring>
@@ -204,18 +204,18 @@ V AND xx are computed at compile time, yielding the following assembly (clang 17
 
 ```assembly
 .LCPI0_0:
-        .quad   0x3fbaec7b35a00d3a              # double 0.10517091807564763
-main:                                   # @main
-        push    rax
-        lea     rdi, [rip + .L.str]
-        movsd   xmm0, qword ptr [rip + .LCPI0_0] # xmm0 = mem[0],zero
-        mov     al, 1
-        call    printf@PLT
-        xor     eax, eax
-        pop     rcx
-        ret
+  .quad   0x3fbaec7b35a00d3a  # double 0.10517091807564763
+main: # @main
+  push    rax
+  lea     rdi, [rip + .L.str]
+  movsd   xmm0, qword ptr [rip + .LCPI0_0] # xmm0 = mem[0],zero
+  mov     al, 1
+  call    printf@PLT
+  xor     eax, eax
+  pop     rcx
+  ret
 .L.str:
-        .asciz  "%lf\n"
+  .asciz  "%lf\n"
 ```
 
 ## Evaluations on variables
@@ -231,56 +231,56 @@ double expm1(const double x) {
 again, coefficients are all computed compile time, yielding following assembly (given processor supports fused multiply add) : 
 ```assembly
 .LCPI0_0:
-        .quad   0x3de6124613a86d09              # double 1.6059043836821613E-10
+  .quad   0x3de6124613a86d09  # double 1.6059043836821613E-10
 .LCPI0_1:
-        .quad   0x3e21eed8eff8d898              # double 2.08767569878681E-9
+  .quad   0x3e21eed8eff8d898  # double 2.08767569878681E-9
 .LCPI0_2:
-        .quad   0x3e5ae64567f544e4              # double 2.505210838544172E-8
+  .quad   0x3e5ae64567f544e4  # double 2.505210838544172E-8
 .LCPI0_3:
-        .quad   0x3e927e4fb7789f5c              # double 2.7557319223985888E-7
+  .quad   0x3e927e4fb7789f5c  # double 2.7557319223985888E-7
 .LCPI0_4:
-        .quad   0x3ec71de3a556c734              # double 2.7557319223985893E-6
+  .quad   0x3ec71de3a556c734  # double 2.7557319223985893E-6
 .LCPI0_5:
-        .quad   0x3efa01a01a01a01a              # double 2.4801587301587302E-5
+  .quad   0x3efa01a01a01a01a  # double 2.4801587301587302E-5
 .LCPI0_6:
-        .quad   0x3f2a01a01a01a01a              # double 1.9841269841269841E-4
+  .quad   0x3f2a01a01a01a01a  # double 1.9841269841269841E-4
 .LCPI0_7:
-        .quad   0x3f56c16c16c16c17              # double 0.0013888888888888889
+  .quad   0x3f56c16c16c16c17  # double 0.0013888888888888889
 .LCPI0_8:
-        .quad   0x3f81111111111111              # double 0.0083333333333333332
+  .quad   0x3f81111111111111  # double 0.0083333333333333332
 .LCPI0_9:
-        .quad   0x3fa5555555555555              # double 0.041666666666666664
+  .quad   0x3fa5555555555555  # double 0.041666666666666664
 .LCPI0_10:
-        .quad   0x3fc5555555555555              # double 0.16666666666666666
+  .quad   0x3fc5555555555555  # double 0.16666666666666666
 .LCPI0_11:
-        .quad   0x3fe0000000000000              # double 0.5
+  .quad   0x3fe0000000000000  # double 0.5
 .LCPI0_12:
-        .quad   0x3ff0000000000000              # double 1
+  .quad   0x3ff0000000000000  # double 1
 expm1(double):                              # @expm1(double)
-        vxorpd  xmm1, xmm1, xmm1
-        vmovsd  xmm2, qword ptr [rip + .LCPI0_0] # xmm2 = mem[0],zero
-        vfmadd231sd     xmm2, xmm0, xmm1        # xmm2 = (xmm0 * xmm1) + xmm2
-        vfmadd213sd     xmm2, xmm0, qword ptr [rip + .LCPI0_1] # xmm2 = (xmm0 * xmm2) +   
-        vfmadd213sd     xmm2, xmm0, qword ptr [rip + .LCPI0_2] # xmm2 = (xmm0 * xmm2) + mem
-        vfmadd213sd     xmm2, xmm0, qword ptr [rip + .LCPI0_3] # xmm2 = (xmm0 * xmm2) + mem
-        vfmadd213sd     xmm2, xmm0, qword ptr [rip + .LCPI0_4] # xmm2 = (xmm0 * xmm2) + mem
-        vfmadd213sd     xmm2, xmm0, qword ptr [rip + .LCPI0_5] # xmm2 = (xmm0 * xmm2) + mem
-        vfmadd213sd     xmm2, xmm0, qword ptr [rip + .LCPI0_6] # xmm2 = (xmm0 * xmm2) + mem
-        vfmadd213sd     xmm2, xmm0, qword ptr [rip + .LCPI0_7] # xmm2 = (xmm0 * xmm2) + mem
-        vfmadd213sd     xmm2, xmm0, qword ptr [rip + .LCPI0_8] # xmm2 = (xmm0 * xmm2) + mem
-        vfmadd213sd     xmm2, xmm0, qword ptr [rip + .LCPI0_9] # xmm2 = (xmm0 * xmm2) + mem
-        vfmadd213sd     xmm2, xmm0, qword ptr [rip + .LCPI0_10] # xmm2 = (xmm0 * xmm2) + mem
-        vfmadd213sd     xmm2, xmm0, qword ptr [rip + .LCPI0_11] # xmm2 = (xmm0 * xmm2) + mem
-        vfmadd213sd     xmm2, xmm0, qword ptr [rip + .LCPI0_12] # xmm2 = (xmm0 * xmm2) + mem
-        vfmadd213sd     xmm0, xmm2, xmm1        # xmm0 = (xmm2 * xmm0) + xmm1
-        ret
+  vxorpd  xmm1, xmm1, xmm1
+  vmovsd  xmm2, qword ptr [rip + .LCPI0_0] # xmm2 = mem[0],zero
+  vfmadd231sd xmm2, xmm0, xmm1       
+  vfmadd213sd xmm2, xmm0, qword ptr [rip + .LCPI0_1]
+  vfmadd213sd xmm2, xmm0, qword ptr [rip + .LCPI0_2]
+  vfmadd213sd xmm2, xmm0, qword ptr [rip + .LCPI0_3] 
+  vfmadd213sd xmm2, xmm0, qword ptr [rip + .LCPI0_4] 
+  vfmadd213sd xmm2, xmm0, qword ptr [rip + .LCPI0_5]
+  vfmadd213sd xmm2, xmm0, qword ptr [rip + .LCPI0_6]
+  vfmadd213sd xmm2, xmm0, qword ptr [rip + .LCPI0_7]
+  vfmadd213sd xmm2, xmm0, qword ptr [rip + .LCPI0_8]
+  vfmadd213sd xmm2, xmm0, qword ptr [rip + .LCPI0_9]
+  vfmadd213sd xmm2, xmm0, qword ptr [rip + .LCPI0_10]
+  vfmadd213sd xmm2, xmm0, qword ptr [rip + .LCPI0_11]
+  vfmadd213sd xmm2, xmm0, qword ptr [rip + .LCPI0_12]
+  vfmadd213sd xmm0, xmm2, xmm1
+  ret
 ```
 
 ## Apply on vectors and get proper vectorization
 If applied to a vector of data, with proper compiler hints, gcc can easily generate vectorized version of the code : 
 
 ```c++
-double compute_expm1(const size_t N, const double* const __restrict in, double* const __restrict out) {
+double compute_expm1(const size_t N, double* in, double* out) {
     using V = aerobus::expm1<aerobus::i64, 13>;
     for (size_t i = 0; i < N; ++i) {
         out[i] = V::eval(in[i]);
@@ -292,51 +292,51 @@ yielding :
 
 ```assembly
 compute_expm1(unsigned long, double const*, double*):
-        lea     rax, [rdi-1]
-        cmp     rax, 2
-        jbe     .L5
-        mov     rcx, rdi
-        xor     eax, eax
-        vxorpd  xmm1, xmm1, xmm1
-        vbroadcastsd    ymm14, QWORD PTR .LC1[rip]
-        vbroadcastsd    ymm13, QWORD PTR .LC3[rip]
-        shr     rcx, 2
-        vbroadcastsd    ymm12, QWORD PTR .LC5[rip]
-        vbroadcastsd    ymm11, QWORD PTR .LC7[rip]
-        sal     rcx, 5
-        vbroadcastsd    ymm10, QWORD PTR .LC9[rip]
-        vbroadcastsd    ymm9, QWORD PTR .LC11[rip]
-        vbroadcastsd    ymm8, QWORD PTR .LC13[rip]
-        vbroadcastsd    ymm7, QWORD PTR .LC15[rip]
-        vbroadcastsd    ymm6, QWORD PTR .LC17[rip]
-        vbroadcastsd    ymm5, QWORD PTR .LC19[rip]
-        vbroadcastsd    ymm4, QWORD PTR .LC21[rip]
-        vbroadcastsd    ymm3, QWORD PTR .LC23[rip]
-        vbroadcastsd    ymm2, QWORD PTR .LC25[rip]
+  lea     rax, [rdi-1]
+  cmp     rax, 2
+  jbe     .L5
+  mov     rcx, rdi
+  xor     eax, eax
+  vxorpd  xmm1, xmm1, xmm1
+  vbroadcastsd    ymm14, QWORD PTR .LC1[rip]
+  vbroadcastsd    ymm13, QWORD PTR .LC3[rip]
+  shr     rcx, 2
+  vbroadcastsd    ymm12, QWORD PTR .LC5[rip]
+  vbroadcastsd    ymm11, QWORD PTR .LC7[rip]
+  sal     rcx, 5
+  vbroadcastsd    ymm10, QWORD PTR .LC9[rip]
+  vbroadcastsd    ymm9, QWORD PTR .LC11[rip]
+  vbroadcastsd    ymm8, QWORD PTR .LC13[rip]
+  vbroadcastsd    ymm7, QWORD PTR .LC15[rip]
+  vbroadcastsd    ymm6, QWORD PTR .LC17[rip]
+  vbroadcastsd    ymm5, QWORD PTR .LC19[rip]
+  vbroadcastsd    ymm4, QWORD PTR .LC21[rip]
+  vbroadcastsd    ymm3, QWORD PTR .LC23[rip]
+  vbroadcastsd    ymm2, QWORD PTR .LC25[rip]
 .L3:
-        vmovupd ymm15, YMMWORD PTR [rsi+rax]
-        vmovapd ymm0, ymm15
-        vfmadd132pd     ymm0, ymm14, ymm1
-        vfmadd132pd     ymm0, ymm13, ymm15
-        vfmadd132pd     ymm0, ymm12, ymm15
-        vfmadd132pd     ymm0, ymm11, ymm15
-        vfmadd132pd     ymm0, ymm10, ymm15
-        vfmadd132pd     ymm0, ymm9, ymm15
-        vfmadd132pd     ymm0, ymm8, ymm15
-        vfmadd132pd     ymm0, ymm7, ymm15
-        vfmadd132pd     ymm0, ymm6, ymm15
-        vfmadd132pd     ymm0, ymm5, ymm15
-        vfmadd132pd     ymm0, ymm4, ymm15
-        vfmadd132pd     ymm0, ymm3, ymm15
-        vfmadd132pd     ymm0, ymm2, ymm15
-        vfmadd132pd     ymm0, ymm1, ymm15
-        vmovupd YMMWORD PTR [rdx+rax], ymm0
-        add     rax, 32
-        cmp     rcx, rax
-        jne     .L3
-        mov     rax, rdi
-        and     rax, -4
-        vzeroupper
+  vmovupd ymm15, YMMWORD PTR [rsi+rax]
+  vmovapd ymm0, ymm15
+  vfmadd132pd     ymm0, ymm14, ymm1
+  vfmadd132pd     ymm0, ymm13, ymm15
+  vfmadd132pd     ymm0, ymm12, ymm15
+  vfmadd132pd     ymm0, ymm11, ymm15
+  vfmadd132pd     ymm0, ymm10, ymm15
+  vfmadd132pd     ymm0, ymm9, ymm15
+  vfmadd132pd     ymm0, ymm8, ymm15
+  vfmadd132pd     ymm0, ymm7, ymm15
+  vfmadd132pd     ymm0, ymm6, ymm15
+  vfmadd132pd     ymm0, ymm5, ymm15
+  vfmadd132pd     ymm0, ymm4, ymm15
+  vfmadd132pd     ymm0, ymm3, ymm15
+  vfmadd132pd     ymm0, ymm2, ymm15
+  vfmadd132pd     ymm0, ymm1, ymm15
+  vmovupd YMMWORD PTR [rdx+rax], ymm0
+  add     rax, 32
+  cmp     rcx, rax
+  jne     .L3
+  mov     rax, rdi
+  and     rax, -4
+  vzeroupper
 ```
 
 # Misc
@@ -374,6 +374,16 @@ using PI_fraction = ContinuedFraction<3, 7, 15, 1, 292, 1, 1, 1, 2, 1, 3, 1, 14,
 ```
 
 then, you can have the corresponding rational number by using `PI_fraction::type` and a computation with `PI_fraction::val`.
+
+
+
+# Benchmarks
+We compare to `vml` and to the standard library in the file "benchmarks.cpp". 
+Benchmark is quite simple and test compute intensive operation : computing sinus (compound twelve times) of all elements of a large double buffer of values (larger than cache). We run code on a Asus expertbook, equipped with an Intel i7-1195G7 @ 2.90GHz. 
+
+![Performance comparison between std::math, VML and Aerobus in compound sinus computation (double precision)](performance.png)
+ 
+
 
 # Acknowledgements
 
