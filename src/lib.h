@@ -555,6 +555,7 @@ namespace aerobus {
 	};
 }
 
+// z/pz
 namespace aerobus {
 	/**
 	 * congruence classes of integers for a modulus
@@ -1908,4 +1909,32 @@ namespace aerobus {
 	/// tanh(x)
 	template<typename T, size_t deg>
 	using tanh = taylor<T, internal::tanh_coeff, deg>;
+}
+
+// continued fractions
+namespace aerobus {
+	template<int64_t... values>
+	struct ContinuedFraction {};
+
+	template<int64_t a0>
+	struct ContinuedFraction<a0> {
+		using type = typename q64::template inject_constant_t<a0>;
+		static constexpr double val = type::template get<double>();
+	};
+
+	template<int64_t a0, int64_t... rest> 
+	struct ContinuedFraction<a0, rest...> {
+		using type = q64::template add_t<
+				typename q64::template inject_constant_t<a0>,
+				typename q64::template div_t<
+					typename q64::one,
+					typename ContinuedFraction<rest...>::type
+				>>;
+		static constexpr double val = type::template get<double>();
+	};
+
+	using PI_fraction = ContinuedFraction<3, 7, 15, 1, 292, 1, 1, 1, 2, 1, 3, 1, 14, 2, 1, 1, 2, 2, 2, 2, 1>;
+	using E_fraction = ContinuedFraction<2, 1, 2, 1, 1, 4, 1, 1, 6, 1, 1, 8, 1, 1, 10, 1, 1, 12, 1, 1, 14, 1, 1>;
+	using SQRT2_fraction = ContinuedFraction<1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2>;
+	using SQRT3_fraction = ContinuedFraction<1, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2>;
 }
