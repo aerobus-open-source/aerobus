@@ -1431,6 +1431,11 @@ namespace aerobus {
 	/// @tparam v2 value 2 in Ring
 	template<typename Ring, typename v1, typename v2>
 	using makefraction_t = typename FractionField<Ring>::template val<v1, v2>;
+
+	template<typename Ring, typename v1, typename v2>
+	using addfractions_t = typename FractionField<Ring>::template add_t<v1, v2>;
+	template<typename Ring, typename v1, typename v2>
+	using mulfractions_t = typename FractionField<Ring>::template mul_t<v1, v2>;
 }
 
 namespace aerobus {
@@ -1497,19 +1502,17 @@ namespace aerobus {
 		struct bernouilli_helper {
 			using type = typename bernouilli_helper<
 				T,
-				typename FractionField<T>::template add_t<
-				accum,
-				typename FractionField<T>::template mul_t<
-				makefraction_t<T, 
-					typename combination_t<T, k, m + 1>,
-					typename T::one
-				>,
-				typename bernouilli<T, k>::type
-				>
+				addfractions_t<T, 
+					accum,
+					mulfractions_t<T, 
+						makefraction_t<T, 
+							combination_t<T, k, m + 1>,
+							typename T::one>,
+						typename bernouilli<T, k>::type
+					>
 				>,
 				k + 1,
-				m
-			>::type;
+				m>::type;
 		};
 
 		template<typename T, typename accum, size_t m>
@@ -1802,7 +1805,7 @@ namespace aerobus {
 				_4p,
 				FractionField<T>::template mul_t<
 				_4pm1,
-				typename bernouilli_t<T, (i + 1)>
+				bernouilli_t<T, (i + 1)>
 				>
 				>
 			>;
@@ -1834,7 +1837,7 @@ namespace aerobus {
 				_4p,
 				typename FractionField<T>::template mul_t<
 				_4pm1,
-				typename bernouilli_t<T, (i + 1)>
+				bernouilli_t<T, (i + 1)>
 				>
 				>::type;
 		public:
