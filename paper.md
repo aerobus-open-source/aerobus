@@ -1,10 +1,10 @@
 ---
-title: 'Aerobus: a C++ template library for polynomials algebra over discrete integral domains'
+title: 'Aerobus: a C++ template library for polynomials algebra over discrete euclidean domains'
 tags:
   - Polynomials
   - Mathematics
   - metaprogramming
-  - Integral Domains
+  - Euclidean Domains
   - Rings
   - Fields
 authors:
@@ -24,24 +24,29 @@ C++ comes with high compile-time computations capability, also known as metaprog
 Templates are a language-in-the-language which is Turing-complete, meaning we can run every computation at compile time instead of runtime, as long as input data is known at compile time. 
 
 Using these capabilities, vastly extended with latest versions of the standard, we implemented a library 
-for polynomials over any discrete integral domain, such $\mathbb{Z}$. We  also provide a way to generate the fraction field of such rings (e.g. $\mathbb{Q}$). 
+for polynomials over any discrete euclidean domain, such $\mathbb{Z}$. We  also provide a way to generate the fraction field of such rings (e.g. $\mathbb{Q}$). 
 
 We also implemented polynomials over such a discrete ring or field (e.g. $\mathbb{Q}[X]$). Since polynomials are also a ring, same implementation as above gives us rational fractions as field of fractions of polynomials.
 
 In addition, we expose a way to generate taylor series of any math functions as long as coefficients are known. 
+Likewise, given we have a typed representation of rationals, we've been able to add continued fractions as part of the library. 
 
 `Aerobus` was designed to be used in high performance software, teaching purposes or embedded sotfware where as much as possible must be precomputed to shrink binary size. It compiles with major compilers : gcc, clang and msvc. It is quite easily configurable and extensible. 
 
 # Statement of need
-Polynomials over discrete integral domains are highly used in physics simulations or cryptographic applications. 
-Most of software applications evaluate transcendental functions, such as `exp`, `sin` by using C math library
-which lead to a call -- inlining being often prevented by compiler when high precision is required. 
-Hardwarde vendors provide high level libraries such as [@wang2014intel], but implementation is often hidden. 
-We can also provide inline functions, such as [@vml] does. 
-But library such VML are highly tight to one architecture by their use of intrinsics or inline assembly. 
-In addition, they only provide a restricted list of math functions and do not expose capabilities to generate 
-high performance versions of other functions such as arctanh. 
-`Aerobus` provides automatic generation of such functions.
+By implementing general algebra concepts such as discrete rings, field of fractions and polynomials, `Aerobus` can serve multiple purposes. 
+
+The main application we want to express in this paper is the automatic (and configurable) generation or taylor approximation of usual transcendental functions such as `exp` or `sin`. The "generated" code is pure C++ and can be inspected. 
+
+This functions are usually exposed by the standard library (`<cmath>`) with high (guaranteed) precision. However, in high performance computing, evaluate `std::exp` has several flaws : 
+- it leads to a syscal which is very expensive
+- it doesn't leverage vector units (avx, avx2, avx512 or equivalent in non-intel hardware). 
+
+Hardwarde vendors provide high performance libraries such as [@wang2014intel], but implementation is often hidden and absolutely not extensible. 
+
+Some others can provide vectorized functions, such as [@vml] does. But library such VML are highly tight to one architecture by their use of intrinsics or inline assembly. In addition, they only provide a restricted list of math functions and do not expose capabilities to generate high performance versions of other functions such as arctanh. 
+
+`Aerobus` provides automatic generation of such functions, in an hardware independant way.
 In addition, `Aerobus` provides a way to control precision of generated function by changing the degree of taylor expansion, which can't be use in competing libraries without reimplementing the whole function. 
 
 # Mathematic definitions
@@ -50,39 +55,96 @@ Addition is commutative and associative and every element $x$ has an inverse $-x
 
 An `integral domain` is a ring with one additional property. For every elements $a, b, c$ such as $ab = ac$, then either $a = 0$ or $b = c$. Such a ring is not always a field, such as $\mathbb{Z}$ shows it. 
 
-For such an integral domain, we can build two important structures : 
+An `euclidean domain` is an integral domain that can be endowed with an euclidean division. 
 
-- the polynomials $\mathbb{A}[X]$, wich is in turn an integral domain when given usual operations ;
-- the field of fractions, which is the smallest field containg $\mathbb{A}$. Canonical example is $\mathbb{Q}$, the set of rational numbers. 
+For such an euclidean domain, we can build two important structures : 
+
+## Polynomials $\mathbb{A}[X]$
+Polynomials over $\mathbb{A}$ is the free module generated by a base noted $(X^k)_{k\in\mathbb{N}}$. Practically speaking, it's the set of 
+
+$$a_0 + a_1X + \ldots + a_nX^n$$
+
+where $a_n \neq 0$ if $n \neq 0$. 
+
+$(a_i)$, the coefficients, are elements of $A$. Theory states that if $A$ is a field, then $A[X]$ is euclidean. That means notions like division of gcd have a meaning, yielding an arithmetic of polynomials. 
+
+
+## Field of fractions
+If $A$ is euclidean, we can build it's field of fractions: the smallest field containg $\mathbb{A}$. 
+We construct is a congruences classes of $A\times A$ with respect to the relation $(p,q) \sim (pp, qq)\  \mathrm{iff}\ p*qq = q*pp$. Basic algebra shows that this is a field (every element has an inverse). Canonical example is $\mathbb{Q}$, the set of rational numbers. 
+
+Given polynomials over a field form an euclidean ring, we can do the same construction and get rational fractions $P(x) / Q(X)$ where $P$ and $Q$ are polynomials. 
 
 # Software
-Library exposes a some native types: 
+All types in `aerobus` have the same structure.
+
+An englobing type describes an algebraic structure. It has a nested type `val` which is always a template model describing elements of the set.
+
+For example, integers : 
+```C++
+struct i32 {
+		template<int32_t x>
+		struct val {};
+};
+```
+This is because we want to operate on types more than on values. This allows generic implementation, for example of gcd (see below) without specifying what are the values. 
+
+## Concepts
+Library exposes two main `concepts` : 
+```C++
+template <typename R>
+concept IsRing = requires {
+  typename R::one;
+  typename R::zero;
+  typename R::template add_t<typename R::one, typename R::one>;
+  typename R::template sub_t<typename R::one, typename R::one>;
+  typename R::template mul_t<typename R::one, typename R::one>;
+};
+
+template <typename R>
+concept IsEuclideanDomain = IsRing<R> && requires {
+  typename R::template div_t<typename R::one, typename R::one>;
+  typename R::template mod_t<typename R::one, typename R::one>;
+  typename R::template gcd_t<typename R::one, typename R::one>;
+  typename R::template eq_t<typename R::one, typename R::one>;
+  typename R::template pos_t<typename R::one>;
+  R::is_euclidean_domain == true;
+};
+```
+which express the algebraic objects described above. Then, as long as a type satisfies the IsEuclideanDomain concept, we can calculate greated common divisor of two values of this type using euclidean algorithm. As stated above, this algorithm operates on types instead of values and does not depend on the Ring, making possible for user to implement another kind of discrete integral domain without worring about that kind of algorithm :
+
+```C++
+template<typename Ring>
+struct gcd {
+  /// v1 and v2 are values in Ring
+  template <typename v1, typename v2>
+  using type = (some implementation)
+};
+/// alias to save some typename and template keyworks all over the code
+template<typename Ring, typename v1, typename v2>
+using gcd_t = typename gcd<Ring>::template type<v1, v2>;
+```
+
+The same is done for field of fraction : implementation does not rely on the nature of underlying euclidean domain but rather on its structure. It's automatically done by templates, as long as Ring satisfies the appropriate concept : 
+
+```C++
+template<typename Ring>
+requires IsEuclideanDomain<Ring>
+using FractionField (some implementation);
+```
+
+Doing that way, $\mathbb{Q}$ has the exact same implementation as rational fractions of polynomials. User could also get the field of fractions of any ring of his convenience, as long as he implements the required concepts. 
+
+## Native types
+`Aerobus` exposes several preimplemented types, as they are common and necessary to do actual computations : 
 
 - `i32` and `i64` ($\mathbb{Z}$ seen as 32bits or 64 bits integers)
 - `zpz` the quotient ring $\mathbb{Z}/p\mathbb{Z}$ 
 - `polynomial<T>` where T is a ring
-- `FractionField<T>` where T is an integral domain
+- `FractionField<T>` where T is an euclidean domain
 
-Polynomial expose an evaluation function, which automatically generate Horner development and unrolls the
-loop by generating it at compile time.
-
-All of those types expose internal operations, such as: 
-
-- add_t (addition)
-- sub_t (substraction)
-- mul_t (multiplication)
-- is_zero_t (is zero element)
-- one (one element -- neutral for multiplication)
-- zero (zero elemet -- neutral for addition)
-- eq_t (equality)
-
-Integral domains and polynomials also expose additional operations : 
-
-- div_t (division)
-- mod_t (modulus)
-- gcd_t (greatest common divisor)
-- lt_t (less than)
-- gt_t (greater than)
+Polynomial expose an evaluation function, which automatically generates Horner development and unrolls the
+loop by generating it at compile time. 
 
 Library provide builtin integers and functions, such as:
 
@@ -111,43 +173,207 @@ And taylor series for these functions:
 - asinh
 - atanh
 
-# Example and resulting assembly
+Additionnaly, library comes with a type designed to help the user implement custom taylor series. 
+If user provides a type `mycoeff` satisfying the following template : 
 
-Considering this function, applying expm1 twelve time to a double precision float: 
+```C++
+template<typename T, size_t i>
+struct mycoeff {
+    using type = (something in FractionField<T>);
+  };
+};
 ```
-double expm1_12(const double x) {
-	using V = aerobus::expm1<aerobus::i64, 13>;
-	return V::eval(V::eval(V::eval(V::eval(V::eval(V::eval(
-		V::eval(V::eval(V::eval(V::eval(V::eval(V::eval(x))))))))))));
+the correspondint taylor serie can be built using : 
+```C++
+template<typename T, size_t deg>
+using myfunc = taylor<T, mycoeff, deg>;
+```
+
+# Examples
+## Pure compile time
+Lets consider the following program, featuring function exp - 1, with 13 64-bits coefficients
+```c++
+int main() {
+    using V = aerobus::expm1<aerobus::i64, 13>;
+    static constexpr double xx = V::eval(0.1);
+    printf("%lf\n", xx);
 }
+```
 
-void vexpm1_12(const std::vector<double>& in, std::vector<double>& out) {
-	for (int i = 0; i < in.size(); ++i) {
-		out[i] = expm1_12(in[i]);
-	}
+V AND xx are computed at compile time, yielding the following assembly (clang 17)
+
+```assembly
+.LCPI0_0:
+        .quad   0x3fbaec7b35a00d3a              # double 0.10517091807564763
+main:                                   # @main
+        push    rax
+        lea     rdi, [rip + .L.str]
+        movsd   xmm0, qword ptr [rip + .LCPI0_0] # xmm0 = mem[0],zero
+        mov     al, 1
+        call    printf@PLT
+        xor     eax, eax
+        pop     rcx
+        ret
+.L.str:
+        .asciz  "%lf\n"
+```
+
+## Evaluations on variables
+On the other hand, one might want to define a runtime function this way : 
+
+```c++
+double expm1(const double x) {
+    using V = aerobus::expm1<aerobus::i64, 13>;
+    return V::eval(x);
 }
 ```
 
-Compiled with `clang 17.0` with options `-O3 -std=c++20 -mavx512f`, it yields an assembly similar to: 
+again, coefficients are all computed compile time, yielding following assembly (given processor supports fused multiply add) : 
+```assembly
+.LCPI0_0:
+        .quad   0x3de6124613a86d09              # double 1.6059043836821613E-10
+.LCPI0_1:
+        .quad   0x3e21eed8eff8d898              # double 2.08767569878681E-9
+.LCPI0_2:
+        .quad   0x3e5ae64567f544e4              # double 2.505210838544172E-8
+.LCPI0_3:
+        .quad   0x3e927e4fb7789f5c              # double 2.7557319223985888E-7
+.LCPI0_4:
+        .quad   0x3ec71de3a556c734              # double 2.7557319223985893E-6
+.LCPI0_5:
+        .quad   0x3efa01a01a01a01a              # double 2.4801587301587302E-5
+.LCPI0_6:
+        .quad   0x3f2a01a01a01a01a              # double 1.9841269841269841E-4
+.LCPI0_7:
+        .quad   0x3f56c16c16c16c17              # double 0.0013888888888888889
+.LCPI0_8:
+        .quad   0x3f81111111111111              # double 0.0083333333333333332
+.LCPI0_9:
+        .quad   0x3fa5555555555555              # double 0.041666666666666664
+.LCPI0_10:
+        .quad   0x3fc5555555555555              # double 0.16666666666666666
+.LCPI0_11:
+        .quad   0x3fe0000000000000              # double 0.5
+.LCPI0_12:
+        .quad   0x3ff0000000000000              # double 1
+expm1(double):                              # @expm1(double)
+        vxorpd  xmm1, xmm1, xmm1
+        vmovsd  xmm2, qword ptr [rip + .LCPI0_0] # xmm2 = mem[0],zero
+        vfmadd231sd     xmm2, xmm0, xmm1        # xmm2 = (xmm0 * xmm1) + xmm2
+        vfmadd213sd     xmm2, xmm0, qword ptr [rip + .LCPI0_1] # xmm2 = (xmm0 * xmm2) +   
+        vfmadd213sd     xmm2, xmm0, qword ptr [rip + .LCPI0_2] # xmm2 = (xmm0 * xmm2) + mem
+        vfmadd213sd     xmm2, xmm0, qword ptr [rip + .LCPI0_3] # xmm2 = (xmm0 * xmm2) + mem
+        vfmadd213sd     xmm2, xmm0, qword ptr [rip + .LCPI0_4] # xmm2 = (xmm0 * xmm2) + mem
+        vfmadd213sd     xmm2, xmm0, qword ptr [rip + .LCPI0_5] # xmm2 = (xmm0 * xmm2) + mem
+        vfmadd213sd     xmm2, xmm0, qword ptr [rip + .LCPI0_6] # xmm2 = (xmm0 * xmm2) + mem
+        vfmadd213sd     xmm2, xmm0, qword ptr [rip + .LCPI0_7] # xmm2 = (xmm0 * xmm2) + mem
+        vfmadd213sd     xmm2, xmm0, qword ptr [rip + .LCPI0_8] # xmm2 = (xmm0 * xmm2) + mem
+        vfmadd213sd     xmm2, xmm0, qword ptr [rip + .LCPI0_9] # xmm2 = (xmm0 * xmm2) + mem
+        vfmadd213sd     xmm2, xmm0, qword ptr [rip + .LCPI0_10] # xmm2 = (xmm0 * xmm2) + mem
+        vfmadd213sd     xmm2, xmm0, qword ptr [rip + .LCPI0_11] # xmm2 = (xmm0 * xmm2) + mem
+        vfmadd213sd     xmm2, xmm0, qword ptr [rip + .LCPI0_12] # xmm2 = (xmm0 * xmm2) + mem
+        vfmadd213sd     xmm0, xmm2, xmm1        # xmm0 = (xmm2 * xmm0) + xmm1
+        ret
+```
 
+## Apply on vectors and get proper vectorization
+If applied to a vector of data, with proper compiler hints, gcc can easily generate vectorized version of the code : 
+
+```c++
+double compute_expm1(const size_t N, const double* const __restrict in, double* const __restrict out) {
+    using V = aerobus::expm1<aerobus::i64, 13>;
+    for (size_t i = 0; i < N; ++i) {
+        out[i] = V::eval(in[i]);
+    }
+}
 ```
-vfmadd213pd %zmm0, %zmm15, %zmm14 # zmm14 = (zmm15 * zmm14) + zmm0
-vfmadd213pd %zmm2, %zmm15, %zmm14 # zmm14 = (zmm15 * zmm14) + zmm2
-vfmadd213pd %zmm3, %zmm15, %zmm14 # zmm14 = (zmm15 * zmm14) + zmm3
-vfmadd213pd %zmm4, %zmm15, %zmm14 # zmm14 = (zmm15 * zmm14) + zmm4
-vfmadd213pd %zmm5, %zmm15, %zmm14 # zmm14 = (zmm15 * zmm14) + zmm5
-vfmadd213pd %zmm6, %zmm15, %zmm14 # zmm14 = (zmm15 * zmm14) + zmm6
-vfmadd213pd %zmm7, %zmm15, %zmm14 # zmm14 = (zmm15 * zmm14) + zmm7
-vfmadd213pd %zmm8, %zmm15, %zmm14 # zmm14 = (zmm15 * zmm14) + zmm8
-vfmadd213pd %zmm9, %zmm15, %zmm14 # zmm14 = (zmm15 * zmm14) + zmm9
-vfmadd213pd %zmm10, %zmm15, %zmm14 # zmm14 = (zmm15 * zmm14) + zmm10
-vfmadd213pd %zmm11, %zmm15, %zmm14 # zmm14 = (zmm15 * zmm14) + zmm11
-vfmadd213pd %zmm12, %zmm15, %zmm14 # zmm14 = (zmm15 * zmm14) + zmm12
-vfmadd213pd %zmm13, %zmm15, %zmm14 # zmm14 = (zmm15 * zmm14) + zmm13
-vfmadd213pd %zmm1, %zmm15, %zmm14 # zmm14 = (zmm15 * zmm14) + zmm1
-vxorpd %xmm15, %xmm15, %xmm15
+
+yielding : 
+
+```assembly
+compute_expm1(unsigned long, double const*, double*):
+        lea     rax, [rdi-1]
+        cmp     rax, 2
+        jbe     .L5
+        mov     rcx, rdi
+        xor     eax, eax
+        vxorpd  xmm1, xmm1, xmm1
+        vbroadcastsd    ymm14, QWORD PTR .LC1[rip]
+        vbroadcastsd    ymm13, QWORD PTR .LC3[rip]
+        shr     rcx, 2
+        vbroadcastsd    ymm12, QWORD PTR .LC5[rip]
+        vbroadcastsd    ymm11, QWORD PTR .LC7[rip]
+        sal     rcx, 5
+        vbroadcastsd    ymm10, QWORD PTR .LC9[rip]
+        vbroadcastsd    ymm9, QWORD PTR .LC11[rip]
+        vbroadcastsd    ymm8, QWORD PTR .LC13[rip]
+        vbroadcastsd    ymm7, QWORD PTR .LC15[rip]
+        vbroadcastsd    ymm6, QWORD PTR .LC17[rip]
+        vbroadcastsd    ymm5, QWORD PTR .LC19[rip]
+        vbroadcastsd    ymm4, QWORD PTR .LC21[rip]
+        vbroadcastsd    ymm3, QWORD PTR .LC23[rip]
+        vbroadcastsd    ymm2, QWORD PTR .LC25[rip]
+.L3:
+        vmovupd ymm15, YMMWORD PTR [rsi+rax]
+        vmovapd ymm0, ymm15
+        vfmadd132pd     ymm0, ymm14, ymm1
+        vfmadd132pd     ymm0, ymm13, ymm15
+        vfmadd132pd     ymm0, ymm12, ymm15
+        vfmadd132pd     ymm0, ymm11, ymm15
+        vfmadd132pd     ymm0, ymm10, ymm15
+        vfmadd132pd     ymm0, ymm9, ymm15
+        vfmadd132pd     ymm0, ymm8, ymm15
+        vfmadd132pd     ymm0, ymm7, ymm15
+        vfmadd132pd     ymm0, ymm6, ymm15
+        vfmadd132pd     ymm0, ymm5, ymm15
+        vfmadd132pd     ymm0, ymm4, ymm15
+        vfmadd132pd     ymm0, ymm3, ymm15
+        vfmadd132pd     ymm0, ymm2, ymm15
+        vfmadd132pd     ymm0, ymm1, ymm15
+        vmovupd YMMWORD PTR [rdx+rax], ymm0
+        add     rax, 32
+        cmp     rcx, rax
+        jne     .L3
+        mov     rax, rdi
+        and     rax, -4
+        vzeroupper
 ```
-In which all vector registers are saturated with fused multiply-add instructions. 
+
+# Misc
+`Aerobus` also provides [continued fractions](https://en.wikipedia.org/wiki/Continued_fraction), seen as an example of what is possible when your have a proper type representations of field of fractions. 
+Implementation is quite trivial : 
+
+```C++
+template<int64_t... values>
+struct ContinuedFraction {};
+
+template<int64_t a0>
+struct ContinuedFraction<a0> {
+  using type = typename q64::template inject_constant_t<a0>;
+  static constexpr double val = type::template get<double>();
+};
+
+template<int64_t a0, int64_t... rest> 
+struct ContinuedFraction<a0, rest...> {
+  using type = q64::template add_t<
+      typename q64::template inject_constant_t<a0>,
+      typename q64::template div_t<
+        typename q64::one,
+        typename ContinuedFraction<rest...>::type
+      >>;
+  static constexpr double val = type::template get<double>();
+};
+```
+
+once done, you can get a rational approximation of numbers using their known representation, given by the On-Line Encyclopedia of Integer Sequences (OEIS). 
+
+For example, an approximation of $\pi$ is given by 
+
+```C++
+using PI_fraction = ContinuedFraction<3, 7, 15, 1, 292, 1, 1, 1, 2, 1, 3, 1, 14, 2, 1, 1, 2, 2, 2, 2, 1>
+```
+
+then, you can have the corresponding rational number by using `PI_fraction::type` and a computation with `PI_fraction::val`.
 
 # Acknowledgements
 
