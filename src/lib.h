@@ -1941,3 +1941,33 @@ namespace aerobus {
 	using SQRT2_fraction = ContinuedFraction<1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2>;
 	using SQRT3_fraction = ContinuedFraction<1, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2>;
 }
+
+// known polynomials
+namespace aerobus {
+	namespace internal {
+		template<typename T, int deg>
+		struct chebyshev_helper {
+			using P = polynomial<FractionField<T>>;
+			using type = P::template sub_t<
+				P::template mul_t<
+					P::template val<FractionField<T>::template inject_constant_t<2>>,
+					typename chebyshev_helper<T, deg-1>::type;
+				>,
+				typename chebyshev_helper<T, deg-2>::type
+			>;
+		};
+
+		template<typename T>
+		struct chebyshev_helper<T, 0> {
+			using type = polynomial<FractionField<T>>::one;
+		};
+
+		template<typename T>
+		struct chebyshev_helper<T, 0> {
+			using type = polynomial<FractionField<T>>::X;
+		};
+	}
+
+	template<typename T, size_t deg>
+	using chebyshev = typename internal::chebyshev_helper<T, deg>::type;
+}
