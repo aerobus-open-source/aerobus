@@ -1427,6 +1427,8 @@ namespace aerobus {
 	using fpq32 = FractionField<polynomial<q32>>;
 	/// @brief 64 bits rationals
 	using q64 = FractionField<i64>;
+	/// @brief polynomial with 64 bits integers coefficients
+	using pq64 = polynomial<i64>;
 	/// @brief polynomial with 64 bits rational coefficients
 	using fpq64 = FractionField<polynomial<q64>>;
 	/// @brief helper type : the rational V1/V2 in the field of fractions of Ring
@@ -1945,29 +1947,31 @@ namespace aerobus {
 // known polynomials
 namespace aerobus {
 	namespace internal {
-		template<typename T, int deg>
+		template<int deg>
 		struct chebyshev_helper {
-			using P = polynomial<FractionField<T>>;
-			using type = P::template sub_t<
-				P::template mul_t<
-					P::template val<FractionField<T>::template inject_constant_t<2>>,
-					typename chebyshev_helper<T, deg-1>::type;
+			using type = typename pq64::template sub_t<
+				typename pq64::template mul_t<
+					typename pq64::template mul_t<
+						pq64::inject_constant_t<2>,
+						typename pq64::X
+					>,
+					typename chebyshev_helper<deg-1>::type
 				>,
-				typename chebyshev_helper<T, deg-2>::type
+				typename chebyshev_helper<deg-2>::type
 			>;
 		};
 
-		template<typename T>
-		struct chebyshev_helper<T, 0> {
-			using type = polynomial<FractionField<T>>::one;
+		template<>
+		struct chebyshev_helper<0> {
+			using type = typename pq64::one;
 		};
 
-		template<typename T>
-		struct chebyshev_helper<T, 0> {
-			using type = polynomial<FractionField<T>>::X;
+		template<>
+		struct chebyshev_helper<1> {
+			using type = typename pq64::X;
 		};
 	}
 
-	template<typename T, size_t deg>
-	using chebyshev = typename internal::chebyshev_helper<T, deg>::type;
+	template<size_t deg>
+	using chebyshev = typename internal::chebyshev_helper<deg>::type;
 }
