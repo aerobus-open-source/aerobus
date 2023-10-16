@@ -33,7 +33,7 @@ Likewise, given we have a typed representation of rationals, we've been able to 
 
 `Aerobus` was designed to be used in high performance software, teaching purposes or embedded sotfware where as much as possible must be precomputed to shrink binary size. It compiles with major compilers : gcc, clang and msvc. It is quite easily configurable and extensible. 
 
-# Statement of need []{label="statementofneed"}
+# Statement of need
 By implementing general algebra concepts such as discrete rings, field of fractions and polynomials, `Aerobus` can serve multiple purposes. 
 
 The main application we want to express in this paper is the automatic (and configurable) generation or taylor approximation of usual transcendental functions such as `exp` or `sin`. The "generated" code is pure C++ and can be inspected. 
@@ -425,10 +425,10 @@ For each version, we note performance (in billions of sinus per second) and erro
 
 ![Performance and error of aerobus, depending of the degree of the taylor expansion of sinus](performance_and_error.png)
 
-Peak performance is reached for degree 3 with 20 billions sinus per second (error $\sim 1E-4$). 
-Error is minimal ($1E-16$) for degree 13 with performance still significantly higher than fastmath. 
+Peak performance is reached for degree 3 with 20 billions sinus per second (error $\sim 10^{-4}$). 
+Error is minimal ($10^{-16}$) for degree 13 with performance still significantly higher than fastmath. 
 
-As stated in \ref{"statementofneed"}, user can conveniently choose precision or speed at compile time, which is, as far as we know, not possible in any other library. 
+As sayd in the statement of need, user can conveniently choose precision or speed at compile time, which is, as far as we know, not possible in any other library. 
 
 # Acknowledgements
 
