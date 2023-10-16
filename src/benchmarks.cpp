@@ -3,10 +3,12 @@
 #include <chrono>
 #include <cmath>
 #include "lib.h"
-#include "vml_math.h"
 #include <immintrin.h>
 
 const size_t N = 134217728 / 16;
+
+
+extern "C" __m512d _ZGVeN8v_sin(__m512d x);
 
 #ifndef DEGREE 
 #define DEGREE 13
