@@ -972,7 +972,7 @@ int test_continued_fraction() {
 }
 
 int test_chebyshev() {
-	using T4 = chebyshev<4>;
+	using T4 = chebyshev_T<4>;
 	if(T4::degree != 4) {
 		return 1;
 	}
@@ -991,6 +991,27 @@ int test_chebyshev() {
 	if (T4::template coeff_at_t<0>::v != 1) {
 		return 0;
 	}
+
+	using U4 = chebyshev_U<4>;
+	if(U4::degree != 4) {
+		return 1;
+	}
+	if (U4::template coeff_at_t<4>::v != 16) {
+		return 0;
+	}
+	if (U4::template coeff_at_t<3>::v != 0) {
+		return 0;
+	}
+	if (U4::template coeff_at_t<2>::v != -12) {
+		return 0;
+	}
+	if (U4::template coeff_at_t<1>::v != 0) {
+		return 0;
+	}
+	if (U4::template coeff_at_t<0>::v != 1) {
+		return 0;
+	}
+
 
 	return 0;
 }
