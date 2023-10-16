@@ -16,7 +16,7 @@
 #define INLINED __forceinline 
 #else 
 #define ALIGNED(x) __attribute__((aligned(x)))
-#define INLINED __attribute__((always_inline))  
+#define INLINED __attribute__((always_inline)) inline
 #endif
 
 // aligned allocation
@@ -1427,6 +1427,8 @@ namespace aerobus {
 	using fpq32 = FractionField<polynomial<q32>>;
 	/// @brief 64 bits rationals
 	using q64 = FractionField<i64>;
+	/// @brief polynomial with 64 bits integers coefficients
+	using pi64 = polynomial<i64>;
 	/// @brief polynomial with 64 bits rational coefficients
 	using fpq64 = FractionField<polynomial<q64>>;
 	/// @brief helper type : the rational V1/V2 in the field of fractions of Ring
@@ -1940,4 +1942,50 @@ namespace aerobus {
 	using E_fraction = ContinuedFraction<2, 1, 2, 1, 1, 4, 1, 1, 6, 1, 1, 8, 1, 1, 10, 1, 1, 12, 1, 1, 14, 1, 1>;
 	using SQRT2_fraction = ContinuedFraction<1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2>;
 	using SQRT3_fraction = ContinuedFraction<1, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2>;
+}
+
+// known polynomials
+namespace aerobus {
+	namespace internal {
+		template<int kind, int deg>
+		struct chebyshev_helper {
+			using type = typename pi64::template sub_t<
+				typename pi64::template mul_t<
+					typename pi64::template mul_t<
+						pi64::inject_constant_t<2>,
+						typename pi64::X
+					>,
+					typename chebyshev_helper<kind, deg-1>::type
+				>,
+				typename chebyshev_helper<kind, deg-2>::type
+			>;
+		};
+
+		template<>
+		struct chebyshev_helper<1, 0> {
+			using type = typename pi64::one;
+		};
+
+		template<>
+		struct chebyshev_helper<1, 1> {
+			using type = typename pi64::X;
+		};
+
+		template<>
+		struct chebyshev_helper<2, 0> {
+			using type = typename pi64::one;
+		};
+
+		template<>
+		struct chebyshev_helper<2, 1> {
+			using type = typename pi64::template mul_t<
+							typename pi64::inject_constant_t<2>, 
+							typename pi64::X>;
+		};
+	}
+
+	template<size_t deg>
+	using chebyshev_T = typename internal::chebyshev_helper<1, deg>::type;
+	template<size_t deg>
+	using chebyshev_U = typename internal::chebyshev_helper<2, deg>::type;
 }

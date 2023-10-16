@@ -971,9 +971,55 @@ int test_continued_fraction() {
 	return 0;
 }
 
+int test_chebyshev() {
+	using T4 = chebyshev_T<4>;
+	if(T4::degree != 4) {
+		return 1;
+	}
+	if (T4::template coeff_at_t<4>::v != 8) {
+		return 0;
+	}
+	if (T4::template coeff_at_t<3>::v != 0) {
+		return 0;
+	}
+	if (T4::template coeff_at_t<2>::v != -8) {
+		return 0;
+	}
+	if (T4::template coeff_at_t<1>::v != 0) {
+		return 0;
+	}
+	if (T4::template coeff_at_t<0>::v != 1) {
+		return 0;
+	}
+
+	using U4 = chebyshev_U<4>;
+	if(U4::degree != 4) {
+		return 1;
+	}
+	if (U4::template coeff_at_t<4>::v != 16) {
+		return 0;
+	}
+	if (U4::template coeff_at_t<3>::v != 0) {
+		return 0;
+	}
+	if (U4::template coeff_at_t<2>::v != -12) {
+		return 0;
+	}
+	if (U4::template coeff_at_t<1>::v != 0) {
+		return 0;
+	}
+	if (U4::template coeff_at_t<0>::v != 1) {
+		return 0;
+	}
+
+
+	return 0;
+}
+
 #define RUN_TEST(test_name) if (test_name() != 0) { printf("%s failed\n", #test_name); return 1; }
 
 int main(int argc, char* argv[]) {
+	RUN_TEST(test_chebyshev);
 	RUN_TEST(test_continued_fraction)
 	RUN_TEST(test_concept_ring)
 	RUN_TEST(test_type_list)
