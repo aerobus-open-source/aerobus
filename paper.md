@@ -33,7 +33,7 @@ Likewise, given we have a typed representation of rationals, we've been able to 
 
 `Aerobus` was designed to be used in high performance software, teaching purposes or embedded sotfware where as much as possible must be precomputed to shrink binary size. It compiles with major compilers : gcc, clang and msvc. It is quite easily configurable and extensible. 
 
-# Statement of need
+# Statement of need []{label="statementofneed"}
 By implementing general algebra concepts such as discrete rings, field of fractions and polynomials, `Aerobus` can serve multiple purposes. 
 
 The main application we want to express in this paper is the automatic (and configurable) generation or taylor approximation of usual transcendental functions such as `exp` or `sin`. The "generated" code is pure C++ and can be inspected. 
@@ -340,6 +340,8 @@ compute_expm1(unsigned long, double const*, double*):
 ```
 
 # Misc
+
+## Continued Fractions
 `Aerobus` also provides [continued fractions](https://en.wikipedia.org/wiki/Continued_fraction), seen as an example of what is possible when your have a proper type representations of field of fractions. 
 Implementation is quite trivial : 
 
@@ -375,15 +377,58 @@ using PI_fraction = ContinuedFraction<3, 7, 15, 1, 292, 1, 1, 1, 2, 1, 3, 1, 14,
 
 then, you can have the corresponding rational number by using `PI_fraction::type` and a computation with `PI_fraction::val`.
 
+## Known polynomials
+As an example, we provide Chebyshev polynomials of first and second kind. 
+They can be computed using : 
+
+```C++
+using T4 = chebyshev_T<4>; // first kind
+using U4 = chebyshev_U<4>; // second kind
+```
+
+Again, since we can operate on polynomials as types, implementation is quite trivial : 
+
+```C++
+template<int kind, int deg>
+struct chebyshev_helper {
+  // Pn+2 = 2xPn+1 - Pn
+  // note pi64 is polynomial<i64>
+  using type = typename pi64::template sub_t<
+    typename pi64::template mul_t<
+      // 2X
+      typename pi64::template mul_t<
+        pi64::inject_constant_t<2>,
+        typename pi64::X
+      >,
+      typename chebyshev_helper<kind, deg-1>::type
+    >,
+    typename chebyshev_helper<kind, deg-2>::type
+  >;
+};
+```
+
+In a similar way, with potentially some effort, a user could define Hermite or Berstein polynomials. 
 
 
 # Benchmarks
-We compare to `vml` and to the standard library in the file "benchmarks.cpp". 
-Benchmark is quite simple and test compute intensive operation : computing sinus (compound twelve times) of all elements of a large double buffer of values (larger than cache). We run code on a Asus expertbook, equipped with an Intel i7-1195G7 @ 2.90GHz. 
+In "benchmarks.cpp", we compare ourselves to std::math and harcoded fastmath calls.cpp". Standard library exposes functions such as `_ZGVeN8v_sin`. They are vectorized versions of `std::sin`, in this case specialized for avx512 registers. 
 
-![Performance comparison between std::math, VML and Aerobus in compound sinus computation (double precision)](performance.png)
- 
+Benchmark is quite simple and test compute intensive operation : computing sinus (compound twelve times) of all elements of a large double precision buffer of values (larger than cache). We run code on a Asus expertbook, equipped with an Intel i7-1195G7 @ 2.90GHz. Loop are parallelized using openmp. 
 
+We make sure data is properly aligned and fits exactly an integer number of avx512 registers. Input vector is filled with random data from 0.5 to 0.5. 
+
+We use different version of sinus, varying the degree of the taylor expansion from 1 to 17. 
+
+For each version, we note performance (in billions of sinus per second) and error relative to `std::math`. 
+
+
+
+![Performance and error of aerobus, depending of the degree of the taylor expansion of sinus](performance_and_error.png)
+
+Peak performance is reached for degree 3 with 20 billions sinus per second (error $\sim 1E-4$). 
+Error is minimal ($1E-16$) for degree 13 with performance still significantly higher than fastmath. 
+
+As stated in \ref{"statementofneed"}, user can conveniently choose precision or speed at compile time, which is, as far as we know, not possible in any other library. 
 
 # Acknowledgements
 

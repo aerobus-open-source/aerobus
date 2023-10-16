@@ -1428,7 +1428,7 @@ namespace aerobus {
 	/// @brief 64 bits rationals
 	using q64 = FractionField<i64>;
 	/// @brief polynomial with 64 bits integers coefficients
-	using pq64 = polynomial<i64>;
+	using pi64 = polynomial<i64>;
 	/// @brief polynomial with 64 bits rational coefficients
 	using fpq64 = FractionField<polynomial<q64>>;
 	/// @brief helper type : the rational V1/V2 in the field of fractions of Ring
@@ -1949,11 +1949,11 @@ namespace aerobus {
 	namespace internal {
 		template<int kind, int deg>
 		struct chebyshev_helper {
-			using type = typename pq64::template sub_t<
-				typename pq64::template mul_t<
-					typename pq64::template mul_t<
-						pq64::inject_constant_t<2>,
-						typename pq64::X
+			using type = typename pi64::template sub_t<
+				typename pi64::template mul_t<
+					typename pi64::template mul_t<
+						pi64::inject_constant_t<2>,
+						typename pi64::X
 					>,
 					typename chebyshev_helper<kind, deg-1>::type
 				>,
@@ -1963,24 +1963,24 @@ namespace aerobus {
 
 		template<>
 		struct chebyshev_helper<1, 0> {
-			using type = typename pq64::one;
+			using type = typename pi64::one;
 		};
 
 		template<>
 		struct chebyshev_helper<1, 1> {
-			using type = typename pq64::X;
+			using type = typename pi64::X;
 		};
 
 		template<>
 		struct chebyshev_helper<2, 0> {
-			using type = typename pq64::one;
+			using type = typename pi64::one;
 		};
 
 		template<>
 		struct chebyshev_helper<2, 1> {
-			using type = typename pq64::template mul_t<
-							typename pq64::inject_constant_t<2>, 
-							typename pq64::X>;
+			using type = typename pi64::template mul_t<
+							typename pi64::inject_constant_t<2>, 
+							typename pi64::X>;
 		};
 	}
 
