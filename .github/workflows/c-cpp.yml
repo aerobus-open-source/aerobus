@@ -2,9 +2,9 @@ name: C/C++ CI
 
 on:
   push:
-    branches: [ "main", "joss2" ]
+    branches: [ "main", "joss2", "dev" ]
   pull_request:
-    branches: [ "main", "joss2" ]
+    branches: [ "main", "joss2", "dev" ]
 
 jobs:
   build:
