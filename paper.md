@@ -411,7 +411,7 @@ In a similar way, with potentially some effort, a user could define Hermite or B
 
 
 # Benchmarks
-In "benchmarks.cpp", we compare ourselves to std::math and harcoded fastmath calls.cpp". Standard library exposes functions such as `_ZGVeN8v_sin`. They are vectorized versions of `std::sin`, in this case specialized for avx512 registers. 
+In "benchmarks.cpp", we compare ourselves to std::math and harcoded fastmath calls. Standard library exposes functions (at link time only) such as `_ZGVeN8v_sin`. They are vectorized versions of `std::sin`, in this case specialized for avx512 registers. 
 
 Benchmark is quite simple and test compute intensive operation : computing sinus (compound twelve times) of all elements of a large double precision buffer of values (larger than cache). We run code on a Asus expertbook, equipped with an Intel i7-1195G7 @ 2.90GHz. Loop are parallelized using openmp. 
 
@@ -428,7 +428,7 @@ For each version, we note performance (in billions of sinus per second) and erro
 Peak performance is reached for degree 3 with 20 billions sinus per second (error $\sim 10^{-4}$). 
 Error is minimal ($10^{-16}$) for degree 13 with performance still significantly higher than fastmath. 
 
-As sayd in the statement of need, user can conveniently choose precision or speed at compile time, which is, as far as we know, not possible in any other library. 
+As said in the statement of need, user can conveniently choose precision or speed at compile time, which is, as far as we know, not possible in any other library. 
 
 # Acknowledgements
 
