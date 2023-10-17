@@ -24,9 +24,9 @@ C++ comes with high compile-time computations capability, also known as metaprog
 Templates are a language-in-the-language which is Turing-complete, meaning we can run every computation at compile time instead of runtime, as long as input data is known at compile time. 
 
 Using these capabilities, vastly extended with latest versions of the standard, we implemented a library 
-for discrete euclidean domain, such $\mathbb{Z}$. We also provide a way to generate the fraction field of such rings (e.g. $\mathbb{Q}$). 
+for discrete euclidean domain, such as $\mathbb{Z}$. We also provide a way to generate the fraction field of such rings (e.g. $\mathbb{Q}$). 
 
-We also implemented polynomials over such a discrete ring or field (e.g. $\mathbb{Q}[X]$). Since polynomials are also a ring, same implementation as above gives us rational fractions as field of fractions of polynomials.
+We also implemented polynomials over such discrete ring and fields (e.g. $\mathbb{Q}[X]$). Since polynomials are also a ring, the above implementation gives us rational fractions as field of fractions of polynomials.
 
 In addition, we expose a way to generate taylor series of any math functions as long as coefficients are known. 
 Likewise, given we have a typed representation of rationals, we've been able to add continued fractions as part of the library. 
@@ -38,13 +38,14 @@ By implementing general algebra concepts such as discrete rings, field of fracti
 
 The main application we want to express in this paper is the automatic (and configurable) generation or taylor approximation of usual transcendental functions such as `exp` or `sin`. The "generated" code is pure C++ and can be inspected. 
 
-This functions are usually exposed by the standard library (`<cmath>`) with high (guaranteed) precision. However, in high performance computing, evaluate `std::exp` has several flaws : 
+This functions are usually exposed by the standard library (`<cmath>`) with high (guaranteed) precision. However, in high performance computing, when not compiled with `-Ofast`, evaluating `std::exp` has several flaws : 
+
 - it leads to a syscal which is very expensive
 - it doesn't leverage vector units (avx, avx2, avx512 or equivalent in non-intel hardware). 
 
 Hardwarde vendors provide high performance libraries such as [@wang2014intel], but implementation is often hidden and absolutely not extensible. 
 
-Some others can provide vectorized functions, such as [@vml] does. But library such VML are highly tight to one architecture by their use of intrinsics or inline assembly. In addition, they only provide a restricted list of math functions and do not expose capabilities to generate high performance versions of other functions such as arctanh. 
+Some others can provide vectorized functions, such as [@vml] does. But libraries like VML are highly tight to one architecture by their use of intrinsics or inline assembly. In addition, they only provide a restricted list of math functions and do not expose capabilities to generate high performance versions of other functions such as arctanh. It's the same for standard library compiled with `-Ofast` : it generates vectorized version of some functions (such as exp) but with no control of precision and no extensibility. 
 
 `Aerobus` provides automatic generation of such functions, in an hardware independant way.
 In addition, `Aerobus` provides a way to control precision of generated function by changing the degree of taylor expansion, which can't be use in competing libraries without reimplementing the whole function. 
@@ -66,7 +67,7 @@ $$a_0 + a_1X + \ldots + a_nX^n$$
 
 where $a_n \neq 0$ if $n \neq 0$. 
 
-$(a_i)$, the coefficients, are elements of $\mathbb{A}$. Theory states that if $A$ is a field, then $\mathbb{A}[X]$ is euclidean. That means notions like division of gcd have a meaning, yielding an arithmetic of polynomials. 
+$(a_i)$, the coefficients, are elements of $\mathbb{A}$. Theory states that if $\mathbb{A}$ is a field, then $\mathbb{A}[X]$ is euclidean. That means notions like division of greatest common divisor (gcd) have a meaning, yielding an arithmetic of polynomials. 
 
 
 ## Field of fractions
@@ -367,7 +368,7 @@ struct ContinuedFraction<a0, rest...> {
 };
 ```
 
-once done, you can get a rational approximation of numbers using their known representation, given by the On-Line Encyclopedia of Integer Sequences (OEIS). 
+once done, you can get a rational approximation of numbers using their known representation, given by the On-Line Encyclopedia of Integer Sequences ([@OEIS]). 
 
 For example, an approximation of $\pi$ is given by 
 
@@ -386,7 +387,7 @@ using T4 = chebyshev_T<4>; // first kind
 using U4 = chebyshev_U<4>; // second kind
 ```
 
-Again, since we can operate on polynomials as types, implementation is quite trivial : 
+Again, since we can operate on polynomials as types, implementation is straightforward : 
 
 ```C++
 template<int kind, int deg>
@@ -407,13 +408,13 @@ struct chebyshev_helper {
 };
 ```
 
-In a similar way, with potentially some effort, a user could define Hermite or Berstein polynomials. 
+In a similar way, with some effort, a user could define Hermite or Berstein polynomials. 
 
 
 # Benchmarks
 In "benchmarks.cpp", we compare ourselves to std::math and harcoded fastmath calls. Standard library exposes functions (at link time only) such as `_ZGVeN8v_sin`. They are vectorized versions of `std::sin`, in this case specialized for avx512 registers. 
 
-Benchmark is quite simple and test compute intensive operation : computing sinus (compound twelve times) of all elements of a large double precision buffer of values (larger than cache). We run code on a Asus expertbook, equipped with an Intel i7-1195G7 @ 2.90GHz. Loop are parallelized using openmp. 
+Benchmark is quite simple and test compute intensive operation : computing sinus (compound twelve times) of all elements of a large double precision buffer of values (larger than cache). We run code on a laptop equipped with an Intel i7-1195G7 @ 2.90GHz. Loop are parallelized using openmp (version 201511) with a "parallel for". 
 
 We make sure data is properly aligned and fits exactly an integer number of avx512 registers. Input vector is filled with random data from 0.5 to 0.5. 
 
@@ -423,7 +424,7 @@ For each version, we note performance (in billions of sinus per second) and erro
 
 
 
-![Performance and error of aerobus, depending of the degree of the taylor expansion of sinus](performance_and_error.png)
+![Performance (Gsin/s) and error (log scale) of aerobus, depending of the degree of the taylor expansion of sinus](performance_and_error.png)
 
 Peak performance is reached for degree 3 with 20 billions sinus per second (error $\sim 10^{-4}$). 
 Error is minimal ($10^{-16}$) for degree 13 with performance still significantly higher than fastmath. 
@@ -432,6 +433,6 @@ As said in the statement of need, user can conveniently choose precision or spee
 
 # Acknowledgements
 
-Many thanks to my math teachers, A. Soyeur and M. Gonnord. I also acknowledge indirect contributions from F. Duguet, who basically learnt me all I know in C++. 
+Many thanks to my math teachers, A. Soyeur and M. Gonnord. I also acknowledge indirect contributions from F. Duguet, who showed me the way. 
 
 # Reference
