@@ -29,9 +29,8 @@ void vsin_12(double * in, double * out) {
 	in = (double*) __builtin_assume_aligned(in, 64);
 	out = (double*) __builtin_assume_aligned(out, 64);
 #pragma omp parallel for
-	for (int i = 0; i < N; i += 8) {
-		#pragma simd
-		for(int j = i; j < i+8; ++j) {
+	for (size_t i = 0; i < N; i += 8) {
+		for(size_t j = i; j < i+8; ++j) {
 			out[j] = sin_12<deg>(in[j]);
 		}
 	}
@@ -50,9 +49,8 @@ void vsin_slow(double * in, double * out) {
 	in = (double*) __builtin_assume_aligned(in, 64);
 	out = (double*) __builtin_assume_aligned(out, 64);
 #pragma omp parallel for
-	for (int i = 0; i < N; i += 8) {
-		#pragma simd
-		for(int j = i; j < i+8; ++j) {
+	for (size_t i = 0; i < N; i += 8) {
+		for(size_t j = i; j < i+8; ++j) {
 			out[j] = sin_12_slow(in[j]);
 		}
 	}
@@ -105,7 +103,7 @@ void run_aero(double* in, double* out_aero) {
 void verify(double* out_aero, double* out_std) {
 	double err_aero = 0.0;
 	double max_err = 0.0;
-	for(int i = 0; i < N; ++i) {
+	for(size_t i = 0; i < N; ++i) {
 		double err = fabs(out_aero[i] - out_std[i]);
 		err_aero += err;
 		if (err > max_err) {
@@ -126,7 +124,7 @@ int main() {
 	memset((void*) out_std, 0, N * sizeof(double));
 	memset((void*) out_vml, 0, N * sizeof(double));
 	#pragma omp parallel for
-	for(int i = 0; i < N; ++i) {
+	for(size_t i = 0; i < N; ++i) {
 		in[i] = rand(-0.5, 0.5); // pi / 6
 	}
 
@@ -190,7 +188,7 @@ int main() {
 
 	double err_aero = 0.0;
 	double max_err = 0.0;
-	for(int i = 0; i < N; ++i) {
+	for(size_t i = 0; i < N; ++i) {
 		double err = fabs(out_aero[i] - out_std[i]);
 		err_aero += err;
 		if (err > max_err) {

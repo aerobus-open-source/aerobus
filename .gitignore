@@ -6,3 +6,7 @@
 .vs
 x64
 main.exe
+build/
+documentation/latex/*
+!documentation/latex/refman.pdf
+documentation/html/*
