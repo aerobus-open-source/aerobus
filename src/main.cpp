@@ -729,12 +729,12 @@ int test_fraction_field_of_fraction_field () {
 }
 
 int test_factorial() {
-	constexpr float x = factorial<i32, 3>::value;
+	constexpr float x = internal::factorial<i32, 3>::value;
 	if (x != 6.0f) {
 		return 1;
 	}
 
-	constexpr size_t y = factorial<i32, 0>::value;
+	constexpr size_t y = internal::factorial<i32, 0>::value;
 	if (y != 1) {
 		return 1;
 	}
@@ -743,20 +743,20 @@ int test_factorial() {
 }
 
 int test_combination() {
-	constexpr int x = combination<i32, 2, 4>::value;
+	constexpr int x = internal::combination<i32, 2, 4>::value;
 	if (x != 6) {
 		return 1;
 	}
-	constexpr int y = combination<i32, 0, 4>::value;
+	constexpr int y = internal::combination<i32, 0, 4>::value;
 	if (y != 1) {
 		return 1;
 	}
-	constexpr int z = combination<i32, 1, 4>::value;
+	constexpr int z = internal::combination<i32, 1, 4>::value;
 	if (z != 4) {
 		return 1;
 	}
 
-	constexpr int zz = combination<i32, 3, 4>::value;
+	constexpr int zz = internal::combination<i32, 3, 4>::value;
 	if (zz != 4) {
 		return 1;
 	}
@@ -764,19 +764,19 @@ int test_combination() {
 }
 
 int test_bernouilli() {
-	constexpr float b0 = bernouilli<i32, 0>::template value<float>;
+	constexpr float b0 = internal::bernouilli<i32, 0>::template value<float>;
 	if (b0 != 1.0f) {
 		return 1;
 	}
-	constexpr float b1 = bernouilli<i32, 1>::template value<float>;
+	constexpr float b1 = internal::bernouilli<i32, 1>::template value<float>;
 	if (b1 != -0.5f) {
 		return 1;
 	}
-	using B2 = bernouilli<i32, 2>::type;
+	using B2 = bernouilli_t<i32, 2>;
 	if (B2::x::v != 1 || B2::y::v != 6) {
 		return 1;
 	}
-	constexpr double b3 = bernouilli<i32, 3>::template value<double>;
+	constexpr double b3 = internal::bernouilli<i32, 3>::template value<double>;
 	if (b3 != 0.0) {
 		return 1;
 	}
@@ -876,15 +876,15 @@ int test_exp() {
 }
 
 int test_alternate() {
-	constexpr int a0 = alternate<i32, 0>::value;
+	constexpr int a0 = internal::alternate<i32, 0>::value;
 	if (a0 != 1) {
 		return 1;
 	}
-	constexpr int a1 = alternate<i32, 1>::value;
+	constexpr int a1 = internal::alternate<i32, 1>::value;
 	if (a1 != -1) {
 		return 1;
 	}
-	constexpr int a2 = alternate<i32, 2>::value;
+	constexpr int a2 = internal::alternate<i32, 2>::value;
 	if (a2 != 1) {
 		return 1;
 	}
@@ -972,13 +972,15 @@ int test_continued_fraction() {
 }
 
 int test_chebyshev() {
-	using T4 = chebyshev_T<4>;
+	using T4 = aerobus::chebyshev_T<4>;
+
 	if(T4::degree != 4) {
 		return 1;
 	}
 	if (T4::template coeff_at_t<4>::v != 8) {
 		return 0;
 	}
+	
 	if (T4::template coeff_at_t<3>::v != 0) {
 		return 0;
 	}

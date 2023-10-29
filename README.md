@@ -263,8 +263,21 @@ Compile with -std=c++20 (at least)
 
 see [conformance view](https://godbolt.org/z/z6Wbdr15s)
 
+### Test and bench
+move to top directory then : 
+```bash
+mkdir build
+cd build
+cmake ..
+```
+
+This creates (in build directory) an `aerobus_test` executable which runs all test and prints
+`ALL TESTS OK` 
+if everything went fine
+
+
 ## benchmarks
-install (or clone) [VML](https://github.com/intel/VML) in the parent directory
+Benchmarks are written for Intel CPUs having AVX512f and AVX512vl flags. 
 
 then run `make benchmarks`
 

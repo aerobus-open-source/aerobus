@@ -40,6 +40,7 @@ namespace aerobus {
 // concepts
 namespace aerobus
 {
+	/// Concept to express R is a Ring
 	template <typename R>
 	concept IsRing = requires {
 		typename R::one;
@@ -49,6 +50,7 @@ namespace aerobus
 		typename R::template mul_t<typename R::one, typename R::one>;
 	};
 	
+	/// Concept to express R is an euclidean domain
 	template <typename R>
 	concept IsEuclideanDomain = IsRing<R> && requires {
 		typename R::template div_t<typename R::one, typename R::one>;
@@ -59,6 +61,7 @@ namespace aerobus
 		R::is_euclidean_domain == true;
 	};
 
+	/// Concept to express R is a field
 	template<typename R>
 	concept IsField = IsEuclideanDomain<R> && requires {
 		R::is_field == true;
@@ -123,11 +126,8 @@ namespace aerobus {
 			(i >= 5 && i * i > n)>> : std::true_type {};
 	}
 
-	/**
-	 * check if integer is prime or not
-	 * 
-	 * @tparam n integer to check
-	*/
+	/// @brief checks if n is prime
+	/// @tparam n 
 	template<int32_t n>
 	struct is_prime {
 		/// @brief true iff n is prime
@@ -193,6 +193,8 @@ namespace aerobus {
 		};
 	}
 
+	/// @brief computes the greatest common divisor or A and B
+	/// @tparam T Ring type (must be euclidean domain)
 	template<typename T, typename A, typename B>
 	using gcd_t = typename internal::gcd<T>::template type<A, B>;
 }
@@ -200,9 +202,7 @@ namespace aerobus {
 // type_list
 namespace aerobus
 {
-	/**
-	 * Empty pure template struct to handle type lists
-	*/
+	/// @brief Empty pure template struct to handle type list
     template <typename... Ts>
     struct type_list;
 
@@ -332,35 +332,50 @@ namespace aerobus
 
 // i32
 namespace aerobus {
-	/**
-	 * 32 bits signed integers, seen as a algebraic ring with related operations
-	*/
+	///@brief 32 bits signed integers, seen as a algebraic ring with related operations
     struct i32 {
 		using inner_type = int32_t;
+		/// @brief values in i32
+		/// @tparam x an actual integer
 		template<int32_t x>
 		struct val {
 			static constexpr int32_t v = x;
 
+			/// @brief cast x into valueType
+			/// @tparam valueType double for example
 			template<typename valueType>
 			static constexpr valueType get() { return static_cast<valueType>(x); }
 
+			/// @brief is value zero 
 			using is_zero_t = std::bool_constant<x == 0>;
+
+			/// @brief string representation of value
 			static std::string to_string() {
 				return std::to_string(x);
 			}
 
+			/// @brief cast x into valueRing
+			/// @tparam valueRing double for example
 			template<typename valueRing>
 			static constexpr valueRing eval(const valueRing& v) {
 				return static_cast<valueRing>(x);
 			}
 		};
 
+		/// @brief constant zero
 		using zero = val<0>;
+		/// @brief constant one
 		using one = val<1>;
+		/// @brief integers are not a field
 		static constexpr bool is_field = false;
+		/// @brief integers are an euclidean domain
 		static constexpr bool is_euclidean_domain = true;
+		/// @brief inject a native constant
+		/// @tparam x 
+		/// @example i32::template inject_constant_2<2> -> i32::template val<2>
 		template<auto x>
 		using inject_constant_t = val<static_cast<int32_t>(x)>;
+
 		template<typename v>
 		using inject_ring_t = v;
 
@@ -411,33 +426,43 @@ namespace aerobus {
 		};
 
 	public:
+		/// @brief addition operator
 		template<typename v1, typename v2>
 		using add_t = typename add<v1, v2>::type;
 
+		/// @brief substraction operator
 		template<typename v1, typename v2>
 		using sub_t = typename sub<v1, v2>::type;
 
+		/// @brief multiplication operator
 		template<typename v1, typename v2>
 		using mul_t = typename mul<v1, v2>::type;
 
+		/// @brief division operator
 		template<typename v1, typename v2>
 		using div_t = typename div<v1, v2>::type;
 
+		/// @brief modulus operator
 		template<typename v1, typename v2>
 		using mod_t = typename remainder<v1, v2>::type;
 
+		/// @brief strictly greater operator (v1 > v2)
 		template<typename v1, typename v2>
 		using gt_t = typename gt<v1, v2>::type;
 
+		/// @brief strict less operator (v1 < v2)
 		template<typename v1, typename v2>
 		using lt_t = typename lt<v1, v2>::type;
 
+		/// @brief equality operator
 		template<typename v1, typename v2>
 		using eq_t = typename eq<v1, v2>::type;
 
+		/// @brief greatest common divisor
 		template<typename v1, typename v2>
 		using gcd_t = gcd_t<i32, v1, v2>;
 
+		/// @brief positivity (v > 0)
 		template<typename v>
 		using pos_t = typename pos<v>::type;
 	};
@@ -445,38 +470,52 @@ namespace aerobus {
 
 // i64
 namespace aerobus {
-	/**
-	 * 64 bits signed integers, seen as a algebraic ring with related operations
-	*/
+	/// @brief 64 bits signed integers, seen as a algebraic ring with related operations
     struct i64 {
 		using inner_type = int64_t;
+		/// @brief values in i64
+		/// @tparam x an actual integer
 		template<int64_t x>
 		struct val {
 			static constexpr int64_t v = x;
 
+			/// @brief cast value in valueType
+			/// @tparam valueType (double for example)
 			template<typename valueType>
 			static constexpr valueType get() { return static_cast<valueType>(x); }
 
+			/// @brief is value zero
 			using is_zero_t = std::bool_constant<x == 0>;
+
+			/// @brief string representation
 			static std::string to_string() {
 				return std::to_string(x);
 			}
 
+			/// @brief cast value in valueRing
+			/// @tparam valueRing (double for example)
 			template<typename valueRing>
 			static constexpr valueRing eval(const valueRing& v) {
 				return static_cast<valueRing>(x);
 			}
 		};
 
+		/// @brief injects constant as an i64 value
+		/// @tparam x 
+		/// @example i64::template inject_constant_t<2>
 		template<auto x>
 		using inject_constant_t = val<static_cast<int64_t>(x)>;
 
 		template<typename v>
 		using inject_ring_t = v;
 
+		/// @brief constant zero
 		using zero = val<0>;
+		/// @brief constant one
 		using one = val<1>;
+		/// @brief integers are not a field
 		static constexpr bool is_field = false;
+		/// @brief integers are an euclidean domain
 		static constexpr bool is_euclidean_domain = true;
 
 	private:
@@ -526,33 +565,43 @@ namespace aerobus {
 		};	
 
 	public:
+		/// @brief addition operator
 		template<typename v1, typename v2>
 		using add_t = typename add<v1, v2>::type;
 
+		/// @brief substraction operator
 		template<typename v1, typename v2>
 		using sub_t = typename sub<v1, v2>::type;
 
+		/// @brief multiplication operator
 		template<typename v1, typename v2>
 		using mul_t = typename mul<v1, v2>::type;
 
+		/// @brief division operator
 		template<typename v1, typename v2>
 		using div_t = typename div<v1, v2>::type;
 
+		/// @brief modulus operator
 		template<typename v1, typename v2>
 		using mod_t = typename remainder<v1, v2>::type;
 
+		/// @brief strictly greater operator (v1 > v2)
 		template<typename v1, typename v2>
 		using gt_t = typename gt<v1, v2>::type;
 
+		/// @brief strict less operator (v1 < v2)
 		template<typename v1, typename v2>
 		using lt_t = typename lt<v1, v2>::type;
 
+		/// @brief equality operator
 		template<typename v1, typename v2>
 		using eq_t = typename eq<v1, v2>::type;
 
+		/// @brief greatest common divisor
 		template<typename v1, typename v2>
 		using gcd_t = gcd_t<i64, v1, v2>;
 
+		/// @brief is v posititive 
 		template<typename v>
 		using pos_t = typename pos<v>::type;
 	};
@@ -687,11 +736,15 @@ namespace aerobus {
 
 		template<typename coeffN, typename... coeffs>
 		struct val {
+			/// @brief degree of the polynomial
 			static constexpr size_t degree = sizeof...(coeffs);
+			/// @brief heavy weight coefficient (non zero)
 			using aN = coeffN;
 			using strip = val<coeffs...>;
+			/// @brief true if polynomial is constant zero
 			using is_zero_t = std::bool_constant<(degree == 0) && (aN::is_zero_t::value)>;
 
+			private:
 			template<size_t index, typename E = void>
 			struct coeff_at {};
 
@@ -705,13 +758,22 @@ namespace aerobus {
 				using type = typename Ring::zero;
 			};
 
+			public:
+			/// @brief coefficient at index
+			/// @tparam index 
 			template<size_t index>
 			using coeff_at_t = typename coeff_at<index>::type;
 
+			/// @brief get a string representation of polynomial
+			/// @return something like a_n X^n + ... + a_1 X + a_0
 			static std::string to_string() {
 				return string_helper<coeffN, coeffs...>::func();
 			}
 
+			/// @brief evaluates polynomial seen as a function operating on ValueRing
+			/// @tparam valueRing usually float or double
+			/// @param x value
+			/// @return P(x)
 			template<typename valueRing>
 			static constexpr valueRing eval(const valueRing& x) {
 				return eval_helper<valueRing, val>::template inner<0, degree + 1>::func(static_cast<valueRing>(0), x);
@@ -752,8 +814,11 @@ namespace aerobus {
 			}
 		};
 
+		/// @brief constant zero
 		using zero = val<typename Ring::zero>;
+		/// @brief constant one
 		using one = val<typename Ring::one>;
+		/// @brief generator
 		using X = val<typename Ring::one, typename Ring::zero>;
 
 	private:
@@ -837,9 +902,7 @@ namespace aerobus {
 		template<typename v1, typename v2>
 		struct eq_helper<v1, v2, std::enable_if_t<
 			v1::degree == v1::degree &&
-			v1::degree == 0
-		>
-		> {
+			v1::degree == 0>> {
 			using type = typename Ring::template eq_t<typename v1::aN, typename v2::aN>;
 		};
 
@@ -1104,51 +1167,93 @@ namespace aerobus {
 		};
 
 	public:
+		/// @brief simplifies a polynomial (deletes highest degree if null, do nothing otherwise)
+		/// @tparam P 
 		template<typename P>
 		using simplify_t = typename simplify<P>::type;
 
+		/// @brief adds two polynomials
+		/// @tparam v1 
+		/// @tparam v2 
 		template<typename v1, typename v2>
 		using add_t = typename add<v1, v2>::type;
 
+		/// @brief substraction of two polynomials
+		/// @tparam v1 
+		/// @tparam v2 
 		template<typename v1, typename v2>
 		using sub_t = typename sub<v1, v2>::type;
 
+		/// @brief multiplication of two polynomials
+		/// @tparam v1 
+		/// @tparam v2 
 		template<typename v1, typename v2>
 		using mul_t = typename mul<v1, v2>::type;
 
+		/// @brief equality operator
+		/// @tparam v1 
+		/// @tparam v2 
 		template<typename v1, typename v2>
 		using eq_t = typename eq_helper<v1, v2>::type;
 
+		/// @brief strict less operator
+		/// @tparam v1 
+		/// @tparam v2 
 		template<typename v1, typename v2>
 		using lt_t = typename lt_helper<v1, v2>::type;
 
+		/// @brief strict greater operator
+		/// @tparam v1 
+		/// @tparam v2 
 		template<typename v1, typename v2>
 		using gt_t = typename gt_helper<v1, v2>::type;
 
+		/// @brief division operator
+		/// @tparam v1 
+		/// @tparam v2 
 		template<typename v1, typename v2>
 		using div_t = typename div<v1, v2>::q_type;
 
+		/// @brief modulo operator
+		/// @tparam v1 
+		/// @tparam v2 
 		template<typename v1, typename v2>
 		using mod_t = typename div_helper<v1, v2, zero, v1>::mod_type;
 
+		/// @brief monomial : coeff X^deg
+		/// @tparam coeff 
+		/// @tparam deg 
 		template<typename coeff, size_t deg>
 		using monomial_t = typename monomial<coeff, deg>::type;
 
+		/// @brief derivation operator
+		/// @tparam v 
 		template<typename v>
 		using derive_t = typename derive_helper<v>::type;
 
+		/// @brief checks for positivity (an > 0)
+		/// @tparam v 
 		template<typename v>
 		using pos_t = typename Ring::template pos_t<typename v::aN>;
 
+		/// @brief greatest common divisor of two polynomials
+		/// @tparam v1 
+		/// @tparam v2 
 		template<typename v1, typename v2>
 		using gcd_t = std::conditional_t<
 			Ring::is_euclidean_domain,
 			typename make_unit<gcd_t<polynomial<Ring, variable_name>, v1, v2>>::type,
 			void>;
 
+		/// @brief makes the constant (native type) polynomial a_0
+		/// @tparam x 
+		/// @example polynomial<i32>::template inject_constant_t<2>
 		template<auto x>
 		using inject_constant_t = val<typename Ring::template inject_constant_t<x>>;
 
+		/// @brief makes the constant (ring type) polynomial a_0
+		/// @tparam v 
+		/// @example polynomial<i32>::template inject_ring_t<i32::template val<2>>
 		template<typename v>
 		using inject_ring_t = val<v>;
 	};
@@ -1165,9 +1270,11 @@ namespace aerobus {
 		requires IsEuclideanDomain<Ring>
 		struct _FractionField<Ring, std::enable_if_t<Ring::is_euclidean_domain>>
 		{
+			/// @brief true because field of fraction is a field
 			static constexpr bool is_field = true;
 			static constexpr bool is_euclidean_domain = true;
 
+			private:
 			template<typename val1, typename val2, typename E = void>
 			struct to_string_helper {};
 
@@ -1197,39 +1304,62 @@ namespace aerobus {
 					return "(" + val1::to_string() + ") / (" + val2::to_string() + ")";
 				}
 			};
-
+			
+			public:
+			/// @brief represents elements of field of fractions, often noted val1/val2
+			/// @tparam val1 numerator
+			/// @tparam val2 denominator
 			template<typename val1, typename val2>
 			struct val {
 				using x = val1;
 				using y = val2;
+				/// @brief is val1/val2 == 0
 				using is_zero_t = typename val1::is_zero_t;
 				using ring_type = Ring;
 				using field_type = _FractionField<Ring>;
 
+			 	/// @brief true if val2 is one
 			 	static constexpr bool is_integer = std::is_same<val2, typename Ring::one>::value;
 
+				/// @brief computes fraction value in valueType
+				/// @tparam valueType likely double or float
+				/// @return 
 				template<typename valueType>
 				static constexpr valueType get() { return static_cast<valueType>(x::v) / static_cast<valueType>(y::v); }
 
+				/// @brief represents value as string
+				/// @return something like val1 / val2
 				static std::string to_string() {
 					return to_string_helper<val1, val2>::func();
 				}
 
+				/// @brief evaluates fraction in valueRing : used for rational fractions
+				/// @tparam valueRing : something like double
+				/// @param v 
+				/// @return 
 				template<typename valueRing>
 				static constexpr valueRing eval(const valueRing& v) {
 					return x::eval(v) / y::eval(v);
 				}
 			};
 			
+			/// @brief constant zero
 			using zero = val<typename Ring::zero, typename Ring::one>;
+			/// @brief constant one
 			using one = val<typename Ring::one, typename Ring::one>;
 
+			/// @brief injects from Ring to field of fractions
+			/// @tparam v : will be the numerator of v / 1
 			template<typename v>
 			using inject_t = val<v, typename Ring::one>;
 
+			/// @brief injects a constant (native type) to field of fractions
+			/// @tparam x : will be injected in Ring and become numerator of Ring::val<v> / 1
 			template<auto x>
 			using inject_constant_t = val<typename Ring::template inject_constant_t<x>, typename Ring::one>;
 
+			/// @brief inject a value from Ring to field of fraction
+			/// @tparam v : something like Ring::val<2>
 			template<typename v>
 			using inject_ring_t = val<typename Ring::template inject_ring_t<v>, typename Ring::one>;
 
@@ -1261,7 +1391,8 @@ namespace aerobus {
 			};
 
 		public:
-
+			/// @brief simplifies fraction (devides both numerator and denominator by their gcd)
+			/// @tparam v 
 			template<typename v>
 			using simplify_t = typename simplify<v>::type;
 
@@ -1371,24 +1502,38 @@ namespace aerobus {
 		
 
 		public:
+			/// @brief addition operator
 			template<typename v1, typename v2>
 			using add_t = typename add<v1, v2>::type;
+			/// @brief modulus operator
 			template<typename v1, typename v2>
 			using mod_t = zero;
+			/// @brief greatest common divisor
+			/// @tparam v1 
+			/// @tparam v2 
 			template<typename v1, typename v2>
 			using gcd_t = v1;
+			/// @brief adds multiple elements (a1 + a2 + ... + an
+			/// @tparam ...vs 
 			template<typename... vs>
 			using vadd_t = typename vadd<vs...>::type;
+			/// @brief multiplies multiple elements (a1 * a2 * ... * an)
+			/// @tparam ...vs 
 			template<typename... vs>
 			using vmul_t = typename vmul<vs...>::type;
+			/// @brief substraction operator
 			template<typename v1, typename v2>
 			using sub_t = typename sub<v1, v2>::type;
+			/// @brief multiplication operator
 			template<typename v1, typename v2>
 			using mul_t = typename mul<v1, v2>::type;
+			/// @brief division operator
 			template<typename v1, typename v2>
 			using div_t = typename div<v1, v2>::type;
+			/// @brief equality operator
 			template<typename v1, typename v2>
 			using eq_t = typename eq<v1, v2>::type;
+			/// @brief is v1 positive
 			template<typename v1>
 			using pos_t = typename pos<v1>::type;
 		};
@@ -1445,28 +1590,33 @@ namespace aerobus {
 }
 
 namespace aerobus {
-	template<typename T, size_t x, typename E = void>
-	struct factorial {};
+	namespace internal {
+		template<typename T, size_t x, typename E = void>
+		struct factorial {};
 
-	template<typename T, size_t x>
-	struct factorial<T, x, std::enable_if_t<(x > 0)>> {
-	private:
-		template<typename, size_t, typename>
-		friend struct factorial;
-	public:
-		using type = typename T::template mul_t<typename T::template val<x>, typename factorial<T, x - 1>::type>;
-		static constexpr typename T::inner_type value = type::template get<typename T::inner_type>();
-	};
+		template<typename T, size_t x>
+		struct factorial<T, x, std::enable_if_t<(x > 0)>> {
+		private:
+			template<typename, size_t, typename>
+			friend struct factorial;
+		public:
+			using type = typename T::template mul_t<typename T::template val<x>, typename factorial<T, x - 1>::type>;
+			static constexpr typename T::inner_type value = type::template get<typename T::inner_type>();
+		};
 
-	template<typename T>
-	struct factorial<T, 0> {
-	public:
-		using type = typename T::one;
-		static constexpr typename T::inner_type value = type::template get<typename T::inner_type>();
-	};
+		template<typename T>
+		struct factorial<T, 0> {
+		public:
+			using type = typename T::one;
+			static constexpr typename T::inner_type value = type::template get<typename T::inner_type>();
+		};
+	}
 
+	/// @brief computes factorial(i)
+	/// @tparam T Ring type (e.g. i32)
+	/// @tparam i 
 	template<typename T, size_t i>
-	using factorial_t = typename factorial<T, i>::type;
+	using factorial_t = typename internal::factorial<T, i>::type;
 
 	namespace internal {
 		template<typename T, size_t k, size_t n, typename E = void>
@@ -1488,22 +1638,23 @@ namespace aerobus {
 		struct combination_helper<T, 0, n> {
 			using type = typename FractionField<T>::one;
 		};
+
+		template<typename T, size_t k, size_t n>
+		struct combination {
+			using type = typename internal::combination_helper<T, k, n>::type::x;
+			static constexpr typename T::inner_type value = internal::combination_helper<T, k, n>::type::template get<typename T::inner_type>();
+		};
 	}
 
+	/// @brief computes binomial coefficient (k among n)
+	/// @tparam T Ring type (i32 for example)
 	template<typename T, size_t k, size_t n>
-	struct combination {
-		using type = typename internal::combination_helper<T, k, n>::type::x;
-		static constexpr typename T::inner_type value = internal::combination_helper<T, k, n>::type::template get<typename T::inner_type>();
-	};
-
-	template<typename T, size_t k, size_t n>
-	using combination_t = typename combination<T, k, n>::type;
-
-
-	template<typename T, size_t m>
-	struct bernouilli;
+	using combination_t = typename internal::combination<T, k, n>::type;
 
 	namespace internal {
+		template<typename T, size_t m>
+		struct bernouilli;
+
 		template<typename T, typename accum, size_t k, size_t m>
 		struct bernouilli_helper {
 			using type = typename bernouilli_helper<
@@ -1526,61 +1677,73 @@ namespace aerobus {
 		{
 			using type = accum;
 		};
+
+
+
+		template<typename T, size_t m>
+		struct bernouilli {
+			using type = typename FractionField<T>::template mul_t<
+				typename internal::bernouilli_helper<T, typename FractionField<T>::zero, 0, m>::type,
+				makefraction_t<T, 
+				typename T::template val<static_cast<typename T::inner_type>(-1)>,
+				typename T::template val<static_cast<typename T::inner_type>(m + 1)>
+				>
+			>;
+
+			template<typename floatType>
+			static constexpr floatType value = type::template get<floatType>();
+		};
+
+		template<typename T>
+		struct bernouilli<T, 0> {
+			using type = typename FractionField<T>::one;
+
+			template<typename floatType>
+			static constexpr floatType value = type::template get<floatType>();
+		};
 	}
 
-	template<typename T, size_t m>
-	struct bernouilli {
-		using type = typename FractionField<T>::template mul_t<
-			typename internal::bernouilli_helper<T, typename FractionField<T>::zero, 0, m>::type,
-			makefraction_t<T, 
-			typename T::template val<static_cast<typename T::inner_type>(-1)>,
-			typename T::template val<static_cast<typename T::inner_type>(m + 1)>
-			>
-		>;
-
-		template<typename floatType>
-		static constexpr floatType value = type::template get<floatType>();
-	};
-
-	template<typename T>
-	struct bernouilli<T, 0> {
-		using type = typename FractionField<T>::one;
-
-		template<typename floatType>
-		static constexpr floatType value = type::template get<floatType>();
-	};
-
+	/// @brief nth Bernouilli number
+	/// @tparam T Ring type (i64)
+	/// @tparam n 
 	template<typename T, size_t n>
-	using bernouilli_t = typename bernouilli<T, n>::type;
+	using bernouilli_t = typename internal::bernouilli<T, n>::type;
 
-	template<typename T, int k, typename E = void>
-	struct alternate {};
+	namespace internal {
+		template<typename T, int k, typename E = void>
+		struct alternate {};
 
+		template<typename T, int k>
+		struct alternate<T, k, std::enable_if_t<k % 2 == 0>> {
+			using type = typename T::one;
+			static constexpr typename T::inner_type value = type::template get<typename T::inner_type>();
+		};
+
+		template<typename T, int k>
+		struct alternate<T, k, std::enable_if_t<k % 2 != 0>> {
+			using type = typename T::template sub_t<typename T::zero, typename T::one>;
+			static constexpr typename T::inner_type value = type::template get<typename T::inner_type>();
+		};
+	}
+
+	/// @brief (-1)^k
+	/// @tparam T Ring type
 	template<typename T, int k>
-	struct alternate<T, k, std::enable_if_t<k % 2 == 0>> {
-		using type = typename T::one;
-		static constexpr typename T::inner_type value = type::template get<typename T::inner_type>();
-	};
+	using alternate_t = typename internal::alternate<T, k>::type;
 
-	template<typename T, int k>
-	struct alternate<T, k, std::enable_if_t<k % 2 != 0>> {
-		using type = typename T::template sub_t<typename T::zero, typename T::one>;
-		static constexpr typename T::inner_type value = type::template get<typename T::inner_type>();
-	};
+	// pow
+	namespace internal {
+		template<typename T, auto p, auto n>
+		struct pow {
+			using type = typename T::template mul_t<typename T::template val<p>, typename pow<T, p, n - 1>::type>;
+		};
 
-	template<typename T, int k>
-	using alternate_t = typename alternate<T, k>::type;
+		template<typename T, auto p>
+		struct pow<T, p, 0> { using type = typename T::one; };
+	}
 
 	template<typename T, auto p, auto n>
-	struct pow {
-		using type = typename T::template mul_t<typename T::template val<p>, typename pow<T, p, n - 1>::type>;
-	};
-
-	template<typename T, auto p>
-	struct pow<T, p, 0> { using type = typename T::one; };
-
-	template<typename T, auto p, auto n>
-	using pow_t = typename pow<T, p, n>::type;
+	using pow_t = typename internal::pow<T, p, n>::type;
 
 	namespace internal {
 		template<typename, template<typename, size_t> typename, class>
@@ -1857,67 +2020,97 @@ namespace aerobus {
 		};
 	}
 
-	// e^x
+	/// @brief exp(x)
+	/// @tparam T Ring type (for example i64)
+	/// @tparam deg taylor approximation degree
 	template<typename T, size_t deg>
 	using exp = taylor<T, internal::exp_coeff, deg>;
 
-	// e^x - 1
+	/// @brief exp(x) - 1
+	/// @tparam T Ring type (for example i64)
+	/// @tparam deg taylor approximation degree
 	template<typename T, size_t deg>
 	using expm1 = typename polynomial<FractionField<T>>::template sub_t<
 		exp<T, deg>,
 		typename polynomial<FractionField<T>>::one>;
 
-	/// ln(1+x)
+	/// @brief ln(1+x)
+	/// @tparam T Ring type (for example i64)
+	/// @tparam deg taylor approximation degree
 	template<typename T, size_t deg>
 	using lnp1 = taylor<T, internal::lnp1_coeff, deg>;
 
-	/// atan(x);
+	/// @brief atan(x)
+	/// @tparam T Ring type (for example i64)
+	/// @tparam deg taylor approximation degree
 	template<typename T, size_t deg>
 	using atan = taylor<T, internal::atan_coeff, deg>;
 
-	/// sin(x)
+	/// @brief sin(x)
+	/// @tparam T Ring type (for example i64)
+	/// @tparam deg taylor approximation degree
 	template<typename T, size_t deg>
 	using sin = taylor<T, internal::sin_coeff, deg>;
 
-	/// sh(x)
+	/// @brief sh(x)
+	/// @tparam T Ring type (for example i64)
+	/// @tparam deg taylor approximation degree
 	template<typename T, size_t deg>
 	using sinh = taylor<T, internal::sh_coeff, deg>;
 
-	/// ch(x)
+	/// @brief ch(x)
+	/// @tparam T Ring type (for example i64)
+	/// @tparam deg taylor approximation degree
 	template<typename T, size_t deg>
 	using cosh = taylor<T, internal::cosh_coeff, deg>;
 
-	/// cos(x)
+	/// @brief cos(x)
+	/// @tparam T Ring type (for example i64)
+	/// @tparam deg taylor approximation degree
 	template<typename T, size_t deg>
 	using cos = taylor<T, internal::cos_coeff, deg>;
 
-	/// 1 / (1-x)
+	/// @brief 1/(1-x)
+	/// @tparam T Ring type (for example i64)
+	/// @tparam deg taylor approximation degree
 	template<typename T, size_t deg>
 	using geometric_sum = taylor<T, internal::geom_coeff, deg>;
 
-	/// asin(x)
+	/// @brief asin(x)
+	/// @tparam T Ring type (for example i64)
+	/// @tparam deg taylor approximation degree
 	template<typename T, size_t deg>
 	using asin = taylor<T, internal::asin_coeff, deg>;
 
-	/// asinh(x)
+	/// @brief asinh(x)
+	/// @tparam T Ring type (for example i64)
+	/// @tparam deg taylor approximation degree
 	template<typename T, size_t deg>
 	using asinh = taylor<T, internal::asinh_coeff, deg>;
 
-	/// atanh(x)
+	/// @brief atanh(x)
+	/// @tparam T Ring type (for example i64)
+	/// @tparam deg taylor approximation degree
 	template<typename T, size_t deg>
 	using atanh = taylor<T, internal::atanh_coeff, deg>;
 
-	/// tan(x)
+	/// @brief tan(x)
+	/// @tparam T Ring type (for example i64)
+	/// @tparam deg taylor approximation degree
 	template<typename T, size_t deg>
 	using tan = taylor<T, internal::tan_coeff, deg>;
 
-	/// tanh(x)
+	/// @brief tanh(x)
+	/// @tparam T Ring type (for example i64)
+	/// @tparam deg taylor approximation degree
 	template<typename T, size_t deg>
 	using tanh = taylor<T, internal::tanh_coeff, deg>;
 }
 
 // continued fractions
 namespace aerobus {
+	/// @brief represents a continued fraction a0 + 1/(a1 + 1/(...))
+	/// @tparam ...values 
 	template<int64_t... values>
 	struct ContinuedFraction {};
 
@@ -1938,9 +2131,17 @@ namespace aerobus {
 		static constexpr double val = type::template get<double>();
 	};
 
+	/** 
+	 * representation of PI as a continued fraction
+	 * @example PI_fraction::val -> 3.14...
+	 */
 	using PI_fraction = ContinuedFraction<3, 7, 15, 1, 292, 1, 1, 1, 2, 1, 3, 1, 14, 2, 1, 1, 2, 2, 2, 2, 1>;
+	/// @brief approximation of e
+	/// @example E_fraction::val -> 2.718...
 	using E_fraction = ContinuedFraction<2, 1, 2, 1, 1, 4, 1, 1, 6, 1, 1, 8, 1, 1, 10, 1, 1, 12, 1, 1, 14, 1, 1>;
+	/// @brief approximation of sqrt(2)
 	using SQRT2_fraction = ContinuedFraction<1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2>;
+	/// @brief approximation of cuberoot(2)
 	using SQRT3_fraction = ContinuedFraction<1, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2>;
 }
 
@@ -1984,8 +2185,13 @@ namespace aerobus {
 		};
 	}
 
+	/// @brief chebyshev polynomial of first kind
+	/// @tparam deg degree of polynomial
 	template<size_t deg>
 	using chebyshev_T = typename internal::chebyshev_helper<1, deg>::type;
+
+	/// @brief chebyshev polynomial of second kind
+	/// @tparam deg degree of polynomial
 	template<size_t deg>
 	using chebyshev_U = typename internal::chebyshev_helper<2, deg>::type;
 }
