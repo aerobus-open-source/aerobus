@@ -740,6 +740,7 @@ namespace aerobus {
 			static constexpr size_t degree = sizeof...(coeffs);
 			/// @brief heavy weight coefficient (non zero)
 			using aN = coeffN;
+			/// @brief remove largest coefficient
 			using strip = val<coeffs...>;
 			/// @brief true if polynomial is constant zero
 			using is_zero_t = std::bool_constant<(degree == 0) && (aN::is_zero_t::value)>;
@@ -867,7 +868,8 @@ namespace aerobus {
 
 		template<typename v>
 		struct derive_helper<v, std::enable_if_t<v::degree != 0>> {
-			using type = typename add<typename derive_helper<typename v::strip>::type,
+			using type = typename add<
+				typename derive_helper<typename simplify<typename v::strip>::type>::type,
 				typename monomial<
 					typename Ring::template mul_t<
 						typename v::aN,
