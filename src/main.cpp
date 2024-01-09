@@ -186,6 +186,48 @@ int test_poly_add() {
 	return 0;
 }
 
+int test_poly_derive() {
+	{
+		// 1 + x
+		using P1 = IX<Int<1>, Int<1>>;
+		using PP = polynomial<i32>::template derive_t<P1>;
+		if(PP::degree != 0) {
+			return 1;
+		}
+		if(PP::coeff_at_t<0>::v != 1) {
+			return 1;
+		}
+	} 
+	{
+		// 1 + x + 3x²
+		using P1 = IX<Int<3>, Int<1>, Int<1>>;
+		using PP = polynomial<i32>::template derive_t<P1>;
+		if (PP::degree != 1) {
+			return 1;
+		}
+		if (PP::coeff_at_t<0>::v != 1) {
+			return 1;
+		}
+		if (PP::coeff_at_t<1>::v != 6) {
+			return 1;
+		}
+	} 
+	{
+		// in Z/2Z
+		// 1 + x + 3x²
+		using P1 = polynomial<zpz<2>>::template val<zpz<2>::template val<3>, zpz<2>::template val<1>, zpz<2>::template val<1>>;
+		using PP = polynomial<zpz<2>>::template derive_t<P1>;
+		if (PP::degree != 0) {
+			return 1;
+		}
+		if (PP::coeff_at_t<0>::v != 1) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
 int test_poly_sub() {
 	{
 		// 1 + x
@@ -1030,6 +1072,7 @@ int main(int argc, char* argv[]) {
 	RUN_TEST(test_coeff_at)
 	RUN_TEST(test_poly_add)
 	RUN_TEST(test_poly_sub)
+	RUN_TEST(test_poly_derive)
 	RUN_TEST(test_poly_eq)
 	RUN_TEST(test_gcd)
 	RUN_TEST(test_poly_mul)
