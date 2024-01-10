@@ -5,6 +5,7 @@
 #include <cstdlib>
 
 #include "lib.h"
+#include "../imports/conwaypolynomials.h"
 
 
 // conformance : https://godbolt.org/z/5chqjYEEs
@@ -212,15 +213,34 @@ int test_poly_derive() {
 			return 1;
 		}
 	} 
+	using Z2Z = zpz<2>;
 	{
 		// in Z/2Z
-		// 1 + x + 3x²
-		using P1 = polynomial<zpz<2>>::template val<zpz<2>::template val<3>, zpz<2>::template val<1>, zpz<2>::template val<1>>;
-		using PP = polynomial<zpz<2>>::template derive_t<P1>;
+		// 1 + x + 3x² -> 1
+		using P1 = polynomial<Z2Z>::template val<Z2Z::template val<3>, Z2Z::template val<1>, Z2Z::template val<1>>;
+		using PP = polynomial<Z2Z>::template derive_t<P1>;
 		if (PP::degree != 0) {
 			return 1;
 		}
 		if (PP::coeff_at_t<0>::v != 1) {
+			return 1;
+		}
+	}
+	{
+		// in Z/2Z
+		// x^3 + x^2 + x + 1 -> 1 + x^2 (because 3 == 1)
+		using P1 = polynomial<Z2Z>::template val<Z2Z::template val<1>, Z2Z::template val<1>, Z2Z::template val<1>, Z2Z::template val<1>>;
+		using PP = polynomial<Z2Z>::template derive_t<P1>;
+		if (PP::degree != 2) {
+			return 1;
+		}
+		if (PP::coeff_at_t<0>::v != 1) {
+			return 1;
+		}
+		if (PP::coeff_at_t<1>::v != 0) {
+			return 1;
+		}
+		if (PP::coeff_at_t<2>::v != 1) {
 			return 1;
 		}
 	}
@@ -589,6 +609,45 @@ int test_add_q32() {
 	return 0;
 }
 
+int test_is_zero_q32() {
+	using a = q32::zero;
+	if (!a::is_zero_t::value) {
+		return 1;
+	}
+	using b = q32::one;
+	if (b::is_zero_t::value) {
+		return 1;
+	}
+
+	return 0;
+}
+
+int test_gt_q32() {
+	{
+		using a = q32::inject_constant_t<1>;
+		using b = q32::zero;
+		if (!q32::gt_t<a, b>::value) {
+			return 1;
+		}
+	} 
+	{
+		using a = q32::zero;
+		using b = q32::inject_constant_t<2>;
+		if (q32::gt_t<a, b>::value) {
+			return 1;
+		}
+	}
+	{
+		using a = q32::zero;
+		using b = q32::zero;
+		if (q32::gt_t<a, b>::value) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
 int test_sub_q32() {
 	{
 		using a = q32::val<i32::val<1>, i32::val<2>>;
@@ -770,6 +829,60 @@ int test_fraction_field_of_fraction_field () {
 	return 0;
 }
 
+int test_quotient_ring_is_z2z() {
+	using QQ = Quotient<i32, i32::template val<2>>;
+	using two = QQ::inject_constant_t<2>;
+	using three = QQ::inject_constant_t<3>;
+	using one = QQ::inject_constant_t<1>;
+	using zero = QQ::zero;
+	if (!QQ::eq_t<two, zero>::value) {
+		return 1;
+	}
+	if (!QQ::eq_t<one, three>::value) {
+		return 1;
+	}
+
+	return 0;
+}
+
+int test_instanciate_F4() {
+	using F2 = zpz<2>;
+	using PF2 = polynomial<F2>;
+	using F4 = Quotient<PF2, ConwayPolynomial<2, 2>::type>;
+	using zero = F4::zero;
+	using one = F4::one;
+	using phi = F4::inject_ring_t<PF2::X>;
+	using phi2 = F4::inject_ring_t<PF2::template val<F2::inject_constant_t<1>, F2::inject_constant_t<1>>>;
+	// check that elements are different
+	if (F4::eq_t<one, zero>::value || F4::eq_t<phi, zero>::value || F4::eq_t<phi2, zero>::value ||
+		F4::eq_t<phi, one>::value || F4::eq_t<phi2, one>::value ||
+		F4::eq_t<phi, phi2>::value) {
+		return 1;
+	}
+	// one + phi = phi2
+	if (!F4::eq_t<phi2, F4::template add_t<one, phi>>::value) {
+		return 1;
+	}
+	// one + phi2 = phi
+	if (!F4::eq_t<phi, F4::template add_t<one, phi2>>::value) {
+		return 1;
+	}
+	// phi * phi = phi2
+	if (!F4::eq_t<phi2, F4::template mul_t<phi, phi>>::value) {
+		return 1;
+	}
+	// phi2 * phi2 = phi
+	if (!F4::eq_t<phi, F4::template mul_t<phi2, phi2>>::value) {
+		return 1;
+	}
+	return 0;
+}
+
+int test_instanciate_large_finite_field() {
+	using F_17_8 = Quotient<polynomial<zpz<17>>, ConwayPolynomial<17, 8>::type>;
+	return 0;
+}
+
 int test_factorial() {
 	constexpr float x = internal::factorial<i32, 3>::value;
 	if (x != 6.0f) {
@@ -896,6 +1009,24 @@ int test_is_prime() {
 		return 1;
 	}
 	if (is_prime<100>::value) {
+		return 1;
+	}
+	if (!is_prime<7883>::value) {
+		return 1;
+	}
+	if (is_prime<7884>::value) {
+		return 1;
+	}
+	if (!is_prime<7919>::value) {
+		return 1;
+	}
+	if (is_prime<7920>::value) {
+		return 1;
+	}
+	if (!is_prime<7927>::value) {
+		return 1;
+	}
+	if (!is_prime<1000423>::value) {
 		return 1;
 	}
 
@@ -1081,12 +1212,17 @@ int main(int argc, char* argv[]) {
 	RUN_TEST(test_poly_gcd)
 	RUN_TEST(test_poly_eval)
 	RUN_TEST(test_add_q32)
+	RUN_TEST(test_gt_q32)
+	RUN_TEST(test_is_zero_q32)
 	RUN_TEST(test_fraction_field_eval)
 	RUN_TEST(test_sub_q32)
 	RUN_TEST(test_mul_q32)
 	RUN_TEST(test_div_q32)
 	RUN_TEST(test_eq_q32)
 	RUN_TEST(test_fraction_field_of_fraction_field)
+	RUN_TEST(test_quotient_ring_is_z2z)
+	RUN_TEST(test_instanciate_F4)
+	RUN_TEST(test_instanciate_large_finite_field)
 	RUN_TEST(test_factorial)
 	RUN_TEST(test_combination)
 	RUN_TEST(test_bernouilli)
