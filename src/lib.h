@@ -1776,7 +1776,7 @@ namespace aerobus {
 	using factorial_t = typename internal::factorial<T, i>::type;
 
 	template<typename T, size_t i>
-	inline constexpr T::inner_type factorial_v = internal::factorial<T, i>::value;
+	inline constexpr typename T::inner_type factorial_v = internal::factorial<T, i>::value;
 
 	namespace internal {
 		template<typename T, size_t k, size_t n, typename E = void>
@@ -1812,7 +1812,7 @@ namespace aerobus {
 	using combination_t = typename internal::combination<T, k, n>::type;
 
 	template<typename T, size_t k, size_t n>
-	inline constexpr T::inner_type combination_v = internal::combination<T, k, n>::value;
+	inline constexpr typename T::inner_type combination_v = internal::combination<T, k, n>::value;
 
 	namespace internal {
 		template<typename T, size_t m>
@@ -1898,7 +1898,7 @@ namespace aerobus {
 	using alternate_t = typename internal::alternate<T, k>::type;
 
 	template<typename T, size_t k>
-	inline constexpr T::inner_type alternate_v = internal::alternate<T, k>::value;
+	inline constexpr typename T::inner_type alternate_v = internal::alternate<T, k>::value;
 
 	// pow
 	namespace internal {
