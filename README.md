@@ -12,6 +12,8 @@ As an interesting application, it provides predefined polynomials, such as taylo
 
 Unlike most of competing libraries, it's quite easy to add a custom function as aerobus provides mechanisms to easily define coefficients and taylor series. 
 
+Code is tested against MSVC, CLANG and GCC, see report [here](https://godbolt.org/z/qnfP99KWv)
+
 ## examples
 ### pure compile time
 Lets consider the folliwing program, featuring function exp - 1, with 13 64 bits coefficients
