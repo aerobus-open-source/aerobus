@@ -7,8 +7,11 @@
 #include "lib.h"
 #include "../imports/conwaypolynomials.h"
 
+#ifdef _MSC_VER
+#define _USE_MATH_DEFINES
+#endif
 
-// conformance : https://godbolt.org/z/5chqjYEEs
+// conformance : https://godbolt.org/z/qnfP99KWv
 
 using namespace aerobus;
 
@@ -879,17 +882,20 @@ int test_instanciate_F4() {
 }
 
 int test_instanciate_large_finite_field() {
-	using F_17_8 = Quotient<polynomial<zpz<17>>, ConwayPolynomial<17, 8>::type>;
+	using F17 = zpz<17>;
+	using PF17 = polynomial<F17>;
+	using F_17_8 = Quotient<PF17, ConwayPolynomial<17, 8>::type>;
+	using x = F_17_8::inject_ring_t<PF17::X>;
 	return 0;
 }
 
 int test_factorial() {
-	constexpr float x = internal::factorial<i32, 3>::value;
+	constexpr float x = factorial_v<i32, 3>;
 	if (x != 6.0f) {
 		return 1;
 	}
 
-	constexpr size_t y = internal::factorial<i32, 0>::value;
+	constexpr size_t y = factorial_v<i32, 0>;
 	if (y != 1) {
 		return 1;
 	}
@@ -898,20 +904,20 @@ int test_factorial() {
 }
 
 int test_combination() {
-	constexpr int x = internal::combination<i32, 2, 4>::value;
+	constexpr int x = combination_v<i32, 2, 4>;
 	if (x != 6) {
 		return 1;
 	}
-	constexpr int y = internal::combination<i32, 0, 4>::value;
+	constexpr int y = combination_v<i32, 0, 4>;
 	if (y != 1) {
 		return 1;
 	}
-	constexpr int z = internal::combination<i32, 1, 4>::value;
+	constexpr int z = combination_v<i32, 1, 4>;
 	if (z != 4) {
 		return 1;
 	}
 
-	constexpr int zz = internal::combination<i32, 3, 4>::value;
+	constexpr int zz = combination_v<i32, 3, 4>;
 	if (zz != 4) {
 		return 1;
 	}
@@ -919,19 +925,22 @@ int test_combination() {
 }
 
 int test_bernouilli() {
-	constexpr float b0 = internal::bernouilli<i32, 0>::template value<float>;
+	constexpr float b0 = bernouilli_v<float, i32, 0>;
 	if (b0 != 1.0f) {
 		return 1;
 	}
-	constexpr float b1 = internal::bernouilli<i32, 1>::template value<float>;
+	constexpr float b1 = bernouilli_v<float, i32, 1>;
 	if (b1 != -0.5f) {
 		return 1;
 	}
 	using B2 = bernouilli_t<i32, 2>;
-	if (B2::x::v != 1 || B2::y::v != 6) {
+	if (B2::x::v != 1) {
 		return 1;
 	}
-	constexpr double b3 = internal::bernouilli<i32, 3>::template value<double>;
+	if (B2::y::v != 6) {
+		return 1;
+	}
+	constexpr double b3 = bernouilli_v<double, i32, 3>;
 	if (b3 != 0.0) {
 		return 1;
 	}
