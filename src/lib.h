@@ -81,6 +81,8 @@ namespace aerobus
 		typename R::template gcd_t<typename R::one, typename R::one>;
 		typename R::template eq_t<typename R::one, typename R::one>;
 		typename R::template pos_t<typename R::one>;
+
+		R::template pos_v<typename R::one> == true;
 		//typename R::template gt_t<typename R::one, typename R::zero>;
 		R::is_euclidean_domain == true;
 	};
@@ -236,7 +238,7 @@ namespace aerobus {
 			using tmp = typename Ring::template mod_t<V, X>;
 		public:
 			using type = std::conditional_t<
-				Ring::template pos_t<tmp>::value,
+				Ring::template pos_v<tmp>,
 				tmp, 
 				typename Ring::template sub_t<typename Ring::zero, tmp>
 			>;
@@ -257,6 +259,9 @@ namespace aerobus {
 		using eq_t = typename Ring::template eq_t<typename v1::type, typename v2::type>;
 		template<typename v1>
 		using pos_t = std::true_type;
+
+		template<typename v>
+		static constexpr bool pos_v = pos_t<v>::value;
 
 		static constexpr bool is_euclidean_domain = true;
 
@@ -534,6 +539,9 @@ namespace aerobus {
 		/// @brief positivity (v > 0)
 		template<typename v>
 		using pos_t = typename pos<v>::type;
+
+		template<typename v>
+		static constexpr bool pos_v = pos_t<v>::value;
 	};
 }
 
@@ -673,6 +681,9 @@ namespace aerobus {
 		/// @brief is v posititive 
 		template<typename v>
 		using pos_t = typename pos<v>::type;
+
+		template<typename v>
+		static constexpr bool pos_v = pos_t<v>::value;
 	};
 }
 
@@ -787,6 +798,9 @@ namespace aerobus {
 
 		template<typename v1>
 		using pos_t = typename pos<v1>::type;
+
+		template<typename v>
+		static constexpr bool pos_v = pos_t<v>::value;
 	};
 }
 
@@ -1321,6 +1335,9 @@ namespace aerobus {
 		template<typename v>
 		using pos_t = typename Ring::template pos_t<typename v::aN>;
 
+		template<typename v>
+		static constexpr bool pos_v = pos_t<v>::value;
+
 		/// @brief greatest common divisor of two polynomials
 		/// @tparam v1 
 		/// @tparam v2 
@@ -1469,8 +1486,8 @@ namespace aerobus {
 				using newx = typename Ring::template div_t<typename v::x, _gcd>;
 				using newy = typename Ring::template div_t<typename v::y, _gcd>;
 
-				using posx = std::conditional_t<!Ring::template pos_t<newy>::value, typename Ring::template sub_t<typename Ring::zero, newx>, newx>;
-				using posy = std::conditional_t<!Ring::template pos_t<newy>::value, typename Ring::template sub_t<typename Ring::zero, newy>, newy>;
+				using posx = std::conditional_t<!Ring::template pos_v<newy>, typename Ring::template sub_t<typename Ring::zero, newx>, newx>;
+				using posy = std::conditional_t<!Ring::template pos_v<newy>, typename Ring::template sub_t<typename Ring::zero, newy>, newy>;
 			public:
 				using type = typename _FractionField<Ring>::template val<posx, posy>;
 			};
@@ -1499,8 +1516,8 @@ namespace aerobus {
 			template<typename v>
 			struct pos {
 				using type = std::conditional_t<
-					(Ring::template pos_t<typename v::x>::value && Ring::template pos_t<typename v::y>::value) ||
-					(!Ring::template pos_t<typename v::x>::value && !Ring::template pos_t<typename v::y>::value),
+					(Ring::template pos_v<typename v::x> && Ring::template pos_v<typename v::y>) ||
+					(!Ring::template pos_v<typename v::x> && !Ring::template pos_v<typename v::y>),
 					std::true_type,
 					std::false_type>;
 
@@ -1672,6 +1689,9 @@ namespace aerobus {
 			/// @brief is v1 positive
 			template<typename v1>
 			using pos_t = typename pos<v1>::type;
+
+			template<typename v>
+			static constexpr bool pos_v = pos_t<v>::value;
 		};
 
 		template<typename Ring, typename E = void>
@@ -1755,6 +1775,9 @@ namespace aerobus {
 	template<typename T, size_t i>
 	using factorial_t = typename internal::factorial<T, i>::type;
 
+	template<typename T, size_t i>
+	inline constexpr T::inner_type factorial_v = internal::factorial<T, i>::value;
+
 	namespace internal {
 		template<typename T, size_t k, size_t n, typename E = void>
 		struct combination_helper {};
@@ -1787,6 +1810,9 @@ namespace aerobus {
 	/// @tparam T Ring type (i32 for example)
 	template<typename T, size_t k, size_t n>
 	using combination_t = typename internal::combination<T, k, n>::type;
+
+	template<typename T, size_t k, size_t n>
+	inline constexpr T::inner_type combination_v = internal::combination<T, k, n>::value;
 
 	namespace internal {
 		template<typename T, size_t m>
@@ -1846,6 +1872,9 @@ namespace aerobus {
 	template<typename T, size_t n>
 	using bernouilli_t = typename internal::bernouilli<T, n>::type;
 
+	template<typename FloatType, typename T, size_t n >
+	inline constexpr FloatType bernouilli_v = internal::bernouilli<T, n>::template value<FloatType>;
+
 	namespace internal {
 		template<typename T, int k, typename E = void>
 		struct alternate {};
@@ -1867,6 +1896,9 @@ namespace aerobus {
 	/// @tparam T Ring type
 	template<typename T, int k>
 	using alternate_t = typename internal::alternate<T, k>::type;
+
+	template<typename T, size_t k>
+	inline constexpr T::inner_type alternate_v = internal::alternate<T, k>::value;
 
 	// pow
 	namespace internal {
