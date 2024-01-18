@@ -84,7 +84,7 @@ In an Euclidean domain $\mathbb{A}$, such as $\mathbb{Z}$ or $\mathbb{A}[X]$, we
 Applied on $\mathbb{Z}$, that operation gives us modular arithmetic and all finite fields of cardinal $q$ where $q$ is a prime number (up to isomorphism). These fields are usually named $\mathbb{Z}/p\mathbb{Z}$. Applied on $\mathbb{Z}/p\mathbb{Z}[X]$, it gives finite Galois fields, meaning all finite fields of cardinal $p^n$ where $p$ is prime, see [@evariste1846memoire]. 
 
 # Software
-All types of `aerobus` have the same structure.
+All types of Aerobus have the same structure.
 
 An englobing type describes an algebraic structure. It has a nested type `val` which is always a template model describing elements of the set.
 
@@ -119,7 +119,7 @@ concept IsEuclideanDomain = IsRing<R> && requires {
   R::is_euclidean_domain == true;
 };
 ```
-which express the algebraic objects described above. Then, as long as a type satisfies the IsEuclideanDomain concept, we can calculate the greatest common divisor of two values of this type using Euclide's algorithm. As stated above, this algorithm operates on types instead of values and does not depend on the Ring, making it possible for users to implement another kind of discrete Euclidean domain without worrying about that kind of algorithm:
+which express the algebraic objects described above. Then, as long as a type satisfies the IsEuclideanDomain concept, we can calculate the greatest common divisor of two values of this type using Euclide's algorithm (see [@heath1956thirteen]). As stated above, this algorithm operates on types instead of values and does not depend on the Ring, making it possible for users to implement another kind of discrete Euclidean domain without worrying about that kind of algorithm:
 
 ```cpp
 template<typename Ring>
