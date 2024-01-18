@@ -1200,6 +1200,133 @@ int test_chebyshev() {
 	return 0;
 }
 
+int test_value_at() {
+	{
+		constexpr uint16_t x = aerobus::internal::value_at<0, 1, 2, 3>::value;
+		if(x != 1) {
+			return 1;
+		}
+	}
+	{
+		constexpr uint16_t x = aerobus::internal::value_at<1, 1, 2, 3>::value;
+		if(x != 2) {
+			return 1;
+		}
+	}
+	{
+		constexpr uint16_t x = aerobus::internal::value_at<2, 1, 2, 3>::value;
+		if(x != 3) {
+			return 1;
+		}
+	}
+	{
+		constexpr uint16_t x = aerobus::internal::value_at<0, 1, 2, 3>::value;
+		if(x != 1) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
+int test_bigint_digit_at() {
+	using x = aerobus::bigint::template val<aerobus::bigint::sign::positive, 1, 2>;
+	constexpr uint16_t x0 = x::template digit_at<0>::value;
+	if(x0 != 2) {
+		return 1;
+	}
+	constexpr uint16_t x1 = x::template digit_at<1>::value;
+	if(x1 != 1) {
+		return 1;
+	}
+	constexpr uint16_t x2 = x::template digit_at<2>::value;
+	if(x2 != 0) {
+		return 1;
+	}
+
+	return 0;
+}
+
+int test_bigint_add_at() {
+	// no carry
+	{ 
+		using a = aerobus::bigint::template val<aerobus::bigint::sign::positive, 2, 1>;
+		using b = aerobus::bigint::template val<aerobus::bigint::sign::positive, 2, 1>;
+		constexpr auto d0 = bigint::add_at_digit<a, b, 0, 0>;
+		constexpr auto d1 = bigint::add_at_digit<a, b, 1, 0>;
+		constexpr auto d2 = bigint::add_at_digit<a, b, 2, 0>;
+		if(d0 != 2) {
+			return 1;
+		}
+		if(d1 != 4) {
+			return 1;
+		}
+		if(d2 != 0) {
+			return 1;
+		}
+	}
+	// carry
+	{ 
+		using a = aerobus::bigint::template val<aerobus::bigint::sign::positive, UINT32_MAX, UINT32_MAX>;
+		using b = aerobus::bigint::one;
+
+		constexpr auto d0 = bigint::add_at_digit<a, b, 0, 0>;
+		constexpr auto c0 = bigint::add_at_carry<a, b, 0, 0>;
+		constexpr auto d1 = bigint::add_at_digit<a, b, 1, c0>;
+		constexpr auto c1 = bigint::add_at_carry<a, b, 1, c0>;
+		constexpr auto d2 = bigint::add_at_digit<a, b, 2, c1>;
+		constexpr auto c2 = bigint::add_at_carry<a, b, 2, c1>;
+		if(d0 != 0 || c0 != 1) {
+			return 1;
+		}
+		if(d1 != 0 || c1 != 1) {
+			return 1;
+		}
+		if(d2 != 1 || c2 != 0) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+int test_bigint_add_low_helper() {
+	using I1 = aerobus::bigint::template val<aerobus::bigint::sign::positive, UINT32_MAX, UINT32_MAX>;
+	using I2 = aerobus::bigint::one;
+	using X0 = aerobus::bigint::add_low_helper<I1, I2, 0>;
+	if(X0::digit != 0 || X0::carry_out != 1) {
+		return 1;
+	}
+	using X1 = aerobus::bigint::add_low_helper<I1, I2, 1>;
+	if(X1::digit != 0 || X1::carry_out != 1) {
+		return 1;
+	}
+	using X2 = aerobus::bigint::add_low_helper<I1, I2, 2>;
+	if(X2::digit != 1 || X2::carry_out != 0) {
+		return 1;
+	}
+
+	return 0;
+}
+
+int test_bigint_add() {
+	using I1 = typename aerobus::bigint::template val<aerobus::bigint::sign::positive, UINT32_MAX, UINT32_MAX>;
+	using I2 = typename aerobus::bigint::one;
+	using S = typename aerobus::bigint::template add<I1, I2>::type;
+	if(S::digits != 3) {
+		return 1;
+	}
+	if(S::digit_at<0>::value != 0) {
+		return 0;
+	}
+	if(S::digit_at<1>::value != 0) {
+		return 0;
+	}
+	if(S::digit_at<2>::value != 1) {
+		return 0;
+	}
+	return 0;
+}
+
 #define RUN_TEST(test_name) if (test_name() != 0) { printf("%s failed\n", #test_name); return 1; }
 
 int main(int argc, char* argv[]) {
@@ -1239,6 +1366,11 @@ int main(int argc, char* argv[]) {
 	RUN_TEST(test_exp)
 	RUN_TEST(test_is_prime)
 	RUN_TEST(test_zpz)
+	RUN_TEST(test_value_at)
+	RUN_TEST(test_bigint_digit_at)
+	RUN_TEST(test_bigint_add_at)
+	RUN_TEST(test_bigint_add_low_helper)
+	RUN_TEST(test_bigint_add)
 	printf("ALL TESTS OK\n");
 	return 0;
 }

@@ -107,7 +107,7 @@ namespace aerobus {
 		template<template<typename...> typename TT, typename T>
 		inline constexpr bool is_instantiation_of_v = is_instantiation_of<TT, T>::value;
 
-		template <int64_t i, typename T, typename... Ts>
+		template <size_t i, typename T, typename... Ts>
 		struct type_at
 		{
 			static_assert(i < sizeof...(Ts) + 1, "index out of range");
@@ -120,6 +120,17 @@ namespace aerobus {
 
 		template <size_t i, typename... Ts>
 		using type_at_t = typename type_at<i, Ts...>::type;
+
+		template<size_t i, auto x, auto... xs>
+		struct value_at {
+			static_assert(i < sizeof...(xs) + 1, "index out of range");
+			static constexpr auto value = value_at<i-1, xs...>::value;
+		};
+
+		template<auto x, auto... xs> 
+		struct value_at<0, x, xs...> {
+			static constexpr auto value = x;
+		};
 
 
 		template<int32_t n, int32_t i, typename E = void>
@@ -1358,6 +1369,161 @@ namespace aerobus {
 		/// @example polynomial<i32>::template inject_ring_t<i32::template val<2>>
 		template<typename v>
 		using inject_ring_t = val<v>;
+	};
+}
+
+// big integers
+namespace aerobus {
+	struct bigint {
+		enum sign {
+			positive,
+			negative
+		};
+
+		template<sign s, uint32_t an, uint32_t... as>
+		struct val {
+			template<size_t index, typename E = void>
+			struct digit_at {};
+
+			template<size_t index>
+			struct digit_at<index, std::enable_if_t<(index <= sizeof...(as))>> {
+				static constexpr uint32_t value = internal::value_at<(sizeof...(as) - index), an, as...>::value;
+			};
+			
+			template<size_t index>
+			struct digit_at<index, std::enable_if_t<(index > sizeof...(as))>> {
+				static constexpr uint32_t value = 0;
+			};
+
+			static constexpr bool is_positive = s != sign::negative;
+
+			using strip = val<s, as...>;
+			static constexpr uint32_t aN = an;
+			static constexpr size_t digits = sizeof...(as) + 1;
+
+			static std::string to_string() {
+				return std::to_string(aN) + "B^" + std::to_string(digits-1) + " + " + strip::to_string();
+			}
+		};
+
+		template<typename I>
+		struct is_zero {
+			static constexpr bool value = I::digits == 1 && I::aN == 0;
+		};
+
+		template<typename I>
+		static constexpr bool is_zero_v = is_zero<I>::value;
+
+		template<sign s, uint32_t a0>
+		struct val<s, a0> {
+			using strip = val<s, a0>;
+			static constexpr bool is_positive = s != sign::negative;
+			static constexpr uint32_t aN = a0;
+			static constexpr size_t digits = 1;
+			template<size_t index, typename E = void>
+			struct digit_at {};
+			template<size_t index>
+			struct digit_at<index, std::enable_if_t<index == 0>> {
+				static constexpr uint32_t value = a0;
+			};
+			
+			template<size_t index>
+			struct digit_at<index, std::enable_if_t<index != 0>> {
+				static constexpr uint32_t value = 0;
+			};
+
+			static std::string to_string() {
+				return std::to_string(a0);
+			}
+		};
+
+		using zero = val<sign::positive, 0>;
+		using one = val<sign::positive, 1>;
+
+	private:
+		template<uint32_t x, uint32_t y, uint8_t carry_in = 0>
+		struct add_digit_helper {
+		private:
+			static constexpr uint64_t raw = ((uint64_t) x + (uint64_t) y + (uint64_t) carry_in);
+		public:
+			static constexpr uint32_t value = (uint32_t)(raw & 0xFFFF'FFFF);
+			static constexpr uint8_t carry_out = (uint32_t) (raw >> 32);
+		};
+
+		template<typename I1, typename I2, size_t index, uint16_t carry_in = 0>
+		struct add_at_helper {
+			static_assert(I1::is_positive, "always add positive values");
+			static_assert(I2::is_positive, "always add positive values");
+		private:
+			static constexpr uint32_t d1 = I1::template digit_at<index>::value;
+			static constexpr uint32_t d2 = I2::template digit_at<index>::value;
+		public:
+			static constexpr uint32_t value = add_digit_helper<d1, d2, carry_in>::value;
+			static constexpr uint8_t carry_out = add_digit_helper<d1, d2, carry_in>::carry_out;
+		};
+
+		template<typename I, typename E = void>
+		struct simplify {};
+
+		template<typename I>
+		struct simplify<I, std::enable_if_t<I::aN == 0>> {
+			using type = typename I::strip;
+		};
+
+		template<typename I>
+		struct simplify<I, std::enable_if_t<I::aN != 0>> {
+			using type = I;
+		};
+
+	public:
+
+		template<typename I>
+		using simplify_t = typename simplify<I>::type;
+
+		// exposed for testing -- DO NOT USE
+		template<typename I1, typename I2, size_t index, uint8_t carry_in = 0>
+		static constexpr uint32_t add_at_digit = add_at_helper<I1, I2, index, carry_in>::value;
+		template<typename I1, typename I2, size_t index, uint8_t carry_in = 0>
+		static constexpr uint8_t add_at_carry = add_at_helper<I1, I2, index, carry_in>::carry_out;
+
+		// exposed for testing -- DO NOT USE
+		template<typename I1, typename I2, size_t index>
+		struct add_low_helper {
+			private:
+			using helper = add_at_helper<I1, I2, index, add_low_helper<I1, I2, index-1>::carry_out>;
+			public:
+			static constexpr uint32_t digit = helper::value;
+			static constexpr uint8_t carry_out = helper::carry_out;
+		};
+
+		// exposed for testing -- DO NOT USE
+		template<typename I1, typename I2>
+		struct add_low_helper<I1, I2, 0> {
+			static constexpr uint32_t digit = add_at_helper<I1, I2, 0, 0>::value;
+			static constexpr uint32_t carry_out = add_at_helper<I1, I2, 0, 0>::carry_out;
+		};
+
+		template<typename I1, typename I2, typename I>
+		struct add_low {};
+
+		template<typename I1, typename I2, std::size_t... I>
+		struct add_low<I1, I2, std::index_sequence<I...>> {
+			static_assert(I1::is_positive, "add works on positive values");
+			static_assert(I2::is_positive, "add works on positive values");
+			using type = val<sign::positive, add_low_helper<I1, I2, I>::digit...>;
+		};
+
+		template<typename I1, typename I2>
+		struct add {
+			static_assert(I1::is_positive, "add works on positive values");
+			static_assert(I2::is_positive, "add works on positive values");
+			using type = simplify_t<
+				typename add_low<
+						I1, 
+						I2, 
+						typename internal::make_index_sequence_reverse<std::max(I1::digits, I2::digits) + 1>
+					>::type>;
+		};
 	};
 }
 
