@@ -1,23 +1,20 @@
-# aerobus
+# Aerobus
 Aerobus is a C++20 template library which expresses algebra concepts in types
 
-It defines some concepts, such a Ring, IntegralDomain or Field which can be used to construct the field of fractions of a Ring, polynomials with coefficients in such a set or rational fractions, all at compile time. 
+It defines some concepts, such as Ring, IntegralDomain or Field which can be used to construct the field of fractions of a Ring, polynomials with coefficients in such a set or rational fractions, all at compile time. It allows the definition of polynomials over any discrete integral domain (and therefore the corresponding field of fractions), as long as your Ring implementation satisfies the IsIntegralDomain concept. 
 
-It allows definition of polynomials over any discrete integral domain (and therefore the corresponding field of fractions), as long as your Ring implementation satisfies the IsIntegralDomain concept. 
+It defines Integers (32 or 64 bits) as types, therefore rationals (field of fractions) and modular arithmetic (Z/pZ). Polynomials with integer or rational coefficients are exposed as types, and so are rational fractions (field of fractions of polynomials). 
 
-It provides definition for Integers (32 or 64 bits) as types, therefore rationals (field of fractions) and modular arithmetic (Z/pZ).
-Polynomial with integer or rational coefficients are exposed as types, and so are rational fractions (field of fractions of polynomials). 
+As an interesting application, it provides predefined polynomials, such as the Taylor series of usual functions. Given polynomials can then be evaluated at floating point values, Aerobus therefore defines compile-time versions of usual functions and very efficient implementations for runtime.
 
-As an interesting application, it provides predefined polynomials, such as taylor series of usual functions. Given polynomials can then be evaluated at floating point values, aerobus therefore define compile time versions of usual functions, and very efficient implementations for runtime.
-
-Unlike most of competing libraries, it's quite easy to add a custom function as aerobus provides mechanisms to easily define coefficients and taylor series. 
+Unlike most competing libraries, it's quite easy to add a custom function as Aerobus provides mechanisms to easily define coefficients and Taylor series. 
 
 Code is tested against MSVC, CLANG and GCC, see report [here](https://godbolt.org/z/qnfP99KWv)
 
 ## examples
 ### pure compile time
-Lets consider the folliwing program, featuring function exp - 1, with 13 64 bits coefficients
-```c++
+Let us consider the following program, featuring function exp - 1, with 13 64 bits coefficients
+```cpp
 int main() {
     using V = aerobus::expm1<aerobus::i64, 13>;
     static constexpr double xx = V::eval(0.1);
@@ -26,7 +23,7 @@ int main() {
 ```
 V AND xx are computed at compile time, yielding the following assembly (clang 17)
 
-```assembly
+```nasm
 .LCPI0_0:
         .quad   0x3fbaec7b35a00d3a              # double 0.10517091807564763
 main:                                   # @main
@@ -41,17 +38,17 @@ main:                                   # @main
 .L.str:
         .asciz  "%lf\n"
 ```
-### evaluations on variables
+### Evaluations on variables
 On the other hand, one might want to define a runtime function this way : 
 
-```c++
+```cpp
 double expm1(const double x) {
     using V = aerobus::expm1<aerobus::i64, 13>;
     return V::eval(x);
 }
 ```
-again, coefficients are all computed compile time, yielding following assembly (given processor supports fused multiply add) : 
-```assembly
+again, coefficients are all computed compile time, yielding the following assembly (given processor supports fused multiply-add) : 
+```nasm
 .LCPI0_0:
         .quad   0x3de6124613a86d09              # double 1.6059043836821613E-10
 .LCPI0_1:
@@ -97,10 +94,10 @@ expm1(double):                              # @expm1(double)
         vfmadd213sd     xmm0, xmm2, xmm1        # xmm0 = (xmm2 * xmm0) + xmm1
         ret
 ```
-### apply on vectors and get proper vectorization
-If applied to a vector of data, with proper compiler hints, gcc can easily generate vectorized version of the code : 
+### Apply on vectors and get proper vectorization
+If applied to a vector of data, with proper compiler hints, compilers can easily generate a vectorized version of the code : 
 
-```c++
+```cpp
 double compute_expm1(const size_t N, const double* const __restrict in, double* const __restrict out) {
     using V = aerobus::expm1<aerobus::i64, 13>;
     for (size_t i = 0; i < N; ++i) {
@@ -111,7 +108,7 @@ double compute_expm1(const size_t N, const double* const __restrict in, double* 
 
 yielding : 
 
-```assembly
+```nasm
 compute_expm1(unsigned long, double const*, double*):
         lea     rax, [rdi-1]
         cmp     rax, 2
@@ -160,8 +157,8 @@ compute_expm1(unsigned long, double const*, double*):
         vzeroupper
 ```
 
-## predefined functions
-```C++
+## Predefined functions
+```cpp
 // e^x
 template<typename T, size_t deg>
 using exp = taylor<T, internal::exp_coeff, deg>;
@@ -222,12 +219,12 @@ using tanh = taylor<T, internal::tanh_coeff, deg>;
 ```
 
 ### extend
-To define another taylor serie, it's just needed to provide an implementation for coefficients. 
-Aerobus already exposes usual integers (bernouilli, factorial, alternate, pow) to help user extend the library. 
+To define another Taylor serie, it's just needed to provide an implementation for coefficients. 
+Aerobus already exposes usual integers (Bernoulli, factorial, alternate, pow) to help users extend the library. 
 
 For example, here is the code of the sin function (at zero) : 
 
-```C++
+```cpp
 namespace aerobus 
 {
     namespace internal 
@@ -266,14 +263,14 @@ Compile with -std=c++20 (at least)
 see [conformance view](https://godbolt.org/z/z6Wbdr15s)
 
 ### Test and bench
-move to top directory then : 
+Move to the top directory then : 
 ```bash
 mkdir build
 cd build
 cmake ..
 ```
 
-This creates (in build directory) an `aerobus_test` executable which runs all test and prints
+This creates (in the `build` directory) an `aerobus_test` executable which runs all tests and prints
 `ALL TESTS OK` 
 if everything went fine
 
