@@ -451,7 +451,7 @@ struct Quotient {
 
 We can then define finite fields such as $\mathbb{Z}/p\mathbb{Z}$ by writing `using Z2Z = Quotient<i32, i32::inject_constant_t<2>>;`.
 
-In $\mathbb{Z}/p\mathbb{Z}[X]$, there are special irreducible polynomials named Conway polynomials [@holt2005handbook], used to build larger finite fields. `Aerobus` exposes Conway polynomials for $p$ smaller than 1000 and degrees smaller than 20. They are in a special header `imports/conwaypolynomials.h` and completely optional. If users import that header, they can build finite fields of cardinal $p^n$ for all prime $p \lt 1000$ and $n \leq 20$. 
+In $\mathbb{Z}/p\mathbb{Z}[X]$, there are special irreducible polynomials named Conway polynomials [@holt2005handbook], used to build larger finite fields. `Aerobus` exposes Conway polynomials for $p$ smaller than 1000 and degrees smaller than 20. They are in a special header `imports/conwaypolynomials.h` and completely optional. If users import that header, they can build finite fields of cardinal $p^n$ for all prime $p < 1000$ and $n ≤ 20$. 
 
 For instance, we can compute $\mathbb{F}_4 = \mathrm{GF}(2, 2)$ by writing:
 
