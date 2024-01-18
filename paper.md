@@ -1,5 +1,5 @@
 ---
-title: 'Aerobus: a C++ template library for polynomials algebra over discrete euclidean domains'
+title: 'Aerobus: a C++ template library for polynomials algebra over discrete Euclidean domains'
 tags:
   - Polynomials
   - Mathematics
@@ -23,42 +23,44 @@ bibliography: paper.bib
 C++ comes with high compile-time computations capability, also known as metaprogramming with templates.
 Templates are a language-in-the-language which is Turing-complete, meaning we can run every computation at compile time instead of runtime, as long as input data is known at compile time. 
 
-Using these capabilities, vastly extended with latest versions of the standard, we implemented a library 
-for discrete euclidean domain, such as $\mathbb{Z}$. We also provide a way to generate the fraction field of such rings (e.g. $\mathbb{Q}$). 
+Using these capabilities, vastly extended with the latest versions of the standard, we implemented a library for discrete Euclidean domains, such as $\mathbb{Z}$. We also provide a way to generate the fraction field of such rings (e.g. $\mathbb{Q}$). 
 
-We also implemented polynomials over such discrete ring and fields (e.g. $\mathbb{Q}[X]$). Since polynomials are also a ring, the above implementation gives us rational fractions as field of fractions of polynomials.
+We also implemented polynomials over such discrete rings and fields (e.g. $\mathbb{Q}[X]$). Since polynomials are also a ring, the above implementation gives us rational fractions as the field of fractions of polynomials.
 
-In addition, we expose a way to generate taylor series of any math functions as long as coefficients are known. 
-Likewise, given we have a typed representation of rationals, we've been able to add continued fractions as part of the library. 
+In addition, we expose a way to generate the Taylor series of any math functions as long as coefficients are known. 
 
-`Aerobus` was designed to be used in high performance software, teaching purposes or embedded sotfware where as much as possible must be precomputed to shrink binary size. It compiles with major compilers : gcc, clang and msvc. It is quite easily configurable and extensible. 
+In addition, we added some useful additional features, such as known polynomials (Chebyshev), continued fractions, quotient rings and some Conway polynomials to define Galois finite fields.
+
+`Aerobus` was designed to be used in high-performance software, teaching purposes or embedded software where as much as possible must be precomputed to shrink binary size. It compiles with major compilers: gcc, clang and msvc. It is quite easily configurable and extensible. 
 
 # Statement of need
 By implementing general algebra concepts such as discrete rings, field of fractions and polynomials, `Aerobus` can serve multiple purposes. 
 
-The main application we want to express in this paper is the automatic (and configurable) generation or taylor approximation of usual transcendental functions such as `exp` or `sin`. The "generated" code is pure C++ and can be inspected. 
+The main application we want to express in this paper is the automatic (and configurable) generation or Taylor approximation of usual transcendental functions such as `exp` or `sin`. The "generated" code is pure C++ and can be inspected.
 
-This functions are usually exposed by the standard library (`<cmath>`) with high (guaranteed) precision. However, in high performance computing, when not compiled with `-Ofast`, evaluating `std::exp` has several flaws : 
+These functions are usually exposed by the standard library (`<cmath>`) with high (guaranteed) precision. However, in high-performance computing, when not compiled with `-Ofast`, evaluating `std::exp` has several flaws: 
 
-- it leads to a syscal which is very expensive
+- it leads to a `syscall` which is very expensive
 - it doesn't leverage vector units (avx, avx2, avx512 or equivalent in non-intel hardware). 
 
-Hardwarde vendors provide high performance libraries such as [@wang2014intel], but implementation is often hidden and absolutely not extensible. 
+Hardware vendors provide high-performance libraries such as [@wang2014intel], but implementation is often hidden and not extensible. 
 
-Some others can provide vectorized functions, such as [@vml] does. But libraries like VML are highly tight to one architecture by their use of intrinsics or inline assembly. In addition, they only provide a restricted list of math functions and do not expose capabilities to generate high performance versions of other functions such as arctanh. It's the same for standard library compiled with `-Ofast` : it generates vectorized version of some functions (such as exp) but with no control of precision and no extensibility. 
+Some others can provide vectorized functions, such as [@vml] does. But libraries like VML are highly tight to one architecture by their use of intrinsics or inline assembly. In addition, they only provide a restricted list of math functions and do not expose capabilities to generate high-performance versions of other functions such as arctanh. It is the same for the standard library compiled with `-Ofast`: it generates a vectorized version of some functions (such as exp) but with no control of precision and no extensibility. 
 
-`Aerobus` provides automatic generation of such functions, in an hardware independant way.
-In addition, `Aerobus` provides a way to control precision of generated function by changing the degree of taylor expansion, which can't be use in competing libraries without reimplementing the whole function. 
+`Aerobus` provides automatic generation of such functions, in a hardware-independent way.
+In addition, `Aerobus` provides a way to control the precision of the generated function by changing the degree of Taylor expansion, which can't be used in competing libraries without reimplementing the whole function. 
 
 # Mathematic definitions
-A `ring` $\mathbb{A}$ is a non empty set with two internal laws, addition and multiplication. There is a neutral element for both, zero and one. 
+For the sake of completeness, we give basic definitions of the mathematical concepts which the library deals with. However, readers desiring complete and rigorous definitions of the concepts explained below should refer to some mathematical books on algebra, such as [@lang2012algebra] or [@bourbaki2013algebra].
+
+A `ring` $\mathbb{A}$ is a nonempty set with two internal laws, addition and multiplication. There is a neutral element for both, zero and one. 
 Addition is commutative and associative and every element $x$ has an inverse $-x$. Multiplication is commutative, associative and distributive over addition, meaning that $a(b+c) = ab+ac$ for every $a, b, c$ element. We call it `discrete` if it is countable. 
 
 An `integral domain` is a ring with one additional property. For every elements $a, b, c$ such as $ab = ac$, then either $a = 0$ or $b = c$. Such a ring is not always a field, such as $\mathbb{Z}$ shows it. 
 
 An `euclidean domain` is an integral domain that can be endowed with an euclidean division. 
 
-For such an euclidean domain, we can build two important structures : 
+For such an euclidean domain, we can build two important structures: 
 
 ## Polynomials $\mathbb{A}[X]$
 Polynomials over $\mathbb{A}$ is the free module generated by a base noted $(X^k)_{k\in\mathbb{N}}$. Practically speaking, it's the set of 
@@ -67,22 +69,27 @@ $$a_0 + a_1X + \ldots + a_nX^n$$
 
 where $a_n \neq 0$ if $n \neq 0$. 
 
-$(a_i)$, the coefficients, are elements of $\mathbb{A}$. Theory states that if $\mathbb{A}$ is a field, then $\mathbb{A}[X]$ is euclidean. That means notions like division of greatest common divisor (gcd) have a meaning, yielding an arithmetic of polynomials. 
+$(a_i)$, the coefficients, are elements of $\mathbb{A}$. The theory states that if $\mathbb{A}$ is a field, then $\mathbb{A}X$ is Euclidean. That means notions like division of greatest common divisor (gcd) have a meaning, yielding an arithmetic of polynomials. 
 
 
 ## Field of fractions
-If $\mathbb{A}$ is euclidean, we can build it's field of fractions: the smallest field containg $\mathbb{A}$. 
-We construct is a congruences classes of $\mathbb{A}\times \mathbb{A}$ with respect to the relation $(p,q) \sim (pp, qq)\  \mathrm{iff}\ p*qq = q*pp$. Basic algebra shows that this is a field (every element has an inverse). Canonical example is $\mathbb{Q}$, the set of rational numbers. 
+If $\mathbb{A}$ is Euclidean, we can build its field of fractions: the smallest field containing $\mathbb{A}$. 
+We construct it as congruences classes of $\mathbb{A}\times \mathbb{A}$ for the relation $(p,q) \sim (pp, qq)\  \mathrm{iff}\ p*qq = q*pp$. Basic algebra shows that this is a field (every element has an inverse). The canonical example is $\mathbb{Q}$, the set of rational numbers. 
 
-Given polynomials over a field form an euclidean ring, we can do the same construction and get rational fractions $P(x) / Q(X)$ where $P$ and $Q$ are polynomials. 
+Given polynomials over a field form an Euclidean ring, we can do the same construction and get rational fractions $P(x) / Q(X)$ where $P$ and $Q$ are polynomials.
+
+## Quotient rings
+In an Euclidean domain $\mathbb{A}$, such as $\mathbb{Z}$ or $\mathbb{A}[X]$, we can define the quotient ring of $\mathbb{A}$ by a principal ideal $I$. Given that $I$ is principal, it is generated by an element $X$ and the quotient ring is the ring of rests modulo $X$. When $X$ is `prime` (meaning it has no smallest factors in $\mathbb{A}$), the quotient ring $\mathbb{A}/I$ is a field. 
+
+Applied on $\mathbb{Z}$, that operation gives us modular arithmetic and all finite fields of cardinal $q$ where $q$ is a prime number (up to isomorphism). These fields are usually named $\mathbb{Z}/p\mathbb{Z}$. Applied on $\mathbb{Z}/p\mathbb{Z}[X]$, it gives finite Galois fields, meaning all finite fields of cardinal $p^n$ where $p$ is prime, see [@evariste1846memoire]. 
 
 # Software
-All types in `aerobus` have the same structure.
+All types of `aerobus` have the same structure.
 
 An englobing type describes an algebraic structure. It has a nested type `val` which is always a template model describing elements of the set.
 
-For example, integers : 
-```C++
+For example, integers: 
+```cpp
 struct i32 {
 		template<int32_t x>
 		struct val {};
@@ -91,8 +98,8 @@ struct i32 {
 This is because we want to operate on types more than on values. This allows generic implementation, for example of gcd (see below) without specifying what are the values. 
 
 ## Concepts
-Library exposes two main `concepts` : 
-```C++
+The library exposes two main `concepts`: 
+```cpp
 template <typename R>
 concept IsRing = requires {
   typename R::one;
@@ -112,9 +119,9 @@ concept IsEuclideanDomain = IsRing<R> && requires {
   R::is_euclidean_domain == true;
 };
 ```
-which express the algebraic objects described above. Then, as long as a type satisfies the IsEuclideanDomain concept, we can calculate greatest common divisor of two values of this type using euclidean algorithm. As stated above, this algorithm operates on types instead of values and does not depend on the Ring, making possible for user to implement another kind of discrete euclidean domain without worrying about that kind of algorithm :
+which express the algebraic objects described above. Then, as long as a type satisfies the IsEuclideanDomain concept, we can calculate the greatest common divisor of two values of this type using Euclide's algorithm. As stated above, this algorithm operates on types instead of values and does not depend on the Ring, making it possible for users to implement another kind of discrete Euclidean domain without worrying about that kind of algorithm:
 
-```C++
+```cpp
 template<typename Ring>
 struct gcd {
   /// v1 and v2 are values in Ring
@@ -126,28 +133,26 @@ template<typename Ring, typename v1, typename v2>
 using gcd_t = typename gcd<Ring>::template type<v1, v2>;
 ```
 
-The same is done for field of fraction : implementation does not rely on the nature of underlying euclidean domain but rather on its structure. It's automatically done by templates, as long as Ring satisfies the appropriate concept : 
+The same is done for the field of fractions: implementation does not rely on the nature of the underlying Euclidean domain but rather on its structure. It's automatically done by templates, as long as Ring satisfies the appropriate concept: 
 
-```C++
+```cpp
 template<typename Ring>
 requires IsEuclideanDomain<Ring>
 using FractionField (some implementation);
 ```
 
-Doing that way, $\mathbb{Q}$ has the exact same implementation as rational fractions of polynomials. User could also get the field of fractions of any ring of his convenience, as long as he implements the required concepts. 
+Doing that way, $\mathbb{Q}$ has the same implementation as rational fractions of polynomials. Users could also get the field of fractions of any ring of their convenience, as long as they implement the required concepts. 
 
 ## Native types
-`Aerobus` exposes several preimplemented types, as they are common and necessary to do actual computations : 
+`Aerobus` exposes several pre-implemented types, as they are common and necessary to do actual computations: 
 
 - `i32` and `i64` ($\mathbb{Z}$ seen as 32bits or 64 bits integers)
 - `zpz` the quotient ring $\mathbb{Z}/p\mathbb{Z}$ 
 - `polynomial<T>` where T is a ring
-- `FractionField<T>` where T is an euclidean domain
+- `FractionField<T>` where T is an Euclidean domain
+Polynomial exposes an evaluation function, which automatically generates Horner development and unrolls the loop by generating it at compile time. 
 
-Polynomial expose an evaluation function, which automatically generates Horner development and unrolls the
-loop by generating it at compile time. 
-
-Library provide builtin integers and functions, such as:
+The library provides built-in integers and functions, such as:
 
 - is_prime
 - factorial_t
@@ -156,7 +161,7 @@ Library provide builtin integers and functions, such as:
 - combination_t
 - bernouilli_t
 
-And taylor series for these functions:
+And Taylor series for these functions:
 
 - exp
 - expm1 (exp - 1)
@@ -174,26 +179,28 @@ And taylor series for these functions:
 - asinh
 - atanh
 
-Additionnaly, library comes with a type designed to help the user implement custom taylor series. 
-If user provides a type `mycoeff` satisfying the following template : 
+Additionally, the library comes with a type designed to help the users implement other Taylor series. 
+If users provide a type `mycoeff` satisfying the following template: 
 
-```C++
+```cpp
 template<typename T, size_t i>
 struct mycoeff {
     using type = (something in FractionField<T>);
   };
 };
 ```
-the correspondint taylor serie can be built using : 
-```C++
+
+the corresponding Taylor expansion can be built using: 
+
+```cpp
 template<typename T, size_t deg>
 using myfunc = taylor<T, mycoeff, deg>;
 ```
 
 # Examples
 ## Pure compile time
-Lets consider the following program, featuring function exp - 1, with 13 64-bits coefficients
-```c++
+Let us consider the following program, featuring function exp - 1, with 13 64-bit coefficients
+```cpp
 int main() {
     using V = aerobus::expm1<aerobus::i64, 13>;
     static constexpr double xx = V::eval(0.1);
@@ -203,7 +210,7 @@ int main() {
 
 V AND xx are computed at compile time, yielding the following assembly (clang 17)
 
-```assembly
+```nasm
 .LCPI0_0:
   .quad   0x3fbaec7b35a00d3a  # double 0.10517091807564763
 main: # @main
@@ -220,17 +227,18 @@ main: # @main
 ```
 
 ## Evaluations on variables
-On the other hand, one might want to define a runtime function this way : 
+On the other hand, one might want to define a runtime function this way: 
 
-```c++
+```cpp
 double expm1(const double x) {
     using V = aerobus::expm1<aerobus::i64, 13>;
     return V::eval(x);
 }
 ```
 
-again, coefficients are all computed compile time, yielding following assembly (given processor supports fused multiply add) : 
-```assembly
+again, coefficients are all computed compile time, yielding the following assembly (given processor supports fused multiply-add): 
+
+```nasm
 .LCPI0_0:
   .quad   0x3de6124613a86d09  # double 1.6059043836821613E-10
 .LCPI0_1:
@@ -278,9 +286,9 @@ expm1(double):                              # @expm1(double)
 ```
 
 ## Apply on vectors and get proper vectorization
-If applied to a vector of data, with proper compiler hints, gcc can easily generate vectorized version of the code : 
+If applied to a vector of data, with proper compiler hints, GCC can easily generate a vectorized version of the code: 
 
-```c++
+```cpp
 double compute_expm1(const size_t N, double* in, double* out) {
     using V = aerobus::expm1<aerobus::i64, 13>;
     for (size_t i = 0; i < N; ++i) {
@@ -289,9 +297,9 @@ double compute_expm1(const size_t N, double* in, double* out) {
 }
 ```
 
-yielding : 
+yielding: 
 
-```assembly
+```nasm
 compute_expm1(unsigned long, double const*, double*):
   lea     rax, [rdi-1]
   cmp     rax, 2
@@ -343,10 +351,10 @@ compute_expm1(unsigned long, double const*, double*):
 # Misc
 
 ## Continued Fractions
-`Aerobus` also provides [continued fractions](https://en.wikipedia.org/wiki/Continued_fraction), seen as an example of what is possible when your have a proper type representations of field of fractions. 
-Implementation is quite trivial : 
+`Aerobus` also provides [continued fractions](https://en.wikipedia.org/wiki/Continued_fraction), seen as an example of what is possible when you have a proper type representation of the field of fractions. 
+Implementation is quite trivial: 
 
-```C++
+```cpp
 template<int64_t... values>
 struct ContinuedFraction {};
 
@@ -372,24 +380,27 @@ once done, you can get a rational approximation of numbers using their known rep
 
 For example, an approximation of $\pi$ is given by 
 
-```C++
-using PI_fraction = ContinuedFraction<3, 7, 15, 1, 292, 1, 1, 1, 2, 1, 3, 1, 14, 2, 1, 1, 2, 2, 2, 2, 1>
+```cpp
+using PI_fraction = ContinuedFraction<
+      3, 7, 15, 1, 292, 1, 1, 
+      1, 2, 1, 3, 1, 14, 2, 1, 
+      1, 2, 2, 2, 2, 1>
 ```
 
 then, you can have the corresponding rational number by using `PI_fraction::type` and a computation with `PI_fraction::val`.
 
 ## Known polynomials
 As an example, we provide Chebyshev polynomials of first and second kind. 
-They can be computed using : 
+They can be computed using: 
 
-```C++
+```cpp
 using T4 = chebyshev_T<4>; // first kind
 using U4 = chebyshev_U<4>; // second kind
 ```
 
-Again, since we can operate on polynomials as types, implementation is straightforward : 
+Again, since we can operate on polynomials as types, implementation is straightforward: 
 
-```C++
+```cpp
 template<int kind, int deg>
 struct chebyshev_helper {
   // Pn+2 = 2xPn+1 - Pn
@@ -408,31 +419,74 @@ struct chebyshev_helper {
 };
 ```
 
-In a similar way, with some effort, a user could define Hermite or Berstein polynomials. 
+Similarly, with little effort, users could define Hermite or Berstein polynomials. 
 
+## Quotient rings and Galois fields
+If some type meets the `IsRing` concept requirement, Aerobus can generate its quotient ring by a principal ideal generated by some element `X`. Implementation is the following:
+
+```cpp
+template<typename Ring, typename X>
+requires IsRing<Ring>
+struct Quotient {
+  template <typename V>
+  struct val {
+  private:
+    using tmp = typename Ring::template mod_t<V, X>;
+  public:
+    using type = std::conditional_t<
+      Ring::template pos_v<tmp>,
+      tmp, 
+      typename Ring::template sub_t<typename Ring::zero, tmp>
+    >;
+  };
+
+  using zero = val<typename Ring::zero>;
+  using one = val<typename Ring::one>;
+
+  template<typename v1, typename v2>
+  using add_t = val<typename Ring::template add_t<typename v1::type, typename v2::type>>;
+  ...
+};
+```
+
+We can then define finite fields such as $\mathbb{Z}/p\mathbb{Z}$ by writing `using Z2Z = Quotient<i32, i32::inject_constant_t<2>>;`.
+
+In $\mathbb{Z}/p\mathbb{Z}[X]$, there are special irreducible polynomials named Conway polynomials [@holt2005handbook], used to build larger finite fields. `Aerobus` exposes Conway polynomials for $p$ smaller than 1000 and degrees smaller than 20. They are in a special header `imports/conwaypolynomials.h` and completely optional. If users import that header, they can build finite fields of cardinal $p^n$ for all prime $p \lt 1000$ and $n \leq 20$. 
+
+For instance, we can compute $\mathbb{F}_4 = \mathrm{GF}(2, 2)$ by writing:
+
+```cpp
+using F2 = zpz<2>;
+using PF2 = polynomial<F2>;
+using F4 = Quotient<PF2, ConwayPolynomial<2, 2>::type>;
+```
+
+In unit tests, we checked that multiplication and addition tables are indeed those of $\mathbb{F}_4$.
+
+Surprisingly, compilation time is not significantly higher when we include `conwaypolynomials.h`. However, we chose to make it optional. 
 
 # Benchmarks
-In "benchmarks.cpp", we compare ourselves to std::math and harcoded fastmath calls. Standard library exposes functions (at link time only) such as `_ZGVeN8v_sin`. They are vectorized versions of `std::sin`, in this case specialized for avx512 registers. 
+In "benchmarks.cpp", we compare ourselves to std::math and hardcoded fastmath calls. The standard library exposes functions (at link time only) such as `_ZGVeN8v_sin`. They are vectorized versions of `std::sin`, in this case, specialized for avx512 registers. 
 
-Benchmark is quite simple and test compute intensive operation : computing sinus (compound twelve times) of all elements of a large double precision buffer of values (larger than cache). We run code on a laptop equipped with an Intel i7-1195G7 @ 2.90GHz. Loop are parallelized using openmp (version 201511) with a "parallel for". 
+Benchmarks are quite simple and test compute-intensive operations: computing sinus (compound twelve times) of all elements of a large double precision buffer of values (larger than cache). We run code on a laptop equipped with an Intel i7-1195G7 @ 2.90GHz. The main loop is parallelized using OpenMP (version 201511) with a "parallel for". 
 
-We make sure data is properly aligned and fits exactly an integer number of avx512 registers. Input vector is filled with random data from 0.5 to 0.5. 
+We make sure data is properly aligned and fits exactly an integer number of avx512 registers. The input vector is filled with random data from 0.5 to 0.5. 
 
-We use different version of sinus, varying the degree of the taylor expansion from 1 to 17. 
+We use different versions of sinus, varying the degree of the Taylor expansion from 1 to 17. 
 
 For each version, we note performance (in billions of sinus per second) and error relative to `std::math`. 
 
 
 
-![Performance (Gsin/s) and error (log scale) of aerobus, depending of the degree of the taylor expansion of sinus](performance_and_error.png)
+![Performance (Gsin/s) and error (log scale) of aerobus, depending on the degree of the Taylor expansion of sinus](performance_and_error.png)
 
 Peak performance is reached for degree 3 with 20 billions sinus per second (error $\sim 10^{-4}$). 
 Error is minimal ($10^{-16}$) for degree 13 with performance still significantly higher than fastmath. 
 
-As said in the statement of need, user can conveniently choose precision or speed at compile time, which is, as far as we know, not possible in any other library. 
+As said in the statement of need, users can conveniently choose precision or speed at compile time, which is, as far as we know, not possible in any other library. 
 
-# Acknowledgements
+# Acknowledgments
 
-Many thanks to my math teachers, A. Soyeur and M. Gonnord. I also acknowledge indirect contributions from F. Duguet, who showed me the way. 
+Many thanks to my math teachers, A. Soyeur and M. Gonnord. I also acknowledge indirect contributions from F. Duguet, who showed me the way. I wish also to thank Miss Chloé Gence, who gave me the name of the library.
 
 # Reference

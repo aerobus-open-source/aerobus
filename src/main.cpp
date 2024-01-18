@@ -203,7 +203,7 @@ int test_poly_derive() {
 		}
 	} 
 	{
-		// 1 + x + 3x²
+		// 1 + x + 3xï¿½
 		using P1 = IX<Int<3>, Int<1>, Int<1>>;
 		using PP = polynomial<i32>::template derive_t<P1>;
 		if (PP::degree != 1) {
@@ -219,7 +219,7 @@ int test_poly_derive() {
 	using Z2Z = zpz<2>;
 	{
 		// in Z/2Z
-		// 1 + x + 3x² -> 1
+		// 1 + x + 3xï¿½ -> 1
 		using P1 = polynomial<Z2Z>::template val<Z2Z::template val<3>, Z2Z::template val<1>, Z2Z::template val<1>>;
 		using PP = polynomial<Z2Z>::template derive_t<P1>;
 		if (PP::degree != 0) {
@@ -833,7 +833,7 @@ int test_fraction_field_of_fraction_field () {
 }
 
 int test_quotient_ring_is_z2z() {
-	using QQ = Quotient<i32, i32::template val<2>>;
+	using QQ = Quotient<i32, i32::inject_constant_t<2>>;
 	using two = QQ::inject_constant_t<2>;
 	using three = QQ::inject_constant_t<3>;
 	using one = QQ::inject_constant_t<1>;
