@@ -71,6 +71,8 @@ namespace aerobus
 		typename R::template add_t<typename R::one, typename R::one>;
 		typename R::template sub_t<typename R::one, typename R::one>;
 		typename R::template mul_t<typename R::one, typename R::one>;
+		typename R::template minus_t<typename R::one>;
+		R::template eq_v<typename R::one, typename R::one> == true;
 	};
 	
 	/// Concept to express R is an euclidean domain
@@ -79,11 +81,9 @@ namespace aerobus
 		typename R::template div_t<typename R::one, typename R::one>;
 		typename R::template mod_t<typename R::one, typename R::one>;
 		typename R::template gcd_t<typename R::one, typename R::one>;
-		typename R::template eq_t<typename R::one, typename R::one>;
-		typename R::template pos_t<typename R::one>;
 
 		R::template pos_v<typename R::one> == true;
-		//typename R::template gt_t<typename R::one, typename R::zero>;
+		R::template gt_v<typename R::one, typename R::zero> == true;
 		R::is_euclidean_domain == true;
 	};
 
@@ -198,8 +198,7 @@ namespace aerobus {
 			// B = 0, A > 0
 			template<typename A, typename B>
 			struct gcd_helper<A, B, std::enable_if_t<
-				((B::is_zero_t::value) &&
-					(Ring::template gt_t<A, typename Ring::zero>::value))>>
+				B::is_zero_v && Ring::template pos_v<A>>>
 			{
 				using type = A;
 			};
@@ -207,16 +206,15 @@ namespace aerobus {
 			// B = 0, A < 0
 			template<typename A, typename B>
 			struct gcd_helper<A, B, std::enable_if_t<
-				((B::is_zero_t::value) &&
-					!(Ring::template gt_t<A, typename Ring::zero>::value))>>
+				B::is_zero_v && !Ring::template pos_v<A>>>
 			{
-				using type = typename Ring::template sub_t<typename Ring::zero, A>;
+				using type = typename Ring::template minus_t<A>;
 			};
 
 			// B != 0
 			template<typename A, typename B>
 			struct gcd_helper<A, B, std::enable_if_t<
-				(!B::is_zero_t::value)
+				(!B::is_zero_v)
 				>> {
 			private:
 				// A / B
@@ -251,7 +249,7 @@ namespace aerobus {
 			using type = std::conditional_t<
 				Ring::template pos_v<tmp>,
 				tmp, 
-				typename Ring::template sub_t<typename Ring::zero, tmp>
+				typename Ring::template minus_t<tmp>
 			>;
 		};
 
@@ -266,13 +264,12 @@ namespace aerobus {
 		using div_t = val<typename Ring::template div_t<typename v1::type, typename v2::type>>;
 		template<typename v1, typename v2>
 		using mod_t = val<typename Ring::template mod_t<typename v1::type, typename v2::type>>;
+
 		template<typename v1, typename v2>
-		using eq_t = typename Ring::template eq_t<typename v1::type, typename v2::type>;
-		template<typename v1>
-		using pos_t = std::true_type;
+		static constexpr bool eq_v = Ring::template eq_v<typename v1::type, typename v2::type>;
 
 		template<typename v>
-		static constexpr bool pos_v = pos_t<v>::value;
+		static constexpr bool pos_v = true;
 
 		static constexpr bool is_euclidean_domain = true;
 
@@ -432,7 +429,7 @@ namespace aerobus {
 			static constexpr valueType get() { return static_cast<valueType>(x); }
 
 			/// @brief is value zero 
-			using is_zero_t = std::bool_constant<x == 0>;
+			static constexpr bool is_zero_v = x == 0;
 
 			/// @brief string representation of value
 			static std::string to_string() {
@@ -505,15 +502,14 @@ namespace aerobus {
 			using type = std::conditional_t<(v1::v == v2::v), std::true_type, std::false_type>;
 		};
 
-		template<typename v1>
-		struct pos {
-			using type = std::bool_constant<(v1::v > 0)>;
-		};
-
 	public:
 		/// @brief addition operator
 		template<typename v1, typename v2>
 		using add_t = typename add<v1, v2>::type;
+
+		/// @brief -v1
+		template<typename v1>
+		using minus_t = val<-v1::v>;
 
 		/// @brief substraction operator
 		template<typename v1, typename v2>
@@ -533,7 +529,7 @@ namespace aerobus {
 
 		/// @brief strictly greater operator (v1 > v2)
 		template<typename v1, typename v2>
-		using gt_t = typename gt<v1, v2>::type;
+		static constexpr bool gt_v = gt<v1, v2>::type::value;
 
 		/// @brief strict less operator (v1 < v2)
 		template<typename v1, typename v2>
@@ -541,18 +537,15 @@ namespace aerobus {
 
 		/// @brief equality operator
 		template<typename v1, typename v2>
-		using eq_t = typename eq<v1, v2>::type;
+		static constexpr bool eq_v = eq<v1, v2>::type::value;
+
+		/// @brief positivity (v1 > 0)
+		template<typename v1>
+		static constexpr bool pos_v = (v1::v > 0);
 
 		/// @brief greatest common divisor
 		template<typename v1, typename v2>
 		using gcd_t = gcd_t<i32, v1, v2>;
-
-		/// @brief positivity (v > 0)
-		template<typename v>
-		using pos_t = typename pos<v>::type;
-
-		template<typename v>
-		static constexpr bool pos_v = pos_t<v>::value;
 	};
 }
 
@@ -573,7 +566,7 @@ namespace aerobus {
 			static constexpr valueType get() { return static_cast<valueType>(x); }
 
 			/// @brief is value zero
-			using is_zero_t = std::bool_constant<x == 0>;
+			static constexpr bool is_zero_v = x == 0;
 
 			/// @brief string representation
 			static std::string to_string() {
@@ -647,15 +640,14 @@ namespace aerobus {
 			using type = std::conditional_t<(v1::v == v2::v), std::true_type, std::false_type>;
 		};
 
-		template<typename v>
-		struct pos {
-			using type = std::bool_constant<(v::v > 0)>;
-		};	
-
 	public:
 		/// @brief addition operator
 		template<typename v1, typename v2>
 		using add_t = typename add<v1, v2>::type;
+
+		/// @brief -v1
+		template<typename v1>
+		using minus_t = val<-v1::v>;
 
 		/// @brief substraction operator
 		template<typename v1, typename v2>
@@ -675,7 +667,7 @@ namespace aerobus {
 
 		/// @brief strictly greater operator (v1 > v2)
 		template<typename v1, typename v2>
-		using gt_t = typename gt<v1, v2>::type;
+		static constexpr bool gt_v = gt<v1, v2>::type::value;
 
 		/// @brief strict less operator (v1 < v2)
 		template<typename v1, typename v2>
@@ -683,18 +675,16 @@ namespace aerobus {
 
 		/// @brief equality operator
 		template<typename v1, typename v2>
-		using eq_t = typename eq<v1, v2>::type;
+		static constexpr bool eq_v = eq<v1, v2>::type::value;
+
+		/// weirdly enough, for clang, this must be declared before gcd_t
+		/// @brief is v posititive 
+		template<typename v1>
+		static constexpr bool pos_v = (v1::v > 0);
 
 		/// @brief greatest common divisor
 		template<typename v1, typename v2>
 		using gcd_t = gcd_t<i64, v1, v2>;
-
-		/// @brief is v posititive 
-		template<typename v>
-		using pos_t = typename pos<v>::type;
-
-		template<typename v>
-		static constexpr bool pos_v = pos_t<v>::value;
 	};
 }
 
@@ -714,7 +704,7 @@ namespace aerobus {
 			template<typename valueType>
 			static constexpr valueType get() { return static_cast<valueType>(x % p); }
 
-			using is_zero_t = std::bool_constant<x% p == 0>;
+			static constexpr bool is_zero_v = v == 0;
 			static std::string to_string() {
 				return std::to_string(x % p);
 			}
@@ -780,6 +770,10 @@ namespace aerobus {
 		};
 
 	public:
+		/// @brief -v1
+		template<typename v1>
+		using minus_t = val<-v1::v>;
+
 		template<typename v1, typename v2>
 		using add_t = typename add<v1, v2>::type;
 
@@ -796,22 +790,19 @@ namespace aerobus {
 		using mod_t = typename remainder<v1, v2>::type;
 
 		template<typename v1, typename v2>
-		using gt_t = typename gt<v1, v2>::type;
+		static constexpr bool gt_v = gt<v1, v2>::type::value;
 
 		template<typename v1, typename v2>
 		using lt_t = typename lt<v1, v2>::type;
 
 		template<typename v1, typename v2>
-		using eq_t = typename eq<v1, v2>::type;
+		static constexpr bool eq_v = eq<v1, v2>::type::value;
 
 		template<typename v1, typename v2>
 		using gcd_t = gcd_t<i32, v1, v2>;
 
-		template<typename v1>
-		using pos_t = typename pos<v1>::type;
-
 		template<typename v>
-		static constexpr bool pos_v = pos_t<v>::value;
+		static constexpr bool pos_v = pos<v>::type::value;
 	};
 }
 
@@ -837,7 +828,7 @@ namespace aerobus {
 			/// @brief remove largest coefficient
 			using strip = val<coeffs...>;
 			/// @brief true if polynomial is constant zero
-			using is_zero_t = std::bool_constant<(degree == 0) && (aN::is_zero_t::value)>;
+			static constexpr bool is_zero_v = degree == 0 && aN::is_zero_v;
 
 			private:
 			template<size_t index, typename E = void>
@@ -881,7 +872,7 @@ namespace aerobus {
 			static constexpr size_t degree = 0;
 			using aN = coeffN;
 			using strip = val<coeffN>;
-			using is_zero_t = std::bool_constant<aN::is_zero_t::value>;
+			static constexpr bool is_zero_v = coeffN::is_zero_v;
 
 			template<size_t index, typename E = void>
 			struct coeff_at {};
@@ -979,7 +970,7 @@ namespace aerobus {
 
 		template<typename v1, typename v2>
 		struct eq_helper<v1, v2, std::enable_if_t<v1::degree != v2::degree>> {
-			using type = std::false_type;
+			static constexpr bool value = false;
 		};
 
 
@@ -987,25 +978,18 @@ namespace aerobus {
 		struct eq_helper<v1, v2, std::enable_if_t<
 			v1::degree == v2::degree &&
 			(v1::degree != 0 || v2::degree != 0) &&
-			std::is_same<
-			typename Ring::template eq_t<typename v1::aN, typename v2::aN>,
-			std::false_type
-			>::value
-		>
-		> {
-			using type = std::false_type;
-		};
-
-		template<typename v1, typename v2>
-		struct eq_helper<v1, v2, std::enable_if_t<
-			v1::degree == v2::degree &&
-			(v1::degree != 0 || v2::degree != 0) &&
-			std::is_same<
-			typename Ring::template eq_t<typename v1::aN, typename v2::aN>,
-			std::true_type
-			>::value
+			(!Ring::template eq_v<typename v1::aN, typename v2::aN>)
 		>> {
-			using type = typename eq_helper<typename v1::strip, typename v2::strip>::type;
+			static constexpr bool value = false;
+		};
+
+		template<typename v1, typename v2>
+		struct eq_helper<v1, v2, std::enable_if_t<
+			v1::degree == v2::degree &&
+			(v1::degree != 0 || v2::degree != 0) &&
+			(Ring::template eq_v<typename v1::aN, typename v2::aN>)
+		>> {
+			static constexpr bool value = eq_helper<typename v1::strip, typename v2::strip>::value;
 		};
 
 		template<typename v1, typename v2>
@@ -1013,7 +997,7 @@ namespace aerobus {
 			v1::degree == v2::degree &&
 			(v1::degree == 0)
 		>> {
-			using type = typename Ring::template eq_t<typename v1::aN, typename v2::aN>;
+			static constexpr bool value = Ring::template eq_v<typename v1::aN, typename v2::aN>;
 		};
 
 		template<typename v1, typename v2, typename E = void>
@@ -1237,10 +1221,10 @@ namespace aerobus {
 			static std::string func() {
 				std::string tail = string_helper<coeffs...>::func();
 				std::string result = "";
-				if (Ring::template eq_t<coeff, typename Ring::zero>::value) {
+				if (Ring::template eq_v<coeff, typename Ring::zero>) {
 					return tail;
 				}
-				else if (Ring::template eq_t<coeff, typename Ring::one>::value) {
+				else if (Ring::template eq_v<coeff, typename Ring::one>) {
 					if (sizeof...(coeffs) == 1) {
 						result += std::string(1, variable_name);
 					}
@@ -1294,6 +1278,9 @@ namespace aerobus {
 		template<typename v1, typename v2>
 		using sub_t = typename sub<v1, v2>::type;
 
+		template<typename v1>
+		using minus_t = sub_t<zero, v1>;
+
 		/// @brief multiplication of two polynomials
 		/// @tparam v1 
 		/// @tparam v2 
@@ -1304,7 +1291,7 @@ namespace aerobus {
 		/// @tparam v1 
 		/// @tparam v2 
 		template<typename v1, typename v2>
-		using eq_t = typename eq_helper<v1, v2>::type;
+		static constexpr bool eq_v = eq_helper<v1, v2>::value;
 
 		/// @brief strict less operator
 		/// @tparam v1 
@@ -1316,7 +1303,7 @@ namespace aerobus {
 		/// @tparam v1 
 		/// @tparam v2 
 		template<typename v1, typename v2>
-		using gt_t = typename gt_helper<v1, v2>::type;
+		static constexpr bool gt_v = gt_helper<v1, v2>::type::value;
 
 		/// @brief division operator
 		/// @tparam v1 
@@ -1344,10 +1331,7 @@ namespace aerobus {
 		/// @brief checks for positivity (an > 0)
 		/// @tparam v 
 		template<typename v>
-		using pos_t = typename Ring::template pos_t<typename v::aN>;
-
-		template<typename v>
-		static constexpr bool pos_v = pos_t<v>::value;
+		static constexpr bool pos_v = Ring::template pos_v<typename v::aN>;
 
 		/// @brief greatest common divisor of two polynomials
 		/// @tparam v1 
@@ -1375,13 +1359,19 @@ namespace aerobus {
 // big integers
 namespace aerobus {
 	struct bigint {
-		enum sign {
+		enum signs {
 			positive,
 			negative
 		};
 
-		template<sign s, uint32_t an, uint32_t... as>
+		static constexpr signs opposite(const signs& s) {
+			return s == signs::positive ? signs::negative : signs::positive;
+		}
+
+		template<signs s, uint32_t an, uint32_t... as>
 		struct val {
+			static constexpr signs sign = s;
+
 			template<size_t index, typename E = void>
 			struct digit_at {};
 
@@ -1395,8 +1385,6 @@ namespace aerobus {
 				static constexpr uint32_t value = 0;
 			};
 
-			static constexpr bool is_positive = s != sign::negative;
-
 			using strip = val<s, as...>;
 			static constexpr uint32_t aN = an;
 			static constexpr size_t digits = sizeof...(as) + 1;
@@ -1404,20 +1392,16 @@ namespace aerobus {
 			static std::string to_string() {
 				return std::to_string(aN) + "B^" + std::to_string(digits-1) + " + " + strip::to_string();
 			}
+
+			static constexpr bool is_zero_v = sizeof...(as) == 0 && an == 0;
+
+			using minus_t = val<opposite(s), an, as...>;
 		};
 
-		template<typename I>
-		struct is_zero {
-			static constexpr bool value = I::digits == 1 && I::aN == 0;
-		};
-
-		template<typename I>
-		static constexpr bool is_zero_v = is_zero<I>::value;
-
-		template<sign s, uint32_t a0>
+		template<signs s, uint32_t a0>
 		struct val<s, a0> {
+			static constexpr signs sign = s;
 			using strip = val<s, a0>;
-			static constexpr bool is_positive = s != sign::negative;
 			static constexpr uint32_t aN = a0;
 			static constexpr size_t digits = 1;
 			template<size_t index, typename E = void>
@@ -1435,12 +1419,39 @@ namespace aerobus {
 			static std::string to_string() {
 				return std::to_string(a0);
 			}
+
+			static constexpr bool is_zero_v = a0 == 0;
+
+			using minus_t = val<opposite(s), a0>;
 		};
 
-		using zero = val<sign::positive, 0>;
-		using one = val<sign::positive, 1>;
+		using zero = val<signs::positive, 0>;
+		using one = val<signs::positive, 1>;
 
 	private:
+		template<typename I, typename E = void>
+		struct simplify {};
+
+		template<typename I>
+		struct simplify<I, std::enable_if_t<I::digits == 1 && I::aN != 0>> {
+			using type = I;
+		};
+		
+		template<typename I>
+		struct simplify<I, std::enable_if_t<I::digits == 1 && I::aN == 0>> {
+			using type = zero;
+		};
+
+		template<typename I>
+		struct simplify<I, std::enable_if_t<I::digits != 1 && I::aN == 0>> {
+			using type = typename simplify<typename I::strip>::type;
+		};
+
+		template<typename I>
+		struct simplify<I, std::enable_if_t<I::digits != 1 && I::aN != 0>> {
+			using type = I;
+		};
+
 		template<uint32_t x, uint32_t y, uint8_t carry_in = 0>
 		struct add_digit_helper {
 		private:
@@ -1450,10 +1461,8 @@ namespace aerobus {
 			static constexpr uint8_t carry_out = (uint32_t) (raw >> 32);
 		};
 
-		template<typename I1, typename I2, size_t index, uint16_t carry_in = 0>
+		template<typename I1, typename I2, size_t index, uint8_t carry_in = 0>
 		struct add_at_helper {
-			static_assert(I1::is_positive, "always add positive values");
-			static_assert(I2::is_positive, "always add positive values");
 		private:
 			static constexpr uint32_t d1 = I1::template digit_at<index>::value;
 			static constexpr uint32_t d2 = I2::template digit_at<index>::value;
@@ -1462,31 +1471,43 @@ namespace aerobus {
 			static constexpr uint8_t carry_out = add_digit_helper<d1, d2, carry_in>::carry_out;
 		};
 
-		template<typename I, typename E = void>
-		struct simplify {};
+		template<uint32_t x, uint32_t y, uint8_t carry_in, typename E = void>
+		struct sub_digit_helper {};
 
-		template<typename I>
-		struct simplify<I, std::enable_if_t<I::aN == 0>> {
-			using type = typename I::strip;
+		// x - y
+		template<uint32_t x, uint32_t y, uint8_t carry_in>
+		struct sub_digit_helper<x, y, carry_in, std::enable_if_t<
+				(static_cast<uint64_t>(y) + static_cast<uint64_t>(carry_in) > x)
+		>> {
+
+			static constexpr uint32_t value = static_cast<uint32_t>(
+				static_cast<uint32_t>(x) + 0x1'0000'0000UL - (static_cast<uint64_t>(y) + static_cast<uint64_t>(carry_in))
+			);
+			static constexpr uint8_t carry_out = 1;
 		};
 
-		template<typename I>
-		struct simplify<I, std::enable_if_t<I::aN != 0>> {
-			using type = I;
+		template<uint32_t x, uint32_t y, uint8_t carry_in>
+		struct sub_digit_helper<x, y, carry_in, std::enable_if_t<
+				(static_cast<uint64_t>(y) + static_cast<uint64_t>(carry_in) <= x)
+		>> {
+
+			static constexpr uint32_t value = static_cast<uint32_t>(
+				static_cast<uint64_t>(x) - (static_cast<uint64_t>(y) + static_cast<uint64_t>(carry_in))
+			);
+			static constexpr uint8_t carry_out = 0;
 		};
 
-	public:
-
-		template<typename I>
-		using simplify_t = typename simplify<I>::type;
-
-		// exposed for testing -- DO NOT USE
 		template<typename I1, typename I2, size_t index, uint8_t carry_in = 0>
-		static constexpr uint32_t add_at_digit = add_at_helper<I1, I2, index, carry_in>::value;
-		template<typename I1, typename I2, size_t index, uint8_t carry_in = 0>
-		static constexpr uint8_t add_at_carry = add_at_helper<I1, I2, index, carry_in>::carry_out;
+		struct sub_at_helper {
+		private:
+			static constexpr uint32_t d1 = I1::template digit_at<index>::value;
+			static constexpr uint32_t d2 = I2::template digit_at<index>::value;
+			using tmp = sub_digit_helper<d1, d2, carry_in>;
+		public:
+			static constexpr uint32_t value = tmp::value;
+			static constexpr uint8_t carry_out = tmp::carry_out;
+		};
 
-		// exposed for testing -- DO NOT USE
 		template<typename I1, typename I2, size_t index>
 		struct add_low_helper {
 			private:
@@ -1496,11 +1517,25 @@ namespace aerobus {
 			static constexpr uint8_t carry_out = helper::carry_out;
 		};
 
-		// exposed for testing -- DO NOT USE
 		template<typename I1, typename I2>
 		struct add_low_helper<I1, I2, 0> {
 			static constexpr uint32_t digit = add_at_helper<I1, I2, 0, 0>::value;
 			static constexpr uint32_t carry_out = add_at_helper<I1, I2, 0, 0>::carry_out;
+		};
+
+		template<typename I1, typename I2, size_t index>
+		struct sub_low_helper {
+			private:
+			using helper = sub_at_helper<I1, I2, index, sub_low_helper<I1, I2, index-1>::carry_out>;
+			public:
+			static constexpr uint32_t digit = helper::value;
+			static constexpr uint8_t carry_out = helper::carry_out;
+		};
+
+		template<typename I1, typename I2>
+		struct sub_low_helper<I1, I2, 0> {
+			static constexpr uint32_t digit = sub_at_helper<I1, I2, 0, 0>::value;
+			static constexpr uint32_t carry_out = sub_at_helper<I1, I2, 0, 0>::carry_out;
 		};
 
 		template<typename I1, typename I2, typename I>
@@ -1508,22 +1543,300 @@ namespace aerobus {
 
 		template<typename I1, typename I2, std::size_t... I>
 		struct add_low<I1, I2, std::index_sequence<I...>> {
-			static_assert(I1::is_positive, "add works on positive values");
-			static_assert(I2::is_positive, "add works on positive values");
-			using type = val<sign::positive, add_low_helper<I1, I2, I>::digit...>;
+			using type = val<signs::positive, add_low_helper<I1, I2, I>::digit...>;
+		};
+
+		template<typename I1, typename I2, typename I>
+		struct sub_low {};
+
+		template<typename I1, typename I2, std::size_t... I>
+		struct sub_low<I1, I2, std::index_sequence<I...>> {
+			using type = val<signs::positive, sub_low_helper<I1, I2, I>::digit...>;
+		};
+
+		template<typename I1, typename I2, typename E = void>
+		struct eq {};
+
+		template<typename I1, typename I2>
+		struct eq<I1, I2, std::enable_if_t<I1::digits != I2::digits>> {
+			static constexpr bool value = false;
+		};
+		
+		template<typename I1, typename I2>
+		struct eq<I1, I2, std::enable_if_t<I1::digits == I2::digits && I1::digits == 1>> {
+			static constexpr bool value = (I1::is_zero_v && I2::is_zero_v) || (I1::sign == I2::sign && I1::aN == I2::aN);
+		};
+		
+		template<typename I1, typename I2>
+		struct eq<I1, I2, std::enable_if_t<I1::digits == I2::digits && I1::digits != 1>> {
+			static constexpr bool value = 
+				I1::sign == I2::sign && 
+				I1::aN == I2::aN && 
+				eq<typename I1::strip, typename I2::strip>::value;
+		};
+
+		template<typename I1, typename I2, typename E = void>
+		struct gt_helper {};
+
+		template<typename I1, typename I2>
+		struct gt_helper<I1, I2, std::enable_if_t<eq<I1, I2>::value>> {
+			static constexpr bool value = false;
 		};
 
 		template<typename I1, typename I2>
-		struct add {
-			static_assert(I1::is_positive, "add works on positive values");
-			static_assert(I2::is_positive, "add works on positive values");
-			using type = simplify_t<
+		struct gt_helper<I1, I2, std::enable_if_t<!eq<I1, I2>::value && I1::sign != I2::sign>> {
+			static constexpr bool value = I1::sign == signs::positive;
+		};
+
+		template<typename I1, typename I2>
+		struct gt_helper<I1, I2, 
+			std::enable_if_t<
+				!eq<I1, I2>::value &&
+				I1::sign == I2::sign &&
+				I1::sign == signs::negative
+			>> {
+			static constexpr bool value = gt_helper<typename I2::minus_t, typename I1::minus_t>::value;
+		};
+
+		template<typename I1, typename I2>
+		struct gt_helper<I1, I2, 
+			std::enable_if_t<
+				!eq<I1, I2>::value &&
+				I1::sign == I2::sign && 
+				I1::sign == signs::positive &&
+				(I1::digits > I2::digits)
+			>> {
+			static constexpr bool value = true;
+		};
+
+		template<typename I1, typename I2>
+		struct gt_helper<I1, I2, 
+			std::enable_if_t<
+				!eq<I1, I2>::value &&
+				I1::sign == I2::sign && 
+				I1::sign == signs::positive &&
+				(I1::digits < I2::digits)
+			>> {
+			static constexpr bool value = false;
+		};
+
+		template<typename I1, typename I2>
+		struct gt_helper<I1, I2, 
+			std::enable_if_t<
+				!eq<I1, I2>::value &&
+				I1::sign == I2::sign && 
+				I1::sign == signs::positive &&
+				(I1::digits == I2::digits) && I1::digits == 1
+			>> {
+			static constexpr bool value = I1::aN > I2::aN;
+		};
+
+		template<typename I1, typename I2>
+		struct gt_helper<I1, I2, 
+			std::enable_if_t<
+				!eq<I1, I2>::value &&
+				I1::sign == I2::sign && 
+				I1::sign == signs::positive &&
+				(I1::digits == I2::digits) && I1::digits != 1 && (I1::aN > I2::aN)
+			>> {
+			static constexpr bool value = true;
+		};
+
+		template<typename I1, typename I2>
+		struct gt_helper<I1, I2, 
+			std::enable_if_t<
+				!eq<I1, I2>::value &&
+				I1::sign == I2::sign && 
+				I1::sign == signs::positive &&
+				(I1::digits == I2::digits) && I1::digits != 1 && (I1::aN < I2::aN)
+			>> {
+			static constexpr bool value = false;
+		};
+
+		template<typename I1, typename I2>
+		struct gt_helper<I1, I2, 
+			std::enable_if_t<
+				!eq<I1, I2>::value &&
+				I1::sign == I2::sign && 
+				I1::sign == signs::positive &&
+				(I1::digits == I2::digits) && I1::digits != 1 && I1::aN == I2::aN
+			>> {
+			static constexpr bool value = gt_helper<typename I1::strip, typename I2::strip>::value;
+		};
+
+
+
+		template<typename I1, typename I2, typename E = void>
+		struct add {};
+
+		template<typename I1, typename I2, typename E = void>
+		struct sub {};
+
+		// +x + +y -> x + y
+		template<typename I1, typename I2>
+		struct add<I1, I2, std::enable_if_t<
+			gt_helper<I1, zero>::value &&
+			gt_helper<I2, zero>::value
+		>> {
+			using type = typename simplify<
 				typename add_low<
 						I1, 
 						I2, 
 						typename internal::make_index_sequence_reverse<std::max(I1::digits, I2::digits) + 1>
-					>::type>;
+					>::type>::type;
 		};
+		
+		// -x + -y -> -(x+y)
+		template<typename I1, typename I2>
+		struct add<I1, I2, std::enable_if_t<
+			gt_helper<zero, I1>::value &&
+			gt_helper<zero, I2>::value
+		>> {
+			using type = typename add<typename I1::minus_t, typename I2::minus_t>::type::minus_t;
+		};
+		
+		// 0 + x -> x
+		template<typename I1, typename I2>
+		struct add<I1, I2, std::enable_if_t<
+			I1::is_zero_v
+		>> {
+			using type = I2;
+		};
+		
+		// x + 0 -> x
+		template<typename I1, typename I2>
+		struct add<I1, I2, std::enable_if_t<
+			I2::is_zero_v
+		>> {
+			using type = I1;
+		};
+		
+		// x + (-y) -> x - y
+		template<typename I1, typename I2>
+		struct add<I1, I2, std::enable_if_t<
+			!I1::is_zero_v && !I2::is_zero_v &&
+			gt_helper<I1, zero>::value &&
+			gt_helper<zero, I2>::value
+		>> {
+			using type = typename sub<I1, typename I2::minus_t>::type;
+		};
+		
+		// -x + y -> y - x
+		template<typename I1, typename I2>
+		struct add<I1, I2, std::enable_if_t<
+			!I1::is_zero_v && !I2::is_zero_v &&
+			gt_helper<zero, I1>::value &&
+			gt_helper<I2, zero>::value
+		>> {
+			using type = typename sub<I2, typename I1::minus_t>::type;
+		};
+
+		// I1 == I2
+		template<typename I1, typename I2>
+		struct sub<I1, I2, std::enable_if_t<
+			eq<I1, I2>::value
+		>> {
+			using type = zero;
+		};
+
+		// I1 != I2, I2 == 0
+		template<typename I1, typename I2>
+		struct sub<I1, I2, std::enable_if_t<
+			!eq<I1, I2>::value &&
+			eq<I2, zero>::value
+		>> {
+			using type = I1;
+		};
+
+		// I1 != I2, I1 == 0
+		template<typename I1, typename I2>
+		struct sub<I1, I2, std::enable_if_t<
+			!eq<I1, I2>::value &&
+			eq<I1, zero>::value
+		>> {
+			using type = typename I2::minus_t;
+		};
+
+		// 0 < I2 < I1
+		template<typename I1, typename I2>
+		struct sub<I1, I2, std::enable_if_t<
+			gt_helper<I2, zero>::value &&
+			gt_helper<I1, I2>::value
+		>> {
+			using type = typename simplify<
+				typename sub_low<
+						I1, 
+						I2, 
+						typename internal::make_index_sequence_reverse<std::max(I1::digits, I2::digits) + 1>
+					>::type>::type;
+		};
+
+		// 0 < I1 < I2
+		template<typename I1, typename I2>
+		struct sub<I1, I2, std::enable_if_t<
+			gt_helper<I1, zero>::value &&
+			gt_helper<I2, I1>::value
+		>> {
+			using type = typename sub<I2, I1>::type::minus_t;
+		};
+
+		// I2 < I1 < 0
+		template<typename I1, typename I2>
+		struct sub<I1, I2, std::enable_if_t<
+			gt_helper<zero, I1>::value && 
+			gt_helper<I1, I2>::value
+		>> {
+			using type = typename sub<typename I2::minus_t, typename I1::minus_t>::type;
+		};
+
+		// I1 < I2 < 0
+		template<typename I1, typename I2>
+		struct sub<I1, I2, std::enable_if_t<
+			gt_helper<zero, I2>::value && 
+			gt_helper<I2, I1>::value
+		>> {
+			using type = typename sub<typename I1::minus_t, typename I2::minus_t>::type::minus_t;
+		};
+
+		// I2 < 0 < I1
+		template<typename I1, typename I2>
+		struct sub<I1, I2, std::enable_if_t<
+			gt_helper<zero, I2>::value &&
+			gt_helper<I1, zero>::value
+		>> {
+			using type = typename add<I1, typename I2::minus_t>::type;
+		};
+
+		// I1 < 0 < I2
+		template<typename I1, typename I2>
+		struct sub<I1, I2, std::enable_if_t<
+			gt_helper<zero, I1>::value &&
+			gt_helper<I2, zero>::value
+		>> {
+			using type = typename add<I2, typename I1::minus_t>::type::minus_t;
+		};
+
+	public:
+		template<typename I>
+		using minus_t = I::minus_t;
+
+		template<typename I1, typename I2>
+		static constexpr bool eq_v = eq<I1, I2>::value;
+
+		template<typename I>
+		static constexpr bool pos_v = I::sign == signs::positive && !I::is_zero_v;
+
+		template<typename I1, typename I2>
+		static constexpr bool gt_v = gt_helper<I1, I2>::value;
+
+		template<typename I>
+		using simplify_t = typename simplify<I>::type;
+
+		template<typename I1, typename I2>
+		using add_t = typename add<I1, I2>::type;
+
+		template<typename I1, typename I2>
+		using sub_t = typename sub<I1, I2>::type;
 	};
 }
 
@@ -1549,11 +1862,8 @@ namespace aerobus {
 			template<typename val1, typename val2>
 			struct to_string_helper <val1, val2,
 				std::enable_if_t<
-				Ring::template eq_t<
-				val2, typename Ring::one
-				>::value
-				>
-			> {
+				Ring::template eq_v<val2, typename Ring::one>
+				>> {
 				static std::string func() {
 					return val1::to_string();
 				}
@@ -1562,12 +1872,8 @@ namespace aerobus {
 			template<typename val1, typename val2>
 			struct to_string_helper<val1, val2,
 				std::enable_if_t<
-				!Ring::template eq_t<
-				val2,
-				typename Ring::one
-				>::value
-				>
-			> {
+				!Ring::template eq_v<val2,typename Ring::one>
+				>> {
 				static std::string func() {
 					return "(" + val1::to_string() + ") / (" + val2::to_string() + ")";
 				}
@@ -1581,8 +1887,9 @@ namespace aerobus {
 			struct val {
 				using x = val1;
 				using y = val2;
-				/// @brief is val1/val2 == 0
-				using is_zero_t = typename val1::is_zero_t;
+
+				/// @brief is val == 0
+				static constexpr bool is_zero_v = val1::is_zero_v;
 				using ring_type = Ring;
 				using field_type = _FractionField<Ring>;
 
@@ -1639,21 +1946,21 @@ namespace aerobus {
 
 			// x = 0
 			template<typename v>
-			struct simplify<v, std::enable_if_t<v::x::is_zero_t::value>> {
+			struct simplify<v, std::enable_if_t<v::x::is_zero_v>> {
 				using type = typename _FractionField<Ring>::zero;
 			};
 
 			// x != 0
 			template<typename v>
-			struct simplify<v, std::enable_if_t<!v::x::is_zero_t::value>> {
+			struct simplify<v, std::enable_if_t<!v::x::is_zero_v>> {
 
 			private:
 				using _gcd = typename Ring::template gcd_t<typename v::x, typename v::y>;
 				using newx = typename Ring::template div_t<typename v::x, _gcd>;
 				using newy = typename Ring::template div_t<typename v::y, _gcd>;
 
-				using posx = std::conditional_t<!Ring::template pos_v<newy>, typename Ring::template sub_t<typename Ring::zero, newx>, newx>;
-				using posy = std::conditional_t<!Ring::template pos_v<newy>, typename Ring::template sub_t<typename Ring::zero, newy>, newy>;
+				using posx = std::conditional_t<!Ring::template pos_v<newy>, typename Ring::template minus_t<newx>, newx>;
+				using posy = std::conditional_t<!Ring::template pos_v<newy>, typename Ring::template minus_t<newy>, newy>;
 			public:
 				using type = typename _FractionField<Ring>::template val<posx, posy>;
 			};
@@ -1810,54 +2117,65 @@ namespace aerobus {
 				(!eq<v1, v2>::type::value) &&
 				(pos<v1>::type::value) && (pos<v2>::type::value)
 				>> {
-				using type = typename Ring::template gt_t<
+				using type = std::bool_constant<Ring::template gt_v<
 					typename Ring::template mul_t<v1::x, v2::y>,
 					typename Ring::template mul_t<v2::y, v2::x>
-				>;
+				>>;
 			};
 		
 
 		public:
+
 			/// @brief addition operator
 			template<typename v1, typename v2>
 			using add_t = typename add<v1, v2>::type;
+
 			/// @brief modulus operator
 			template<typename v1, typename v2>
 			using mod_t = zero;
+
 			/// @brief greatest common divisor
 			/// @tparam v1 
 			/// @tparam v2 
 			template<typename v1, typename v2>
 			using gcd_t = v1;
+
 			/// @brief adds multiple elements (a1 + a2 + ... + an
 			/// @tparam ...vs 
 			template<typename... vs>
 			using vadd_t = typename vadd<vs...>::type;
+
 			/// @brief multiplies multiple elements (a1 * a2 * ... * an)
 			/// @tparam ...vs 
 			template<typename... vs>
 			using vmul_t = typename vmul<vs...>::type;
+
 			/// @brief substraction operator
 			template<typename v1, typename v2>
 			using sub_t = typename sub<v1, v2>::type;
+
+			template<typename v>
+			using minus_t = sub_t<zero, v>;
+
 			/// @brief multiplication operator
 			template<typename v1, typename v2>
 			using mul_t = typename mul<v1, v2>::type;
+
 			/// @brief division operator
 			template<typename v1, typename v2>
 			using div_t = typename div<v1, v2>::type;
+			
 			/// @brief equality operator
 			template<typename v1, typename v2>
-			using eq_t = typename eq<v1, v2>::type;
+			static constexpr bool eq_v = eq<v1, v2>::type::value;
+
 			/// @brief comparison (strictly greater)
 			template<typename v1, typename v2>
-			using gt_t = typename gt<v1, v2>::type;
-			/// @brief is v1 positive
-			template<typename v1>
-			using pos_t = typename pos<v1>::type;
+			static constexpr bool gt_v = gt<v1, v2>::type::value;
 
+			/// @brief is v positive
 			template<typename v>
-			static constexpr bool pos_v = pos_t<v>::value;
+			static constexpr bool pos_v = pos<v>::type::value;
 		};
 
 		template<typename Ring, typename E = void>
@@ -1898,6 +2216,16 @@ namespace aerobus {
 	using pi64 = polynomial<i64>;
 	/// @brief polynomial with 64 bits rational coefficients
 	using fpq64 = FractionField<polynomial<q64>>;
+
+	/// @brief bigint "constructor" for positive values
+	/// @tparam ...digits 
+	template<uint32_t... digits>
+	using bigint_pos = bigint::template val<bigint::signs::positive, digits...>;
+	/// @brief bigint "constructor" for negative values
+	/// @tparam ...digits 
+	template<uint32_t... digits>
+	using bigint_neg = bigint::template val<bigint::signs::negative, digits...>;
+
 	/// @brief helper type : the rational V1/V2 in the field of fractions of Ring
 	/// @tparam Ring the base ring
 	/// @tparam v1 value 1 in Ring
@@ -2053,7 +2381,7 @@ namespace aerobus {
 
 		template<typename T, int k>
 		struct alternate<T, k, std::enable_if_t<k % 2 != 0>> {
-			using type = typename T::template sub_t<typename T::zero, typename T::one>;
+			using type = typename T::template minus_t<typename T::one>;
 			static constexpr typename T::inner_type value = type::template get<typename T::inner_type>();
 		};
 	}
