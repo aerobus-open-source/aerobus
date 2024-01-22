@@ -1410,6 +1410,92 @@ int test_bigint_sub() {
 	return 0; 
 }
 
+int test_bigint_mul() {
+	{
+		using A = bigint_pos<1, 2>;
+		using B = bigint::mul_t<A, bigint::one>;
+		if(!bigint::eq_v<A, B>) {
+			return 1;
+		}
+	}
+	{
+		using A = bigint_pos<1, 2>;
+		using B = bigint::mul_t<A, bigint::zero>;
+		if(!bigint::eq_v<bigint::zero, B>) {
+			return 1;
+		}
+	}
+	{
+		using A = bigint_pos<1, 2>;
+		using B = bigint_pos<2>;
+		using PROD = bigint::mul_t<A, B>;
+		using expected = bigint_pos<2, 4>;
+		if(!bigint::eq_v<expected, PROD>) {
+			printf("%s\n", PROD::to_string().c_str());
+			return 1;
+		}
+	}
+	// 9 * 9 = 81
+	{
+		using A = bigint_pos<UINT32_MAX>;
+		using B = bigint_pos<UINT32_MAX>;
+		using PROD = bigint::mul_t<A, B>;
+		using expected = bigint_pos<UINT32_MAX - 1, 1>;
+		if(!bigint::eq_v<expected, PROD>) {
+			printf("%s\n", PROD::to_string().c_str());
+			return 1;
+		}
+	}
+
+	// 9 * -9 = -81
+	{
+		using A = bigint_pos<UINT32_MAX>;
+		using B = bigint_neg<UINT32_MAX>;
+		using PROD = bigint::mul_t<A, B>;
+		using expected = bigint_neg<UINT32_MAX - 1, 1>;
+		if(!bigint::eq_v<expected, PROD>) {
+			printf("%s\n", PROD::to_string().c_str());
+			return 1;
+		}
+	}	
+
+	// -9 * -9 = 81
+	{
+		using A = bigint_neg<UINT32_MAX>;
+		using B = bigint_neg<UINT32_MAX>;
+		using PROD = bigint::mul_t<A, B>;
+		using expected = bigint_pos<UINT32_MAX - 1, 1>;
+		if(!bigint::eq_v<expected, PROD>) {
+			printf("%s\n", PROD::to_string().c_str());
+			return 1;
+		}
+	}	
+	// 99 * 9 = 891
+	{
+		using A = bigint_pos<UINT32_MAX, UINT32_MAX>;
+		using B = bigint_pos<UINT32_MAX>;
+		using PROD = bigint::mul_t<A, B>;
+		using expected = bigint_pos<UINT32_MAX - 1, UINT32_MAX, 1>;
+		if(!bigint::eq_v<expected, PROD>) {
+			printf("%s\n", PROD::to_string().c_str());
+			return 1;
+		}
+	}
+	// 999 * 99 = 98901
+	{
+		using A = bigint_pos<UINT32_MAX, UINT32_MAX, UINT32_MAX>;
+		using B = bigint_pos<UINT32_MAX, UINT32_MAX>;
+		using PROD = bigint::mul_t<A, B>;
+		using expected = bigint_pos<UINT32_MAX, UINT32_MAX - 1, UINT32_MAX, 0, 1>;
+		if(!bigint::eq_v<expected, PROD>) {
+			printf("%s\n", PROD::to_string().c_str());
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
 int test_bigint_eq() {
 	using a = bigint::val<bigint::signs::positive, 1, 2, 3>;
 	using b = bigint::val<bigint::signs::negative, 1, 2, 3>;
@@ -1561,6 +1647,7 @@ int main(int argc, char* argv[]) {
 	RUN_TEST(test_bigint_pos)
 	RUN_TEST(test_bigint_gt)
 	RUN_TEST(test_bigint_shift_left)
+	RUN_TEST(test_bigint_mul)
 
 	printf("%d/%d tests passed\n", ok_count, ok_count + fail_count);
 	if(fail_count > 0) {

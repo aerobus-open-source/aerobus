@@ -1363,6 +1363,7 @@ namespace aerobus {
 			positive,
 			negative
 		};
+
 		template<signs s, uint32_t an, uint32_t... as>
 		struct val;
 
@@ -1380,8 +1381,18 @@ namespace aerobus {
 		};
 
 	public:
-		static constexpr signs opposite(const signs& s) {
+		template<signs s>
+		static constexpr signs opposite() {
 			return s == signs::positive ? signs::negative : signs::positive;
+		}
+
+		template<signs s1, signs s2>
+		static constexpr signs mul_sign() {
+			if constexpr (s1 == signs::positive) {
+				return s2;
+			}
+
+			return opposite<s2>();
 		}
 
 		template<signs s, uint32_t an, uint32_t... as>
@@ -1413,7 +1424,7 @@ namespace aerobus {
 
 			static constexpr bool is_zero_v = sizeof...(as) == 0 && an == 0;
 
-			using minus_t = val<opposite(s), an, as...>;
+			using minus_t = val<opposite<s>(), an, as...>;
 		};
 
 		template<signs s, uint32_t a0>
@@ -1441,7 +1452,7 @@ namespace aerobus {
 
 			static constexpr bool is_zero_v = a0 == 0;
 
-			using minus_t = val<opposite(s), a0>;
+			using minus_t = val<opposite<s>(), a0>;
 
 		};
 
@@ -1529,6 +1540,25 @@ namespace aerobus {
 			static constexpr uint8_t carry_out = tmp::carry_out;
 		};
 
+		template<uint32_t x, uint32_t y, uint32_t carry_in>
+		struct mul_digit_helper {
+		private:
+			static constexpr uint64_t tmp = static_cast<uint64_t>(x) * static_cast<uint64_t>(y) + static_cast<uint64_t>(carry_in);
+		public:
+			static constexpr uint32_t value = static_cast<uint32_t>(tmp & 0xFFFF'FFFFU);
+			static constexpr uint32_t carry_out = static_cast<uint32_t>(tmp >> 32);
+		};
+
+		template<typename I1, uint32_t d2, size_t index, uint32_t carry_in = 0>
+		struct mul_at_helper {
+		private:
+			static constexpr uint32_t d1 = I1::template digit_at<index>::value;
+			using tmp = mul_digit_helper<d1, d2, carry_in>;
+		public:
+			static constexpr uint32_t value = tmp::value;
+			static constexpr uint32_t carry_out = tmp::carry_out;
+		};
+
 		template<typename I1, typename I2, size_t index>
 		struct add_low_helper {
 			private:
@@ -1559,6 +1589,99 @@ namespace aerobus {
 			static constexpr uint32_t carry_out = sub_at_helper<I1, I2, 0, 0>::carry_out;
 		};
 
+		template<typename I1, uint32_t d2, size_t index>
+		struct mul_low_helper {
+			private:
+			using helper = mul_at_helper<I1, d2, index, mul_low_helper<I1, d2, index-1>::carry_out>;
+			public:
+			static constexpr uint32_t digit = helper::value;
+			static constexpr uint32_t carry_out = helper::carry_out;
+		};
+
+		template<typename I1, uint32_t d2>
+		struct mul_low_helper<I1, d2, 0> {
+			static constexpr uint32_t digit = mul_at_helper<I1, d2, 0, 0>::value;
+			static constexpr uint32_t carry_out = mul_at_helper<I1, d2, 0, 0>::carry_out;
+		};
+
+		template<typename I1, uint32_t d2, typename I>
+		struct mul_low {};
+
+		template<typename I1, uint32_t d2, std::size_t... I>
+		struct mul_low<I1, d2, std::index_sequence<I...>> {
+			using type = val<signs::positive, mul_low_helper<I1, d2, I>::digit...>;
+		};
+
+		template<typename I1, uint32_t d2, uint32_t shift>
+		struct mul_row_helper {
+			using type = typename simplify<
+				typename mul_low<
+						I1, 
+						d2, 
+						typename internal::make_index_sequence_reverse<I1::digits + 1>
+					>::type>::type::template shift_left<shift>;
+		};
+
+		template<typename I1, typename I2, size_t index>
+		struct mul_row {
+		private:
+			static constexpr uint32_t d2 = I2::template digit_at<index>::value;
+		public:
+			using type = typename mul_row_helper<I1, d2, index>::type;
+		};
+
+		template<typename I1, typename... Is>
+		struct vadd;
+
+		template<typename I1, typename I2, typename E = void>
+		struct eq;
+
+		template<typename I1, typename I2, typename I>
+		struct mul_helper {};
+
+		template<typename I1, typename I2, std::size_t... I>
+		struct mul_helper<I1, I2, std::index_sequence<I...>> {
+			using type = typename vadd<typename mul_row<I1, I2, I>::type...>::type;
+		};
+
+		template<typename I1, typename I2, typename E = void>
+		struct mul {};
+
+		template<typename I1, typename I2>
+		struct mul<I1, I2, std::enable_if_t<
+			I1::is_zero_v || I2::is_zero_v
+		>> {
+			using type = zero;
+		};
+
+		template<typename I1, typename I2>
+		struct mul<I1, I2, std::enable_if_t<
+			!I1::is_zero_v && !I2::is_zero_v && eq<I1, one>::value
+		>> {
+			using type = I2;
+		};
+		
+		template<typename I1, typename I2>
+		struct mul<I1, I2, std::enable_if_t<
+			!I1::is_zero_v && !I2::is_zero_v && !eq<I1, one>::value && eq<I2, one>::value
+		>> {
+			using type = I1;
+		};
+		
+		template<typename I1, typename I2>
+		struct mul<I1, I2, std::enable_if_t<
+			!I1::is_zero_v && !I2::is_zero_v && !eq<I1, one>::value && !eq<I2, one>::value
+		>> {
+		private:
+			static constexpr signs sign = mul_sign<I1::sign, I2::sign>();
+			using tmp = 
+				typename simplify<
+					typename mul_helper<I1, I2, internal::make_index_sequence_reverse<I1::digits * I2::digits + 1>>::type
+				>::type;
+		public:
+			using type = std::conditional_t<sign == signs::positive, tmp, typename tmp::minus_t>;
+		};
+
 		template<typename I1, typename I2, typename I>
 		struct add_low {};
 
@@ -1575,7 +1698,7 @@ namespace aerobus {
 			using type = val<signs::positive, sub_low_helper<I1, I2, I>::digit...>;
 		};
 
-		template<typename I1, typename I2, typename E = void>
+		template<typename I1, typename I2, typename E>
 		struct eq {};
 
 		template<typename I1, typename I2>
@@ -1880,6 +2003,10 @@ namespace aerobus {
 		/// @brief shift left operator (add zeros to the end)
 		template<typename I, uint32_t s>
 		using shift_left_t = typename I::template shift_left<s>;
+
+		/// @brief multiplication operator (I1 * I2)
+		template<typename I1, typename I2>
+		using mul_t = typename mul<I1, I2>::type;
 	};
 }
 
