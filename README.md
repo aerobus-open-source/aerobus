@@ -270,7 +270,7 @@ cd build
 cmake ..
 ```
 
-This creates (in the `build` directory) an `aerobus_test` executable which runs all tests and prints
+This creates (in the `build` directory) an `aerobus_test` executable that runs all tests and prints
 `All tests passed` 
 plus some additional information if everything went fine.
 
