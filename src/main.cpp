@@ -1284,6 +1284,7 @@ int test_bigint_add() {
 	if(S::digit_at<2>::value != 1) {
 		return 0;
 	}
+	// 22 + -11 = 11
 	{
 		using X = bigint_pos<2, 2>;
 		using Y = bigint_neg<1, 1>;
@@ -1294,36 +1295,97 @@ int test_bigint_add() {
 		}
 	}
 
+	// -22 + -11 = -33
+	{
+		using X = bigint_neg<2, 2>;
+		using Y = bigint_neg<1, 1>;
+		using expected = bigint_neg<3, 3>;
+		using S4 = bigint::add_t<X, Y>;
+		if(!bigint::eq_v<S4, expected>) {
+			return 1;
+		}
+	}
+
+	// -22 + 11 = -11
+	{
+		using X = bigint_neg<2, 2>;
+		using Y = bigint_pos<1, 1>;
+		using expected = bigint_neg<1, 1>;
+		using S4 = bigint::add_t<X, Y>;
+		if(!bigint::eq_v<S4, expected>) {
+			printf("%s\n", S4::to_string().c_str());
+			return 1;
+		}
+	}
+
 	return 0;
 }
 
 int test_bigint_sub() {
+	// 100 - 99 = 1
 	{
-		using a = bigint::zero;
 		using b = bigint_pos<UINT32_MAX, UINT32_MAX>;
 		using c = bigint_pos<1, 0, 0>;
 		using d = bigint::sub_t<c, b>;
 		if(!bigint::eq_v<bigint::one, d>) {
-			printf("%s\n", d::to_string().c_str());
 			return 1;
 		}
 	}
+	// 100 - 1 = 99
+	{
+		using b = bigint_pos<UINT32_MAX, UINT32_MAX>;
+		using c = bigint_pos<1, 0, 0>;
+		using d = bigint::sub_t<c, bigint::one>;
+		if(!bigint::eq_v<b, d>) {
+			return 1;
+		}
+	}
+	// 22 - 11 = 11
 	{
 		using a = bigint_pos<2, 2>;
 		using b = bigint_pos<1, 1>;
 		using c = bigint::sub_t<a, b>;
 		if(!bigint::eq_v<b, c>) {
-			printf("%s\n", c::to_string().c_str());
 			return 1;
 		}
 	}
+	// 1 - 2 = -1
 	{
 		using a = bigint_pos<1>;
 		using b = bigint_pos<2>;
 		using expected = bigint_neg<1>;
 		using c = bigint::sub_t<a, b>;
 		if(!bigint::eq_v<expected, c>) {
-			printf("%s\n", c::to_string().c_str());
+			return 1;
+		}
+	}
+	// 2 - -1 = 3
+	{
+		using a = bigint_pos<2>;
+		using b = bigint_neg<1>;
+		using expected = bigint_pos<3>;
+		using c = bigint::sub_t<a, b>;
+		if(!bigint::eq_v<expected, c>) {
+			return 1;
+		}
+	}
+	// -2 - -1 = -1
+	{
+		using a = bigint_neg<2>;
+		using b = bigint_neg<1>;
+		using expected = bigint_neg<1>;
+		using c = bigint::sub_t<a, b>;
+		if(!bigint::eq_v<expected, c>) {
+			return 1;
+		}
+	}
+	// 99 - -1 = -1
+	{
+		using a = bigint_pos<UINT32_MAX, UINT32_MAX>;
+		using b = bigint_neg<1>;
+		using expected = bigint_pos<1, 0, 0>;
+		using c = bigint::sub_t<a, b>;
+		if(!bigint::eq_v<expected, c>) {
 			return 1;
 		}
 	}
