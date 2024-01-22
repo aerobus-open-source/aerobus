@@ -302,35 +302,35 @@ int test_poly_eq() {
 	{
 		using A = polynomial<i32>::val<i32::val<1>>;
 		using B = polynomial<i32>::val<i32::val<1>>;
-		if (!polynomial<i32>::eq_t<A, B>::value) {
+		if (!polynomial<i32>::eq_v<A, B>) {
 			return 1;
 		}
 	}
 	{
 		using A = polynomial<i32>::val<i32::val<1>>;
 		using B = polynomial<i32>::val<i32::val<2>>;
-		if (polynomial<i32>::eq_t<A, B>::value) {
+		if (polynomial<i32>::eq_v<A, B>) {
 			return 1;
 		}
 	}
 	{
 		using A = polynomial<i32>::val<i32::val<1>, i32::val<1>>;
 		using B = polynomial<i32>::val<i32::val<1>, i32::val<1>>;
-		if (!polynomial<i32>::eq_t<A, B>::value) {
+		if (!polynomial<i32>::eq_v<A, B>) {
 			return 1;
 		}
 	}
 	{
 		using A = polynomial<i32>::val<i32::val<1>, i32::val<1>>;
 		using B = polynomial<i32>::val<i32::val<1>, i32::val<2>>;
-		if (polynomial<i32>::eq_t<A, B>::value) {
+		if (polynomial<i32>::eq_v<A, B>) {
 			return 1;
 		}
 	}
 	{
 		using A = polynomial<i32>::val<i32::val<1>, i32::val<1>>;
 		using B = polynomial<i32>::val<i32::val<1>, i32::val<1>, i32::val<2>>;
-		if (polynomial<i32>::eq_t<A, B>::value) {
+		if (polynomial<i32>::eq_v<A, B>) {
 			return 1;
 		}
 	}
@@ -419,7 +419,7 @@ int test_poly_div() {
 		// x + 1
 		using Q = polynomial<i32>::div_t<A, B>;
 		using R = polynomial<i32>::mod_t<A, B>;
-		if (!R::is_zero_t::value) {
+		if (!R::is_zero_v) {
 			return 1;
 		}
 		if (Q::degree != 1) {
@@ -438,7 +438,7 @@ int test_poly_div() {
 		using B = polynomial<i32>::val<i32::val<2>>;
 		using C = polynomial<i32>::div_t<A, B>;
 		using R = polynomial<i32>::mod_t<A, B>;
-		if (!R::is_zero_t::value) {
+		if (!R::is_zero_v) {
 			return 1;
 		}
 		if (C::degree != 2) {
@@ -614,11 +614,11 @@ int test_add_q32() {
 
 int test_is_zero_q32() {
 	using a = q32::zero;
-	if (!a::is_zero_t::value) {
+	if (!a::is_zero_v) {
 		return 1;
 	}
 	using b = q32::one;
-	if (b::is_zero_t::value) {
+	if (b::is_zero_v) {
 		return 1;
 	}
 
@@ -629,21 +629,21 @@ int test_gt_q32() {
 	{
 		using a = q32::inject_constant_t<1>;
 		using b = q32::zero;
-		if (!q32::gt_t<a, b>::value) {
+		if (!q32::gt_v<a, b>) {
 			return 1;
 		}
 	} 
 	{
 		using a = q32::zero;
 		using b = q32::inject_constant_t<2>;
-		if (q32::gt_t<a, b>::value) {
+		if (q32::gt_v<a, b>) {
 			return 1;
 		}
 	}
 	{
 		using a = q32::zero;
 		using b = q32::zero;
-		if (q32::gt_t<a, b>::value) {
+		if (q32::gt_v<a, b>) {
 			return 1;
 		}
 	}
@@ -791,19 +791,19 @@ int test_simplify_q32() {
 	using B = q32::val<i32::val<1>, i32::val<1>>;
 	using C = q32::val<i32::val<-1>, i32::val<-1>>;
 	using D = q32::val<i32::val<1>, i32::val<-2>>;
-	if (!q32::eq_t<q32::simplify_t<A>, q32::one>::value) {
+	if (!q32::eq_v<q32::simplify_t<A>, q32::one>) {
 		return 1;
 	}
-	if (!q32::eq_t<q32::simplify_t<B>, q32::one>::value) {
+	if (!q32::eq_v<q32::simplify_t<B>, q32::one>) {
 		return 1;
 	}
-	if (!q32::eq_t<q32::simplify_t<C>, q32::one>::value) {
+	if (!q32::eq_v<q32::simplify_t<C>, q32::one>) {
 		return 1;
 	}
-	if (!q32::eq_t<q32::simplify_t<D>, q32::val<i32::val<-1>, i32::val<2>>>::value) {
+	if (!q32::eq_v<q32::simplify_t<D>, q32::val<i32::val<-1>, i32::val<2>>>) {
 		return 1;
 	}
-	if(!q32::eq_t<q32::simplify_t<q32::sub_t<q32::zero, q32::zero>>, q32::zero>::value) {
+	if(!q32::eq_v<q32::simplify_t<q32::sub_t<q32::zero, q32::zero>>, q32::zero>) {
 		return 1;
 	}
 
@@ -814,10 +814,10 @@ int test_eq_q32() {
 	using A = q32::val<i32::val<2>, i32::val<2>>;
 	using B = q32::val<i32::val<1>, i32::val<1>>;
 	using C = q32::val<i32::val<-1>, i32::val<-1>>;
-	if (!q32::eq_t<A, B>::value) {
+	if (!q32::eq_v<A, B>) {
 		return 1;
 	}
-	if (!q32::eq_t<A, C>::value) {
+	if (!q32::eq_v<A, C>) {
 		return 1;
 	}
 	return 0;
@@ -838,10 +838,10 @@ int test_quotient_ring_is_z2z() {
 	using three = QQ::inject_constant_t<3>;
 	using one = QQ::inject_constant_t<1>;
 	using zero = QQ::zero;
-	if (!QQ::eq_t<two, zero>::value) {
+	if (!QQ::eq_v<two, zero>) {
 		return 1;
 	}
-	if (!QQ::eq_t<one, three>::value) {
+	if (!QQ::eq_v<one, three>) {
 		return 1;
 	}
 
@@ -857,25 +857,25 @@ int test_instanciate_F4() {
 	using phi = F4::inject_ring_t<PF2::X>;
 	using phi2 = F4::inject_ring_t<PF2::template val<F2::inject_constant_t<1>, F2::inject_constant_t<1>>>;
 	// check that elements are different
-	if (F4::eq_t<one, zero>::value || F4::eq_t<phi, zero>::value || F4::eq_t<phi2, zero>::value ||
-		F4::eq_t<phi, one>::value || F4::eq_t<phi2, one>::value ||
-		F4::eq_t<phi, phi2>::value) {
+	if (F4::eq_v<one, zero> || F4::eq_v<phi, zero> || F4::eq_v<phi2, zero> ||
+		F4::eq_v<phi, one> || F4::eq_v<phi2, one> ||
+		F4::eq_v<phi, phi2>) {
 		return 1;
 	}
 	// one + phi = phi2
-	if (!F4::eq_t<phi2, F4::template add_t<one, phi>>::value) {
+	if (!F4::eq_v<phi2, F4::template add_t<one, phi>>) {
 		return 1;
 	}
 	// one + phi2 = phi
-	if (!F4::eq_t<phi, F4::template add_t<one, phi2>>::value) {
+	if (!F4::eq_v<phi, F4::template add_t<one, phi2>>) {
 		return 1;
 	}
 	// phi * phi = phi2
-	if (!F4::eq_t<phi2, F4::template mul_t<phi, phi>>::value) {
+	if (!F4::eq_v<phi2, F4::template mul_t<phi, phi>>) {
 		return 1;
 	}
 	// phi2 * phi2 = phi
-	if (!F4::eq_t<phi, F4::template mul_t<phi2, phi2>>::value) {
+	if (!F4::eq_v<phi, F4::template mul_t<phi2, phi2>>) {
 		return 1;
 	}
 	return 0;
@@ -1229,7 +1229,7 @@ int test_value_at() {
 }
 
 int test_bigint_digit_at() {
-	using x = aerobus::bigint::template val<aerobus::bigint::sign::positive, 1, 2>;
+	using x = aerobus::bigint::template val<aerobus::bigint::signs::positive, 1, 2>;
 	constexpr uint16_t x0 = x::template digit_at<0>::value;
 	if(x0 != 2) {
 		return 1;
@@ -1246,62 +1246,17 @@ int test_bigint_digit_at() {
 	return 0;
 }
 
-int test_bigint_add_at() {
-	// no carry
-	{ 
-		using a = aerobus::bigint::template val<aerobus::bigint::sign::positive, 2, 1>;
-		using b = aerobus::bigint::template val<aerobus::bigint::sign::positive, 2, 1>;
-		constexpr auto d0 = bigint::add_at_digit<a, b, 0, 0>;
-		constexpr auto d1 = bigint::add_at_digit<a, b, 1, 0>;
-		constexpr auto d2 = bigint::add_at_digit<a, b, 2, 0>;
-		if(d0 != 2) {
-			return 1;
-		}
-		if(d1 != 4) {
-			return 1;
-		}
-		if(d2 != 0) {
-			return 1;
-		}
-	}
-	// carry
-	{ 
-		using a = aerobus::bigint::template val<aerobus::bigint::sign::positive, UINT32_MAX, UINT32_MAX>;
-		using b = aerobus::bigint::one;
-
-		constexpr auto d0 = bigint::add_at_digit<a, b, 0, 0>;
-		constexpr auto c0 = bigint::add_at_carry<a, b, 0, 0>;
-		constexpr auto d1 = bigint::add_at_digit<a, b, 1, c0>;
-		constexpr auto c1 = bigint::add_at_carry<a, b, 1, c0>;
-		constexpr auto d2 = bigint::add_at_digit<a, b, 2, c1>;
-		constexpr auto c2 = bigint::add_at_carry<a, b, 2, c1>;
-		if(d0 != 0 || c0 != 1) {
-			return 1;
-		}
-		if(d1 != 0 || c1 != 1) {
-			return 1;
-		}
-		if(d2 != 1 || c2 != 0) {
-			return 1;
-		}
-	}
-
-	return 0;
-}
-
-int test_bigint_add_low_helper() {
-	using I1 = aerobus::bigint::template val<aerobus::bigint::sign::positive, UINT32_MAX, UINT32_MAX>;
-	using I2 = aerobus::bigint::one;
-	using X0 = aerobus::bigint::add_low_helper<I1, I2, 0>;
-	if(X0::digit != 0 || X0::carry_out != 1) {
+int test_bigint_minus() {
+	using I1 = bigint_pos<1, 2>;
+	using I2 = bigint_neg<1, 2>;
+	using MZ = bigint_neg<0>;
+	if(!bigint::eq_v<I1, typename I2::minus_t>) {
 		return 1;
 	}
-	using X1 = aerobus::bigint::add_low_helper<I1, I2, 1>;
-	if(X1::digit != 0 || X1::carry_out != 1) {
+	if(!bigint::eq_v<I2, typename I1::minus_t>) {
 		return 1;
 	}
-	using X2 = aerobus::bigint::add_low_helper<I1, I2, 2>;
-	if(X2::digit != 1 || X2::carry_out != 0) {
+	if(!bigint::eq_v<typename bigint::zero, MZ>) {
 		return 1;
 	}
 
@@ -1309,9 +1264,14 @@ int test_bigint_add_low_helper() {
 }
 
 int test_bigint_add() {
-	using I1 = typename aerobus::bigint::template val<aerobus::bigint::sign::positive, UINT32_MAX, UINT32_MAX>;
-	using I2 = typename aerobus::bigint::one;
-	using S = typename aerobus::bigint::template add<I1, I2>::type;
+	using I1 = bigint_pos<UINT32_MAX, UINT32_MAX>;
+	using I2 = bigint::one;
+	using S = bigint::add_t<I1, I2>;
+	using S2 = bigint::add_t<I1, typename bigint::zero>;
+	using S3 = bigint::add_t<bigint::zero, I2>;
+	if(!bigint::eq_v<S2, I1> || !bigint::eq_v<I2, S3>) {
+		return 1;
+	}
 	if(S::digits != 3) {
 		return 1;
 	}
@@ -1324,6 +1284,117 @@ int test_bigint_add() {
 	if(S::digit_at<2>::value != 1) {
 		return 0;
 	}
+	{
+		using X = bigint_pos<2, 2>;
+		using Y = bigint_neg<1, 1>;
+		using S4 = bigint::add_t<X, Y>;
+		if(!bigint::eq_v<S4, typename Y::minus_t>) {
+			printf("%s\n", S4::to_string().c_str());
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+int test_bigint_sub() {
+	{
+		using a = bigint::zero;
+		using b = bigint_pos<UINT32_MAX, UINT32_MAX>;
+		using c = bigint_pos<1, 0, 0>;
+		using d = bigint::sub_t<c, b>;
+		if(!bigint::eq_v<bigint::one, d>) {
+			printf("%s\n", d::to_string().c_str());
+			return 1;
+		}
+	}
+	{
+		using a = bigint_pos<2, 2>;
+		using b = bigint_pos<1, 1>;
+		using c = bigint::sub_t<a, b>;
+		if(!bigint::eq_v<b, c>) {
+			printf("%s\n", c::to_string().c_str());
+			return 1;
+		}
+	}
+	{
+		using a = bigint_pos<1>;
+		using b = bigint_pos<2>;
+		using expected = bigint_neg<1>;
+		using c = bigint::sub_t<a, b>;
+		if(!bigint::eq_v<expected, c>) {
+			printf("%s\n", c::to_string().c_str());
+			return 1;
+		}
+	}
+
+	return 0; 
+}
+
+int test_bigint_eq() {
+	using a = bigint::val<bigint::signs::positive, 1, 2, 3>;
+	using b = bigint::val<bigint::signs::negative, 1, 2, 3>;
+	using c = bigint::val<bigint::signs::positive, 1, 2, 1>;
+	if(bigint::eq_v<a, b>) {
+		return 1;
+	}
+	if(!bigint::eq_v<a, a>) {
+		return 1;
+	}
+	if(bigint::eq_v<a, c>) {
+		return 1;
+	}
+
+	return 0;
+}
+
+int test_bigint_pos() {
+	using a = bigint::zero;
+	using b = bigint::val<bigint::signs::positive, 1>;
+	using c = bigint::val<bigint::signs::negative, 1>;
+	using d = bigint::val<bigint::signs::negative, 0>;
+
+	if(bigint::pos_v<a>) {
+		return 1;
+	}
+	if(!bigint::pos_v<b>) {
+		return 1;
+	}
+	if(bigint::pos_v<c>) {
+		return 1;
+	}
+	if(bigint::pos_v<d>) {
+		return 1;
+	}
+
+	return 0;
+}
+
+int test_bigint_gt() {
+	using a = bigint::zero;
+	using aa = bigint_neg<0>; // negative zero -- should not exist
+	using b = bigint_pos<1, 2, 3>;
+	using c = bigint_neg<1>;
+	using d = bigint_neg<2>;
+	using e = bigint_neg<1, 2>;
+	using f = bigint::one;
+	// zero
+	if(bigint::gt_v<a, b> || bigint::gt_v<a, aa> || bigint::gt_v<a, aa> || bigint::gt_v<aa, a>) {
+		return 1;
+	}
+	// zero
+	if(!bigint::gt_v<a, c> || !bigint::gt_v<a, e>) {
+		return 1;
+	}
+	// normal positive numbers
+	if(!bigint::gt_v<b, a> || !bigint::gt_v<b, f>) {
+		return 1;
+	}
+	// normal negative numbers
+	if(!bigint::gt_v<c, d> || !bigint::gt_v<c, e> || !bigint::gt_v<d, e>) {
+		return 1;
+	}
+
 	return 0;
 }
 
@@ -1368,9 +1439,12 @@ int main(int argc, char* argv[]) {
 	RUN_TEST(test_zpz)
 	RUN_TEST(test_value_at)
 	RUN_TEST(test_bigint_digit_at)
-	RUN_TEST(test_bigint_add_at)
-	RUN_TEST(test_bigint_add_low_helper)
+	RUN_TEST(test_bigint_minus)
 	RUN_TEST(test_bigint_add)
+	RUN_TEST(test_bigint_sub)
+	RUN_TEST(test_bigint_eq)
+	RUN_TEST(test_bigint_pos)
+	RUN_TEST(test_bigint_gt)
 	printf("ALL TESTS OK\n");
 	return 0;
 }
