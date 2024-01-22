@@ -1389,6 +1389,23 @@ int test_bigint_sub() {
 			return 1;
 		}
 	}
+	// 99 - 0 = 00
+	{
+		using a = bigint_pos<UINT32_MAX, UINT32_MAX>;
+		using c = bigint::sub_t<a, bigint::zero>;
+		if(!bigint::eq_v<a, c>) {
+			return 1;
+		}
+	}
+	// 12 - 11 = 1 (must be simplified)
+	{
+		using a = bigint_pos<1, 2>;
+		using b = bigint_pos<1, 1>;
+		using c = bigint::sub_t<a, b>;
+		if(!bigint::eq_v<bigint::one, c>) {
+			return 1;
+		}
+	}
 
 	return 0; 
 }
@@ -1460,7 +1477,15 @@ int test_bigint_gt() {
 	return 0;
 }
 
-#define RUN_TEST(test_name) if (test_name() != 0) { printf("%s failed\n", #test_name); return 1; }
+static uint32_t ok_count = 0;
+static uint32_t fail_count = 0;
+#define RUN_TEST(test_name) \
+	if (test_name() != 0) { \
+		printf("%s failed\n", #test_name); \
+		fail_count += 1; \
+	} else { \
+		ok_count += 1; \
+	}
 
 int main(int argc, char* argv[]) {
 	RUN_TEST(test_chebyshev);
@@ -1507,6 +1532,10 @@ int main(int argc, char* argv[]) {
 	RUN_TEST(test_bigint_eq)
 	RUN_TEST(test_bigint_pos)
 	RUN_TEST(test_bigint_gt)
-	printf("ALL TESTS OK\n");
+
+	printf("%d/%d tests passed\n", ok_count, ok_count + fail_count);
+	if(fail_count > 0) {
+		return 1;
+	}
 	return 0;
 }
