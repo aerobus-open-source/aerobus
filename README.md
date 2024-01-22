@@ -271,8 +271,8 @@ cmake ..
 ```
 
 This creates (in the `build` directory) an `aerobus_test` executable which runs all tests and prints
-`ALL TESTS OK` 
-if everything went fine
+`All tests passed` 
+plus some additional information if everything went fine.
 
 
 ## benchmarks

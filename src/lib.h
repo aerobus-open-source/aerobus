@@ -1363,13 +1363,31 @@ namespace aerobus {
 			positive,
 			negative
 		};
+		template<signs s, uint32_t an, uint32_t... as>
+		struct val;
 
+	private:
+
+		template<uint32_t ss, signs s, uint32_t aN, uint32_t... as>
+		struct shift_left_helper {
+			using type = typename shift_left_helper<ss-1, s, aN, as..., 0>::type;
+		};
+
+		template<signs s, uint32_t aN, uint32_t... as>
+		struct shift_left_helper<0, s, aN, as...>
+		{
+			using type = val<s, aN, as...>;
+		};
+
+	public:
 		static constexpr signs opposite(const signs& s) {
 			return s == signs::positive ? signs::negative : signs::positive;
 		}
 
 		template<signs s, uint32_t an, uint32_t... as>
 		struct val {
+			template<uint32_t ss>
+			using shift_left = typename shift_left_helper<ss, s, an, as...>::type;
 			static constexpr signs sign = s;
 
 			template<size_t index, typename E = void>
@@ -1400,8 +1418,9 @@ namespace aerobus {
 
 		template<signs s, uint32_t a0>
 		struct val<s, a0> {
+			template<uint32_t ss>
+			using shift_left = typename shift_left_helper<ss, s, a0>::type;
 			static constexpr signs sign = s;
-			using strip = val<s, a0>;
 			static constexpr uint32_t aN = a0;
 			static constexpr size_t digits = 1;
 			template<size_t index, typename E = void>
@@ -1423,12 +1442,14 @@ namespace aerobus {
 			static constexpr bool is_zero_v = a0 == 0;
 
 			using minus_t = val<opposite(s), a0>;
+
 		};
 
 		using zero = val<signs::positive, 0>;
 		using one = val<signs::positive, 1>;
 
 	private:
+
 		template<typename I, typename E = void>
 		struct simplify {};
 
@@ -1816,27 +1837,49 @@ namespace aerobus {
 			using type = typename add<I2, typename I1::minus_t>::type::minus_t;
 		};
 
+		// useful for multiplication
+		template<typename I1, typename... Is>
+		struct vadd {
+			using type = typename add<I1, typename vadd<Is...>::type>::type;
+		};
+
+		template<typename I1, typename I2>
+		struct vadd<I1, I2> {
+			using type = typename add<I1, I2>::type;
+		};
+
 	public:
+		/// @brief minus operator (-I)
 		template<typename I>
 		using minus_t = I::minus_t;
 
+		/// @brief equality operator (I1 == I2)
 		template<typename I1, typename I2>
 		static constexpr bool eq_v = eq<I1, I2>::value;
 
+		/// @brief positivity operator (strict) (I > 0)
 		template<typename I>
 		static constexpr bool pos_v = I::sign == signs::positive && !I::is_zero_v;
 
+		/// @brief greater operator (strict) (I1 > I2)
 		template<typename I1, typename I2>
 		static constexpr bool gt_v = gt_helper<I1, I2>::value;
 
+		/// @brief trim leading zeros
 		template<typename I>
 		using simplify_t = typename simplify<I>::type;
 
+		/// @brief addition operator (I1 + I2)
 		template<typename I1, typename I2>
 		using add_t = typename add<I1, I2>::type;
 
+		/// @brief substraction operator (I1 - I2)
 		template<typename I1, typename I2>
 		using sub_t = typename sub<I1, I2>::type;
+
+		/// @brief shift left operator (add zeros to the end)
+		template<typename I, uint32_t s>
+		using shift_left_t = typename I::template shift_left<s>;
 	};
 }
 

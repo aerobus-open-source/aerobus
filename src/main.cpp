@@ -1477,6 +1477,34 @@ int test_bigint_gt() {
 	return 0;
 }
 
+int test_bigint_shift_left() {
+	{
+		using X = bigint_pos<2>;
+		using Y = bigint::shift_left_t<X, 2>;
+		using expected = bigint_pos<2, 0, 0>;
+		if(!bigint::eq_v<Y, expected>) {
+			return 1;
+		}
+	}
+	{
+		using X = bigint_pos<2>;
+		using Y = bigint::shift_left_t<X, 0>;
+		if(!bigint::eq_v<X, Y>) {
+			return 1;
+		}
+	}
+	{
+		using X = bigint_pos<2, 3>;
+		using Y = bigint::shift_left_t<X, 2>;
+		using expected = bigint_pos<2, 3, 0, 0>;
+		if(!bigint::eq_v<Y, expected>) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
 static uint32_t ok_count = 0;
 static uint32_t fail_count = 0;
 #define RUN_TEST(test_name) \
@@ -1532,10 +1560,15 @@ int main(int argc, char* argv[]) {
 	RUN_TEST(test_bigint_eq)
 	RUN_TEST(test_bigint_pos)
 	RUN_TEST(test_bigint_gt)
+	RUN_TEST(test_bigint_shift_left)
 
 	printf("%d/%d tests passed\n", ok_count, ok_count + fail_count);
 	if(fail_count > 0) {
 		return 1;
+	}
+
+	if(fail_count == 0) {
+		printf("All tests passed\n");
 	}
 	return 0;
 }
