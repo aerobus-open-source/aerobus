@@ -1369,7 +1369,7 @@ namespace aerobus {
 
 	private:
 
-		template<uint32_t ss, signs s, uint32_t aN, uint32_t... as>
+		template<size_t ss, signs s, uint32_t aN, uint32_t... as>
 		struct shift_left_helper {
 			using type = typename shift_left_helper<ss-1, s, aN, as..., 0>::type;
 		};
@@ -1380,7 +1380,6 @@ namespace aerobus {
 			using type = val<s, aN, as...>;
 		};
 
-	public:
 		template<signs s>
 		static constexpr signs opposite() {
 			return s == signs::positive ? signs::negative : signs::positive;
@@ -1395,9 +1394,11 @@ namespace aerobus {
 			return opposite<s2>();
 		}
 
+	public:
+
 		template<signs s, uint32_t an, uint32_t... as>
 		struct val {
-			template<uint32_t ss>
+			template<size_t ss>
 			using shift_left = typename shift_left_helper<ss, s, an, as...>::type;
 			static constexpr signs sign = s;
 
@@ -1429,7 +1430,7 @@ namespace aerobus {
 
 		template<signs s, uint32_t a0>
 		struct val<s, a0> {
-			template<uint32_t ss>
+			template<size_t ss>
 			using shift_left = typename shift_left_helper<ss, s, a0>::type;
 			static constexpr signs sign = s;
 			static constexpr uint32_t aN = a0;
@@ -1612,7 +1613,7 @@ namespace aerobus {
 			using type = val<signs::positive, mul_low_helper<I1, d2, I>::digit...>;
 		};
 
-		template<typename I1, uint32_t d2, uint32_t shift>
+		template<typename I1, uint32_t d2, size_t shift>
 		struct mul_row_helper {
 			using type = typename simplify<
 				typename mul_low<
@@ -1971,6 +1972,31 @@ namespace aerobus {
 			using type = typename add<I1, I2>::type;
 		};
 
+		template<typename I, size_t s, typename E = void>
+		struct shift_right_helper { };
+
+		template<typename I, size_t s>
+		struct shift_right_helper<I, s, std::enable_if_t<(s >= I::digits)>> {
+			using type = zero;
+		};
+
+		template<typename I, size_t s>
+		struct shift_right_helper<I, s, std::enable_if_t<(s == 0)>> {
+			using type = I;
+		};
+
+		template<typename I, size_t s>
+		struct shift_right_helper<I, s, std::enable_if_t<(s != 0) && (s < I::digits)>> {
+		private:
+			using digit = val<I::sign, I::template digit_at<s>::value>;
+			using tmp = typename shift_right_helper<I, s + 1>::type;
+		public:
+			using type = typename add<
+				typename digit,
+				typename tmp::template shift_left<1>
+			>::type;
+		};
+
 	public:
 		/// @brief minus operator (-I)
 		template<typename I>
@@ -2001,12 +2027,20 @@ namespace aerobus {
 		using sub_t = typename sub<I1, I2>::type;
 
 		/// @brief shift left operator (add zeros to the end)
-		template<typename I, uint32_t s>
+		template<typename I, size_t s>
 		using shift_left_t = typename I::template shift_left<s>;
+
+		/// @brief shift right operator (get highest digits)
+		template<typename I, size_t s>
+		using shift_right_t = typename shift_right_helper<I, s>::type;
 
 		/// @brief multiplication operator (I1 * I2)
 		template<typename I1, typename I2>
 		using mul_t = typename mul<I1, I2>::type;
+
+		/// @brief addition of multiple values
+		template<typename... Is>
+		using vadd_t = typename vadd<Is...>::type;
 	};
 }
 
