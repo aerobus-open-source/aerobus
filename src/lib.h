@@ -2111,7 +2111,7 @@ namespace aerobus {
 	public:
 		/// @brief minus operator (-I)
 		template<typename I>
-		using minus_t = I::minus_t;
+		using minus_t = typename I::minus_t;
 
 		/// @brief equality operator (I1 == I2)
 		template<typename I1, typename I2>
