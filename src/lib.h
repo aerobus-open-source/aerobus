@@ -1369,6 +1369,23 @@ namespace aerobus {
 
 	private:
 
+		template<signs s>
+		struct opposite {
+			static constexpr signs value = s == signs::positive ? signs::negative : signs::positive;
+		};
+
+		template<signs s>
+		static constexpr signs opposite_v = opposite<s>::value;
+
+		template<signs s1, signs s2>
+		static constexpr signs mul_sign() {
+			if constexpr (s1 == signs::positive) {
+				return s2;
+			}
+
+			return opposite_v<s2>;
+		}
+
 		template<size_t ss, signs s, uint32_t aN, uint32_t... as>
 		struct shift_left_helper {
 			using type = typename shift_left_helper<ss-1, s, aN, as..., 0>::type;
@@ -1379,20 +1396,6 @@ namespace aerobus {
 		{
 			using type = val<s, aN, as...>;
 		};
-
-		template<signs s>
-		static constexpr signs opposite() {
-			return s == signs::positive ? signs::negative : signs::positive;
-		}
-
-		template<signs s1, signs s2>
-		static constexpr signs mul_sign() {
-			if constexpr (s1 == signs::positive) {
-				return s2;
-			}
-
-			return opposite<s2>();
-		}
 
 	public:
 
@@ -1425,7 +1428,7 @@ namespace aerobus {
 
 			static constexpr bool is_zero_v = sizeof...(as) == 0 && an == 0;
 
-			using minus_t = val<opposite<s>(), an, as...>;
+			using minus_t = val<opposite_v<s>, an, as...>;
 		};
 
 		template<signs s, uint32_t a0>
@@ -1453,7 +1456,7 @@ namespace aerobus {
 
 			static constexpr bool is_zero_v = a0 == 0;
 
-			using minus_t = val<opposite<s>(), a0>;
+			using minus_t = val<opposite_v<s>, a0>;
 
 		};
 
@@ -1643,6 +1646,24 @@ namespace aerobus {
 		template<typename I1, typename I2, std::size_t... I>
 		struct mul_helper<I1, I2, std::index_sequence<I...>> {
 			using type = typename vadd<typename mul_row<I1, I2, I>::type...>::type;
+		};
+
+		template<typename I, size_t index>
+		struct div_2_digit {
+			static constexpr uint32_t value = ((I::template digit_at<index + 1>::value & 1) << 31) + (I::template digit_at<index>::value >> 1);
+		};
+
+		template<typename X, typename I>
+		struct div_2_helper {};
+
+		template<typename X, std::size_t... I>
+		struct div_2_helper<X, std::index_sequence<I...>> {
+			using type = val<signs::positive, div_2_digit<X, I>::value...>;
+		};
+
+		template<typename X>
+		struct div_2 {
+			using type = typename simplify<typename div_2_helper<X, internal::make_index_sequence_reverse<X::digits>>::type>::type;
 		};
 
 		template<typename I1, typename I2, typename E = void>
@@ -1992,9 +2013,99 @@ namespace aerobus {
 			using tmp = typename shift_right_helper<I, s + 1>::type;
 		public:
 			using type = typename add<
-				typename digit,
+				digit,
 				typename tmp::template shift_left<1>
 			>::type;
+		};
+
+		template<typename A, typename B, typename E = void>
+		struct floor_helper {};
+
+		template<typename A, typename B>
+		struct floor_helper<A, B, std::enable_if_t<gt_helper<B, A>::value>> {
+			using type = zero;
+		};
+
+		template<typename A, typename B>
+		struct floor_helper<A, B, std::enable_if_t<eq<A, B>::value>> {
+			using type = one;
+		}; 
+		
+		template<typename A, typename B>
+		struct floor_helper<A, B, std::enable_if_t<gt_helper<A, B>::value && (A::digits == 1 && B::digits == 1)>> {
+			using type = val<signs::positive, A::aN / B::aN>;
+		};
+
+		template<typename A, typename B>
+		struct floor_helper<A, B, std::enable_if_t<gt_helper<A, B>::value && (A::digits != 1 || B::digits != 1)>> {
+			static constexpr size_t N = A::digits;
+			static constexpr size_t K = B::digits;
+			// TODO: find better heuristic for boundaries
+			using from = typename one::template shift_left<N - K>;
+			using to = typename one::template shift_left<N - K + 1>;
+
+			template<typename X, typename Y>
+			using average_t = typename div_2<typename add<X, Y>::type>::type;
+
+			template<typename lowerbound, typename upperbound, typename E = void>
+			struct inner {};
+
+			template<typename lowerbound, typename upperbound>
+			struct inner<lowerbound, upperbound, std::enable_if_t<eq<
+					typename add<lowerbound, one>::type, upperbound>::value
+			>> {
+				using type = lowerbound;
+			};
+
+			template<typename lowerbound, typename upperbound>
+			struct inner<lowerbound, upperbound, std::enable_if_t<
+				gt_helper<upperbound, typename add<lowerbound, one>::type>::value &&
+				gt_helper<typename mul<average_t<upperbound, lowerbound>, B>::type, A>::value
+				>> {
+				using type = typename inner<lowerbound, average_t<upperbound, lowerbound>>::type;
+			};
+
+			template<typename lowerbound, typename upperbound>
+			struct inner<lowerbound, upperbound, std::enable_if_t<
+				gt_helper<upperbound, typename add<lowerbound, one>::type>::value &&
+				!gt_helper<typename mul<average_t<upperbound, lowerbound>, B>::type, A>::value
+				>> {
+				using type = typename  inner<average_t<upperbound, lowerbound>, upperbound>::type;
+			};
+
+			using type = typename inner<from, to>::type;
+		};
+
+
+		template<typename N, typename M>
+		struct div_helper {
+			static constexpr size_t l = M::digits;
+			static constexpr size_t k = N::digits;
+
+
+
+			template<int64_t i>
+			struct inner {
+				using Qm1 = typename inner<i - 1>::Q;
+				using Rm1 = typename inner<i - 1>::R;
+				using D = typename add<
+					typename Rm1::template shift_left<1>, 
+					val<signs::positive, N::template digit_at<i + l - 1>::value>
+				>::type;
+				using Beta = typename floor_helper<D, M>::type;
+				using Q = typename add<typename Qm1::template shift_left<1>, Beta>::type;
+
+				using R = typename sub<D, typename mul<M, Beta>::type>::type;
+			};
+
+			template<>
+			struct inner<-1> {
+				using Q = zero;
+				using R = typename shift_right_helper<N, l - 1>::type;
+			};
+
+			using Q = typename inner<k - l>::Q;
+			using R = typename inner<k - l>::R;
 		};
 
 	public:
@@ -2013,6 +2124,10 @@ namespace aerobus {
 		/// @brief greater operator (strict) (I1 > I2)
 		template<typename I1, typename I2>
 		static constexpr bool gt_v = gt_helper<I1, I2>::value;
+
+		/// @brief greater or equal operator (I1 >= I2)
+		template<typename I1, typename I2>
+		static constexpr bool ge_v = eq_v<I1, I2> || gt_v<I1, I2>;
 
 		/// @brief trim leading zeros
 		template<typename I>
@@ -2041,6 +2156,18 @@ namespace aerobus {
 		/// @brief addition of multiple values
 		template<typename... Is>
 		using vadd_t = typename vadd<Is...>::type;
+
+		/// @brief division by 2
+		template<typename I>
+		using div_2_t = typename div_2<I>::type;
+
+		/// @brief floor(A/B)
+		template<typename I1, typename I2>
+		using floor_t = typename floor_helper<I1, I2>::type;
+
+		/// @brief division operator (I1/I2)
+		template<typename I1, typename I2>
+		using div_t = typename div_helper<I1, I2>::type;
 	};
 }
 
