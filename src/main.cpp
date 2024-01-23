@@ -1627,6 +1627,100 @@ int test_bigint_shift_right() {
 	return 0;
 }
 
+int test_bigint_div2() {
+	{
+		using A = bigint_pos<12>;
+		using B = bigint::div_2_t<A>;
+		if (!bigint::eq_v<B, bigint_pos<6>>) {
+			return 1;
+		}
+	} 
+	{
+		using A = bigint_pos<1, 2>;
+		using B = bigint::div_2_t<A>;
+		using expected = bigint_pos<0x8000'0001U>;
+		if (!bigint::eq_v<B, expected>) {
+			printf("%s\n", B::to_string().c_str());
+			return 1;
+		}
+	}
+	{
+		using A = bigint_pos<UINT32_MAX, 2>;
+		using B = bigint::div_2_t<A>;
+		using C = bigint::mul_t<B, bigint_pos<2>>;
+		if (!bigint::eq_v<A, C>) {
+			printf("%s\n", B::to_string().c_str());
+			return 1;
+		}
+	}
+	{
+		using A = bigint_pos<UINT32_MAX, UINT32_MAX, UINT32_MAX-1>;
+		using B = bigint::div_2_t<A>;
+		using C = bigint::mul_t<B, bigint_pos<2>>;
+		if (!bigint::eq_v<A, C>) {
+			printf("%s\n", B::to_string().c_str());
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+int test_bigint_floor() {
+	{
+		using A = bigint_pos<12>;
+		using B = bigint_pos<5>;
+		using C = bigint::floor_t<A, B>;
+		if (!bigint::eq_v<C, bigint_pos<2>>) {
+			return 1;
+		}
+	}
+	{
+		using A = bigint_pos<UINT32_MAX>;
+		using B = bigint_pos<5>;
+		using C = bigint::floor_t<A, B>;
+		using C1 = bigint::add_t<C, bigint::one>;
+		using mul = bigint::mul_t<C, B>;
+		using mul1 = bigint::mul_t<C1, B>;
+
+		if (!bigint::ge_v<A, mul> || !bigint::gt_v<mul1, A>) {
+			printf("%s\n", C::to_string().c_str());
+			return 1;
+		}
+	}
+	{
+		using A = bigint_pos<UINT32_MAX, 1>;
+		using B = bigint_pos<2>;
+		using C = bigint::floor_t<A, B>;
+		using C1 = bigint::add_t<C, bigint::one>;
+		using mul = bigint::mul_t<C, B>;
+		using mul1 = bigint::mul_t<C1, B>;
+
+		if (!bigint::ge_v<A, mul> || !bigint::gt_v<mul1, A>) {
+			printf("floor = %s\n", C::to_string().c_str());
+			printf("original = %s\n", A::to_string().c_str());
+			printf("mul = %s\n", mul::to_string().c_str());
+			return 1;
+		}
+	}
+	{
+		using A = bigint_pos<UINT32_MAX, 1, 7, 0xFF23140A>;
+		using B = bigint_pos<UINT32_MAX, 1>;
+		using C = bigint::floor_t<A, B>;
+		using C1 = bigint::add_t<C, bigint::one>;
+		using mul = bigint::mul_t<C, B>;
+		using mul1 = bigint::mul_t<C1, B>;
+
+		if (!bigint::ge_v<A, mul> || !bigint::gt_v<mul1, A>) {
+			printf("floor = %s\n", C::to_string().c_str());
+			printf("original = %s\n", A::to_string().c_str());
+			printf("mul = %s\n", mul::to_string().c_str());
+			return 1;
+		}
+	}
+	return 0;
+}
+
 static uint32_t ok_count = 0;
 static uint32_t fail_count = 0;
 #define RUN_TEST(test_name) \
@@ -1685,6 +1779,8 @@ int main(int argc, char* argv[]) {
 	RUN_TEST(test_bigint_shift_left)
 	RUN_TEST(test_bigint_shift_right)
 	RUN_TEST(test_bigint_mul)
+	RUN_TEST(test_bigint_div2)
+	RUN_TEST(test_bigint_floor)
 
 	printf("%d/%d tests passed\n", ok_count, ok_count + fail_count);
 	if(fail_count > 0) {
