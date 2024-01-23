@@ -1591,6 +1591,42 @@ int test_bigint_shift_left() {
 	return 0;
 }
 
+int test_bigint_shift_right() {
+	{
+		using A = bigint_pos<1, 2, 3>;
+		using B = bigint::shift_right_t<A, 1>;
+		if (!bigint::eq_v < B, bigint_pos<1, 2>>) {
+			printf("%s\n", B::to_string().c_str());
+			return 1;
+		}
+	}
+	{
+		using A = bigint_pos<1, 2, 3>;
+		using B = bigint::shift_right_t<A, 2>;
+		if (!bigint::eq_v < B, bigint_pos<1>>) {
+			printf("%s\n", B::to_string().c_str());
+			return 1;
+		}
+	}
+	{
+		using A = bigint_pos<1, 2, 3>;
+		using B = bigint::shift_right_t<A, 3>;
+		if (!bigint::eq_v<B, typename bigint::zero>) {
+			printf("%s\n", B::to_string().c_str());
+			return 1;
+		}
+	}
+	{
+		using A = bigint_pos<1, 2, 3>;
+		using B = bigint::shift_right_t<A, 0>;
+		if (!bigint::eq_v<B, A>) {
+			printf("%s\n", B::to_string().c_str());
+			return 1;
+		}
+	}
+	return 0;
+}
+
 static uint32_t ok_count = 0;
 static uint32_t fail_count = 0;
 #define RUN_TEST(test_name) \
@@ -1647,6 +1683,7 @@ int main(int argc, char* argv[]) {
 	RUN_TEST(test_bigint_pos)
 	RUN_TEST(test_bigint_gt)
 	RUN_TEST(test_bigint_shift_left)
+	RUN_TEST(test_bigint_shift_right)
 	RUN_TEST(test_bigint_mul)
 
 	printf("%d/%d tests passed\n", ok_count, ok_count + fail_count);
