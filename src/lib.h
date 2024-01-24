@@ -2076,36 +2076,35 @@ namespace aerobus {
 			using type = typename inner<from, to>::type;
 		};
 
+		template<typename N, typename M, int64_t i>
+		struct div_helper_inner {
+			static constexpr size_t l = M::digits;
+			using Qm1 = typename div_helper_inner<N, M, i - 1>::Q;
+			using Rm1 = typename div_helper_inner<N, M, i - 1>::R;
+			using D = typename add<
+				typename Rm1::template shift_left<1>, 
+				val<signs::positive, N::template digit_at<i + l - 1>::value>
+			>::type;
+			using Beta = typename floor_helper<D, M>::type;
+			using Q = typename add<typename Qm1::template shift_left<1>, Beta>::type;
+
+			using R = typename sub<D, typename mul<M, Beta>::type>::type;
+		};
+
+		template<typename N, typename M>
+		struct div_helper_inner<N, M, -1> {
+			static constexpr size_t l = M::digits;
+			using Q = zero;
+			using R = typename shift_right_helper<N, l - 1>::type;
+		};
+
 
 		template<typename N, typename M>
 		struct div_helper {
 			static constexpr size_t l = M::digits;
 			static constexpr size_t k = N::digits;
-
-
-
-			template<int64_t i>
-			struct inner {
-				using Qm1 = typename inner<i - 1>::Q;
-				using Rm1 = typename inner<i - 1>::R;
-				using D = typename add<
-					typename Rm1::template shift_left<1>, 
-					val<signs::positive, N::template digit_at<i + l - 1>::value>
-				>::type;
-				using Beta = typename floor_helper<D, M>::type;
-				using Q = typename add<typename Qm1::template shift_left<1>, Beta>::type;
-
-				using R = typename sub<D, typename mul<M, Beta>::type>::type;
-			};
-
-			template<>
-			struct inner<-1> {
-				using Q = zero;
-				using R = typename shift_right_helper<N, l - 1>::type;
-			};
-
-			using Q = typename inner<k - l>::Q;
-			using R = typename inner<k - l>::R;
+			using Q = typename div_helper_inner<N, M, k - l>::Q;
+			using R = typename div_helper_inner<N, M, k - l>::R;
 		};
 
 	public:
