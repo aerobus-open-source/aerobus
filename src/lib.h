@@ -2018,6 +2018,7 @@ namespace aerobus {
 			>::type;
 		};
 
+public:
 		template<typename A, typename B, typename E = void>
 		struct floor_helper {};
 
@@ -2079,11 +2080,12 @@ namespace aerobus {
 		template<typename N, typename M, int64_t i>
 		struct div_helper_inner {
 			static constexpr size_t l = M::digits;
+			static constexpr size_t k = N::digits;
 			using Qm1 = typename div_helper_inner<N, M, i - 1>::Q;
 			using Rm1 = typename div_helper_inner<N, M, i - 1>::R;
 			using D = typename add<
 				typename Rm1::template shift_left<1>, 
-				val<signs::positive, N::template digit_at<i + l - 1>::value>
+				val<signs::positive, N::template digit_at<k-(i + l)>::value>
 			>::type;
 			using Beta = typename floor_helper<D, M>::type;
 			using Q = typename add<typename Qm1::template shift_left<1>, Beta>::type;
@@ -2094,8 +2096,9 @@ namespace aerobus {
 		template<typename N, typename M>
 		struct div_helper_inner<N, M, -1> {
 			static constexpr size_t l = M::digits;
+			static constexpr size_t k = N::digits;
 			using Q = zero;
-			using R = typename shift_right_helper<N, l - 1>::type;
+			using R = typename shift_right_helper<N, k - l + 1>::type; // first l-1 digits of N
 		};
 
 
@@ -2166,7 +2169,11 @@ namespace aerobus {
 
 		/// @brief division operator (I1/I2)
 		template<typename I1, typename I2>
-		using div_t = typename div_helper<I1, I2>::type;
+		using div_t = typename div_helper<I1, I2>::Q;
+
+		/// @brief modulo (remainder) operator (I1 % I2)
+		template<typename I1, typename I2>
+		using mod_t = typename div_helper<I1, I2>::R;
 	};
 }
 
