@@ -2111,6 +2111,8 @@ public:
 		};
 
 	public:
+		static constexpr bool is_euclidean_domain = true;
+
 		/// @brief minus operator (-I)
 		template<typename I>
 		using minus_t = typename I::minus_t;
@@ -2174,6 +2176,9 @@ public:
 		/// @brief modulo (remainder) operator (I1 % I2)
 		template<typename I1, typename I2>
 		using mod_t = typename div_helper<I1, I2>::R;
+
+		template<typename I1, typename I2>
+		using gcd_t = gcd_t<bigint, I1, I2>;
 	};
 }
 

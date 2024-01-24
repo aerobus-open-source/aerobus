@@ -1792,6 +1792,28 @@ int test_bigint_div() {
 	return 0;
 }
 
+int test_bigint_gcd() {
+	{
+		using A = bigint_pos<12>;
+		using B = bigint_pos<9>;
+		using G = bigint::gcd_t<A, B>;
+		if(!bigint::eq_v<bigint_pos<3>, G>) {
+			return 1;
+		}
+	}
+	// TODO: fix
+	// {
+	// 	using A = bigint_pos<12, 12>;
+	// 	using B = bigint_pos<9>;
+	// 	using G = bigint::gcd_t<A, B>;
+	// 	if(!bigint::eq_v<bigint_pos<3>, G>) {
+	// 		return 1;
+	// 	}
+	// }
+
+	return 0;
+}
+
 static uint32_t ok_count = 0;
 static uint32_t fail_count = 0;
 #define RUN_TEST(test_name) \
@@ -1853,6 +1875,7 @@ int main(int argc, char* argv[]) {
 	RUN_TEST(test_bigint_div2)
 	RUN_TEST(test_bigint_floor)
 	RUN_TEST(test_bigint_div)
+	RUN_TEST(test_bigint_gcd);
 
 	printf("%d/%d tests passed\n", ok_count, ok_count + fail_count);
 	if(fail_count > 0) {

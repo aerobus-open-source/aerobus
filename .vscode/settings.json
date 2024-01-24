@@ -68,7 +68,8 @@
         "xtree": "cpp",
         "xutility": "cpp",
         "random": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "numeric": "cpp"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }
