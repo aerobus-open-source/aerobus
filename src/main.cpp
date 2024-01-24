@@ -1229,7 +1229,7 @@ int test_value_at() {
 }
 
 int test_bigint_digit_at() {
-	using x = aerobus::bigint::template val<aerobus::bigint::signs::positive, 1, 2>;
+	using x = bigint_pos<1, 2>;
 	constexpr uint16_t x0 = x::template digit_at<0>::value;
 	if(x0 != 2) {
 		return 1;
@@ -1721,6 +1721,77 @@ int test_bigint_floor() {
 	return 0;
 }
 
+int test_bigint_div() {
+	{
+		using A = bigint_pos<12>;
+		using B = bigint_pos<6>;
+		using DIV = bigint::div_t<A, B>;
+		using REM = bigint::mod_t<A, B>;
+		using QEXP = bigint_pos<2>;
+		using REXP = bigint_pos<0>;
+		if(!bigint::eq_v<QEXP, DIV> || !bigint::eq_v<REXP, REM>) {
+			printf("Q = %s\nR = %s\n", DIV::to_string().c_str(), REM::to_string().c_str());
+			return 1;
+		}
+	}
+	{
+		using A = bigint_pos<12, 12>;
+		using B = bigint_pos<6>;
+		using DIV = bigint::div_t<A, B>;
+		using REM = bigint::mod_t<A, B>;
+		using QEXP = bigint_pos<2, 2>;
+		using REXP = bigint_pos<0>;
+		if(!bigint::eq_v<QEXP, DIV> || !bigint::eq_v<REXP, REM>) {
+			printf("Q = %s\nR = %s\n", DIV::to_string().c_str(), REM::to_string().c_str());
+			return 1;
+		}
+	}
+	{
+		using A = bigint_pos<12, 13>;
+		using B = bigint_pos<6>;
+		using DIV = bigint::div_t<A, B>;
+		using REM = bigint::mod_t<A, B>;
+		using QEXP = bigint_pos<2, 2>;
+		using REXP = bigint_pos<1>;
+		if(!bigint::eq_v<QEXP, DIV> || !bigint::eq_v<REXP, REM>) {
+			printf("Q = %s\nR = %s\n", DIV::to_string().c_str(), REM::to_string().c_str());
+			printf("QEXP = %s\nR = %s\n", QEXP::to_string().c_str(), REXP::to_string().c_str());
+			return 1;
+		}
+	}
+
+	{
+		using A = bigint_pos<12, 13>;
+		using B = bigint_pos<12, 13>;
+		using DIV = bigint::div_t<A, B>;
+		using REM = bigint::mod_t<A, B>;
+		using QEXP = bigint_pos<1>;
+		using REXP = bigint_pos<0>;
+		if(!bigint::eq_v<QEXP, DIV> || !bigint::eq_v<REXP, REM>) {
+			printf("Q = %s\nR = %s\n", DIV::to_string().c_str(), REM::to_string().c_str());
+			printf("QEXP = %s\nR = %s\n", QEXP::to_string().c_str(), REXP::to_string().c_str());
+			return 1;
+		}
+	}
+
+
+	{
+		using A = bigint_pos<12, 13>;
+		using B = bigint_pos<2>;
+		using DIV = bigint::div_t<A, B>;
+		using REM = bigint::mod_t<A, B>;
+		using QEXP = bigint_pos<6, 6>;
+		using REXP = bigint_pos<1>;
+		if(!bigint::eq_v<QEXP, DIV> || !bigint::eq_v<REXP, REM>) {
+			printf("Q = %s\nR = %s\n", DIV::to_string().c_str(), REM::to_string().c_str());
+			printf("QEXP = %s\nR = %s\n", QEXP::to_string().c_str(), REXP::to_string().c_str());
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
 static uint32_t ok_count = 0;
 static uint32_t fail_count = 0;
 #define RUN_TEST(test_name) \
@@ -1781,6 +1852,7 @@ int main(int argc, char* argv[]) {
 	RUN_TEST(test_bigint_mul)
 	RUN_TEST(test_bigint_div2)
 	RUN_TEST(test_bigint_floor)
+	RUN_TEST(test_bigint_div)
 
 	printf("%d/%d tests passed\n", ok_count, ok_count + fail_count);
 	if(fail_count > 0) {
