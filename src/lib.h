@@ -1377,6 +1377,16 @@ namespace aerobus {
 		template<signs s>
 		static constexpr signs opposite_v = opposite<s>::value;
 
+		static std::string to_string(const signs& s) {
+			switch (s) {
+				case signs::negative:
+					return "-";
+				case signs::positive:
+				default:
+					return "+";
+			}
+		}
+
 		template<signs s1, signs s2>
 		static constexpr signs mul_sign() {
 			if constexpr (s1 == signs::positive) {
@@ -1423,7 +1433,7 @@ namespace aerobus {
 			static constexpr size_t digits = sizeof...(as) + 1;
 
 			static std::string to_string() {
-				return std::to_string(aN) + "B^" + std::to_string(digits-1) + " + " + strip::to_string();
+				return bigint::to_string(s) + std::to_string(aN) + "B^" + std::to_string(digits-1) + " + " + strip::to_string();
 			}
 
 			static constexpr bool is_zero_v = sizeof...(as) == 0 && an == 0;
@@ -1451,7 +1461,7 @@ namespace aerobus {
 			};
 
 			static std::string to_string() {
-				return std::to_string(a0);
+				return bigint::to_string(s) + std::to_string(a0);
 			}
 
 			static constexpr bool is_zero_v = a0 == 0;
@@ -2018,7 +2028,6 @@ namespace aerobus {
 			>::type;
 		};
 
-public:
 		template<typename A, typename B, typename E = void>
 		struct floor_helper {};
 
@@ -2039,10 +2048,13 @@ public:
 
 		template<typename A, typename B>
 		struct floor_helper<A, B, std::enable_if_t<gt_helper<A, B>::value && (A::digits != 1 || B::digits != 1)>> {
+			static_assert(A::sign == signs::positive);
+			static_assert(B::sign == signs::positive);
 			static constexpr size_t N = A::digits;
 			static constexpr size_t K = B::digits;
-			// TODO: find better heuristic for boundaries
-			using from = typename one::template shift_left<N - K>;
+			static constexpr size_t min_shift = N >= K + 1 ? N - K - 1 : 0;
+
+			using from = typename one::template shift_left<min_shift>;
 			using to = typename one::template shift_left<N - K + 1>;
 
 			template<typename X, typename Y>
@@ -2063,7 +2075,7 @@ public:
 				gt_helper<upperbound, typename add<lowerbound, one>::type>::value &&
 				gt_helper<typename mul<average_t<upperbound, lowerbound>, B>::type, A>::value
 				>> {
-				using type = typename inner<lowerbound, average_t<upperbound, lowerbound>>::type;
+				using type = typename simplify<typename inner<lowerbound, average_t<upperbound, lowerbound>>::type>::type;
 			};
 
 			template<typename lowerbound, typename upperbound>
@@ -2071,7 +2083,7 @@ public:
 				gt_helper<upperbound, typename add<lowerbound, one>::type>::value &&
 				!gt_helper<typename mul<average_t<upperbound, lowerbound>, B>::type, A>::value
 				>> {
-				using type = typename  inner<average_t<upperbound, lowerbound>, upperbound>::type;
+				using type = typename simplify<typename inner<average_t<upperbound, lowerbound>, upperbound>::type>::type;
 			};
 
 			using type = typename inner<from, to>::type;
@@ -2079,6 +2091,8 @@ public:
 
 		template<typename N, typename M, int64_t i>
 		struct div_helper_inner {
+			static_assert(N::sign == signs::positive);
+			static_assert(M::sign == signs::positive);
 			static constexpr size_t l = M::digits;
 			static constexpr size_t k = N::digits;
 			using Qm1 = typename div_helper_inner<N, M, i - 1>::Q;
@@ -2088,26 +2102,56 @@ public:
 				val<signs::positive, N::template digit_at<k-(i + l)>::value>
 			>::type;
 			using Beta = typename floor_helper<D, M>::type;
-			using Q = typename add<typename Qm1::template shift_left<1>, Beta>::type;
+			using Q = typename simplify<typename add<typename Qm1::template shift_left<1>, Beta>::type>::type;
 
-			using R = typename sub<D, typename mul<M, Beta>::type>::type;
+			using R = typename simplify<typename sub<D, typename mul<M, Beta>::type>::type>::type;
 		};
 
 		template<typename N, typename M>
 		struct div_helper_inner<N, M, -1> {
+			static_assert(N::sign == signs::positive);
+			static_assert(M::sign == signs::positive);
 			static constexpr size_t l = M::digits;
 			static constexpr size_t k = N::digits;
 			using Q = zero;
 			using R = typename shift_right_helper<N, k - l + 1>::type; // first l-1 digits of N
 		};
 
+		template<typename N, typename M, typename E = void>
+		struct div_helper {};
 
 		template<typename N, typename M>
-		struct div_helper {
+		struct div_helper<N, M, std::enable_if_t<
+				M::sign == signs::positive && 
+				N::sign == signs::positive && 
+				!M::is_zero_v
+		>> {
 			static constexpr size_t l = M::digits;
 			static constexpr size_t k = N::digits;
-			using Q = typename div_helper_inner<N, M, k - l>::Q;
-			using R = typename div_helper_inner<N, M, k - l>::R;
+			using Q = typename simplify<typename div_helper_inner<N, M, k - l>::Q>::type;
+			using R = typename simplify<typename div_helper_inner<N, M, k - l>::R>::type;
+		};
+
+		template<typename N, typename M>
+		struct div_helper<N, M, std::enable_if_t<
+				M::sign == signs::negative && 
+				!M::is_zero_v
+		>> {
+			using tmp = div_helper<N, typename M::minus_t>;
+			using Q = typename tmp::Q::minus_t;
+			using R = typename tmp::R;
+		};
+
+		template<typename N, typename M>
+		struct div_helper<N, M, std::enable_if_t<
+				N::sign == signs::negative && 
+				!M::is_zero_v
+		>> {
+			using tmp = div_helper<typename N::minus_t, M>;
+			using R_i = typename simplify<typename tmp::R>::type;
+			using Q_i = typename simplify<typename tmp::Q>::type;
+			using Q = std::conditional_t<R_i::is_zero_v, typename Q_i::minus_t, typename sub<typename Q_i::minus_t, one>::type>;
+			using R = std::conditional_t<R_i::is_zero_v, zero, typename sub<M, R_i>::type>;
 		};
 
 	public:
@@ -2177,8 +2221,15 @@ public:
 		template<typename I1, typename I2>
 		using mod_t = typename div_helper<I1, I2>::R;
 
+		/// @brief gcd operator
 		template<typename I1, typename I2>
 		using gcd_t = gcd_t<bigint, I1, I2>;
+
+		/// @brief fma operator (I1 * I2 + I3)
+		template<typename I1, typename I2, typename I3>
+		using fma_t = add_t<mul_t<I1, I2>, I3>;
+
+		
 	};
 }
 

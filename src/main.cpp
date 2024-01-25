@@ -1123,6 +1123,7 @@ int test_concept_ring() {
 	static_assert(aerobus::IsField<aerobus::q32>);
 	static_assert(aerobus::IsRing<aerobus::polynomial<i32>>);
 	static_assert(aerobus::IsField<aerobus::FractionField<aerobus::polynomial<i32>>>);
+	static_assert(IsRing<bigint>);
 	return 0;
 }
 
@@ -1718,6 +1719,23 @@ int test_bigint_floor() {
 			return 1;
 		}
 	}
+
+	{
+		using A = bigint_pos<128, 41>;
+		using B = bigint_pos<25, 1857>;
+		using C = bigint::floor_t<A, B>;
+		using C1 = bigint::add_t<C, bigint::one>;
+		using mul = bigint::mul_t<C, B>;
+		using mul1 = bigint::mul_t<C1, B>;
+
+		if (!bigint::ge_v<A, mul> || !bigint::gt_v<mul1, A>) {
+			printf("floor = %s\n", C::to_string().c_str());
+			printf("original = %s\n", A::to_string().c_str());
+			printf("mul = %s\n", mul::to_string().c_str());
+			return 1;
+		}
+	}
+
 	return 0;
 }
 
@@ -1773,8 +1791,6 @@ int test_bigint_div() {
 			return 1;
 		}
 	}
-
-
 	{
 		using A = bigint_pos<12, 13>;
 		using B = bigint_pos<2>;
@@ -1788,6 +1804,29 @@ int test_bigint_div() {
 			return 1;
 		}
 	}
+	{
+		using A = bigint_pos<12, 12>;
+		using B = bigint_pos<9>;
+		using DIV = bigint::div_t<A, B>;
+		using REM = bigint::mod_t<A, B>;
+
+		using AA = bigint::fma_t<B, DIV, REM>;
+		if(!bigint::eq_v<AA, A>) {
+			printf("Q = %s\nR = %s\n", DIV::to_string().c_str(), REM::to_string().c_str());
+			return 1;
+		}
+	}
+	{
+		using A = bigint_pos<128, 41, 17899>;
+		using B = bigint_pos<25, 1857>;
+		using D = bigint::div_t<A, B>;
+		using R = bigint::mod_t<A, B>;
+		using E = bigint::fma_t<B, D, R>;
+		if(!bigint::eq_v<E, A>) {
+			printf("D = %s\nR = %s\n", D::to_string().c_str(), R::to_string().c_str());
+			return 1;
+		}
+	}
 
 	return 0;
 }
@@ -1795,21 +1834,20 @@ int test_bigint_div() {
 int test_bigint_gcd() {
 	{
 		using A = bigint_pos<12>;
+		using B = bigint_pos<3>;
+		using G = bigint::gcd_t<A, B>;
+		if(!bigint::eq_v<bigint_pos<3>, G>) {
+			return 1;
+		}
+	}
+	{
+		using A = bigint_pos<12, 12>;
 		using B = bigint_pos<9>;
 		using G = bigint::gcd_t<A, B>;
 		if(!bigint::eq_v<bigint_pos<3>, G>) {
 			return 1;
 		}
 	}
-	// TODO: fix
-	// {
-	// 	using A = bigint_pos<12, 12>;
-	// 	using B = bigint_pos<9>;
-	// 	using G = bigint::gcd_t<A, B>;
-	// 	if(!bigint::eq_v<bigint_pos<3>, G>) {
-	// 		return 1;
-	// 	}
-	// }
 
 	return 0;
 }
