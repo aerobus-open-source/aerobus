@@ -1852,6 +1852,48 @@ int test_bigint_gcd() {
 	return 0;
 }
 
+int test_bigint_from_hex() {
+	// small number
+	{
+		using A = bigint::from_hex_t<"12A">;
+		if(!bigint::eq_v<A, bigint_pos<0x12A>>) {
+			return 1;
+		}
+	}
+	// large one digit number
+	{
+		using A = bigint::from_hex_t<"1234ABDF">;
+		if(!bigint::eq_v<A, bigint_pos<0X1234'ABDFU>>) {
+			return 1;
+		}
+	}
+	// largest one digit number
+	{
+		using A = bigint::from_hex_t<"FFFFFFFF">;
+		if(!bigint::eq_v<A, bigint_pos<UINT32_MAX>>) {
+			return 1;
+		}
+	}
+	// two digits number
+	{
+		using A = bigint::from_hex_t<"123ABF67EA">;
+		if(!bigint::eq_v<A, bigint_pos<0x12, 0X3ABF'67EA>>) {
+			printf("%s\n", A::to_string().c_str());
+			return 1;
+		}
+	}
+	// large digits number
+	{
+		using A = bigint::from_hex_t<"123456783ABF67EA">;
+		if(!bigint::eq_v<A, bigint_pos<0x1234'5678, 0X3ABF'67EA>>) {
+			printf("%s\n", A::to_string().c_str());
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
 static uint32_t ok_count = 0;
 static uint32_t fail_count = 0;
 #define RUN_TEST(test_name) \
@@ -1914,6 +1956,7 @@ int main(int argc, char* argv[]) {
 	RUN_TEST(test_bigint_floor)
 	RUN_TEST(test_bigint_div)
 	RUN_TEST(test_bigint_gcd);
+	RUN_TEST(test_bigint_from_hex);
 
 	printf("%d/%d tests passed\n", ok_count, ok_count + fail_count);
 	if(fail_count > 0) {
