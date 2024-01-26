@@ -5,7 +5,9 @@
 #include <cstdlib>
 
 #include "lib.h"
+#ifdef __GALOIS_FIELDS__
 #include "../imports/conwaypolynomials.h"
+#endif
 
 #ifdef _MSC_VER
 #define _USE_MATH_DEFINES
@@ -848,6 +850,7 @@ int test_quotient_ring_is_z2z() {
 	return 0;
 }
 
+#ifdef __GALOIS_FIELDS__
 int test_instanciate_F4() {
 	using F2 = zpz<2>;
 	using PF2 = polynomial<F2>;
@@ -888,6 +891,7 @@ int test_instanciate_large_finite_field() {
 	using x = F_17_8::inject_ring_t<PF17::X>;
 	return 0;
 }
+#endif
 
 int test_factorial() {
 	constexpr float x = factorial_v<i32, 3>;
@@ -1960,8 +1964,10 @@ int main(int argc, char* argv[]) {
 	RUN_TEST(test_eq_q32)
 	RUN_TEST(test_fraction_field_of_fraction_field)
 	RUN_TEST(test_quotient_ring_is_z2z)
+#ifdef __GALOIS_FIELDS__
 	RUN_TEST(test_instanciate_F4)
 	RUN_TEST(test_instanciate_large_finite_field)
+#endif
 	RUN_TEST(test_factorial)
 	RUN_TEST(test_combination)
 	RUN_TEST(test_bernouilli)

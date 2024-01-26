@@ -832,7 +832,7 @@ namespace aerobus {
 	 * polynomial with coefficients in Ring
 	 * Ring must be an integral domain
 	*/
-	template<typename Ring, char variable_name = 'x'>
+	template<typename Ring>
 	requires IsEuclideanDomain<Ring>
 	struct polynomial {
 		static constexpr bool is_field = false;
@@ -1245,18 +1245,18 @@ namespace aerobus {
 				}
 				else if (Ring::template eq_v<coeff, typename Ring::one>) {
 					if (sizeof...(coeffs) == 1) {
-						result += std::string(1, variable_name);
+						result += 'X';
 					}
 					else {
-						result += std::string(1, variable_name) + "^" + std::to_string(sizeof...(coeffs));
+						result += "X^" + std::to_string(sizeof...(coeffs));
 					}
 				}
 				else {
 					if (sizeof...(coeffs) == 1) {
-						result += coeff::to_string() + " " + std::string(1, variable_name);
+						result += coeff::to_string() + " X";
 					}
 					else {
-						result += coeff::to_string() + " " + std::string(1, variable_name) + "^" + std::to_string(sizeof...(coeffs));
+						result += coeff::to_string() + " X^" + std::to_string(sizeof...(coeffs));
 					}
 				}
 
@@ -1358,7 +1358,7 @@ namespace aerobus {
 		template<typename v1, typename v2>
 		using gcd_t = std::conditional_t<
 			Ring::is_euclidean_domain,
-			typename make_unit<gcd_t<polynomial<Ring, variable_name>, v1, v2>>::type,
+			typename make_unit<gcd_t<polynomial<Ring>, v1, v2>>::type,
 			void>;
 
 		/// @brief makes the constant (native type) polynomial a_0
