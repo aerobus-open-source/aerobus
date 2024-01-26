@@ -1894,6 +1894,34 @@ int test_bigint_from_hex() {
 	return 0;
 }
 
+int test_bigint_to_hex() {
+	{
+		using A = bigint_pos<0x12, 0x12345678>;
+		std::string ax = A::to_hex();
+		if(ax != "+0X1212345678") {
+			printf("%s\n", ax.c_str());
+			return 1;
+		}
+	}
+	{
+		using A = bigint_pos<0xFFFEE123, 0x12345678>;
+		std::string ax = A::to_hex();
+		if(ax != "+0XFFFEE12312345678") {
+			printf("%s\n", ax.c_str());
+			return 1;
+		}
+	}
+	{
+		using A = bigint_neg<12>;
+		std::string ax = A::to_hex();
+		if(ax != "-0XC") {
+			printf("%s\n", ax.c_str());
+			return 1;
+		}
+	}
+	return 0;
+}
+
 static uint32_t ok_count = 0;
 static uint32_t fail_count = 0;
 #define RUN_TEST(test_name) \
@@ -1957,6 +1985,7 @@ int main(int argc, char* argv[]) {
 	RUN_TEST(test_bigint_div)
 	RUN_TEST(test_bigint_gcd);
 	RUN_TEST(test_bigint_from_hex);
+	RUN_TEST(test_bigint_to_hex)
 
 	printf("%d/%d tests passed\n", ok_count, ok_count + fail_count);
 	if(fail_count > 0) {
