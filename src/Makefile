@@ -2,6 +2,7 @@ clean:
 	rm -f *.exe
 
 build-profile:
+	clang++ -D__GALOIS_FIELDS__ -ftime-report -I. -ftemplate-depth=10000 -std=c++20 -ftemplate-backtrace-limit=0 -O3 main.cpp -o main.exe 
 	../../llvm-project/build/bin/templight++ -Xtemplight --profiler -Xtemplight -output=main -Xtemplight -blacklist=templight.blacklist -Xtemplight -ignore-system -I. -ftemplate-depth=10000 -std=c++20 -ftemplate-backtrace-limit=0 -O3 main.cpp -o main.exe 
 	../../templight-tools/build/bin/templight-convert --format callgrind --output trace.cg main.trace.pbf
 
