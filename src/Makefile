@@ -1,6 +1,10 @@
 clean:
 	rm -f *.exe
 
+build-profile:
+	../../llvm-project/build/bin/templight++ -Xtemplight --profiler -Xtemplight -output=main -Xtemplight -blacklist=templight.blacklist -Xtemplight -ignore-system -I. -ftemplate-depth=10000 -std=c++20 -ftemplate-backtrace-limit=0 -O3 main.cpp -o main.exe 
+	../../templight-tools/build/bin/templight-convert --format callgrind --output trace.cg main.trace.pbf
+
 build: # to be sure both compile properly
 	clang++ -I. -ftemplate-depth=10000 -std=c++20 -ftemplate-backtrace-limit=0 -O3 main.cpp -o main.exe 
 	# g++ -I. -fconcepts-diagnostics-depth=3 -ftemplate-depth=30000 -std=c++20 -ftemplate-backtrace-limit=0 -O3 main.cpp -o main.exe 
