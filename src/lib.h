@@ -10,6 +10,7 @@
 #include <string>
 #include <concepts>
 #include <array>
+#include <format>
 
 
 #ifdef _MSC_VER
@@ -1385,6 +1386,20 @@ namespace aerobus {
 		template<signs s, uint32_t an, uint32_t... as>
 		struct val;
 
+		template<uint32_t an, uint32_t... as>
+		struct to_hex_helper {
+			static std::string func() {
+				return std::format("0X{:X}", an) + to_hex_helper<as...>::func();
+			}
+		};
+
+		template<uint32_t x>
+		struct to_hex_helper<x> {
+			static std::string func() {
+				return std::format("{:X}", x);
+			}
+		};
+
 	private:
 
 		template<signs s>
@@ -1454,6 +1469,10 @@ namespace aerobus {
 				return bigint::to_string(s) + std::to_string(aN) + "B^" + std::to_string(digits-1) + " + " + strip::to_string();
 			}
 
+			static std::string to_hex() {
+				return bigint::to_string(s) + to_hex_helper<an, as...>::func();
+			}
+
 			static constexpr bool is_zero_v = sizeof...(as) == 0 && an == 0;
 
 			using minus_t = val<opposite_v<s>, an, as...>;
@@ -1480,6 +1499,10 @@ namespace aerobus {
 
 			static std::string to_string() {
 				return bigint::to_string(s) + std::to_string(a0);
+			}
+
+			static std::string to_hex() {
+				return bigint::to_string(s) + std::format("0X{:X}", a0);
 			}
 
 			static constexpr bool is_zero_v = a0 == 0;
