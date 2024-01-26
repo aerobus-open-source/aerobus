@@ -1388,15 +1388,16 @@ namespace aerobus {
 
 		template<uint32_t an, uint32_t... as>
 		struct to_hex_helper {
-			static std::string func() {
-				return std::format("0X{:X}", an) + to_hex_helper<as...>::func();
+			static std::string func(const bool prefix = false) {
+				std::string head = prefix ? std::format("{:08X}", an) : std::format("{:X}", an);
+				return head + to_hex_helper<as...>::func(true);
 			}
 		};
 
 		template<uint32_t x>
 		struct to_hex_helper<x> {
-			static std::string func() {
-				return std::format("{:X}", x);
+			static std::string func(const bool prefix = false) {
+				return prefix ? std::format("{:08X}", x) : std::format("{:X}", x);
 			}
 		};
 
@@ -1470,7 +1471,7 @@ namespace aerobus {
 			}
 
 			static std::string to_hex() {
-				return bigint::to_string(s) + to_hex_helper<an, as...>::func();
+				return bigint::to_string(s) + "0X" + to_hex_helper<an, as...>::func(false);
 			}
 
 			static constexpr bool is_zero_v = sizeof...(as) == 0 && an == 0;
@@ -2229,6 +2230,13 @@ namespace aerobus {
 
 	public:
 		static constexpr bool is_euclidean_domain = true;
+		static constexpr bool is_field = false;
+
+		template<typename v>
+		using inject_ring_t = v;
+
+		template<auto v>
+		using inject_constant_t = val<(v < 0) ? bigint::signs::negative : bigint::signs::positive, std::abs(v)>;
 
 		/// @brief "constructor" from constant hex string (no prefix -- all caps)
 		/// @example bigint::from_hex_t<"12AB456FFE0">;
