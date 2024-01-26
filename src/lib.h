@@ -58,6 +58,24 @@ namespace aerobus {
 		return false;
 	}
 
+	template <size_t N>
+	struct string_literal {
+		constexpr string_literal(const char (&str)[N]) { 
+			std::reverse_copy(str, str + N, value);
+		}
+
+		template<size_t i>
+		constexpr char char_at() const { 
+			if constexpr (i < N)  {
+				return this->value[i]; 
+			}
+			return 0;
+		}
+
+		constexpr size_t len() const { return N; }
+
+		char value[N];
+	};
 }
 
 // concepts
@@ -2154,8 +2172,45 @@ namespace aerobus {
 			using R = std::conditional_t<R_i::is_zero_v, zero, typename sub<M, R_i>::type>;
 		};
 
+		template<string_literal S>
+		struct digit_from_string {
+			static constexpr size_t N = S.len();
+
+			template<size_t i>
+			static constexpr char char_at = (i < N) ? S.template char_at<i>() : '0';
+
+			template <char c>
+			static constexpr uint32_t from_hex = (c >= '0' && c <= '9') ?  c - '0' : 10 + c - 'A';
+
+			template<size_t index>
+			static constexpr uint32_t value() {
+				constexpr uint32_t d1 = from_hex<char_at<8*index + 1>>;
+				constexpr uint32_t d2 = from_hex<char_at<8*index + 2>> << 4;
+				constexpr uint32_t d3 = from_hex<char_at<8*index + 3>> << 8;
+				constexpr uint32_t d4 = from_hex<char_at<8*index + 4>> << 12;
+				constexpr uint32_t d5 = from_hex<char_at<8*index + 5>> << 16;
+				constexpr uint32_t d6 = from_hex<char_at<8*index + 6>> << 20;
+				constexpr uint32_t d7 = from_hex<char_at<8*index + 7>> << 24;
+				constexpr uint32_t d8 = from_hex<char_at<8*index + 8>> << 28;
+				return d1 | d2 | d3 | d4 | d5 | d6 | d7 | d8;
+			}
+		};
+
+		template<string_literal S, typename I>
+		struct from_hex_helper {};
+
+		template<string_literal S, std::size_t... I>
+		struct from_hex_helper<S, std::index_sequence<I...>> {
+			using type = typename simplify<val<signs::positive, digit_from_string<S>::template value<I>()...>>::type;
+		};
+
 	public:
 		static constexpr bool is_euclidean_domain = true;
+
+		/// @brief "constructor" from constant hex string (no prefix -- all caps)
+		/// @example bigint::from_hex_t<"12AB456FFE0">;
+		template<string_literal S>
+		using from_hex_t = typename from_hex_helper<S, internal::make_index_sequence_reverse<(S.len()-1) / 8 + 1>>::type;
 
 		/// @brief minus operator (-I)
 		template<typename I>
@@ -2515,7 +2570,6 @@ namespace aerobus {
 					typename Ring::template mul_t<v2::y, v2::x>
 				>>;
 			};
-		
 
 		public:
 
