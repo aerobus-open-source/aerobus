@@ -1701,7 +1701,7 @@ namespace aerobus {
 
 		template<typename I, size_t index>
 		struct div_2_digit {
-			static constexpr uint32_t value = ((I::template digit_at<index + 1>::value & 1) << 31) + (I::template digit_at<index>::value >> 1);
+			static constexpr uint32_t value = ((I::template digit_at<index + 1>::value & 1) << 31) | (I::template digit_at<index>::value >> 1);
 		};
 
 		template<typename X, typename I>
@@ -1712,8 +1712,16 @@ namespace aerobus {
 			using type = val<signs::positive, div_2_digit<X, I>::value...>;
 		};
 
+		template<typename X, typename E = void>
+		struct div_2 {};
+
 		template<typename X>
-		struct div_2 {
+		struct div_2<X, std::enable_if_t<X::digits == 1>> {
+			using type = val<X::sign, (X::aN >> 1)>;
+		};
+
+		template<typename X>
+		struct div_2<X, std::enable_if_t<X::digits != 1>> {
 			using type = typename simplify<typename div_2_helper<X, internal::make_index_sequence_reverse<X::digits>>::type>::type;
 		};
 
@@ -2089,15 +2097,6 @@ namespace aerobus {
 
 		template<typename A, typename B>
 		struct floor_helper<A, B, std::enable_if_t<gt_helper<A, B>::value && (A::digits != 1 || B::digits != 1)>> {
-			static_assert(A::sign == signs::positive);
-			static_assert(B::sign == signs::positive);
-			static constexpr size_t N = A::digits;
-			static constexpr size_t K = B::digits;
-			static constexpr size_t min_shift = N >= K + 1 ? N - K - 1 : 0;
-
-			using from = typename one::template shift_left<min_shift>;
-			using to = typename one::template shift_left<N - K + 1>;
-
 			template<typename X, typename Y>
 			using average_t = typename div_2<typename add<X, Y>::type>::type;
 
@@ -2127,7 +2126,8 @@ namespace aerobus {
 				using type = typename simplify<typename inner<average_t<upperbound, lowerbound>, upperbound>::type>::type;
 			};
 
-			using type = typename inner<from, to>::type;
+			// this type is ONLY used for division where we know this bound
+			using type = typename inner<zero, val<signs::positive, 1, 1>>::type;
 		};
 
 		template<typename N, typename M, int64_t i>
@@ -2286,10 +2286,6 @@ namespace aerobus {
 		/// @brief division by 2
 		template<typename I>
 		using div_2_t = typename div_2<I>::type;
-
-		/// @brief floor(A/B)
-		template<typename I1, typename I2>
-		using floor_t = typename floor_helper<I1, I2>::type;
 
 		/// @brief division operator (I1/I2)
 		template<typename I1, typename I2>

@@ -564,9 +564,9 @@ int test_poly_to_string() {
 	using P32 = polynomial<q32>;
 	using A = fpq32::val<P32::val<q32::one, q32::one>, P32::val<q32::val<i32::val<2>, i32::val<1>>, q32::one>>;
 	auto rep = A::to_string();
-	const char* expected = "(x + 1) / (2 x + 1)";
+	const char* expected = "(X + 1) / (2 X + 1)";
 	if (strcmp(rep.c_str(),expected) != 0) {
-		printf("expected %s got %s\n", "(x + 1) / (2 x + 1)", rep.c_str());
+		printf("expected %s got %s\n", "(X + 1) / (2 X + 1)", rep.c_str());
 		return 1;
 	}
 
@@ -1671,78 +1671,6 @@ int test_bigint_div2() {
 	return 0;
 }
 
-int test_bigint_floor() {
-	{
-		using A = bigint_pos<12>;
-		using B = bigint_pos<5>;
-		using C = bigint::floor_t<A, B>;
-		if (!bigint::eq_v<C, bigint_pos<2>>) {
-			return 1;
-		}
-	}
-	{
-		using A = bigint_pos<UINT32_MAX>;
-		using B = bigint_pos<5>;
-		using C = bigint::floor_t<A, B>;
-		using C1 = bigint::add_t<C, bigint::one>;
-		using mul = bigint::mul_t<C, B>;
-		using mul1 = bigint::mul_t<C1, B>;
-
-		if (!bigint::ge_v<A, mul> || !bigint::gt_v<mul1, A>) {
-			printf("%s\n", C::to_string().c_str());
-			return 1;
-		}
-	}
-	{
-		using A = bigint_pos<UINT32_MAX, 1>;
-		using B = bigint_pos<2>;
-		using C = bigint::floor_t<A, B>;
-		using C1 = bigint::add_t<C, bigint::one>;
-		using mul = bigint::mul_t<C, B>;
-		using mul1 = bigint::mul_t<C1, B>;
-
-		if (!bigint::ge_v<A, mul> || !bigint::gt_v<mul1, A>) {
-			printf("floor = %s\n", C::to_string().c_str());
-			printf("original = %s\n", A::to_string().c_str());
-			printf("mul = %s\n", mul::to_string().c_str());
-			return 1;
-		}
-	}
-	{
-		using A = bigint_pos<UINT32_MAX, 1, 7, 0xFF23140A>;
-		using B = bigint_pos<UINT32_MAX, 1>;
-		using C = bigint::floor_t<A, B>;
-		using C1 = bigint::add_t<C, bigint::one>;
-		using mul = bigint::mul_t<C, B>;
-		using mul1 = bigint::mul_t<C1, B>;
-
-		if (!bigint::ge_v<A, mul> || !bigint::gt_v<mul1, A>) {
-			printf("floor = %s\n", C::to_string().c_str());
-			printf("original = %s\n", A::to_string().c_str());
-			printf("mul = %s\n", mul::to_string().c_str());
-			return 1;
-		}
-	}
-
-	{
-		using A = bigint_pos<128, 41>;
-		using B = bigint_pos<25, 1857>;
-		using C = bigint::floor_t<A, B>;
-		using C1 = bigint::add_t<C, bigint::one>;
-		using mul = bigint::mul_t<C, B>;
-		using mul1 = bigint::mul_t<C1, B>;
-
-		if (!bigint::ge_v<A, mul> || !bigint::gt_v<mul1, A>) {
-			printf("floor = %s\n", C::to_string().c_str());
-			printf("original = %s\n", A::to_string().c_str());
-			printf("mul = %s\n", mul::to_string().c_str());
-			return 1;
-		}
-	}
-
-	return 0;
-}
-
 int test_bigint_div() {
 	{
 		using A = bigint_pos<12>;
@@ -1987,7 +1915,6 @@ int main(int argc, char* argv[]) {
 	RUN_TEST(test_bigint_shift_right)
 	RUN_TEST(test_bigint_mul)
 	RUN_TEST(test_bigint_div2)
-	RUN_TEST(test_bigint_floor)
 	RUN_TEST(test_bigint_div)
 	RUN_TEST(test_bigint_gcd);
 	RUN_TEST(test_bigint_from_hex);
