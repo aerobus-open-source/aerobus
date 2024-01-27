@@ -1,5 +1,7 @@
 # Aerobus
-Aerobus is a C++20 template library which expresses algebra concepts in types
+Aerobus is a C++20 template library which expresses algebra concepts in types. 
+
+Early developments have been made in [euler](https://github.com/JeWaVe/euler/tree/master), which is now decommissioned. 
 
 It defines some concepts, such as Ring, IntegralDomain or Field which can be used to construct the field of fractions of a Ring, polynomials with coefficients in such a set or rational fractions, all at compile time. It allows the definition of polynomials over any discrete integral domain (and therefore the corresponding field of fractions), as long as your Ring implementation satisfies the IsIntegralDomain concept. 
 
