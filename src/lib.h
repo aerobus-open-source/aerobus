@@ -12,6 +12,12 @@
 #include <array>
 #include <format>
 
+#ifdef __CUDACC__
+#define DEVICE __host__ __device__
+#else 
+#define DEVICE 
+#endif
+
 
 #ifdef _MSC_VER
 #define ALIGNED(x) __declspec(align(x))
@@ -445,7 +451,7 @@ namespace aerobus {
 			/// @brief cast x into valueType
 			/// @tparam valueType double for example
 			template<typename valueType>
-			static constexpr valueType get() { return static_cast<valueType>(x); }
+			DEVICE INLINED static constexpr valueType get() { return static_cast<valueType>(x); }
 
 			/// @brief is value zero 
 			static constexpr bool is_zero_v = x == 0;
@@ -458,7 +464,7 @@ namespace aerobus {
 			/// @brief cast x into valueRing
 			/// @tparam valueRing double for example
 			template<typename valueRing>
-			static constexpr valueRing eval(const valueRing& v) {
+			DEVICE INLINED static constexpr valueRing eval(const valueRing& v) {
 				return static_cast<valueRing>(x);
 			}
 		};
@@ -582,7 +588,7 @@ namespace aerobus {
 			/// @brief cast value in valueType
 			/// @tparam valueType (double for example)
 			template<typename valueType>
-			static constexpr valueType get() { return static_cast<valueType>(x); }
+			DEVICE INLINED static constexpr valueType get() { return static_cast<valueType>(x); }
 
 			/// @brief is value zero
 			static constexpr bool is_zero_v = x == 0;
@@ -595,7 +601,7 @@ namespace aerobus {
 			/// @brief cast value in valueRing
 			/// @tparam valueRing (double for example)
 			template<typename valueRing>
-			static constexpr valueRing eval(const valueRing& v) {
+			DEVICE INLINED static constexpr valueRing eval(const valueRing& v) {
 				return static_cast<valueRing>(x);
 			}
 		};
@@ -721,7 +727,7 @@ namespace aerobus {
 			static constexpr int32_t v = x % p;
 
 			template<typename valueType>
-			static constexpr valueType get() { return static_cast<valueType>(x % p); }
+			DEVICE INLINED static constexpr valueType get() { return static_cast<valueType>(x % p); }
 
 			static constexpr bool is_zero_v = v == 0;
 			static std::string to_string() {
@@ -729,7 +735,7 @@ namespace aerobus {
 			}
 
 			template<typename valueRing>
-			static constexpr valueRing eval(const valueRing& v) {
+			DEVICE INLINED static constexpr valueRing eval(const valueRing& v) {
 				return static_cast<valueRing>(x % p);
 			}
 		};
@@ -880,7 +886,7 @@ namespace aerobus {
 			/// @param x value
 			/// @return P(x)
 			template<typename valueRing>
-			static constexpr valueRing eval(const valueRing& x) {
+			DEVICE INLINED static constexpr valueRing eval(const valueRing& x) {
 				return eval_helper<valueRing, val>::template inner<0, degree + 1>::func(static_cast<valueRing>(0), x);
 			}
 		};
@@ -914,7 +920,7 @@ namespace aerobus {
 			}
 
 			template<typename valueRing>
-			static constexpr valueRing eval(const valueRing& x) {
+			DEVICE INLINED static constexpr valueRing eval(const valueRing& x) {
 				return static_cast<valueRing>(aN::template get<valueRing>());
 			}
 		};
@@ -1221,7 +1227,7 @@ namespace aerobus {
 		{
 			template<size_t index, size_t stop>
 			struct inner {
-				static constexpr valueRing func(const valueRing& accum, const valueRing& x) {
+				DEVICE INLINED static constexpr valueRing func(const valueRing& accum, const valueRing& x) {
 					constexpr valueRing coeff = static_cast<valueRing>(P::template coeff_at_t<P::degree - index>::template get<valueRing>());
 					return eval_helper<valueRing, P>::template inner<index + 1, stop>::func(x * accum + coeff, x);
 				}
@@ -1229,7 +1235,7 @@ namespace aerobus {
 
 			template<size_t stop>
 			struct inner<stop, stop> {
-				static constexpr valueRing func(const valueRing& accum, const valueRing& x) {
+				DEVICE INLINED static constexpr valueRing func(const valueRing& accum, const valueRing& x) {
 					return accum;
 				}
 			};
@@ -2375,7 +2381,7 @@ namespace aerobus {
 				/// @tparam valueType likely double or float
 				/// @return 
 				template<typename valueType>
-				static constexpr valueType get() { return static_cast<valueType>(x::v) / static_cast<valueType>(y::v); }
+				DEVICE INLINED static constexpr valueType get() { return static_cast<valueType>(x::v) / static_cast<valueType>(y::v); }
 
 				/// @brief represents value as string
 				/// @return something like val1 / val2
