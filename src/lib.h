@@ -838,6 +838,7 @@ namespace aerobus {
 	/// @tparam Field can be any version of Q (q32, q64, qbintint)
 	/// @tparam d 
 	template<typename Field, int64_t d>
+	requires IsField<Field>
 	struct QuadraticExtension {
 		// v1 + sqrt(x) v2
 		template<typename v1, typename v2>
