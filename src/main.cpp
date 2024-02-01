@@ -1856,6 +1856,69 @@ int test_bigint_to_hex() {
 	return 0;
 }
 
+int test_quadratic_extension() {
+	using q5 = Quadratic<q32, 5>;
+	{
+		using x = q5::inject_constant_t<2>;
+		using y = q5::inject_constant_t<3>;
+		using xy = q5::mul_t<x, y>;
+		if (xy::x::get<float>() != 6.0F) {
+			return 1;
+		}
+		if (!xy::y::is_zero_v) {
+			return 1;
+		}
+	} 
+	{
+		using x = typename q5::template inject_values_t<1, 1>;
+		using y = typename q5::template inject_values_t<1, -1>;
+		using expected = typename q5::template inject_values_t<-4, 0>;
+		using xy = q5::mul_t<x, y>;
+		if (!q5::eq_v<expected, xy>) {
+			return 1;
+		}
+	}
+	{
+		using x = typename q5::template inject_values_t<1, -1>;
+		using invx = typename q5::template div_t<typename q5::one, x>;
+		if (invx::x::x::v != -1) {
+			return 1;
+		}
+		if (invx::x::y::v != 4) {
+			return 1;
+		}
+		if (invx::y::x::v != -1) {
+			return 1;
+		}
+		if (invx::y::y::v != 4) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+int test_gauss_rationals() {
+	using Q = FractionField<bigint>;
+	using qi = Quadratic<Q, -1>;
+	{
+		// 1 - i
+		using x = qi::inject_values_t<1, -1>;
+		using inv = qi::div_t<typename qi::one, x>;
+		using expected = typename Q::template val<typename bigint::one, typename bigint::template inject_constant_t<2>>;
+		if (!Q::eq_v<typename inv::x, expected>) {
+			printf("%s\n", inv::x::to_string().c_str());
+			return 1;
+		}
+		if (!Q::eq_v<typename inv::y, expected>) {
+			printf("%s\n", inv::y::to_string().c_str());
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
 static uint32_t ok_count = 0;
 static uint32_t fail_count = 0;
 #define RUN_TEST(test_name) \
@@ -1921,6 +1984,8 @@ int main(int argc, char* argv[]) {
 	RUN_TEST(test_bigint_gcd);
 	RUN_TEST(test_bigint_from_hex);
 	RUN_TEST(test_bigint_to_hex)
+	RUN_TEST(test_quadratic_extension)
+	RUN_TEST(test_gauss_rationals)
 
 	printf("%d/%d tests passed\n", ok_count, ok_count + fail_count);
 	if(fail_count > 0) {
