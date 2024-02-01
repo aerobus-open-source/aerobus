@@ -1207,6 +1207,25 @@ int test_chebyshev() {
 	return 0;
 }
 
+int test_laguerre() {
+	{
+		using L2 = laguerre<2>;
+		static_assert(L2::coeff_at_t<2>::get<float>() == 0.5F);
+		static_assert(L2::coeff_at_t<1>::get<float>() == -2.0F);
+		static_assert(L2::coeff_at_t<0>::get<float>() == 1.0F);
+	}
+	{
+		using L3 = laguerre<3>;
+		static_assert(L3::coeff_at_t<3>::x::v == -1);
+		static_assert(L3::coeff_at_t<3>::y::v == 6);
+		static_assert(L3::coeff_at_t<2>::get<float>() == 1.5F);
+		static_assert(L3::coeff_at_t<1>::get<float>() == -3.0F);
+		static_assert(L3::coeff_at_t<0>::get<float>() == 1.0F);
+	}
+
+	return 0;
+}
+
 int test_value_at() {
 	{
 		constexpr uint16_t x = aerobus::internal::value_at<0, 1, 2, 3>::value;
@@ -1934,7 +1953,8 @@ static uint32_t fail_count = 0;
 	}
 
 int main(int argc, char* argv[]) {
-	RUN_TEST(test_chebyshev);
+	RUN_TEST(test_chebyshev)
+	RUN_TEST(test_laguerre)
 	RUN_TEST(test_continued_fraction)
 	RUN_TEST(test_concept_ring)
 	RUN_TEST(test_type_list)

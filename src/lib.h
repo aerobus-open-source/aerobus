@@ -2819,6 +2819,8 @@ namespace aerobus {
 	/// @brief polynomial with 64 bits integers coefficients
 	using pi64 = polynomial<i64>;
 	/// @brief polynomial with 64 bits rational coefficients
+	using pq64 = polynomial<q64>;
+	/// @brief polynomial with 64 bits rational coefficients
 	using fpq64 = FractionField<polynomial<q64>>;
 
 	/// @brief bigint "constructor" for positive values
@@ -3414,6 +3416,7 @@ namespace aerobus {
 
 // known polynomials
 namespace aerobus {
+	// chebyshev
 	namespace internal {
 		template<int kind, int deg>
 		struct chebyshev_helper {
@@ -3452,6 +3455,50 @@ namespace aerobus {
 		};
 	}
 
+	// laguerre
+	namespace internal {
+		template<size_t deg>
+		struct laguerre_helper {
+		private:
+			// Lk = (1 / k) * ((2 * k - 1 - x) * lkm1 - (k - 2)Lkm2)
+			using lnm2 = typename laguerre_helper<deg - 2>::type;
+			using lnm1 = typename laguerre_helper<deg - 1>::type;
+			// -x + 2k-1
+			using p = typename pq64::template val<
+				typename q64::template inject_constant_t<-1>, 
+				typename q64::template inject_constant_t<2 * deg - 1>>;
+			// 1/n
+			using factor = typename pq64::template inject_ring_t<
+				q64::val<typename i64::one, typename i64::template inject_constant_t<deg>>>;
+
+		public:
+			using type = typename pq64::template mul_t <
+				factor,
+				typename pq64::template sub_t<
+					typename pq64::template mul_t<
+						p, 
+						lnm1
+					>,
+					typename pq64::template mul_t<
+						typename pq64::template inject_constant_t<deg-1>,
+						lnm2
+					>
+				>
+			>;
+
+		};
+
+		template<>
+		struct laguerre_helper<0> {
+			using type = typename pq64::one;
+		};
+
+		template<>
+		struct laguerre_helper<1> {
+			using type = typename pq64::template sub_t<typename pq64::one, typename pq64::X>;
+		};
+	};
+
 	/// @brief chebyshev polynomial of first kind
 	/// @tparam deg degree of polynomial
 	template<size_t deg>
@@ -3461,4 +3508,7 @@ namespace aerobus {
 	/// @tparam deg degree of polynomial
 	template<size_t deg>
 	using chebyshev_U = typename internal::chebyshev_helper<2, deg>::type;
+
+	template<size_t deg>
+	using laguerre = typename internal::laguerre_helper<deg>::type;
 }
