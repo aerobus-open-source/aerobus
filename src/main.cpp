@@ -1899,12 +1899,16 @@ int test_quadratic_extension() {
 }
 
 int test_gauss_rationals() {
+	// rationals, arbitrary precision
 	using Q = FractionField<bigint>;
-	using qi = QuadraticExtension<Q, -1>;
+	// Q[i] aka gauss rationals
+	using Qi = QuadraticExtension<Q, -1>;
+	// polynomials with coefficients in gauss rationals -- arbitrary precision
+	using PQi = polynomial<Qi>;
 	{
 		// 1 - i
-		using x = qi::inject_values_t<1, -1>;
-		using inv = qi::div_t<typename qi::one, x>;
+		using x = Qi::inject_values_t<1, -1>;
+		using inv = Qi::div_t<typename Qi::one, x>;
 		using expected = typename Q::template val<typename bigint::one, typename bigint::template inject_constant_t<2>>;
 		if (!Q::eq_v<typename inv::x, expected>) {
 			printf("%s\n", inv::x::to_string().c_str());
