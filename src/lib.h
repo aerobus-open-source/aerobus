@@ -524,7 +524,7 @@ namespace aerobus {
 
 		template<typename v1, typename v2>
 		struct eq {
-			static constexpr bool value =(v1::v == v2::v);
+			static constexpr bool value = (v1::v == v2::v);
 		};
 
 	public:
@@ -776,7 +776,7 @@ namespace aerobus {
 
 		template<typename v1, typename v2>
 		struct gt {
-			static constexpr bool value = (v1::v% p > v2::v% p);
+			static constexpr bool value = (v1::v % p > v2::v % p);
 		};
 
 		template<typename v1, typename v2>
@@ -926,7 +926,7 @@ namespace aerobus {
 		using minus_t = sub_t<zero, v>;
 
 		template<typename v1, typename v2>
-		static constexpr bool eq_v = 
+		static constexpr bool eq_v =
 			(Field::template eq_v<typename v1::x, typename v2::x>) &&
 			(Field::template eq_v<typename v1::y, typename v2::y>);
 
@@ -1309,9 +1309,9 @@ namespace aerobus {
 			using qq = typename add<Q, pT>::type;
 
 		public:
-			using q_type = typename div_helper<A, B, qq, rr>::q_type;
-			using mod_type = typename div_helper<A, B, qq, rr>::mod_type;
-			using gcd_type = rr;
+			using q_type = typename simplify<typename div_helper<A, B, qq, rr>::q_type>::type;
+			using mod_type = typename simplify<typename div_helper<A, B, qq, rr>::mod_type>::type;
+			using gcd_type = typename simplify<rr>::type;
 		};
 
 		template<typename A, typename B>
@@ -2020,10 +2020,37 @@ namespace aerobus {
 		template<typename I1, typename I2, typename E = void>
 		struct sub {};
 
+
+
+		// 0 + x -> x
+		template<typename I1, typename I2>
+		struct add<I1, I2, std::enable_if_t<
+			I1::is_zero_v && !I2::is_zero_v
+			>> {
+			using type = I2;
+		};
+
+		// x + 0 -> x
+		template<typename I1, typename I2>
+		struct add<I1, I2, std::enable_if_t<
+			I2::is_zero_v && !I1::is_zero_v
+			>> {
+			using type = I1;
+		};
+
+		// 0 + 0 -> x
+		template<typename I1, typename I2>
+		struct add<I1, I2, std::enable_if_t<
+			I2::is_zero_v && I1::is_zero_v
+			>> {
+			using type = zero;
+		};
+
 		// +x + +y -> x + y
 		template<typename I1, typename I2>
 		struct add<I1, I2, std::enable_if_t<
-			gt_helper<I1, zero>::value&&
+			!I2::is_zero_v && !I1::is_zero_v &&
+			gt_helper<I1, zero>::value &&
 			gt_helper<I2, zero>::value
 			>> {
 			using type = typename simplify<
@@ -2037,32 +2064,17 @@ namespace aerobus {
 		// -x + -y -> -(x+y)
 		template<typename I1, typename I2>
 		struct add<I1, I2, std::enable_if_t<
-			gt_helper<zero, I1>::value&&
+			!I2::is_zero_v && !I1::is_zero_v &&
+			gt_helper<zero, I1>::value &&
 			gt_helper<zero, I2>::value
 			>> {
 			using type = typename add<typename I1::minus_t, typename I2::minus_t>::type::minus_t;
 		};
 
-		// 0 + x -> x
-		template<typename I1, typename I2>
-		struct add<I1, I2, std::enable_if_t<
-			I1::is_zero_v
-			>> {
-			using type = I2;
-		};
-
-		// x + 0 -> x
-		template<typename I1, typename I2>
-		struct add<I1, I2, std::enable_if_t<
-			I2::is_zero_v
-			>> {
-			using type = I1;
-		};
-
 		// x + (-y) -> x - y
 		template<typename I1, typename I2>
 		struct add<I1, I2, std::enable_if_t<
-			!I1::is_zero_v && !I2::is_zero_v&&
+			!I1::is_zero_v && !I2::is_zero_v &&
 			gt_helper<I1, zero>::value&&
 			gt_helper<zero, I2>::value
 			>> {
@@ -2072,7 +2084,7 @@ namespace aerobus {
 		// -x + y -> y - x
 		template<typename I1, typename I2>
 		struct add<I1, I2, std::enable_if_t<
-			!I1::is_zero_v && !I2::is_zero_v&&
+			!I1::is_zero_v && !I2::is_zero_v &&
 			gt_helper<zero, I1>::value&&
 			gt_helper<I2, zero>::value
 			>> {
@@ -2259,13 +2271,13 @@ namespace aerobus {
 			static_assert(M::sign == signs::positive);
 			static constexpr size_t l = M::digits;
 			static constexpr size_t k = N::digits;
-			using Qm1 = typename div_helper_inner<N, M, i - 1>::Q;
-			using Rm1 = typename div_helper_inner<N, M, i - 1>::R;
-			using D = typename add<
+			using Qm1 = typename simplify<typename div_helper_inner<N, M, i - 1>::Q>::type;
+			using Rm1 = typename simplify<typename div_helper_inner<N, M, i - 1>::R>::type;
+			using D = typename simplify<typename add<
 				typename Rm1::template shift_left<1>,
 				val<signs::positive, N::template digit_at<k - (i + l)>::value>
-			>::type;
-			using Beta = typename floor_helper<D, M>::type;
+			>::type>::type;
+			using Beta = typename simplify<typename floor_helper<D, M>::type>::type;
 			using Q = typename simplify<typename add<typename Qm1::template shift_left<1>, Beta>::type>::type;
 
 			using R = typename simplify<typename sub<D, typename mul<M, Beta>::type>::type>::type;
@@ -2585,8 +2597,8 @@ namespace aerobus {
 
 			template<typename v>
 			struct pos {
-				static constexpr bool value = 
-					(Ring::template pos_v<typename v::x>&& Ring::template pos_v<typename v::y>) ||
+				static constexpr bool value =
+					(Ring::template pos_v<typename v::x> && Ring::template pos_v<typename v::y>) ||
 					(!Ring::template pos_v<typename v::x> && !Ring::template pos_v<typename v::y>);
 
 			};
@@ -2636,7 +2648,7 @@ namespace aerobus {
 			template<typename v1, typename v2>
 			struct eq {
 				static constexpr bool value =
-					std::is_same<typename simplify_t<v1>::x, typename simplify_t<v2>::x>::value &&
+					std::is_same<typename simplify_t<v1>::x, typename simplify_t<v2>::x>::value&&
 					std::is_same<typename simplify_t<v1>::y, typename simplify_t<v2>::y>::value;
 			};
 
@@ -2713,7 +2725,7 @@ namespace aerobus {
 				static constexpr bool value = Ring::template gt_v<
 					typename Ring::template mul_t<v1::x, v2::y>,
 					typename Ring::template mul_t<v2::y, v2::x>
-					>;
+				>;
 			};
 
 		public:
