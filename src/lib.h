@@ -514,17 +514,17 @@ namespace aerobus {
 
 		template<typename v1, typename v2>
 		struct gt {
-			using type = std::conditional_t<(v1::v > v2::v), std::true_type, std::false_type>;
+			static constexpr bool value = (v1::v > v2::v);
 		};
 
 		template<typename v1, typename v2>
 		struct lt {
-			using type = std::conditional_t<(v1::v < v2::v), std::true_type, std::false_type>;
+			static constexpr bool value = (v1::v < v2::v);
 		};
 
 		template<typename v1, typename v2>
 		struct eq {
-			using type = std::conditional_t<(v1::v == v2::v), std::true_type, std::false_type>;
+			static constexpr bool value =(v1::v == v2::v);
 		};
 
 	public:
@@ -554,15 +554,15 @@ namespace aerobus {
 
 		/// @brief strictly greater operator (v1 > v2)
 		template<typename v1, typename v2>
-		static constexpr bool gt_v = gt<v1, v2>::type::value;
+		static constexpr bool gt_v = gt<v1, v2>::value;
 
 		/// @brief strict less operator (v1 < v2)
 		template<typename v1, typename v2>
-		using lt_t = typename lt<v1, v2>::type;
+		static constexpr bool lt_v = lt<v1, v2>::value;
 
 		/// @brief equality operator
 		template<typename v1, typename v2>
-		static constexpr bool eq_v = eq<v1, v2>::type::value;
+		static constexpr bool eq_v = eq<v1, v2>::value;
 
 		/// @brief positivity (v1 > 0)
 		template<typename v1>
@@ -652,17 +652,17 @@ namespace aerobus {
 
 		template<typename v1, typename v2>
 		struct gt {
-			using type = std::conditional_t<(v1::v > v2::v), std::true_type, std::false_type>;
+			static constexpr bool value = (v1::v > v2::v);
 		};
 
 		template<typename v1, typename v2>
 		struct lt {
-			using type = std::conditional_t<(v1::v < v2::v), std::true_type, std::false_type>;
+			static constexpr bool value = (v1::v < v2::v);
 		};
 
 		template<typename v1, typename v2>
 		struct eq {
-			using type = std::conditional_t<(v1::v == v2::v), std::true_type, std::false_type>;
+			static constexpr bool value = (v1::v == v2::v);
 		};
 
 	public:
@@ -692,15 +692,15 @@ namespace aerobus {
 
 		/// @brief strictly greater operator (v1 > v2)
 		template<typename v1, typename v2>
-		static constexpr bool gt_v = gt<v1, v2>::type::value;
+		static constexpr bool gt_v = gt<v1, v2>::value;
 
 		/// @brief strict less operator (v1 < v2)
 		template<typename v1, typename v2>
-		using lt_t = typename lt<v1, v2>::type;
+		static constexpr bool lt_v = lt<v1, v2>::value;
 
 		/// @brief equality operator
 		template<typename v1, typename v2>
-		static constexpr bool eq_v = eq<v1, v2>::type::value;
+		static constexpr bool eq_v = eq<v1, v2>::value;
 
 		/// weirdly enough, for clang, this must be declared before gcd_t
 		/// @brief is v posititive 
@@ -776,22 +776,22 @@ namespace aerobus {
 
 		template<typename v1, typename v2>
 		struct gt {
-			using type = std::conditional_t<(v1::v% p > v2::v% p), std::true_type, std::false_type>;
+			static constexpr bool value = (v1::v% p > v2::v% p);
 		};
 
 		template<typename v1, typename v2>
 		struct lt {
-			using type = std::conditional_t<(v1::v% p < v2::v% p), std::true_type, std::false_type>;
+			static constexpr bool value = (v1::v % p < v2::v % p);
 		};
 
 		template<typename v1, typename v2>
 		struct eq {
-			using type = std::conditional_t<(v1::v% p == v2::v % p), std::true_type, std::false_type>;
+			static constexpr bool value = (v1::v % p == v2::v % p);
 		};
 
 		template<typename v1>
 		struct pos {
-			using type = std::bool_constant<(v1::v > 0)>;
+			static constexpr bool value = v1::v % p > 0;
 		};
 
 	public:
@@ -815,19 +815,19 @@ namespace aerobus {
 		using mod_t = typename remainder<v1, v2>::type;
 
 		template<typename v1, typename v2>
-		static constexpr bool gt_v = gt<v1, v2>::type::value;
+		static constexpr bool gt_v = gt<v1, v2>::value;
 
 		template<typename v1, typename v2>
-		using lt_t = typename lt<v1, v2>::type;
+		static constexpr bool lt_v = lt<v1, v2>::value;
 
 		template<typename v1, typename v2>
-		static constexpr bool eq_v = eq<v1, v2>::type::value;
+		static constexpr bool eq_v = eq<v1, v2>::value;
 
 		template<typename v1, typename v2>
 		using gcd_t = gcd_t<i32, v1, v2>;
 
 		template<typename v>
-		static constexpr bool pos_v = pos<v>::type::value;
+		static constexpr bool pos_v = pos<v>::value;
 	};
 }
 
@@ -1145,17 +1145,17 @@ namespace aerobus {
 
 		template<typename v1, typename v2>
 		struct lt_helper<v1, v2, std::enable_if_t<(v1::degree < v2::degree)>> {
-			using type = std::true_type;
+			static constexpr bool value = true;
 		};
 
 		template<typename v1, typename v2>
 		struct lt_helper<v1, v2, std::enable_if_t<(v1::degree == v2::degree)>> {
-			using type = typename Ring::template lt_t<typename v1::aN, typename v2::aN>;
+			static constexpr bool value = Ring::template lt_v<typename v1::aN, typename v2::aN>;
 		};
 
 		template<typename v1, typename v2>
 		struct lt_helper<v1, v2, std::enable_if_t<(v1::degree > v2::degree)>> {
-			using type = std::false_type;
+			static constexpr bool value = false;
 		};
 
 		template<typename v1, typename v2, typename E = void>
@@ -1163,17 +1163,17 @@ namespace aerobus {
 
 		template<typename v1, typename v2>
 		struct gt_helper<v1, v2, std::enable_if_t<(v1::degree > v2::degree)>> {
-			using type = std::true_type;
+			static constexpr bool value = true;
 		};
 
 		template<typename v1, typename v2>
 		struct gt_helper<v1, v2, std::enable_if_t<(v1::degree == v2::degree)>> {
-			using type = std::false_type;
+			static constexpr bool value = Ring::template gt_v<typename v1::aN, typename v2::aN>;
 		};
 
 		template<typename v1, typename v2>
 		struct gt_helper<v1, v2, std::enable_if_t<(v1::degree < v2::degree)>> {
-			using type = std::false_type;
+			static constexpr bool value = false;
 		};
 
 		// when high power is zero : strip
@@ -1438,13 +1438,13 @@ namespace aerobus {
 		/// @tparam v1 
 		/// @tparam v2 
 		template<typename v1, typename v2>
-		using lt_t = typename lt_helper<v1, v2>::type;
+		static constexpr bool lt_v = lt_helper<v1, v2>::value;
 
 		/// @brief strict greater operator
 		/// @tparam v1 
 		/// @tparam v2 
 		template<typename v1, typename v2>
-		static constexpr bool gt_v = gt_helper<v1, v2>::type::value;
+		static constexpr bool gt_v = gt_helper<v1, v2>::value;
 
 		/// @brief division operator
 		/// @tparam v1 
@@ -2585,11 +2585,9 @@ namespace aerobus {
 
 			template<typename v>
 			struct pos {
-				using type = std::conditional_t<
+				static constexpr bool value = 
 					(Ring::template pos_v<typename v::x>&& Ring::template pos_v<typename v::y>) ||
-					(!Ring::template pos_v<typename v::x> && !Ring::template pos_v<typename v::y>),
-					std::true_type,
-					std::false_type>;
+					(!Ring::template pos_v<typename v::x> && !Ring::template pos_v<typename v::y>);
 
 			};
 
@@ -2637,11 +2635,9 @@ namespace aerobus {
 
 			template<typename v1, typename v2>
 			struct eq {
-				using type = std::conditional_t<
-					std::is_same<typename simplify_t<v1>::x, typename simplify_t<v2>::x>::value&&
-					std::is_same<typename simplify_t<v1>::y, typename simplify_t<v2>::y>::value,
-					std::true_type,
-					std::false_type>;
+				static constexpr bool value =
+					std::is_same<typename simplify_t<v1>::x, typename simplify_t<v2>::x>::value &&
+					std::is_same<typename simplify_t<v1>::y, typename simplify_t<v2>::y>::value;
 			};
 
 			template<typename TL, typename E = void>
@@ -2678,46 +2674,46 @@ namespace aerobus {
 
 			template<typename v1, typename v2>
 			struct gt<v1, v2, std::enable_if_t<
-				(eq<v1, v2>::type::value)
+				(eq<v1, v2>::value)
 				>> {
-				using type = std::false_type;
+				static constexpr bool value = false;
 			};
 
 			template<typename v1, typename v2>
 			struct gt<v1, v2, std::enable_if_t<
-				(!eq<v1, v2>::type::value) &&
-				(!pos<v1>::type::value) && (!pos<v2>::type::value)
+				(!eq<v1, v2>::value) &&
+				(!pos<v1>::value) && (!pos<v2>::value)
 				>> {
-				using type = typename gt<
+				static constexpr bool value = gt<
 					typename sub<zero, v1>::type, typename sub<zero, v2>::type
-				>::type;
+				>::value;
 			};
 
 			template<typename v1, typename v2>
 			struct gt<v1, v2, std::enable_if_t<
-				(!eq<v1, v2>::type::value) &&
-				(pos<v1>::type::value) && (!pos<v2>::type::value)
+				(!eq<v1, v2>::value) &&
+				(pos<v1>::value) && (!pos<v2>::value)
 				>> {
-				using type = std::true_type;
+				static constexpr bool value = true;
 			};
 
 			template<typename v1, typename v2>
 			struct gt<v1, v2, std::enable_if_t<
-				(!eq<v1, v2>::type::value) &&
-				(!pos<v1>::type::value) && (pos<v2>::type::value)
+				(!eq<v1, v2>::value) &&
+				(!pos<v1>::value) && (pos<v2>::value)
 				>> {
-				using type = std::false_type;
+				static constexpr bool value = false;
 			};
 
 			template<typename v1, typename v2>
 			struct gt<v1, v2, std::enable_if_t<
-				(!eq<v1, v2>::type::value) &&
-				(pos<v1>::type::value) && (pos<v2>::type::value)
+				(!eq<v1, v2>::value) &&
+				(pos<v1>::value) && (pos<v2>::value)
 				>> {
-				using type = std::bool_constant<Ring::template gt_v<
+				static constexpr bool value = Ring::template gt_v<
 					typename Ring::template mul_t<v1::x, v2::y>,
 					typename Ring::template mul_t<v2::y, v2::x>
-					>>;
+					>;
 			};
 
 		public:
@@ -2763,15 +2759,15 @@ namespace aerobus {
 
 			/// @brief equality operator
 			template<typename v1, typename v2>
-			static constexpr bool eq_v = eq<v1, v2>::type::value;
+			static constexpr bool eq_v = eq<v1, v2>::value;
 
 			/// @brief comparison (strictly greater)
 			template<typename v1, typename v2>
-			static constexpr bool gt_v = gt<v1, v2>::type::value;
+			static constexpr bool gt_v = gt<v1, v2>::value;
 
 			/// @brief is v positive
 			template<typename v>
-			static constexpr bool pos_v = pos<v>::type::value;
+			static constexpr bool pos_v = pos<v>::value;
 		};
 
 		template<typename Ring, typename E = void>

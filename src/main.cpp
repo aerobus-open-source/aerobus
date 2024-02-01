@@ -1857,7 +1857,7 @@ int test_bigint_to_hex() {
 }
 
 int test_quadratic_extension() {
-	using q5 = Quadratic<q32, 5>;
+	using q5 = QuadraticExtension<q32, 5>;
 	{
 		using x = q5::inject_constant_t<2>;
 		using y = q5::inject_constant_t<3>;
@@ -1900,7 +1900,7 @@ int test_quadratic_extension() {
 
 int test_gauss_rationals() {
 	using Q = FractionField<bigint>;
-	using qi = Quadratic<Q, -1>;
+	using qi = QuadraticExtension<Q, -1>;
 	{
 		// 1 - i
 		using x = qi::inject_values_t<1, -1>;
