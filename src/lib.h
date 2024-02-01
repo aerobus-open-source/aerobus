@@ -838,7 +838,7 @@ namespace aerobus {
 	/// @tparam Field can be any version of Q (q32, q64, qbintint)
 	/// @tparam d 
 	template<typename Field, int64_t d>
-	struct Quadratic {
+	struct QuadraticExtension {
 		// v1 + sqrt(x) v2
 		template<typename v1, typename v2>
 		struct val {
@@ -926,7 +926,9 @@ namespace aerobus {
 		using minus_t = sub_t<zero, v>;
 
 		template<typename v1, typename v2>
-		static constexpr bool eq_v = (Field::template eq_v<v1::x, v2::x>) && (Field::template eq_v<v1::y, v2::y>);
+		static constexpr bool eq_v = 
+			(Field::template eq_v<typename v1::x, typename v2::x>) &&
+			(Field::template eq_v<typename v1::y, typename v2::y>);
 
 		template<typename v1, typename v2>
 		static constexpr bool gt_v =
