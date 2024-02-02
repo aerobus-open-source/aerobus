@@ -3566,6 +3566,46 @@ namespace aerobus {
 		};
 	}
 
+	// Legendre
+	namespace internal {
+		template<size_t deg>
+		struct legendre_helper {
+		private:
+			using lnm1 = typename legendre_helper<deg - 1>::type;
+			using lnm2 = typename legendre_helper<deg - 2>::type;
+			using factor = typename pq64::template val<
+				typename q64::template val<
+					typename i64::template inject_constant_t<2*deg-1>,
+					typename i64::template inject_constant_t<deg>
+				>,
+				typename q64::zero
+			>;
+		public:
+			using type = typename pq64::template sub_t<
+				typename pq64::template mul_t<factor, lnm1>,
+				typename pq64::template mul_t<
+					typename pq64::template inject_ring_t<
+						typename q64::template val<
+							typename i64::template inject_constant_t<deg-1>,
+							typename i64::template inject_constant_t<deg>
+						>
+					>,
+					lnm2
+				>
+			>;
+		};
+
+		template<>
+		struct legendre_helper<0> {
+			using type = typename pq64::one;
+		};
+
+		template<>
+		struct legendre_helper<1> {
+			using type = typename pq64::X;
+		};
+	}
+
 	/// @brief Chebyshev polynomials of first kind
 	/// @tparam deg degree of polynomial
 	template<size_t deg>
@@ -3590,4 +3630,9 @@ namespace aerobus {
 	/// @tparam deg degree of polynomial
 	template<size_t deg>
 	using hermite_phys = typename internal::hermite_helper<deg, hermite_kind::physicist>::type;
+
+	/// @brief Legendre polynomials, physicist form
+	/// @tparam deg degree of polynomial
+	template<size_t deg>
+	using legendre = typename internal::legendre_helper<deg>::type;
 }
