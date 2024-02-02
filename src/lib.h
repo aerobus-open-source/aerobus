@@ -3417,7 +3417,7 @@ namespace aerobus {
 
 // known polynomials
 namespace aerobus {
-	// chebyshev
+	// CChebyshev
 	namespace internal {
 		template<int kind, int deg>
 		struct chebyshev_helper {
@@ -3456,7 +3456,7 @@ namespace aerobus {
 		};
 	}
 
-	// laguerre
+	// Laguerre
 	namespace internal {
 		template<size_t deg>
 		struct laguerre_helper {
@@ -3500,16 +3500,94 @@ namespace aerobus {
 		};
 	};
 
-	/// @brief chebyshev polynomial of first kind
+	/// @brief form of Hermite polynomials
+	enum hermite_kind {
+		probabilist,
+		physicist
+	};
+
+	namespace internal {
+		template<size_t deg, hermite_kind kind>
+		struct hermite_helper {};
+
+		template<size_t deg>
+		struct hermite_helper<deg, hermite_kind::probabilist> {
+		private:
+			using hnm1 = typename hermite_helper<deg - 1, hermite_kind::probabilist>::type;
+			using hnm2 = typename hermite_helper<deg - 2, hermite_kind::probabilist>::type;
+
+		public:
+			using type = typename pi64::template sub_t<
+				typename pi64::template mul_t<typename pi64::X, hnm1>,
+				typename pi64::template mul_t<
+					typename pi64::template inject_constant_t<deg - 1>,
+					hnm2
+				>
+			>;
+		};
+
+		template<size_t deg>
+		struct hermite_helper<deg, hermite_kind::physicist> {
+		private:
+			using hnm1 = typename hermite_helper<deg - 1, hermite_kind::physicist>::type;
+			using hnm2 = typename hermite_helper<deg - 2, hermite_kind::physicist>::type;
+
+		public:
+			using type = typename pi64::template sub_t<
+				// 2X Hn-1
+				typename pi64::template mul_t<typename pi64::val<typename i64::template inject_constant_t<2>, typename i64::zero>, hnm1>,
+
+				typename pi64::template mul_t<
+					typename pi64::template inject_constant_t<2*(deg - 1)>,
+					hnm2
+				>
+			>;
+		};
+
+		template<>
+		struct hermite_helper<0, hermite_kind::probabilist> {
+			using type = typename pi64::one;
+		};
+
+		template<>
+		struct hermite_helper<1, hermite_kind::probabilist> {
+			using type = typename pi64::X;
+		};
+
+		template<>
+		struct hermite_helper<0, hermite_kind::physicist> {
+			using type = typename pi64::one;
+		};
+
+		template<>
+		struct hermite_helper<1, hermite_kind::physicist> {
+			// 2X
+			using type = typename pi64::template val<typename i64::template inject_constant_t<2>, typename i64::zero>;
+		};
+	}
+
+	/// @brief Chebyshev polynomials of first kind
 	/// @tparam deg degree of polynomial
 	template<size_t deg>
 	using chebyshev_T = typename internal::chebyshev_helper<1, deg>::type;
 
-	/// @brief chebyshev polynomial of second kind
+	/// @brief Chebyshev polynomials of second kind
 	/// @tparam deg degree of polynomial
 	template<size_t deg>
 	using chebyshev_U = typename internal::chebyshev_helper<2, deg>::type;
 
+	/// @brief Laguerre polynomials
+	/// @tparam deg degree of polynomial
 	template<size_t deg>
 	using laguerre = typename internal::laguerre_helper<deg>::type;
+
+	/// @brief Hermite polynomials, probabilist form
+	/// @tparam deg degree of polynomial
+	template<size_t deg>
+	using hermite_prob = typename internal::hermite_helper<deg, hermite_kind::probabilist>::type;
+
+	/// @brief Hermite polynomials, physicist form
+	/// @tparam deg degree of polynomial
+	template<size_t deg>
+	using hermite_phys = typename internal::hermite_helper<deg, hermite_kind::physicist>::type;
 }

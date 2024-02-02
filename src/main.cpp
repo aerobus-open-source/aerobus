@@ -1226,6 +1226,37 @@ int test_laguerre() {
 	return 0;
 }
 
+int test_hermite() {
+	{
+		using H2 = hermite_prob<2>;
+		static_assert(H2::coeff_at_t<2>::get<float>() == 1.0F);
+		static_assert(H2::coeff_at_t<1>::get<float>() == 0.0F);
+		static_assert(H2::coeff_at_t<0>::get<float>() == -1.0F);
+	}
+	{
+		using H3 = hermite_prob<3>;
+		static_assert(H3::coeff_at_t<3>::get<float>() == 1.0F);
+		static_assert(H3::coeff_at_t<2>::get<float>() == 0.0F);
+		static_assert(H3::coeff_at_t<1>::get<float>() == -3.0F);
+		static_assert(H3::coeff_at_t<0>::get<float>() == 0.0F);
+	}
+	{
+		using H2 = hermite_phys<2>;
+		static_assert(H2::coeff_at_t<2>::get<float>() == 4.0F);
+		static_assert(H2::coeff_at_t<1>::get<float>() == 0.0F);
+		static_assert(H2::coeff_at_t<0>::get<float>() == -2.0F);
+	}
+	{
+		using H3 = hermite_phys<3>;
+		static_assert(H3::coeff_at_t<3>::get<float>() == 8.0F);
+		static_assert(H3::coeff_at_t<2>::get<float>() == 0.0F);
+		static_assert(H3::coeff_at_t<1>::get<float>() == -12.0F);
+		static_assert(H3::coeff_at_t<0>::get<float>() == 0.0F);
+	}
+
+	return 0;
+}
+
 int test_value_at() {
 	{
 		constexpr uint16_t x = aerobus::internal::value_at<0, 1, 2, 3>::value;
@@ -1955,6 +1986,7 @@ static uint32_t fail_count = 0;
 int main(int argc, char* argv[]) {
 	RUN_TEST(test_chebyshev)
 	RUN_TEST(test_laguerre)
+	RUN_TEST(test_hermite)
 	RUN_TEST(test_continued_fraction)
 	RUN_TEST(test_concept_ring)
 	RUN_TEST(test_type_list)
