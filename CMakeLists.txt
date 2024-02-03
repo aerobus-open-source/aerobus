@@ -11,6 +11,11 @@ include(CheckCXXSourceRuns)
 set(AVX_FLAGS)
 set(CMAKE_REQUIRED_FLAGS)
 
+if (NOT CMAKE_BUILD_TYPE)
+	message(STATUS "No build type selected, default to Release")
+	set(CMAKE_BUILD_TYPE "Release")
+endif()
+
 check_cxx_source_runs("
         #include <immintrin.h>
         int main()
@@ -41,6 +46,7 @@ else()
 endif()
 
 add_executable(aerobus_test src/main.cpp src/lib.h imports/conwaypolynomials.h)
+
 if(HAVE_AVX512_EXTENSIONS)
     message("AVX512 detected, adding benchmarks")
     if(MSVC)
@@ -48,7 +54,13 @@ if(HAVE_AVX512_EXTENSIONS)
     else()
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx512f -mavx512vl")
     endif()
-    add_executable(aerobus_benchmarks src/benchmarks.cpp src/lib.h imports/conwaypolynomials.)
+    add_executable(aerobus_benchmarks src/benchmarks.cpp src/lib.h imports/conwaypolynomials.h)
 else()
     message("AVX512 not detected, benchmarks need manual configuration")
 endif()
+
+install(FILES src/lib.h
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/include/aerobus)
+
+install(FILES imports/conwaypolynomials.h
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/include/aerobus)

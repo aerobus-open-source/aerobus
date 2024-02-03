@@ -1971,8 +1971,6 @@ int test_gauss_rationals() {
 	using Q = FractionField<bigint>;
 	// Q[i] aka gauss rationals
 	using Qi = QuadraticExtension<Q, -1>;
-	// polynomials with coefficients in gauss rationals -- arbitrary precision
-	using PQi = polynomial<Qi>;
 	{
 		// 1 - i
 		using x = Qi::inject_values_t<1, -1>;
