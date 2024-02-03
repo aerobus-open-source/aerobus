@@ -256,7 +256,16 @@ namespace aerobus
 ## HOW TO
 Clone or download the repo somewhere
 
-include "lib.h" in code
+```bash
+cd <repository_path>
+mkdir build
+cd build
+cmake ..
+sudo cmake install
+```
+
+Then include "aerobus/lib.h" in the code. 
+Note: you can also include **"aerobus/conwaypolynomials.h"** if you need to use them (generally for finite Galois fields).
 
 Compile with -std=c++20 (at least)
 
@@ -265,12 +274,11 @@ see [conformance view](https://godbolt.org/z/z6Wbdr15s)
 ### Test and bench
 Move to the top directory then : 
 ```bash
-mkdir build
-cd build
-cmake ..
+cd src
+make build run
 ```
 
-This creates (in the `build` directory) an `aerobus_test` executable that runs all tests and prints
+This runs all tests and prints
 `All tests passed` 
 plus some additional information if everything went fine.
 
