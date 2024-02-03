@@ -7,8 +7,17 @@
 
 const size_t N = 134217728/2;
 
-
+#ifndef _MSC_VER
 extern "C" __m512d _ZGVeN8v_sin(__m512d x);
+INLINED __m512d vec_sin(__m512d x) {
+	return _ZGVeN8v_sin(x);
+}
+#else
+extern "C" __m256d __vdecl_sin4(__m256d x);
+INLINED __m256d vec_sin(__m256d x) {
+	return __vdecl_sin4(x);
+}
+#endif
 
 #ifndef DEGREE 
 #define DEGREE 13
@@ -28,11 +37,9 @@ void vsin_12(double * in, double * out) {
 	static_assert(N % 32 == 0);
 	in = (double*) __builtin_assume_aligned(in, 64);
 	out = (double*) __builtin_assume_aligned(out, 64);
-#pragma omp parallel for
-	for (size_t i = 0; i < N; i += 8) {
-		for(size_t j = i; j < i+8; ++j) {
-			out[j] = sin_12<deg>(in[j]);
-		}
+	#pragma omp parallel for
+	for (int i = 0; i < N; i += 1) {
+		out[i] = sin_12<deg>(in[i]);
 	}
 }
 
@@ -49,10 +56,8 @@ void vsin_slow(double * in, double * out) {
 	in = (double*) __builtin_assume_aligned(in, 64);
 	out = (double*) __builtin_assume_aligned(out, 64);
 #pragma omp parallel for
-	for (size_t i = 0; i < N; i += 8) {
-		for(size_t j = i; j < i+8; ++j) {
-			out[j] = sin_12_slow(in[j]);
-		}
+	for (int i = 0; i < N; i += 1) {
+		out[i] = sin_12_slow(in[i]);
 	}
 }
 
@@ -64,13 +69,13 @@ void fast_math_vsin_12(double * in, double * out) {
 	in = (double*) __builtin_assume_aligned(in, 64);
 	out = (double*) __builtin_assume_aligned(out, 64);
 	#pragma omp parallel for
-	for (unsigned int i = 0; i < N; i += 8)
+	for (int i = 0; i < N; i += 4)
 	{
-		_mm512_store_pd((void*)(out + i), 
-			_ZGVeN8v_sin(_ZGVeN8v_sin(_ZGVeN8v_sin(_ZGVeN8v_sin(
-			_ZGVeN8v_sin(_ZGVeN8v_sin(_ZGVeN8v_sin(_ZGVeN8v_sin(
-			_ZGVeN8v_sin(_ZGVeN8v_sin(_ZGVeN8v_sin(_ZGVeN8v_sin(
-				_mm512_load_pd((void*)(in + i)))))))))))))));
+		_mm256_store_pd((out + i), 
+			vec_sin(vec_sin(vec_sin(vec_sin(
+			vec_sin(vec_sin(vec_sin(vec_sin(
+			vec_sin(vec_sin(vec_sin(vec_sin(
+				_mm256_load_pd((in + i)))))))))))))));
 	}
 }
 
@@ -80,6 +85,7 @@ double rand(double min, double max)
   double div = RAND_MAX / range;
   return min + (rand() / div);
 }
+
 template<int deg>
 void run_aero(double* in, double* out_aero) {
 	// warmup
@@ -124,7 +130,7 @@ int main() {
 	memset((void*) out_std, 0, N * sizeof(double));
 	memset((void*) out_vml, 0, N * sizeof(double));
 	#pragma omp parallel for
-	for(size_t i = 0; i < N; ++i) {
+	for(int i = 0; i < N; ++i) {
 		in[i] = rand(-0.5, 0.5); // pi / 6
 	}
 
