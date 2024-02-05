@@ -7,7 +7,7 @@ build-profile:
 	../../templight-tools/build/bin/templight-convert --format callgrind --output trace.cg main.trace.pbf
 
 build: # to be sure both compile properly
-	clang++ -D__GALOIS_FIELDS__ -I. -ftemplate-depth=10000 -std=c++20 -ftemplate-backtrace-limit=0 -O3 main.cpp -o main.exe 
+	clang++ -Wno-unused-local-typedefs -D__GALOIS_FIELDS__ -I. -ftemplate-depth=10000 -std=c++20 -ftemplate-backtrace-limit=0 -O3 main.cpp -o main.exe 
 	# g++ -D__GALOIS_FIELDS__ -I. -fconcepts-diagnostics-depth=3 -ftemplate-depth=30000 -std=c++20 -ftemplate-backtrace-limit=0 -O3 main.cpp -o main.exe 
 
 debug:
