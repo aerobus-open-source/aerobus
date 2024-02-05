@@ -5,11 +5,12 @@
 #include "lib.h"
 #include <immintrin.h>
 
-constexpr size_t N = 32*1024*1024;
+constexpr int64_t N = 32*1024*1024;
 
 
 // sometimes, gcc and clang don't use fast math lib calls and stay scalar
 // using that, we force them to use vectorized version, no matter the optimization flags
+// unfortunately, gcc doesn't implement _mmXXX_sin_pd so we have to rely on extern libm functions
 #ifdef __AVX512F__
 #ifdef __MSC_VER
 extern "C" __m512d __vdecl_sin8(__m512d x);
@@ -70,7 +71,7 @@ INLINED double aero_laguerre_12(const double x) {
 			aero_laguerre<deg>(aero_laguerre<deg>(aero_laguerre<deg>(aero_laguerre<deg>(x))))))))))));
 }
 
-template<size_t N>
+template<int64_t N>
 void stdh4(double* const __restrict output, const double* const __restrict input) {
 	double* d_o = (double*)__builtin_assume_aligned(output, 64);
 	double* d_i = (double*)__builtin_assume_aligned(input, 64);
@@ -81,7 +82,7 @@ void stdh4(double* const __restrict output, const double* const __restrict input
 }
 
 
-template<size_t N>
+template<int64_t N>
 void aerobush4(double* const __restrict output, const double* const __restrict input) {
 	double* d_o = (double*)__builtin_assume_aligned(output, 64);
 	double* d_i = (double*)__builtin_assume_aligned(input, 64);
@@ -101,15 +102,15 @@ double sin_12(const double x) {
 		AERO_SIN::eval(AERO_SIN::eval(AERO_SIN::eval(AERO_SIN::eval(AERO_SIN::eval(AERO_SIN::eval(x))))))))))));
 }
 
-template<size_t N, int deg>
+template<int64_t N, int deg>
 INLINED
-void vsin_12(double * in, double * out) {
+void vsin_12(const double * const __restrict in, double * const __restrict out) {
 	static_assert(N % 32 == 0);
-	in = (double*) __builtin_assume_aligned(in, 64);
-	out = (double*) __builtin_assume_aligned(out, 64);
+	double *d_in = (double*) __builtin_assume_aligned(in, 64);
+	double *d_out = (double*) __builtin_assume_aligned(out, 64);
 	#pragma omp parallel for
-	for (int i = 0; i < N; i += 1) {
-		out[i] = sin_12<deg>(in[i]);
+	for (int64_t i = 0; i < N; i += 1) {
+		d_out[i] = sin_12<deg>(d_in[i]);
 	}
 }
 
@@ -119,7 +120,7 @@ double sin_12_slow(const double x) {
 		::sin(::sin(::sin(::sin(::sin(::sin(x))))))))))));
 }
 
-template<size_t N>
+template<int64_t N>
 INLINED
 void vsin_slow(double * in, double * out) {
 	static_assert(N % 32 == 0);
@@ -132,21 +133,21 @@ void vsin_slow(double * in, double * out) {
 }
 
 
-template<size_t N>
+template<int64_t N>
 INLINED
-void fast_math_vsin_12(double * in, double * out) {
+void fast_math_vsin_12(const double * const __restrict in, double * const __restrict out) {
 	static_assert(N % 32 == 0);
-	in = (double*) __builtin_assume_aligned(in, 64);
-	out = (double*) __builtin_assume_aligned(out, 64);
+	double *d_in = (double*) __builtin_assume_aligned(in, 64);
+	double *d_out = (double*) __builtin_assume_aligned(out, 64);
 #ifdef __AVX512F__
 	#pragma omp parallel for
 	for (int i = 0; i < N; i += 8)
 	{
-		_mm512_store_pd((out + i), 
+		_mm512_store_pd((d_out + i), 
 			vec_sin(vec_sin(vec_sin(vec_sin(
 			vec_sin(vec_sin(vec_sin(vec_sin(
 			vec_sin(vec_sin(vec_sin(vec_sin(
-				_mm512_load_pd((in + i)))))))))))))));
+				_mm512_load_pd((d_in + i)))))))))))))));
 	}
 #else
 #ifdef __AVX2__
@@ -157,7 +158,7 @@ void fast_math_vsin_12(double * in, double * out) {
 			vec_sin(vec_sin(vec_sin(vec_sin(
 			vec_sin(vec_sin(vec_sin(vec_sin(
 			vec_sin(vec_sin(vec_sin(vec_sin(
-				_mm256_load_pd((in + i)))))))))))))));
+				_mm256_load_pd((d_out + i)))))))))))))));
 	}
 #endif
 #endif
@@ -171,7 +172,7 @@ double drand(double min, double max)
 }
 
 template<int deg>
-void run_aero(double* in, double* out_aero) {
+void run_aero(const double* const __restrict in, double* const __restrict out_aero) {
 	// warmup
 	vsin_12<N, deg>(in, out_aero);
 	vsin_12<N, deg>(in, out_aero);
