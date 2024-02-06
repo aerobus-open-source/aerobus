@@ -20,15 +20,9 @@
 using namespace aerobus;
 
 int test_type_at() {
-	if (!std::is_same<internal::type_at_t<0, float, int, long>, float>::value) {
-		return 1;
-	}
-	if (!std::is_same<internal::type_at_t<1, float, int, long>, int>::value) {
-		return 1;
-	}
-	if (!std::is_same<internal::type_at_t<2, float, int, long>, long>::value) {
-		return 1;
-	}
+	static_assert(std::is_same<internal::type_at_t<0, float, int, long>, float>::value);
+	static_assert(std::is_same<internal::type_at_t<1, float, int, long>, int>::value);
+	static_assert(std::is_same<internal::type_at_t<2, float, int, long>, long>::value);
 
 	return 0;
 }
@@ -37,15 +31,11 @@ int test_poly_simplify() {
 	using poly1 = polynomial<i32>::val<i32::val<0>, i32::val<1>, i32::val<2>>;
 	using simplified1 = polynomial<i32>::simplify_t<poly1>;
 	using expected1 = polynomial<i32>::val<i32::val<1>, i32::val<2>>;
-	if (!std::is_same<expected1, simplified1>::value) {
-		return 1;
-	}
+	static_assert(std::is_same<expected1, simplified1>::value);
 
 	using poly2 = polynomial<i32>::val<i32::val<12>>;
 	using simplified2 = polynomial<i32>::simplify_t<poly2>;
-	if (!std::is_same<poly2, simplified2>::value) {
-		return 1;
-	}
+	static_assert(std::is_same<poly2, simplified2>::value);
 
 	return 0;
 }
@@ -54,24 +44,16 @@ int test_poly_eval() {
 	// 1 + 2x + 3x^2
 	using poly = polynomial<i32>::val<i32::val<3>, i32::val<2>, i32::val<1>>;
 	constexpr int v = poly::eval(1);
-	if (v != 6) {
-		return 1;
-	}
+	static_assert(v == 6);
 	constexpr float vv = poly::eval(1.0f);
-	if (vv != 6.0f) {
-		return 1;
-	}
+	static_assert(vv == 6.0F);
 
 	// 1/2 + 3x/2
 	using polyf = polynomial<q32>::val<q32::val<i32::val<3>, i32::val<2>>, q32::val<i32::val<1>, i32::val<2>>>;
 	constexpr float vvv = polyf::eval(1.0f);
-	if (vvv != 2.0f) {
-		return 1;
-	}
+	static_assert(vvv == 2.0F);
 	constexpr double vvvv = polyf::eval(-1.0);
-	if (vvvv != -1.0) {
-		return 1;
-	}
+	static_assert(vvvv == -1.0);
 
 	return 0;
 }
@@ -79,33 +61,23 @@ int test_poly_eval() {
 int test_fraction_field_eval() {
 	using half = q32::val<i32::one, i32::val<2>>;
 	constexpr float x = half::eval(2.0f);
-	if (x != 0.5f) {
-		return 1;
-	}
+	static_assert(x == 0.5F);
 	using thirdhalf = q32::val<i32::val<3>, i32::val<2>>;
 	constexpr float y = thirdhalf::eval(1.0f);
-	if (y != 1.5f) {
-		return 1;
-	}
+	static_assert(y == 1.5F);
 
 	// 3/2 + x / 2
 	using polyA = polynomial<q32>::val<half, thirdhalf>;
 	constexpr float a = polyA::eval(2.0f);
-	if (a != 2.5F) {
-		return 1;
-	}
+	static_assert(a == 2.5F);
+
 	// 1/2 + x
 	using polyB = polynomial<q32>::val<q32::one, half>;
 	using F = fpq32::val<polyA, polyB>;
 	constexpr float z = F::eval(2.0f);
-	if (z != 1.0f) {
-		return 1;
-	}
+	static_assert(z == 1.0F);
 	constexpr float zz = F::eval(-1.0f);
-	if (zz != -2.0f) {
-		return 1;
-	}
-
+	static_assert(zz == -2.0F);
 
 	return 0;
 }
@@ -118,21 +90,10 @@ int test_coeff_at() {
 	using at2 = poly::coeff_at_t<2>;
 	using at3 = poly::coeff_at_t<3>;
 
-	if(!std::is_same<at0, i32::val<1>>::value) {
-		return 1;
-	}
-
-	if (!std::is_same<at1, i32::val<2>>::value) {
-		return 1;
-	}
-
-	if (!std::is_same<at2, i32::val<3>>::value) {
-		return 1;
-	}
-
-	if (!std::is_same<at3, i32::val<0>>::value) {
-		return 1;
-	}
+	static_assert(std::is_same<at0, i32::val<1>>::value);
+	static_assert(std::is_same<at1, i32::val<2>>::value);
+	static_assert(std::is_same<at2, i32::val<3>>::value);
+	static_assert(std::is_same<at3, i32::val<0>>::value);
 
 	return 0;
 }
@@ -156,18 +117,10 @@ int test_poly_add() {
 		// 2 + 2x + x^2
 		using A = polynomial<i32>::add_t<P1, P2>;
 
-		if (A::coeff_at_t<0>::v != 2) {
-			return 1;
-		}
-		if (A::coeff_at_t<1>::v != 2) {
-			return 1;
-		}
-		if (A::coeff_at_t<2>::v != 1) {
-			return 1;
-		}
-		if (A::degree != 2) {
-			return 1;
-		}
+		static_assert(A::coeff_at_t<0>::v == 2);
+		static_assert(A::coeff_at_t<1>::v == 2);
+		static_assert(A::coeff_at_t<2>::v == 1);
+		static_assert(A::degree == 2);
 	}
 
 	{
@@ -177,18 +130,10 @@ int test_poly_add() {
 		using P2 = polynomial<i32>::val<i32::val<1>, i32::val<1>, i32::val<1>>;
 		// 2 + 2x
 		using A = polynomial<i32>::add_t<P1, P2>;
-		if (A::coeff_at_t<0>::v != 2) {
-			return 1;
-		}
-		if (A::coeff_at_t<1>::v != 2) {
-			return 1;
-		}
-		if (A::coeff_at_t<2>::v != 0) {
-			return 1;
-		}
-		if (A::degree != 1) {
-			return 1;
-		}
+		static_assert(A::coeff_at_t<0>::v == 2);
+		static_assert(A::coeff_at_t<1>::v == 2);
+		static_assert(A::coeff_at_t<2>::v == 0);
+		static_assert(A::degree == 1);
 	}
 
 	return 0;
@@ -199,26 +144,16 @@ int test_poly_derive() {
 		// 1 + x
 		using P1 = IX<Int<1>, Int<1>>;
 		using PP = polynomial<i32>::template derive_t<P1>;
-		if(PP::degree != 0) {
-			return 1;
-		}
-		if(PP::coeff_at_t<0>::v != 1) {
-			return 1;
-		}
+		static_assert(PP::degree == 0);
+		static_assert(PP::coeff_at_t<0>::v == 1);
 	} 
 	{
 		// 1 + x + 3x�
 		using P1 = IX<Int<3>, Int<1>, Int<1>>;
 		using PP = polynomial<i32>::template derive_t<P1>;
-		if (PP::degree != 1) {
-			return 1;
-		}
-		if (PP::coeff_at_t<0>::v != 1) {
-			return 1;
-		}
-		if (PP::coeff_at_t<1>::v != 6) {
-			return 1;
-		}
+		static_assert(PP::degree == 1);
+		static_assert(PP::coeff_at_t<0>::v == 1);
+		static_assert(PP::coeff_at_t<1>::v == 6);
 	} 
 	using Z2Z = zpz<2>;
 	{
@@ -226,30 +161,18 @@ int test_poly_derive() {
 		// 1 + x + 3x� -> 1
 		using P1 = polynomial<Z2Z>::template val<Z2Z::template val<3>, Z2Z::template val<1>, Z2Z::template val<1>>;
 		using PP = polynomial<Z2Z>::template derive_t<P1>;
-		if (PP::degree != 0) {
-			return 1;
-		}
-		if (PP::coeff_at_t<0>::v != 1) {
-			return 1;
-		}
+		static_assert(PP::degree == 0);
+		static_assert(PP::coeff_at_t<0>::v == 1);
 	}
 	{
 		// in Z/2Z
 		// x^3 + x^2 + x + 1 -> 1 + x^2 (because 3 == 1)
 		using P1 = polynomial<Z2Z>::template val<Z2Z::template val<1>, Z2Z::template val<1>, Z2Z::template val<1>, Z2Z::template val<1>>;
 		using PP = polynomial<Z2Z>::template derive_t<P1>;
-		if (PP::degree != 2) {
-			return 1;
-		}
-		if (PP::coeff_at_t<0>::v != 1) {
-			return 1;
-		}
-		if (PP::coeff_at_t<1>::v != 0) {
-			return 1;
-		}
-		if (PP::coeff_at_t<2>::v != 1) {
-			return 1;
-		}
+		static_assert(PP::degree == 2);
+		static_assert(PP::coeff_at_t<0>::v == 1);
+		static_assert(PP::coeff_at_t<1>::v == 0);
+		static_assert(PP::coeff_at_t<2>::v == 1);
 	}
 
 	return 0;
@@ -264,18 +187,10 @@ int test_poly_sub() {
 		// -x2
 		using A = sub_ix<P1, P2>;
 
-		if (A::coeff_at_t<0>::v != 0) {
-			return 1;
-		}
-		if (A::coeff_at_t<1>::v != 0) {
-			return 1;
-		}
-		if (A::coeff_at_t<2>::v != -1) {
-			return 1;
-		}
-		if (A::degree != 2) {
-			return 1;
-		}
+		static_assert(A::coeff_at_t<0>::v == 0);
+		static_assert(A::coeff_at_t<1>::v == 0);
+		static_assert(A::coeff_at_t<2>::v == -1);
+		static_assert(A::degree == 2);
 	}
 
 	{
@@ -285,18 +200,10 @@ int test_poly_sub() {
 		using P2 = polynomial<i32>::val<i32::val<1>, i32::val<1>, i32::val<1>>;
 		// 0
 		using A = polynomial<i32>::sub_t<P2, P1>;
-		if (A::coeff_at_t<0>::v != 0) {
-			return 1;
-		}
-		if (A::coeff_at_t<1>::v != 0) {
-			return 1;
-		}
-		if (A::coeff_at_t<2>::v != 0) {
-			return 1;
-		}
-		if (A::degree != 0) {
-			return 1;
-		}
+		static_assert(A::coeff_at_t<0>::v == 0);
+		static_assert(A::coeff_at_t<1>::v == 0);
+		static_assert(A::coeff_at_t<2>::v == 0);
+		static_assert(A::degree == 0);
 	}
 
 	return 0;
@@ -306,37 +213,27 @@ int test_poly_eq() {
 	{
 		using A = polynomial<i32>::val<i32::val<1>>;
 		using B = polynomial<i32>::val<i32::val<1>>;
-		if (!polynomial<i32>::eq_v<A, B>) {
-			return 1;
-		}
+		static_assert(polynomial<i32>::eq_v<A, B>);
 	}
 	{
 		using A = polynomial<i32>::val<i32::val<1>>;
 		using B = polynomial<i32>::val<i32::val<2>>;
-		if (polynomial<i32>::eq_v<A, B>) {
-			return 1;
-		}
+		static_assert(!polynomial<i32>::eq_v<A, B>);
 	}
 	{
 		using A = polynomial<i32>::val<i32::val<1>, i32::val<1>>;
 		using B = polynomial<i32>::val<i32::val<1>, i32::val<1>>;
-		if (!polynomial<i32>::eq_v<A, B>) {
-			return 1;
-		}
+		static_assert(polynomial<i32>::eq_v<A, B>);
 	}
 	{
 		using A = polynomial<i32>::val<i32::val<1>, i32::val<1>>;
 		using B = polynomial<i32>::val<i32::val<1>, i32::val<2>>;
-		if (polynomial<i32>::eq_v<A, B>) {
-			return 1;
-		}
+		static_assert(!polynomial<i32>::eq_v<A, B>);
 	}
 	{
 		using A = polynomial<i32>::val<i32::val<1>, i32::val<1>>;
 		using B = polynomial<i32>::val<i32::val<1>, i32::val<1>, i32::val<2>>;
-		if (polynomial<i32>::eq_v<A, B>) {
-			return 1;
-		}
+		static_assert(!polynomial<i32>::eq_v<A, B>);
 	}
 
 	return 0;
@@ -344,18 +241,11 @@ int test_poly_eq() {
 
 int test_gcd() {
 	using A = i32::gcd_t<i32::val<12>, i32::val<6>>;
-	if (A::v != 6) {
-		return 1;
-	}
-	using B = i32::gcd_t<i32::val<12>, i32::val<6>>;
-	if (B::v != 6) {
-		return 1;
-	}
-
+	static_assert(A::v == 6);
+	using B = i32::gcd_t<i32::val<18>, i32::val<6>>;
+	static_assert(B::v == 6);
 	using C = i32::gcd_t<i32::val<5>, i32::val<3>>;
-	if (C::v != 1) {
-		return 1;
-	}
+	static_assert(C::v == 1);
 
 	return 0;
 }
@@ -366,27 +256,21 @@ int test_poly_mul() {
 		using B = polynomial<i32>::val<i32::val<1>, i32::val<1>>;
 		using mul = polynomial<i32>::mul_t<A, B>;
 		using expected = polynomial<i32>::val<i32::val<1>, i32::zero, i32::val<-1>>;
-		if (!std::is_same<expected, mul>::value) {
-			return 1;
-		}
+		static_assert(std::is_same<expected, mul>::value);
 	}
 	{
 		using A = polynomial<i32>::val<i32::val<1>, i32::val<1>>;
 		using B = polynomial<i32>::val<i32::val<1>, i32::val<1>>;
 		using mul = polynomial<i32>::mul_t<A, B>;
 		using expected = polynomial<i32>::val<i32::val<1>, i32::val<2>, i32::val<1>>;
-		if (!std::is_same<expected, mul>::value) {
-			return 1;
-		}
+		static_assert(std::is_same<expected, mul>::value);
 	}
 	{
 		using A = polynomial<i32>::val<i32::val<1>, i32::val<1>>;
 		using B = polynomial<i32>::val<i32::val<2>>;
 		using mul = polynomial<i32>::mul_t<A, B>;
 		using expected = polynomial<i32>::val<i32::val<2>, i32::val<2>>;
-		if (!std::is_same<expected, mul>::value) {
-			return 1;
-		}
+		static_assert(std::is_same<expected, mul>::value);
 	}
 
 	return 0;
@@ -396,18 +280,10 @@ int test_monomial() {
 	{
 		//2x^3 + 0 + 0 + 0
 		using A = polynomial<i32>::monomial_t<i32::val<2>, 3>;
-		if (A::coeff_at_t<3>::v != 2) {
-			return 1;
-		}
-		if (A::coeff_at_t<2>::v != 0) {
-			return 1;
-		}
-		if (A::coeff_at_t<1>::v != 0) {
-			return 1;
-		}
-		if (A::coeff_at_t<0>::v != 0) {
-			return 1;
-		}
+		static_assert(A::coeff_at_t<3>::v == 2);
+		static_assert(A::coeff_at_t<2>::v == 0);
+		static_assert(A::coeff_at_t<1>::v == 0);
+		static_assert(A::coeff_at_t<0>::v == 0);
 	}
 
 	return 0;
@@ -423,18 +299,10 @@ int test_poly_div() {
 		// x + 1
 		using Q = polynomial<i32>::div_t<A, B>;
 		using R = polynomial<i32>::mod_t<A, B>;
-		if (!R::is_zero_v) {
-			return 1;
-		}
-		if (Q::degree != 1) {
-			return 1;
-		}
-		if (Q::coeff_at_t<0>::v != 1) {
-			return 1;
-		}
-		if (Q::coeff_at_t<1>::v != 1) {
-			return 1;
-		}
+		static_assert(R::is_zero_v);
+		static_assert(Q::degree == 1) ;
+		static_assert(Q::coeff_at_t<0>::v == 1);
+		static_assert(Q::coeff_at_t<1>::v == 1);
 	}
 	// divide by constant
 	{
@@ -442,21 +310,11 @@ int test_poly_div() {
 		using B = polynomial<i32>::val<i32::val<2>>;
 		using C = polynomial<i32>::div_t<A, B>;
 		using R = polynomial<i32>::mod_t<A, B>;
-		if (!R::is_zero_v) {
-			return 1;
-		}
-		if (C::degree != 2) {
-			return 1;
-		}
-		if (C::coeff_at_t<0>::v != 1) {
-			return 1;
-		}
-		if (C::coeff_at_t<1>::v != 1) {
-			return 1;
-		}
-		if (C::coeff_at_t<2>::v != 1) {
-			return 1;
-		}
+		static_assert(R::is_zero_v);
+		static_assert(C::degree == 2);
+		static_assert(C::coeff_at_t<0>::v == 1);
+		static_assert(C::coeff_at_t<1>::v == 1);
+		static_assert(C::coeff_at_t<2>::v == 1);
 	}
 	// no divisibility
 	{
@@ -464,21 +322,11 @@ int test_poly_div() {
 		using B = polynomial<i32>::val<i32::val<1>, i32::val<1>>;
 		using C = polynomial<i32>::div_t<A, B>;
 		using R = polynomial<i32>::mod_t<A, B>;
-		if (C::degree != 1) {
-			return 1;
-		}
-		if (C::coeff_at_t<0>::v != 0) {
-			return 1;
-		}
-		if (C::coeff_at_t<1>::v != 1) {
-			return 1;
-		}
-		if (R::degree != 0) {
-			return 1;
-		}
-		if (R::aN::v != 1) {
-			return 1;
-		}
+		static_assert(C::degree == 1);
+		static_assert(C::coeff_at_t<0>::v == 0);
+		static_assert(C::coeff_at_t<1>::v == 1);
+		static_assert(R::degree == 0);
+		static_assert(R::aN::v == 1);
 	}
 	// float divisibility
 	{
@@ -488,21 +336,11 @@ int test_poly_div() {
 		using B = polynomial<q32>::val<q32::val<i32::val<2>, i32::one>, q32::val<i32::val<2>, i32::one>>;
 		using Q = polynomial<q32>::div_t<A, B>;
 
-		if (Q::degree != 1) {
-			return 1;
-		}
-		if (Q::coeff_at_t<0>::x::v != -1) {
-			return 1;
-		}
-		if (Q::coeff_at_t<0>::y::v != 2) {
-			return 1;
-		}
-		if (Q::coeff_at_t<1>::x::v != 1) {
-			return 1;
-		}
-		if (Q::coeff_at_t<1>::y::v != 2) {
-			return 1;
-		}
+		static_assert(Q::degree == 1);
+		static_assert(Q::coeff_at_t<0>::x::v == -1);
+		static_assert(Q::coeff_at_t<0>::y::v == 2);
+		static_assert(Q::coeff_at_t<1>::x::v == 1);
+		static_assert(Q::coeff_at_t<1>::y::v == 2);
 	}
 	// float divisibility
 	{
@@ -511,15 +349,9 @@ int test_poly_div() {
 		// 2x + 2
 		using B = polynomial<q32>::val<q32::val<i32::val<2>, i32::one>, q32::val<i32::val<2>, i32::one>>;
 		using Q = polynomial<q32>::div_t<A, B>;
-		if (Q::degree != 0) {
-			return 1;
-		}
-		if (Q::coeff_at_t<0>::x::v != 1) {
-			return 1;
-		}
-		if (Q::coeff_at_t<0>::y::v != 2) {
-			return 1;
-		}
+		static_assert(Q::degree == 0);
+		static_assert(Q::coeff_at_t<0>::x::v == 1);
+		static_assert(Q::coeff_at_t<0>::y::v == 2);
 	}
 	return 0;
 }
@@ -531,15 +363,9 @@ int test_poly_gcd() {
 		// (x+1)
 		using B = polynomial<q32>::val<q32::one, q32::one>;
 		using G = internal::gcd<polynomial<q32>>::type<A, B>;
-		if (G::degree != 1) {
-			return 1;
-		}
-		if (G::coeff_at_t<0>::x::v != 1 || G::coeff_at_t<0>::y::v != 1) {
-			return 1;
-		}
-		if (G::coeff_at_t<1>::x::v != 1 || G::coeff_at_t<1>::y::v != 1) {
-			return 1;
-		}
+		static_assert(G::degree == 1);
+		static_assert(q32::eq_v<G::coeff_at_t<0>, q32::one>);
+		static_assert(q32::eq_v<G::coeff_at_t<1>, q32::one>);
 	}
 	{
 		// (x+1)*(x+1)
@@ -548,15 +374,9 @@ int test_poly_gcd() {
 		using B = polynomial<q32>::val<q32::one, q32::zero, q32::val<i32::val<-1>, i32::val<1>>>;
 		// x + 1
 		using G = polynomial<q32>::gcd_t<A, B>;
-		if (G::degree != 1) {
-			return 1;
-		}
-		if (G::coeff_at_t<0>::x::v != 1 || G::coeff_at_t<0>::y::v != 1) {
-			return 1;
-		}
-		if (G::coeff_at_t<1>::x::v != 1 || G::coeff_at_t<1>::y::v != 1) {
-			return 1;
-		}
+		static_assert(G::degree == 1);
+		static_assert(q32::eq_v<G::coeff_at_t<0>, q32::one>);
+		static_assert(q32::eq_v<G::coeff_at_t<1>, q32::one>);
 	}
 
 	return 0;
@@ -567,7 +387,7 @@ int test_poly_to_string() {
 	using A = fpq32::val<P32::val<q32::one, q32::one>, P32::val<q32::val<i32::val<2>, i32::val<1>>, q32::one>>;
 	auto rep = A::to_string();
 	const char* expected = "(X + 1) / (2 X + 1)";
-	if (strcmp(rep.c_str(),expected) != 0) {
+	if (strcmp(rep.c_str(), expected) != 0) {
 		printf("expected %s got %s\n", "(X + 1) / (2 X + 1)", rep.c_str());
 		return 1;
 	}
@@ -582,11 +402,9 @@ int test_add_q32() {
 
 		using c = q32::add_t<a, b>;
 
-		auto x = c::x::v;
-		auto y = c::y::v;
-		if (x != 3 || y != 4) {
-			return 1;
-		}
+		constexpr auto x = c::x::v;
+		constexpr auto y = c::y::v;
+		static_assert(x == 3 && y == 4);
 	}
 	{
 		using a = q32::val<i32::val<1>, i32::val<2>>;
@@ -594,11 +412,9 @@ int test_add_q32() {
 
 		using c = q32::add_t<a, b>;
 
-		auto x = c::x::v;
-		auto y = c::y::v;
-		if (x != 5 || y != 6) {
-			return 1;
-		}
+		constexpr auto x = c::x::v;
+		constexpr auto y = c::y::v;
+		static_assert(x == 5 && y == 6);
 	}
 	{
 		using a = q32::val<i32::val<-1>, i32::val<2>>;
@@ -606,11 +422,9 @@ int test_add_q32() {
 
 		using c = q32::add_t<a, b>;
 
-		auto x = c::x::v;
-		auto y = c::y::v;
-		if (x != 0 || y != 1) {
-			return 1;
-		}
+		constexpr auto x = c::x::v;
+		constexpr auto y = c::y::v;
+		static_assert(x == 0 && y == 1);
 	}
 
 	return 0;
@@ -618,13 +432,10 @@ int test_add_q32() {
 
 int test_is_zero_q32() {
 	using a = q32::zero;
-	if (!a::is_zero_v) {
-		return 1;
-	}
+	static_assert(a::is_zero_v);
+
 	using b = q32::one;
-	if (b::is_zero_v) {
-		return 1;
-	}
+	static_assert(!b::is_zero_v);
 
 	return 0;
 }
@@ -633,23 +444,17 @@ int test_gt_q32() {
 	{
 		using a = q32::inject_constant_t<1>;
 		using b = q32::zero;
-		if (!q32::gt_v<a, b>) {
-			return 1;
-		}
+		static_assert(q32::gt_v<a, b>);
 	} 
 	{
 		using a = q32::zero;
 		using b = q32::inject_constant_t<2>;
-		if (q32::gt_v<a, b>) {
-			return 1;
-		}
+		static_assert(!q32::gt_v<a, b>);
 	}
 	{
 		using a = q32::zero;
 		using b = q32::zero;
-		if (q32::gt_v<a, b>) {
-			return 1;
-		}
+		static_assert(!q32::gt_v<a, b>);
 	}
 
 	return 0;
@@ -662,11 +467,9 @@ int test_sub_q32() {
 
 		using c = q32::sub_t<a, b>;
 
-		auto x = c::x::v;
-		auto y = c::y::v;
-		if (x != 1 || y != 4) {
-			return 1;
-		}
+		constexpr auto x = c::x::v;
+		constexpr auto y = c::y::v;
+		static_assert(x == 1 && y == 4);
 	}
 	{
 		using a = q32::val<i32::val<1>, i32::val<2>>;
@@ -674,11 +477,9 @@ int test_sub_q32() {
 
 		using c = q32::sub_t<a, b>;
 
-		auto x = c::x::v;
-		auto y = c::y::v;
-		if (x != 1 || y != 6) {
-			return 1;
-		}
+		constexpr auto x = c::x::v;
+		constexpr auto y = c::y::v;
+		static_assert(x == 1 && y == 6);
 	}
 	{
 		using a = q32::val<i32::val<1>, i32::val<2>>;
@@ -686,11 +487,9 @@ int test_sub_q32() {
 
 		using c = q32::sub_t<a, b>;
 
-		auto x = c::x::v;
-		auto y = c::y::v;
-		if (x != 0 || y != 1) {
-			return 1;
-		}
+		constexpr auto x = c::x::v;
+		constexpr auto y = c::y::v;
+		static_assert(x == 0 && y == 1);
 	}
 
 	return 0;
@@ -703,11 +502,9 @@ int test_mul_q32() {
 
 		using c = q32::mul_t<a, b>;
 
-		auto x = c::x::v;
-		auto y = c::y::v;
-		if (x != 1 || y != 8) {
-			return 1;
-		}
+		constexpr auto x = c::x::v;
+		constexpr auto y = c::y::v;
+		static_assert(x == 1 && y == 8);
 	}
 	{
 		using a = q32::val<i32::val<1>, i32::val<2>>;
@@ -715,11 +512,9 @@ int test_mul_q32() {
 
 		using c = q32::mul_t<a, b>;
 
-		auto x = c::x::v;
-		auto y = c::y::v;
-		if (x != 1 || y != 6) {
-			return 1;
-		}
+		constexpr auto x = c::x::v;
+		constexpr auto y = c::y::v;
+		static_assert(x == 1 && y == 6);
 	}
 	{
 		using a = q32::val<i32::val<1>, i32::val<2>>;
@@ -727,11 +522,9 @@ int test_mul_q32() {
 
 		using c = q32::mul_t<a, b>;
 
-		auto x = c::x::v;
-		auto y = c::y::v;
-		if (x != 0 || y != 1) {
-			return 1;
-		}
+		constexpr auto x = c::x::v;
+		constexpr auto y = c::y::v;
+		static_assert(x == 0 && y == 1);
 	}
 
 	return 0;
@@ -744,11 +537,9 @@ int test_div_q32() {
 
 		using c = q32::div_t<a, b>;
 
-		auto x = c::x::v;
-		auto y = c::y::v;
-		if (x != 2 || y != 1) {
-			return 1;
-		}
+		constexpr auto x = c::x::v;
+		constexpr auto y = c::y::v;
+		static_assert(x == 2 && y == 1);
 	}
 	{
 		using a = q32::val<i32::val<1>, i32::val<2>>;
@@ -756,11 +547,9 @@ int test_div_q32() {
 
 		using c = q32::div_t<a, b>;
 
-		auto x = c::x::v;
-		auto y = c::y::v;
-		if (x != 3 || y != 2) {
-			return 1;
-		}
+		constexpr auto x = c::x::v;
+		constexpr auto y = c::y::v;
+		static_assert(x == 3 && y == 2);
 	}
 	{
 		using a = q32::val<i32::val<0>, i32::val<2>>;
@@ -768,11 +557,9 @@ int test_div_q32() {
 
 		using c = q32::div_t<a, b>;
 
-		auto x = c::x::v;
-		auto y = c::y::v;
-		if (x != 0 || y != 1) {
-			return 1;
-		}
+		constexpr auto x = c::x::v;
+		constexpr auto y = c::y::v;
+		static_assert(x == 0 && y == 1);
 	}
 	{
 		using a = q32::val<i32::val<1>, i32::val<1>>;
@@ -780,11 +567,9 @@ int test_div_q32() {
 
 		using c = q32::div_t<a, b>;
 
-		auto x = c::x::v;
-		auto y = c::y::v;
-		if (x != 1 || y != 2) {
-			return 1;
-		}
+		constexpr auto x = c::x::v;
+		constexpr auto y = c::y::v;
+		static_assert(x == 1 && y == 2);
 	}
 
 	return 0;
@@ -795,21 +580,11 @@ int test_simplify_q32() {
 	using B = q32::val<i32::val<1>, i32::val<1>>;
 	using C = q32::val<i32::val<-1>, i32::val<-1>>;
 	using D = q32::val<i32::val<1>, i32::val<-2>>;
-	if (!q32::eq_v<q32::simplify_t<A>, q32::one>) {
-		return 1;
-	}
-	if (!q32::eq_v<q32::simplify_t<B>, q32::one>) {
-		return 1;
-	}
-	if (!q32::eq_v<q32::simplify_t<C>, q32::one>) {
-		return 1;
-	}
-	if (!q32::eq_v<q32::simplify_t<D>, q32::val<i32::val<-1>, i32::val<2>>>) {
-		return 1;
-	}
-	if(!q32::eq_v<q32::simplify_t<q32::sub_t<q32::zero, q32::zero>>, q32::zero>) {
-		return 1;
-	}
+	static_assert(q32::eq_v<q32::simplify_t<A>, q32::one>);
+	static_assert(q32::eq_v<q32::simplify_t<B>, q32::one>);
+	static_assert(q32::eq_v<q32::simplify_t<C>, q32::one>);
+	static_assert(q32::eq_v<q32::simplify_t<D>, q32::val<i32::val<-1>, i32::val<2>>>);
+	static_assert(q32::eq_v<q32::simplify_t<q32::sub_t<q32::zero, q32::zero>>, q32::zero>) ;
 
 	return 0;
 }
@@ -818,20 +593,15 @@ int test_eq_q32() {
 	using A = q32::val<i32::val<2>, i32::val<2>>;
 	using B = q32::val<i32::val<1>, i32::val<1>>;
 	using C = q32::val<i32::val<-1>, i32::val<-1>>;
-	if (!q32::eq_v<A, B>) {
-		return 1;
-	}
-	if (!q32::eq_v<A, C>) {
-		return 1;
-	}
+	static_assert(q32::eq_v<A, B>);
+	static_assert(q32::eq_v<A, C>);
+
 	return 0;
 }
 
 int test_fraction_field_of_fraction_field () {
 	using qq32 = FractionField<q32>;
-	if (!std::is_same<q32, qq32>::value) {
-		return 1;
-	}
+	static_assert(std::is_same<q32, qq32>::value);
 
 	return 0;
 }
@@ -842,12 +612,8 @@ int test_quotient_ring_is_z2z() {
 	using three = QQ::inject_constant_t<3>;
 	using one = QQ::inject_constant_t<1>;
 	using zero = QQ::zero;
-	if (!QQ::eq_v<two, zero>) {
-		return 1;
-	}
-	if (!QQ::eq_v<one, three>) {
-		return 1;
-	}
+	static_assert(QQ::eq_v<two, zero>);
+	static_assert(QQ::eq_v<one, three>);
 
 	return 0;
 }
@@ -862,27 +628,19 @@ int test_instanciate_F4() {
 	using phi = F4::inject_ring_t<PF2::X>;
 	using phi2 = F4::inject_ring_t<PF2::template val<F2::inject_constant_t<1>, F2::inject_constant_t<1>>>;
 	// check that elements are different
-	if (F4::eq_v<one, zero> || F4::eq_v<phi, zero> || F4::eq_v<phi2, zero> ||
-		F4::eq_v<phi, one> || F4::eq_v<phi2, one> ||
-		F4::eq_v<phi, phi2>) {
-		return 1;
-	}
+	static_assert(!F4::eq_v<one, zero> && !F4::eq_v<phi, zero> && !F4::eq_v<phi2, zero> &&
+		!F4::eq_v<phi, one> && !F4::eq_v<phi2, one> &&
+		!F4::eq_v<phi, phi2>) ;
+
 	// one + phi = phi2
-	if (!F4::eq_v<phi2, F4::template add_t<one, phi>>) {
-		return 1;
-	}
+	static_assert(F4::eq_v<phi2, F4::template add_t<one, phi>>);
 	// one + phi2 = phi
-	if (!F4::eq_v<phi, F4::template add_t<one, phi2>>) {
-		return 1;
-	}
+	static_assert(F4::eq_v<phi, F4::template add_t<one, phi2>>);
 	// phi * phi = phi2
-	if (!F4::eq_v<phi2, F4::template mul_t<phi, phi>>) {
-		return 1;
-	}
+	static_assert(F4::eq_v<phi2, F4::template mul_t<phi, phi>>);
 	// phi2 * phi2 = phi
-	if (!F4::eq_v<phi, F4::template mul_t<phi2, phi2>>) {
-		return 1;
-	}
+	static_assert(F4::eq_v<phi, F4::template mul_t<phi2, phi2>>);
+
 	return 0;
 }
 
@@ -897,153 +655,86 @@ int test_instanciate_large_finite_field() {
 
 int test_factorial() {
 	constexpr float x = factorial_v<i32, 3>;
-	if (x != 6.0f) {
-		return 1;
-	}
+	static_assert(x == 6.0f);
 
 	constexpr size_t y = factorial_v<i32, 0>;
-	if (y != 1) {
-		return 1;
-	}
+	static_assert(y == 1);
 
 	return 0;
 }
 
 int test_combination() {
 	constexpr int x = combination_v<i32, 2, 4>;
-	if (x != 6) {
-		return 1;
-	}
+	static_assert(x == 6);
+
 	constexpr int y = combination_v<i32, 0, 4>;
-	if (y != 1) {
-		return 1;
-	}
+	static_assert(y == 1);
+
 	constexpr int z = combination_v<i32, 1, 4>;
-	if (z != 4) {
-		return 1;
-	}
+	static_assert(z == 4);
 
 	constexpr int zz = combination_v<i32, 3, 4>;
-	if (zz != 4) {
-		return 1;
-	}
+	static_assert(zz == 4);
+
 	return 0;
 }
 
 int test_bernouilli() {
 	constexpr float b0 = bernouilli_v<float, i32, 0>;
-	if (b0 != 1.0f) {
-		return 1;
-	}
+	static_assert(b0 == 1.0f) ;
+
 	constexpr float b1 = bernouilli_v<float, i32, 1>;
-	if (b1 != -0.5f) {
-		return 1;
-	}
+	static_assert(b1 == -0.5f) ;
+
 	using B2 = bernouilli_t<i32, 2>;
-	if (B2::x::v != 1) {
-		return 1;
-	}
-	if (B2::y::v != 6) {
-		return 1;
-	}
+	static_assert(B2::x::v == 1);
+	static_assert(B2::y::v == 6);
+
 	constexpr double b3 = bernouilli_v<double, i32, 3>;
-	if (b3 != 0.0) {
-		return 1;
-	}
+	static_assert(b3 == 0.0);
 
 	return 0;
 }
 
 int test_zpz () {
 	using Z2Z = zpz<2>;
-	if (Z2Z::template add_t<typename Z2Z::val<1>, typename Z2Z::val<1>>::v != 0) {
-		return 1;
-	}
-	if (!Z2Z::is_field) {
-		return 1;
-	}
+	static_assert(Z2Z::template add_t<typename Z2Z::val<1>, typename Z2Z::val<1>>::v == 0);
+	static_assert(Z2Z::is_field);
 
 	using Z4Z = zpz<4>;
-	if (Z4Z::template add_t<typename Z4Z::val<4>, typename Z4Z::val<12>>::v != 0) {
-		return 1;
-	}
-	if (Z4Z::template add_t<typename Z4Z::val<5>, typename Z4Z::val<13>>::v == 0) {
-		return 1;
-	}
-	if (Z4Z::is_field) {
-		return 1;
-	}
+	static_assert(Z4Z::template add_t<typename Z4Z::val<4>, typename Z4Z::val<12>>::v == 0);
+	static_assert(Z4Z::template add_t<typename Z4Z::val<5>, typename Z4Z::val<13>>::v != 0);
+	static_assert(!Z4Z::is_field);
 
 	// gcd
-	if (Z2Z::template gcd_t<typename Z2Z::val<1>, typename Z2Z::val<1>>::v != 1) {
-		return 1;
-	}
+	static_assert(Z2Z::template gcd_t<typename Z2Z::val<1>, typename Z2Z::val<1>>::v == 1);
+
 	using Z5Z = zpz<5>;
-	if (Z5Z::template gcd_t<typename Z5Z::val<2>, typename Z5Z::val<3>>::v != 1) {
-		return 1;
-	}
-	if (Z5Z::template gcd_t<typename Z5Z::val<2>, typename Z5Z::val<4>>::v != 2) {
-		return 1;
-	}
+	static_assert(Z5Z::template gcd_t<typename Z5Z::val<2>, typename Z5Z::val<3>>::v == 1);
+	static_assert(Z5Z::template gcd_t<typename Z5Z::val<2>, typename Z5Z::val<4>>::v == 2);
 
 	return 0;
 }
 
 int test_is_prime() {
-	if (is_prime<1>::value) {
-		return 1;
-	}
-	if (!is_prime<2>::value) {
-		return 1;
-	}
-	if (!is_prime<3>::value) {
-		return 1;
-	}
-	if (is_prime<4>::value) {
-		return 1;
-	}
-	if (!is_prime<5>::value) {
-		return 1;
-	}
-	if (is_prime<6>::value) {
-		return 1;
-	}
-	if (!is_prime<7>::value) {
-		return 1;
-	}
-	if (is_prime<8>::value) {
-		return 1;
-	}
-	if (is_prime<9>::value) {
-		return 1;
-	}
-	if (is_prime<10>::value) {
-		return 1;
-	}
-	if (!is_prime<31>::value) {
-		return 1;
-	}
-	if (is_prime<100>::value) {
-		return 1;
-	}
-	if (!is_prime<7883>::value) {
-		return 1;
-	}
-	if (is_prime<7884>::value) {
-		return 1;
-	}
-	if (!is_prime<7919>::value) {
-		return 1;
-	}
-	if (is_prime<7920>::value) {
-		return 1;
-	}
-	if (!is_prime<7927>::value) {
-		return 1;
-	}
-	if (!is_prime<1000423>::value) {
-		return 1;
-	}
+	static_assert(!is_prime<1>::value);
+	static_assert(is_prime<2>::value);
+	static_assert(is_prime<3>::value);
+	static_assert(!is_prime<4>::value);
+	static_assert(is_prime<5>::value);
+	static_assert(!is_prime<6>::value);
+	static_assert(is_prime<7>::value);
+	static_assert(!is_prime<8>::value);
+	static_assert(!is_prime<9>::value);
+	static_assert(!is_prime<10>::value);
+	static_assert(is_prime<31>::value);
+	static_assert(!is_prime<100>::value);
+	static_assert(is_prime<7883>::value);
+	static_assert(!is_prime<7884>::value);
+	static_assert(is_prime<7919>::value);
+	static_assert(!is_prime<7920>::value);
+	static_assert(is_prime<7927>::value);
+	static_assert(is_prime<1000423>::value);
 
 	return 0;
 }
@@ -1052,11 +743,8 @@ int test_exp() {
 	using E = aerobus::functions::exp<i32, 12>;
 	constexpr float e0 = E::eval(0.0F);
 	constexpr float e01 = E::eval(0.1F);
-	if (e0 != 1.0F) {
-		return 1;
-	}
-
-	if (std::abs(std::exp(0.1f) - e01) > 1E-7F) {
+	static_assert(e0 == 1.0F);
+	if(std::abs(std::exp(0.1f) - e01) > 1E-7F) {
 		return 1;
 	}
 
@@ -1065,58 +753,32 @@ int test_exp() {
 
 int test_alternate() {
 	constexpr int a0 = internal::alternate<i32, 0>::value;
-	if (a0 != 1) {
-		return 1;
-	}
+	static_assert(a0 == 1);
 	constexpr int a1 = internal::alternate<i32, 1>::value;
-	if (a1 != -1) {
-		return 1;
-	}
+	static_assert(a1 == -1);
 	constexpr int a2 = internal::alternate<i32, 2>::value;
-	if (a2 != 1) {
-		return 1;
-	}
+	static_assert(a2 == 1);
 
 	return 0;
 }
 
 int test_type_list () {
 	using A = type_list<int, float>;
-	if (A::length != 2) {
-		return 1;
-	}
-	if (typeid(A::at<0>) != typeid(int)) {
-		return 1;
-	}
-	if (typeid(A::at<1>) != typeid(float)) {
-		return 1;
-	}
+	static_assert(A::length == 2);
+	static_assert(std::is_same_v<A::at<0>, int>);
+	static_assert(std::is_same_v<A::at<1>, float>);
 
 	using B = A::push_back<double>;
-	if (B::length != 3) {
-		return 1;
-	}
-	if(typeid(B::at<2>) != typeid(double)) {
-		return 1;
-	}
+	static_assert(B::length == 3) ;
+	static_assert(std::is_same_v<B::at<2>, double>);
 
 	using C = B::pop_front;
-	if(typeid(C::type) != typeid(int)) {
-		return 1;
-	}
-	if(C::tail::length != 2) {
-		return 1;
-	}
-	if (typeid(C::tail::at<0>) != typeid(float)) {
-		return 1;
-	}
+	static_assert(std::is_same_v<C::type, int>);
+	static_assert(C::tail::length == 2);
+	static_assert(std::is_same_v<C::tail::at<0>, float>);
 	using D = C::tail::split<1>;
-	if(D::head::length != 1 || D::tail::length != 1) {
-		return 1;
-	}
-	if(typeid(D::head::at<0>) != typeid(float) || typeid(D::tail::at<0>) != typeid(double)) {
-		return 1;
-	}
+	static_assert(D::head::length == 1 && D::tail::length == 1);
+	static_assert(std::is_same_v<D::head::at<0>, float> && std::is_same_v<D::tail::at<0>, double>) ;
 
 	return 0;
 }
@@ -1136,26 +798,17 @@ int test_concept_ring() {
 int test_continued_fraction() {
 	// A001203
 	constexpr double A_PI = PI_fraction::val;
-	if(::fabs(A_PI - M_PI) > 0) {
-		return 1;
-	}
+	static_assert(A_PI == M_PI);
 
 	// A003417
 	constexpr double A_E = E_fraction::val;
-	if(::fabs(A_E - M_E) > 0) {
-		return 1;
-	}
+	static_assert(A_E == M_E);
 
 	constexpr double A_SQRT2 = SQRT2_fraction::val;
-	if(::fabs(A_SQRT2 - M_SQRT2) > 0) {
-		return 1;
-	}
+	static_assert(A_SQRT2 == M_SQRT2);
 
 	constexpr double A_SQRT3 = SQRT3_fraction::val;
-	if(::fabs(A_SQRT3 - 1.7320508075688772935) > 0) {
-		::printf("%.17g", A_SQRT3);
-		return 1;
-	}
+	static_assert(A_SQRT3 == 1.7320508075688772935);
 
 	return 0;
 }
@@ -1163,45 +816,20 @@ int test_continued_fraction() {
 int test_chebyshev() {
 	using T4 = known_polynomials::chebyshev_T<4>;
 
-	if(T4::degree != 4) {
-		return 1;
-	}
-	if (T4::template coeff_at_t<4>::v != 8) {
-		return 0;
-	}
-	
-	if (T4::template coeff_at_t<3>::v != 0) {
-		return 0;
-	}
-	if (T4::template coeff_at_t<2>::v != -8) {
-		return 0;
-	}
-	if (T4::template coeff_at_t<1>::v != 0) {
-		return 0;
-	}
-	if (T4::template coeff_at_t<0>::v != 1) {
-		return 0;
-	}
+	static_assert(T4::degree == 4);
+	static_assert(T4::template coeff_at_t<4>::v == 8);
+	static_assert(T4::template coeff_at_t<3>::v == 0);
+	static_assert(T4::template coeff_at_t<2>::v == -8);
+	static_assert(T4::template coeff_at_t<1>::v == 0);
+	static_assert(T4::template coeff_at_t<0>::v == 1);
 
 	using U4 = known_polynomials::chebyshev_U<4>;
-	if(U4::degree != 4) {
-		return 1;
-	}
-	if (U4::template coeff_at_t<4>::v != 16) {
-		return 0;
-	}
-	if (U4::template coeff_at_t<3>::v != 0) {
-		return 0;
-	}
-	if (U4::template coeff_at_t<2>::v != -12) {
-		return 0;
-	}
-	if (U4::template coeff_at_t<1>::v != 0) {
-		return 0;
-	}
-	if (U4::template coeff_at_t<0>::v != 1) {
-		return 0;
-	}
+	static_assert(U4::degree == 4);
+	static_assert(U4::template coeff_at_t<4>::v == 16);
+	static_assert(U4::template coeff_at_t<3>::v == 0);
+	static_assert(U4::template coeff_at_t<2>::v == -12);
+	static_assert(U4::template coeff_at_t<1>::v == 0);
+	static_assert(U4::template coeff_at_t<0>::v == 1);
 
 
 	return 0;
@@ -1260,27 +888,19 @@ int test_hermite() {
 int test_value_at() {
 	{
 		constexpr uint16_t x = aerobus::internal::value_at<0, 1, 2, 3>::value;
-		if(x != 1) {
-			return 1;
-		}
+		static_assert(x == 1);
 	}
 	{
 		constexpr uint16_t x = aerobus::internal::value_at<1, 1, 2, 3>::value;
-		if(x != 2) {
-			return 1;
-		}
+		static_assert(x == 2);
 	}
 	{
 		constexpr uint16_t x = aerobus::internal::value_at<2, 1, 2, 3>::value;
-		if(x != 3) {
-			return 1;
-		}
+		static_assert(x == 3);
 	}
 	{
 		constexpr uint16_t x = aerobus::internal::value_at<0, 1, 2, 3>::value;
-		if(x != 1) {
-			return 1;
-		}
+		static_assert(x == 1);
 	}
 	return 0;
 }
@@ -1288,17 +908,13 @@ int test_value_at() {
 int test_bigint_digit_at() {
 	using x = bigint_pos<1, 2>;
 	constexpr uint16_t x0 = x::template digit_at<0>::value;
-	if(x0 != 2) {
-		return 1;
-	}
+	static_assert(x0 == 2);
+
 	constexpr uint16_t x1 = x::template digit_at<1>::value;
-	if(x1 != 1) {
-		return 1;
-	}
+	static_assert(x1 == 1);
+
 	constexpr uint16_t x2 = x::template digit_at<2>::value;
-	if(x2 != 0) {
-		return 1;
-	}
+	static_assert(x2 == 0);
 
 	return 0;
 }
@@ -1307,15 +923,9 @@ int test_bigint_minus() {
 	using I1 = bigint_pos<1, 2>;
 	using I2 = bigint_neg<1, 2>;
 	using MZ = bigint_neg<0>;
-	if(!bigint::eq_v<I1, typename I2::minus_t>) {
-		return 1;
-	}
-	if(!bigint::eq_v<I2, typename I1::minus_t>) {
-		return 1;
-	}
-	if(!bigint::eq_v<typename bigint::zero, MZ>) {
-		return 1;
-	}
+	static_assert(bigint::eq_v<I1, typename I2::minus_t>);
+	static_assert(bigint::eq_v<I2, typename I1::minus_t>);
+	static_assert(bigint::eq_v<typename bigint::zero, MZ>);
 
 	return 0;
 }
@@ -1326,30 +936,18 @@ int test_bigint_add() {
 	using S = bigint::add_t<I1, I2>;
 	using S2 = bigint::add_t<I1, typename bigint::zero>;
 	using S3 = bigint::add_t<bigint::zero, I2>;
-	if(!bigint::eq_v<S2, I1> || !bigint::eq_v<I2, S3>) {
-		return 1;
-	}
-	if(S::digits != 3) {
-		return 1;
-	}
-	if(S::digit_at<0>::value != 0) {
-		return 0;
-	}
-	if(S::digit_at<1>::value != 0) {
-		return 0;
-	}
-	if(S::digit_at<2>::value != 1) {
-		return 0;
-	}
+	static_assert(bigint::eq_v<S2, I1> && bigint::eq_v<I2, S3>);
+	static_assert(S::digits == 3);
+	static_assert(S::digit_at<0>::value == 0);
+	static_assert(S::digit_at<1>::value == 0);
+	static_assert(S::digit_at<2>::value == 1);
+
 	// 22 + -11 = 11
 	{
 		using X = bigint_pos<2, 2>;
 		using Y = bigint_neg<1, 1>;
 		using S4 = bigint::add_t<X, Y>;
-		if(!bigint::eq_v<S4, typename Y::minus_t>) {
-			printf("%s\n", S4::to_string().c_str());
-			return 1;
-		}
+		static_assert(bigint::eq_v<S4, typename Y::minus_t>);
 	}
 
 	// -22 + -11 = -33
@@ -1358,9 +956,7 @@ int test_bigint_add() {
 		using Y = bigint_neg<1, 1>;
 		using expected = bigint_neg<3, 3>;
 		using S4 = bigint::add_t<X, Y>;
-		if(!bigint::eq_v<S4, expected>) {
-			return 1;
-		}
+		static_assert(bigint::eq_v<S4, expected>) ;
 	}
 
 	// -22 + 11 = -11
@@ -1369,10 +965,7 @@ int test_bigint_add() {
 		using Y = bigint_pos<1, 1>;
 		using expected = bigint_neg<1, 1>;
 		using S4 = bigint::add_t<X, Y>;
-		if(!bigint::eq_v<S4, expected>) {
-			printf("%s\n", S4::to_string().c_str());
-			return 1;
-		}
+		static_assert(bigint::eq_v<S4, expected>);
 	}
 
 	return 0;
@@ -1384,27 +977,21 @@ int test_bigint_sub() {
 		using b = bigint_pos<UINT32_MAX, UINT32_MAX>;
 		using c = bigint_pos<1, 0, 0>;
 		using d = bigint::sub_t<c, b>;
-		if(!bigint::eq_v<bigint::one, d>) {
-			return 1;
-		}
+		static_assert(bigint::eq_v<bigint::one, d>);
 	}
 	// 100 - 1 = 99
 	{
 		using b = bigint_pos<UINT32_MAX, UINT32_MAX>;
 		using c = bigint_pos<1, 0, 0>;
 		using d = bigint::sub_t<c, bigint::one>;
-		if(!bigint::eq_v<b, d>) {
-			return 1;
-		}
+		static_assert(bigint::eq_v<b, d>);
 	}
 	// 22 - 11 = 11
 	{
 		using a = bigint_pos<2, 2>;
 		using b = bigint_pos<1, 1>;
 		using c = bigint::sub_t<a, b>;
-		if(!bigint::eq_v<b, c>) {
-			return 1;
-		}
+		static_assert(bigint::eq_v<b, c>);
 	}
 	// 1 - 2 = -1
 	{
@@ -1412,9 +999,7 @@ int test_bigint_sub() {
 		using b = bigint_pos<2>;
 		using expected = bigint_neg<1>;
 		using c = bigint::sub_t<a, b>;
-		if(!bigint::eq_v<expected, c>) {
-			return 1;
-		}
+		static_assert(bigint::eq_v<expected, c>);
 	}
 	// 2 - -1 = 3
 	{
@@ -1422,9 +1007,7 @@ int test_bigint_sub() {
 		using b = bigint_neg<1>;
 		using expected = bigint_pos<3>;
 		using c = bigint::sub_t<a, b>;
-		if(!bigint::eq_v<expected, c>) {
-			return 1;
-		}
+		static_assert(bigint::eq_v<expected, c>);
 	}
 	// -2 - -1 = -1
 	{
@@ -1432,9 +1015,7 @@ int test_bigint_sub() {
 		using b = bigint_neg<1>;
 		using expected = bigint_neg<1>;
 		using c = bigint::sub_t<a, b>;
-		if(!bigint::eq_v<expected, c>) {
-			return 1;
-		}
+		static_assert(bigint::eq_v<expected, c>);
 	}
 	// 99 - -1 = -1
 	{
@@ -1442,26 +1023,20 @@ int test_bigint_sub() {
 		using b = bigint_neg<1>;
 		using expected = bigint_pos<1, 0, 0>;
 		using c = bigint::sub_t<a, b>;
-		if(!bigint::eq_v<expected, c>) {
-			return 1;
-		}
+		static_assert(bigint::eq_v<expected, c>);
 	}
 	// 99 - 0 = 00
 	{
 		using a = bigint_pos<UINT32_MAX, UINT32_MAX>;
 		using c = bigint::sub_t<a, bigint::zero>;
-		if(!bigint::eq_v<a, c>) {
-			return 1;
-		}
+		static_assert(bigint::eq_v<a, c>);
 	}
 	// 12 - 11 = 1 (must be simplified)
 	{
 		using a = bigint_pos<1, 2>;
 		using b = bigint_pos<1, 1>;
 		using c = bigint::sub_t<a, b>;
-		if(!bigint::eq_v<bigint::one, c>) {
-			return 1;
-		}
+		static_assert(bigint::eq_v<bigint::one, c>);
 	}
 
 	return 0; 
@@ -1471,26 +1046,19 @@ int test_bigint_mul() {
 	{
 		using A = bigint_pos<1, 2>;
 		using B = bigint::mul_t<A, bigint::one>;
-		if(!bigint::eq_v<A, B>) {
-			return 1;
-		}
+		static_assert(bigint::eq_v<A, B>);
 	}
 	{
 		using A = bigint_pos<1, 2>;
 		using B = bigint::mul_t<A, bigint::zero>;
-		if(!bigint::eq_v<bigint::zero, B>) {
-			return 1;
-		}
+		static_assert(bigint::eq_v<bigint::zero, B>);
 	}
 	{
 		using A = bigint_pos<1, 2>;
 		using B = bigint_pos<2>;
 		using PROD = bigint::mul_t<A, B>;
 		using expected = bigint_pos<2, 4>;
-		if(!bigint::eq_v<expected, PROD>) {
-			printf("%s\n", PROD::to_string().c_str());
-			return 1;
-		}
+		static_assert(bigint::eq_v<expected, PROD>);
 	}
 	// 9 * 9 = 81
 	{
@@ -1498,10 +1066,7 @@ int test_bigint_mul() {
 		using B = bigint_pos<UINT32_MAX>;
 		using PROD = bigint::mul_t<A, B>;
 		using expected = bigint_pos<UINT32_MAX - 1, 1>;
-		if(!bigint::eq_v<expected, PROD>) {
-			printf("%s\n", PROD::to_string().c_str());
-			return 1;
-		}
+		static_assert(bigint::eq_v<expected, PROD>);
 	}
 
 	// 9 * -9 = -81
@@ -1510,10 +1075,7 @@ int test_bigint_mul() {
 		using B = bigint_neg<UINT32_MAX>;
 		using PROD = bigint::mul_t<A, B>;
 		using expected = bigint_neg<UINT32_MAX - 1, 1>;
-		if(!bigint::eq_v<expected, PROD>) {
-			printf("%s\n", PROD::to_string().c_str());
-			return 1;
-		}
+		static_assert(bigint::eq_v<expected, PROD>);
 	}	
 
 	// -9 * -9 = 81
@@ -1522,10 +1084,7 @@ int test_bigint_mul() {
 		using B = bigint_neg<UINT32_MAX>;
 		using PROD = bigint::mul_t<A, B>;
 		using expected = bigint_pos<UINT32_MAX - 1, 1>;
-		if(!bigint::eq_v<expected, PROD>) {
-			printf("%s\n", PROD::to_string().c_str());
-			return 1;
-		}
+		static_assert(bigint::eq_v<expected, PROD>);
 	}	
 	// 99 * 9 = 891
 	{
@@ -1533,10 +1092,7 @@ int test_bigint_mul() {
 		using B = bigint_pos<UINT32_MAX>;
 		using PROD = bigint::mul_t<A, B>;
 		using expected = bigint_pos<UINT32_MAX - 1, UINT32_MAX, 1>;
-		if(!bigint::eq_v<expected, PROD>) {
-			printf("%s\n", PROD::to_string().c_str());
-			return 1;
-		}
+		static_assert(bigint::eq_v<expected, PROD>);
 	}
 	// 999 * 99 = 98901
 	{
@@ -1544,10 +1100,7 @@ int test_bigint_mul() {
 		using B = bigint_pos<UINT32_MAX, UINT32_MAX>;
 		using PROD = bigint::mul_t<A, B>;
 		using expected = bigint_pos<UINT32_MAX, UINT32_MAX - 1, UINT32_MAX, 0, 1>;
-		if(!bigint::eq_v<expected, PROD>) {
-			printf("%s\n", PROD::to_string().c_str());
-			return 1;
-		}
+		static_assert(bigint::eq_v<expected, PROD>);
 	}
 
 	return 0;
@@ -1557,15 +1110,9 @@ int test_bigint_eq() {
 	using a = bigint::val<bigint::signs::positive, 1, 2, 3>;
 	using b = bigint::val<bigint::signs::negative, 1, 2, 3>;
 	using c = bigint::val<bigint::signs::positive, 1, 2, 1>;
-	if(bigint::eq_v<a, b>) {
-		return 1;
-	}
-	if(!bigint::eq_v<a, a>) {
-		return 1;
-	}
-	if(bigint::eq_v<a, c>) {
-		return 1;
-	}
+	static_assert(!bigint::eq_v<a, b>);
+	static_assert(bigint::eq_v<a, a>);
+	static_assert(!bigint::eq_v<a, c>);
 
 	return 0;
 }
@@ -1576,18 +1123,10 @@ int test_bigint_pos() {
 	using c = bigint::val<bigint::signs::negative, 1>;
 	using d = bigint::val<bigint::signs::negative, 0>;
 
-	if(bigint::pos_v<a>) {
-		return 1;
-	}
-	if(!bigint::pos_v<b>) {
-		return 1;
-	}
-	if(bigint::pos_v<c>) {
-		return 1;
-	}
-	if(bigint::pos_v<d>) {
-		return 1;
-	}
+	static_assert(!bigint::pos_v<a>);
+	static_assert(bigint::pos_v<b>);
+	static_assert(!bigint::pos_v<c>);
+	static_assert(!bigint::pos_v<d>);
 
 	return 0;
 }
@@ -1601,21 +1140,13 @@ int test_bigint_gt() {
 	using e = bigint_neg<1, 2>;
 	using f = bigint::one;
 	// zero
-	if(bigint::gt_v<a, b> || bigint::gt_v<a, aa> || bigint::gt_v<a, aa> || bigint::gt_v<aa, a>) {
-		return 1;
-	}
+	static_assert(!bigint::gt_v<a, b> && !bigint::gt_v<a, aa> && !bigint::gt_v<a, aa> && !bigint::gt_v<aa, a>);
 	// zero
-	if(!bigint::gt_v<a, c> || !bigint::gt_v<a, e>) {
-		return 1;
-	}
+	static_assert(bigint::gt_v<a, c> && bigint::gt_v<a, e>);
 	// normal positive numbers
-	if(!bigint::gt_v<b, a> || !bigint::gt_v<b, f>) {
-		return 1;
-	}
+	static_assert(bigint::gt_v<b, a> && bigint::gt_v<b, f>);
 	// normal negative numbers
-	if(!bigint::gt_v<c, d> || !bigint::gt_v<c, e> || !bigint::gt_v<d, e>) {
-		return 1;
-	}
+	static_assert(bigint::gt_v<c, d> && bigint::gt_v<c, e> && bigint::gt_v<d, e>);
 
 	return 0;
 }
@@ -1625,24 +1156,18 @@ int test_bigint_shift_left() {
 		using X = bigint_pos<2>;
 		using Y = bigint::shift_left_t<X, 2>;
 		using expected = bigint_pos<2, 0, 0>;
-		if(!bigint::eq_v<Y, expected>) {
-			return 1;
-		}
+		static_assert(bigint::eq_v<Y, expected>);
 	}
 	{
 		using X = bigint_pos<2>;
 		using Y = bigint::shift_left_t<X, 0>;
-		if(!bigint::eq_v<X, Y>) {
-			return 1;
-		}
+		static_assert(bigint::eq_v<X, Y>);
 	}
 	{
 		using X = bigint_pos<2, 3>;
 		using Y = bigint::shift_left_t<X, 2>;
 		using expected = bigint_pos<2, 3, 0, 0>;
-		if(!bigint::eq_v<Y, expected>) {
-			return 1;
-		}
+		static_assert(bigint::eq_v<Y, expected>);
 	}
 
 	return 0;
@@ -1652,34 +1177,22 @@ int test_bigint_shift_right() {
 	{
 		using A = bigint_pos<1, 2, 3>;
 		using B = bigint::shift_right_t<A, 1>;
-		if (!bigint::eq_v < B, bigint_pos<1, 2>>) {
-			printf("%s\n", B::to_string().c_str());
-			return 1;
-		}
+		static_assert(bigint::eq_v<B, bigint_pos<1, 2>>);
 	}
 	{
 		using A = bigint_pos<1, 2, 3>;
 		using B = bigint::shift_right_t<A, 2>;
-		if (!bigint::eq_v < B, bigint_pos<1>>) {
-			printf("%s\n", B::to_string().c_str());
-			return 1;
-		}
+		static_assert(bigint::eq_v<B, bigint_pos<1>>);
 	}
 	{
 		using A = bigint_pos<1, 2, 3>;
 		using B = bigint::shift_right_t<A, 3>;
-		if (!bigint::eq_v<B, typename bigint::zero>) {
-			printf("%s\n", B::to_string().c_str());
-			return 1;
-		}
+		static_assert(bigint::eq_v<B, typename bigint::zero>);
 	}
 	{
 		using A = bigint_pos<1, 2, 3>;
 		using B = bigint::shift_right_t<A, 0>;
-		if (!bigint::eq_v<B, A>) {
-			printf("%s\n", B::to_string().c_str());
-			return 1;
-		}
+		static_assert(bigint::eq_v<B, A>);
 	}
 	return 0;
 }
@@ -1688,36 +1201,25 @@ int test_bigint_div2() {
 	{
 		using A = bigint_pos<12>;
 		using B = bigint::div_2_t<A>;
-		if (!bigint::eq_v<B, bigint_pos<6>>) {
-			return 1;
-		}
+		static_assert(bigint::eq_v<B, bigint_pos<6>>);
 	} 
 	{
 		using A = bigint_pos<1, 2>;
 		using B = bigint::div_2_t<A>;
 		using expected = bigint_pos<0x8000'0001U>;
-		if (!bigint::eq_v<B, expected>) {
-			printf("%s\n", B::to_string().c_str());
-			return 1;
-		}
+		static_assert(bigint::eq_v<B, expected>);
 	}
 	{
 		using A = bigint_pos<UINT32_MAX, 2>;
 		using B = bigint::div_2_t<A>;
 		using C = bigint::mul_t<B, bigint_pos<2>>;
-		if (!bigint::eq_v<A, C>) {
-			printf("%s\n", B::to_string().c_str());
-			return 1;
-		}
+		static_assert(bigint::eq_v<A, C>);
 	}
 	{
 		using A = bigint_pos<UINT32_MAX, UINT32_MAX, UINT32_MAX-1>;
 		using B = bigint::div_2_t<A>;
 		using C = bigint::mul_t<B, bigint_pos<2>>;
-		if (!bigint::eq_v<A, C>) {
-			printf("%s\n", B::to_string().c_str());
-			return 1;
-		}
+		static_assert(bigint::eq_v<A, C>);
 	}
 
 	return 0;
@@ -1731,10 +1233,7 @@ int test_bigint_div() {
 		using REM = bigint::mod_t<A, B>;
 		using QEXP = bigint_pos<2>;
 		using REXP = bigint_pos<0>;
-		if(!bigint::eq_v<QEXP, DIV> || !bigint::eq_v<REXP, REM>) {
-			printf("Q = %s\nR = %s\n", DIV::to_string().c_str(), REM::to_string().c_str());
-			return 1;
-		}
+		static_assert(bigint::eq_v<QEXP, DIV> && bigint::eq_v<REXP, REM>);
 	}
 	{
 		using A = bigint_pos<12, 12>;
@@ -1743,10 +1242,7 @@ int test_bigint_div() {
 		using REM = bigint::mod_t<A, B>;
 		using QEXP = bigint_pos<2, 2>;
 		using REXP = bigint_pos<0>;
-		if(!bigint::eq_v<QEXP, DIV> || !bigint::eq_v<REXP, REM>) {
-			printf("Q = %s\nR = %s\n", DIV::to_string().c_str(), REM::to_string().c_str());
-			return 1;
-		}
+		static_assert(bigint::eq_v<QEXP, DIV> && bigint::eq_v<REXP, REM>);
 	}
 	{
 		using A = bigint_pos<12, 13>;
@@ -1755,11 +1251,7 @@ int test_bigint_div() {
 		using REM = bigint::mod_t<A, B>;
 		using QEXP = bigint_pos<2, 2>;
 		using REXP = bigint_pos<1>;
-		if(!bigint::eq_v<QEXP, DIV> || !bigint::eq_v<REXP, REM>) {
-			printf("Q = %s\nR = %s\n", DIV::to_string().c_str(), REM::to_string().c_str());
-			printf("QEXP = %s\nR = %s\n", QEXP::to_string().c_str(), REXP::to_string().c_str());
-			return 1;
-		}
+		static_assert(bigint::eq_v<QEXP, DIV> && bigint::eq_v<REXP, REM>);
 	}
 
 	{
@@ -1769,11 +1261,7 @@ int test_bigint_div() {
 		using REM = bigint::mod_t<A, B>;
 		using QEXP = bigint_pos<1>;
 		using REXP = bigint_pos<0>;
-		if(!bigint::eq_v<QEXP, DIV> || !bigint::eq_v<REXP, REM>) {
-			printf("Q = %s\nR = %s\n", DIV::to_string().c_str(), REM::to_string().c_str());
-			printf("QEXP = %s\nR = %s\n", QEXP::to_string().c_str(), REXP::to_string().c_str());
-			return 1;
-		}
+		static_assert(bigint::eq_v<QEXP, DIV> && bigint::eq_v<REXP, REM>);
 	}
 	{
 		using A = bigint_pos<12, 13>;
@@ -1782,11 +1270,7 @@ int test_bigint_div() {
 		using REM = bigint::mod_t<A, B>;
 		using QEXP = bigint_pos<6, 6>;
 		using REXP = bigint_pos<1>;
-		if(!bigint::eq_v<QEXP, DIV> || !bigint::eq_v<REXP, REM>) {
-			printf("Q = %s\nR = %s\n", DIV::to_string().c_str(), REM::to_string().c_str());
-			printf("QEXP = %s\nR = %s\n", QEXP::to_string().c_str(), REXP::to_string().c_str());
-			return 1;
-		}
+		static_assert(bigint::eq_v<QEXP, DIV> && bigint::eq_v<REXP, REM>);
 	}
 	{
 		using A = bigint_pos<12, 12>;
@@ -1795,10 +1279,7 @@ int test_bigint_div() {
 		using REM = bigint::mod_t<A, B>;
 
 		using AA = bigint::fma_t<B, DIV, REM>;
-		if(!bigint::eq_v<AA, A>) {
-			printf("Q = %s\nR = %s\n", DIV::to_string().c_str(), REM::to_string().c_str());
-			return 1;
-		}
+		static_assert(bigint::eq_v<AA, A>);
 	}
 	{
 		using A = bigint_pos<128, 41, 17899>;
@@ -1806,10 +1287,7 @@ int test_bigint_div() {
 		using D = bigint::div_t<A, B>;
 		using R = bigint::mod_t<A, B>;
 		using E = bigint::fma_t<B, D, R>;
-		if(!bigint::eq_v<E, A>) {
-			printf("D = %s\nR = %s\n", D::to_string().c_str(), R::to_string().c_str());
-			return 1;
-		}
+		static_assert(bigint::eq_v<E, A>);
 	}
 
 	return 0;
@@ -1820,17 +1298,13 @@ int test_bigint_gcd() {
 		using A = bigint_pos<12>;
 		using B = bigint_pos<3>;
 		using G = bigint::gcd_t<A, B>;
-		if(!bigint::eq_v<bigint_pos<3>, G>) {
-			return 1;
-		}
+		static_assert(bigint::eq_v<bigint_pos<3>, G>);
 	}
 	{
 		using A = bigint_pos<12, 12>;
 		using B = bigint_pos<9>;
 		using G = bigint::gcd_t<A, B>;
-		if(!bigint::eq_v<bigint_pos<3>, G>) {
-			return 1;
-		}
+		static_assert(bigint::eq_v<bigint_pos<3>, G>);
 	}
 
 	return 0;
@@ -1840,39 +1314,27 @@ int test_bigint_from_hex() {
 	// small number
 	{
 		using A = bigint::from_hex_t<"12A">;
-		if(!bigint::eq_v<A, bigint_pos<0x12A>>) {
-			return 1;
-		}
+		static_assert(bigint::eq_v<A, bigint_pos<0x12A>>);
 	}
 	// large one digit number
 	{
 		using A = bigint::from_hex_t<"1234ABDF">;
-		if(!bigint::eq_v<A, bigint_pos<0X1234'ABDFU>>) {
-			return 1;
-		}
+		static_assert(bigint::eq_v<A, bigint_pos<0X1234'ABDFU>>);
 	}
 	// largest one digit number
 	{
 		using A = bigint::from_hex_t<"FFFFFFFF">;
-		if(!bigint::eq_v<A, bigint_pos<UINT32_MAX>>) {
-			return 1;
-		}
+		static_assert(bigint::eq_v<A, bigint_pos<UINT32_MAX>>);
 	}
 	// two digits number
 	{
 		using A = bigint::from_hex_t<"123ABF67EA">;
-		if(!bigint::eq_v<A, bigint_pos<0x12, 0X3ABF'67EA>>) {
-			printf("%s\n", A::to_string().c_str());
-			return 1;
-		}
+		static_assert(bigint::eq_v<A, bigint_pos<0x12, 0X3ABF'67EA>>);
 	}
 	// large digits number
 	{
 		using A = bigint::from_hex_t<"123456783ABF67EA">;
-		if(!bigint::eq_v<A, bigint_pos<0x1234'5678, 0X3ABF'67EA>>) {
-			printf("%s\n", A::to_string().c_str());
-			return 1;
-		}
+		static_assert(bigint::eq_v<A, bigint_pos<0x1234'5678, 0X3ABF'67EA>>);
 	}
 
 	return 0;
@@ -1883,7 +1345,6 @@ int test_bigint_to_hex() {
 		using A = bigint_pos<0x12, 0x12345678>;
 		std::string ax = A::to_hex();
 		if(ax != "+0X1212345678") {
-			printf("%s\n", ax.c_str());
 			return 1;
 		}
 	}
@@ -1891,7 +1352,6 @@ int test_bigint_to_hex() {
 		using A = bigint_pos<0xFFFEE123, 0x12345678>;
 		std::string ax = A::to_hex();
 		if(ax != "+0XFFFEE12312345678") {
-			printf("%s\n", ax.c_str());
 			return 1;
 		}
 	}
@@ -1899,7 +1359,6 @@ int test_bigint_to_hex() {
 		using A = bigint_neg<12>;
 		std::string ax = A::to_hex();
 		if(ax != "-0XC") {
-			printf("%s\n", ax.c_str());
 			return 1;
 		}
 	}
@@ -1912,37 +1371,23 @@ int test_quadratic_extension() {
 		using x = q5::inject_constant_t<2>;
 		using y = q5::inject_constant_t<3>;
 		using xy = q5::mul_t<x, y>;
-		if (xy::x::get<float>() != 6.0F) {
-			return 1;
-		}
-		if (!xy::y::is_zero_v) {
-			return 1;
-		}
+		static_assert(xy::x::get<float>() == 6.0F);
+		static_assert(xy::y::is_zero_v);
 	} 
 	{
 		using x = typename q5::template inject_values_t<1, 1>;
 		using y = typename q5::template inject_values_t<1, -1>;
 		using expected = typename q5::template inject_values_t<-4, 0>;
 		using xy = q5::mul_t<x, y>;
-		if (!q5::eq_v<expected, xy>) {
-			return 1;
-		}
+		static_assert(q5::eq_v<expected, xy>);
 	}
 	{
 		using x = typename q5::template inject_values_t<1, -1>;
 		using invx = typename q5::template div_t<typename q5::one, x>;
-		if (invx::x::x::v != -1) {
-			return 1;
-		}
-		if (invx::x::y::v != 4) {
-			return 1;
-		}
-		if (invx::y::x::v != -1) {
-			return 1;
-		}
-		if (invx::y::y::v != 4) {
-			return 1;
-		}
+		static_assert(invx::x::x::v == -1);
+		static_assert(invx::x::y::v == 4);
+		static_assert(invx::y::x::v == -1);
+		static_assert(invx::y::y::v == 4);
 	}
 
 	return 0;
@@ -1960,14 +1405,8 @@ int test_gauss_rationals() {
 		using x = Qi::inject_values_t<1, -1>;
 		using inv = Qi::div_t<typename Qi::one, x>;
 		using expected = typename Q::template val<typename bigint::one, typename bigint::template inject_constant_t<2>>;
-		if (!Q::eq_v<typename inv::x, expected>) {
-			printf("%s\n", inv::x::to_string().c_str());
-			return 1;
-		}
-		if (!Q::eq_v<typename inv::y, expected>) {
-			printf("%s\n", inv::y::to_string().c_str());
-			return 1;
-		}
+		static_assert(Q::eq_v<typename inv::x, expected>);
+		static_assert(Q::eq_v<typename inv::y, expected>);
 	}
 
 	return 0;
