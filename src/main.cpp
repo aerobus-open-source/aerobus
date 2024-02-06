@@ -1049,7 +1049,7 @@ int test_is_prime() {
 }
 
 int test_exp() {
-	using E = aerobus::exp<i32, 12>;
+	using E = aerobus::functions::exp<i32, 12>;
 	constexpr float e0 = E::eval(0.0F);
 	constexpr float e01 = E::eval(0.1F);
 	if (e0 != 1.0F) {
@@ -1161,7 +1161,7 @@ int test_continued_fraction() {
 }
 
 int test_chebyshev() {
-	using T4 = aerobus::chebyshev_T<4>;
+	using T4 = known_polynomials::chebyshev_T<4>;
 
 	if(T4::degree != 4) {
 		return 1;
@@ -1183,7 +1183,7 @@ int test_chebyshev() {
 		return 0;
 	}
 
-	using U4 = chebyshev_U<4>;
+	using U4 = known_polynomials::chebyshev_U<4>;
 	if(U4::degree != 4) {
 		return 1;
 	}
@@ -1209,13 +1209,13 @@ int test_chebyshev() {
 
 int test_laguerre() {
 	{
-		using L2 = laguerre<2>;
+		using L2 = known_polynomials::laguerre<2>;
 		static_assert(L2::coeff_at_t<2>::get<float>() == 0.5F);
 		static_assert(L2::coeff_at_t<1>::get<float>() == -2.0F);
 		static_assert(L2::coeff_at_t<0>::get<float>() == 1.0F);
 	}
 	{
-		using L3 = laguerre<3>;
+		using L3 = known_polynomials::laguerre<3>;
 		static_assert(L3::coeff_at_t<3>::x::v == -1);
 		static_assert(L3::coeff_at_t<3>::y::v == 6);
 		static_assert(L3::coeff_at_t<2>::get<float>() == 1.5F);
@@ -1228,26 +1228,26 @@ int test_laguerre() {
 
 int test_hermite() {
 	{
-		using H2 = hermite_prob<2>;
+		using H2 = known_polynomials::hermite_prob<2>;
 		static_assert(H2::coeff_at_t<2>::get<float>() == 1.0F);
 		static_assert(H2::coeff_at_t<1>::get<float>() == 0.0F);
 		static_assert(H2::coeff_at_t<0>::get<float>() == -1.0F);
 	}
 	{
-		using H3 = hermite_prob<3>;
+		using H3 = known_polynomials::hermite_prob<3>;
 		static_assert(H3::coeff_at_t<3>::get<float>() == 1.0F);
 		static_assert(H3::coeff_at_t<2>::get<float>() == 0.0F);
 		static_assert(H3::coeff_at_t<1>::get<float>() == -3.0F);
 		static_assert(H3::coeff_at_t<0>::get<float>() == 0.0F);
 	}
 	{
-		using H2 = hermite_phys<2>;
+		using H2 = known_polynomials::hermite_phys<2>;
 		static_assert(H2::coeff_at_t<2>::get<float>() == 4.0F);
 		static_assert(H2::coeff_at_t<1>::get<float>() == 0.0F);
 		static_assert(H2::coeff_at_t<0>::get<float>() == -2.0F);
 	}
 	{
-		using H3 = hermite_phys<3>;
+		using H3 = known_polynomials::hermite_phys<3>;
 		static_assert(H3::coeff_at_t<3>::get<float>() == 8.0F);
 		static_assert(H3::coeff_at_t<2>::get<float>() == 0.0F);
 		static_assert(H3::coeff_at_t<1>::get<float>() == -12.0F);

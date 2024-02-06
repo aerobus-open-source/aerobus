@@ -29,28 +29,30 @@
 
 // aligned allocation
 namespace aerobus {
-	/**
-	 * aligned allocation of count elements of type T
-	 * @tparam T the type of elements to store
-	 * @param count the number of elements
-	 * @param alignment alignment boundary
-	*/
-	template<typename T>
-	T* aligned_malloc(size_t count, size_t alignment) {
-#ifdef _MSC_VER
-		return static_cast<T*>(_aligned_malloc(count * sizeof(T), alignment));
-#else
-		return static_cast<T*>(aligned_alloc(alignment, count * sizeof(T)));
-#endif
-	}
+	namespace memory {
+		/**
+		 * aligned allocation of count elements of type T
+		 * @tparam T the type of elements to store
+		 * @param count the number of elements
+		 * @param alignment alignment boundary
+		*/
+		template<typename T>
+		T* aligned_malloc(size_t count, size_t alignment) {
+	#ifdef _MSC_VER
+			return static_cast<T*>(_aligned_malloc(count * sizeof(T), alignment));
+	#else
+			return static_cast<T*>(aligned_alloc(alignment, count * sizeof(T)));
+	#endif
+		}
 
-	template<typename T>
-	void aligned_free(T* memblock) {
-#ifdef _MSC_VER
-		_aligned_free((void*)memblock);
-#else
-		free((void*)memblock);
-#endif
+		template<typename T>
+		void aligned_free(T* memblock) {
+	#ifdef _MSC_VER
+			_aligned_free((void*)memblock);
+	#else
+			free((void*)memblock);
+	#endif
+		}
 	}
 
 	namespace internal {
@@ -60,10 +62,10 @@ namespace aerobus {
 	/// <summary>
 	/// checks if v is in arr
 	/// </summary>
-	/// <typeparam name="T"></typeparam>
-	/// <typeparam name="N"></typeparam>
-	/// <param name="arr"></param>
-	/// <param name="v"></param>
+	/// <typeparam name="T">type of elements in arr</typeparam>
+	/// <typeparam name="N">size of arr</typeparam>
+	/// <param name="arr">array of N elements of type T</param>
+	/// <param name="v">value to search</param>
 	/// <returns></returns>
 	template<typename T, size_t N>
 	constexpr bool contains(const std::array<T, N>& arr, const T& v) {
@@ -76,6 +78,8 @@ namespace aerobus {
 		return false;
 	}
 
+	/// @brief a constexpr "string" utility
+	/// @tparam N sizeof string
 	template <size_t N>
 	struct string_literal {
 		constexpr string_literal(const char(&str)[N]) {
@@ -84,10 +88,11 @@ namespace aerobus {
 
 		template<size_t i>
 		constexpr char char_at() const {
-			if constexpr (i < N) {
-				return this->value[i];
+			// first char is always \0
+			if constexpr (i + 1 < N) {
+				return this->value[i + 1];
 			}
-			return 0;
+			return '\0';
 		}
 
 		constexpr size_t len() const { return N; }
@@ -510,7 +515,7 @@ namespace aerobus {
 
 		template<typename v1, typename v2>
 		struct mul {
-			using type = val<v1::v* v2::v>;
+			using type = val<v1::v * v2::v>;
 		};
 
 		template<typename v1, typename v2>
@@ -2347,21 +2352,21 @@ namespace aerobus {
 			static constexpr size_t N = S.len();
 
 			template<size_t i>
-			static constexpr char char_at = (i < N) ? S.template char_at<i>() : '0';
+			static constexpr char char_at = (i + 1 < N) ? S.template char_at<i>() : '0';
 
 			template <char c>
 			static constexpr uint32_t from_hex = (c >= '0' && c <= '9') ? c - '0' : 10 + c - 'A';
 
 			template<size_t index>
 			static constexpr uint32_t value() {
-				constexpr uint32_t d1 = from_hex<char_at<8 * index + 1>>;
-				constexpr uint32_t d2 = from_hex<char_at<8 * index + 2>> << 4;
-				constexpr uint32_t d3 = from_hex<char_at<8 * index + 3>> << 8;
-				constexpr uint32_t d4 = from_hex<char_at<8 * index + 4>> << 12;
-				constexpr uint32_t d5 = from_hex<char_at<8 * index + 5>> << 16;
-				constexpr uint32_t d6 = from_hex<char_at<8 * index + 6>> << 20;
-				constexpr uint32_t d7 = from_hex<char_at<8 * index + 7>> << 24;
-				constexpr uint32_t d8 = from_hex<char_at<8 * index + 8>> << 28;
+				constexpr uint32_t d1 = from_hex<char_at<8 * index>>;
+				constexpr uint32_t d2 = from_hex<char_at<8 * index + 1>> << 4;
+				constexpr uint32_t d3 = from_hex<char_at<8 * index + 2>> << 8;
+				constexpr uint32_t d4 = from_hex<char_at<8 * index + 3>> << 12;
+				constexpr uint32_t d5 = from_hex<char_at<8 * index + 4>> << 16;
+				constexpr uint32_t d6 = from_hex<char_at<8 * index + 5>> << 20;
+				constexpr uint32_t d7 = from_hex<char_at<8 * index + 6>> << 24;
+				constexpr uint32_t d8 = from_hex<char_at<8 * index + 7>> << 28;
 				return d1 | d2 | d3 | d4 | d5 | d6 | d7 | d8;
 			}
 		};
@@ -2879,18 +2884,7 @@ namespace aerobus {
 			using type = typename T::one;
 			static constexpr typename T::inner_type value = type::template get<typename T::inner_type>();
 		};
-	}
 
-	/// @brief computes factorial(i)
-	/// @tparam T Ring type (e.g. i32)
-	/// @tparam i 
-	template<typename T, size_t i>
-	using factorial_t = typename internal::factorial<T, i>::type;
-
-	template<typename T, size_t i>
-	inline constexpr typename T::inner_type factorial_v = internal::factorial<T, i>::value;
-
-	namespace internal {
 		template<typename T, size_t k, size_t n, typename E = void>
 		struct combination_helper {};
 
@@ -2916,17 +2910,7 @@ namespace aerobus {
 			using type = typename internal::combination_helper<T, k, n>::type::x;
 			static constexpr typename T::inner_type value = internal::combination_helper<T, k, n>::type::template get<typename T::inner_type>();
 		};
-	}
 
-	/// @brief computes binomial coefficient (k among n)
-	/// @tparam T Ring type (i32 for example)
-	template<typename T, size_t k, size_t n>
-	using combination_t = typename internal::combination<T, k, n>::type;
-
-	template<typename T, size_t k, size_t n>
-	inline constexpr typename T::inner_type combination_v = internal::combination<T, k, n>::value;
-
-	namespace internal {
 		template<typename T, size_t m>
 		struct bernouilli;
 
@@ -2935,13 +2919,13 @@ namespace aerobus {
 			using type = typename bernouilli_helper<
 				T,
 				addfractions_t<T,
-				accum,
-				mulfractions_t<T,
-				makefraction_t<T,
-				combination_t<T, k, m + 1>,
-				typename T::one>,
-				typename bernouilli<T, k>::type
-				>
+					accum,
+					mulfractions_t<T,
+						makefraction_t<T,
+							typename combination<T, k, m + 1>::type,
+							typename T::one>,
+						typename bernouilli<T, k>::type
+					>
 				>,
 				k + 1,
 				m>::type;
@@ -2952,8 +2936,6 @@ namespace aerobus {
 		{
 			using type = accum;
 		};
-
-
 
 		template<typename T, size_t m>
 		struct bernouilli {
@@ -2976,18 +2958,8 @@ namespace aerobus {
 			template<typename floatType>
 			static constexpr floatType value = type::template get<floatType>();
 		};
-	}
 
-	/// @brief nth Bernouilli number
-	/// @tparam T Ring type (i64)
-	/// @tparam n 
-	template<typename T, size_t n>
-	using bernouilli_t = typename internal::bernouilli<T, n>::type;
-
-	template<typename FloatType, typename T, size_t n >
-	inline constexpr FloatType bernouilli_v = internal::bernouilli<T, n>::template value<FloatType>;
-
-	namespace internal {
+		// -1^k
 		template<typename T, int k, typename E = void>
 		struct alternate {};
 
@@ -3002,18 +2974,8 @@ namespace aerobus {
 			using type = typename T::template minus_t<typename T::one>;
 			static constexpr typename T::inner_type value = type::template get<typename T::inner_type>();
 		};
-	}
 
-	/// @brief (-1)^k
-	/// @tparam T Ring type
-	template<typename T, int k>
-	using alternate_t = typename internal::alternate<T, k>::type;
-
-	template<typename T, size_t k>
-	inline constexpr typename T::inner_type alternate_v = internal::alternate<T, k>::value;
-
-	// pow
-	namespace internal {
+		// pow
 		template<typename T, auto p, auto n>
 		struct pow {
 			using type = typename T::template mul_t<typename T::template val<p>, typename pow<T, p, n - 1>::type>;
@@ -3022,6 +2984,51 @@ namespace aerobus {
 		template<typename T, auto p>
 		struct pow<T, p, 0> { using type = typename T::one; };
 	}
+
+	/// @brief computes binomial coefficient (k among n) as a type (i32)
+	/// @tparam T Ring type (i32 for example)
+	template<typename T, size_t k, size_t n>
+	using combination_t = typename internal::combination<T, k, n>::type;
+
+	/// @brief computes binomial coefficient (k among n) as value (int)
+	/// @tparam T Ring type (i32 for example)
+	template<typename T, size_t k, size_t n>
+	constexpr typename T::inner_type combination_v = internal::combination<T, k, n>::value;
+
+	/// @brief nth Bernouilli number as a type
+	/// @tparam T Ring type (i64)
+	/// @tparam n 
+	template<typename T, size_t n>
+	using bernouilli_t = typename internal::bernouilli<T, n>::type;
+
+	/// @brief nth Bernouilli number as a float value
+	/// @tparam FloatType float type (float or double)
+	/// @tparam T Ring type (i64)
+	/// @tparam n 
+	template<typename FloatType, typename T, size_t n >
+	constexpr FloatType bernouilli_v = internal::bernouilli<T, n>::template value<FloatType>;
+
+	/// @brief (-1)^k as a type
+	/// @tparam T Ring type
+	template<typename T, int k>
+	using alternate_t = typename internal::alternate<T, k>::type;
+
+	/// @brief (-1)^k as a value
+	/// @tparam T Ring type
+	template<typename T, size_t k>
+	constexpr typename T::inner_type alternate_v = internal::alternate<T, k>::value;
+
+	/// @brief computes factorial(i) as a type
+	/// @tparam T Ring type (e.g. i32)
+	/// @tparam i 
+	template<typename T, size_t i>
+	using factorial_t = typename internal::factorial<T, i>::type;
+
+	/// @brief computes factorial(i) value
+	/// @tparam T Ring type (e.g. i32)
+	/// @tparam i 
+	template<typename T, size_t i>
+	constexpr typename T::inner_type factorial_v = internal::factorial<T, i>::value;
 
 	template<typename T, auto p, auto n>
 	using pow_t = typename internal::pow<T, p, n>::type;
@@ -3301,91 +3308,93 @@ namespace aerobus {
 		};
 	}
 
-	/// @brief exp(x)
-	/// @tparam T Ring type (for example i64)
-	/// @tparam deg taylor approximation degree
-	template<typename T, size_t deg>
-	using exp = taylor<T, internal::exp_coeff, deg>;
+	namespace functions {
+		/// @brief exp(x)
+		/// @tparam T Ring type (for example i64)
+		/// @tparam deg taylor approximation degree
+		template<typename T, size_t deg>
+		using exp = taylor<T, internal::exp_coeff, deg>;
 
-	/// @brief exp(x) - 1
-	/// @tparam T Ring type (for example i64)
-	/// @tparam deg taylor approximation degree
-	template<typename T, size_t deg>
-	using expm1 = typename polynomial<FractionField<T>>::template sub_t<
-		exp<T, deg>,
-		typename polynomial<FractionField<T>>::one>;
+		/// @brief exp(x) - 1
+		/// @tparam T Ring type (for example i64)
+		/// @tparam deg taylor approximation degree
+		template<typename T, size_t deg>
+		using expm1 = typename polynomial<FractionField<T>>::template sub_t<
+			exp<T, deg>,
+			typename polynomial<FractionField<T>>::one>;
 
-	/// @brief ln(1+x)
-	/// @tparam T Ring type (for example i64)
-	/// @tparam deg taylor approximation degree
-	template<typename T, size_t deg>
-	using lnp1 = taylor<T, internal::lnp1_coeff, deg>;
+		/// @brief ln(1+x)
+		/// @tparam T Ring type (for example i64)
+		/// @tparam deg taylor approximation degree
+		template<typename T, size_t deg>
+		using lnp1 = taylor<T, internal::lnp1_coeff, deg>;
 
-	/// @brief atan(x)
-	/// @tparam T Ring type (for example i64)
-	/// @tparam deg taylor approximation degree
-	template<typename T, size_t deg>
-	using atan = taylor<T, internal::atan_coeff, deg>;
+		/// @brief atan(x)
+		/// @tparam T Ring type (for example i64)
+		/// @tparam deg taylor approximation degree
+		template<typename T, size_t deg>
+		using atan = taylor<T, internal::atan_coeff, deg>;
 
-	/// @brief sin(x)
-	/// @tparam T Ring type (for example i64)
-	/// @tparam deg taylor approximation degree
-	template<typename T, size_t deg>
-	using sin = taylor<T, internal::sin_coeff, deg>;
+		/// @brief sin(x)
+		/// @tparam T Ring type (for example i64)
+		/// @tparam deg taylor approximation degree
+		template<typename T, size_t deg>
+		using sin = taylor<T, internal::sin_coeff, deg>;
 
-	/// @brief sh(x)
-	/// @tparam T Ring type (for example i64)
-	/// @tparam deg taylor approximation degree
-	template<typename T, size_t deg>
-	using sinh = taylor<T, internal::sh_coeff, deg>;
+		/// @brief sh(x)
+		/// @tparam T Ring type (for example i64)
+		/// @tparam deg taylor approximation degree
+		template<typename T, size_t deg>
+		using sinh = taylor<T, internal::sh_coeff, deg>;
 
-	/// @brief ch(x)
-	/// @tparam T Ring type (for example i64)
-	/// @tparam deg taylor approximation degree
-	template<typename T, size_t deg>
-	using cosh = taylor<T, internal::cosh_coeff, deg>;
+		/// @brief ch(x)
+		/// @tparam T Ring type (for example i64)
+		/// @tparam deg taylor approximation degree
+		template<typename T, size_t deg>
+		using cosh = taylor<T, internal::cosh_coeff, deg>;
 
-	/// @brief cos(x)
-	/// @tparam T Ring type (for example i64)
-	/// @tparam deg taylor approximation degree
-	template<typename T, size_t deg>
-	using cos = taylor<T, internal::cos_coeff, deg>;
+		/// @brief cos(x)
+		/// @tparam T Ring type (for example i64)
+		/// @tparam deg taylor approximation degree
+		template<typename T, size_t deg>
+		using cos = taylor<T, internal::cos_coeff, deg>;
 
-	/// @brief 1/(1-x)
-	/// @tparam T Ring type (for example i64)
-	/// @tparam deg taylor approximation degree
-	template<typename T, size_t deg>
-	using geometric_sum = taylor<T, internal::geom_coeff, deg>;
+		/// @brief 1/(1-x)
+		/// @tparam T Ring type (for example i64)
+		/// @tparam deg taylor approximation degree
+		template<typename T, size_t deg>
+		using geometric_sum = taylor<T, internal::geom_coeff, deg>;
 
-	/// @brief asin(x)
-	/// @tparam T Ring type (for example i64)
-	/// @tparam deg taylor approximation degree
-	template<typename T, size_t deg>
-	using asin = taylor<T, internal::asin_coeff, deg>;
+		/// @brief asin(x)
+		/// @tparam T Ring type (for example i64)
+		/// @tparam deg taylor approximation degree
+		template<typename T, size_t deg>
+		using asin = taylor<T, internal::asin_coeff, deg>;
 
-	/// @brief asinh(x)
-	/// @tparam T Ring type (for example i64)
-	/// @tparam deg taylor approximation degree
-	template<typename T, size_t deg>
-	using asinh = taylor<T, internal::asinh_coeff, deg>;
+		/// @brief asinh(x)
+		/// @tparam T Ring type (for example i64)
+		/// @tparam deg taylor approximation degree
+		template<typename T, size_t deg>
+		using asinh = taylor<T, internal::asinh_coeff, deg>;
 
-	/// @brief atanh(x)
-	/// @tparam T Ring type (for example i64)
-	/// @tparam deg taylor approximation degree
-	template<typename T, size_t deg>
-	using atanh = taylor<T, internal::atanh_coeff, deg>;
+		/// @brief atanh(x)
+		/// @tparam T Ring type (for example i64)
+		/// @tparam deg taylor approximation degree
+		template<typename T, size_t deg>
+		using atanh = taylor<T, internal::atanh_coeff, deg>;
 
-	/// @brief tan(x)
-	/// @tparam T Ring type (for example i64)
-	/// @tparam deg taylor approximation degree
-	template<typename T, size_t deg>
-	using tan = taylor<T, internal::tan_coeff, deg>;
+		/// @brief tan(x)
+		/// @tparam T Ring type (for example i64)
+		/// @tparam deg taylor approximation degree
+		template<typename T, size_t deg>
+		using tan = taylor<T, internal::tan_coeff, deg>;
 
-	/// @brief tanh(x)
-	/// @tparam T Ring type (for example i64)
-	/// @tparam deg taylor approximation degree
-	template<typename T, size_t deg>
-	using tanh = taylor<T, internal::tanh_coeff, deg>;
+		/// @brief tanh(x)
+		/// @tparam T Ring type (for example i64)
+		/// @tparam deg taylor approximation degree
+		template<typename T, size_t deg>
+		using tanh = taylor<T, internal::tanh_coeff, deg>;
+	}
 }
 
 // continued fractions
@@ -3406,8 +3415,8 @@ namespace aerobus {
 		using type = q64::template add_t<
 			typename q64::template inject_constant_t<a0>,
 			typename q64::template div_t<
-			typename q64::one,
-			typename ContinuedFraction<rest...>::type
+				typename q64::one,
+				typename ContinuedFraction<rest...>::type
 			>>;
 		static constexpr double val = type::template get<double>();
 	};
@@ -3511,21 +3520,23 @@ namespace aerobus {
 		};
 	};
 
-	/// @brief form of Hermite polynomials
-	enum hermite_kind {
-		probabilist,
-		physicist
-	};
+	namespace known_polynomials {
+		/// @brief form of Hermite polynomials
+		enum hermite_kind {
+			probabilist,
+			physicist
+		};
+	}
 
 	namespace internal {
-		template<size_t deg, hermite_kind kind>
+		template<size_t deg, known_polynomials::hermite_kind kind>
 		struct hermite_helper {};
 
 		template<size_t deg>
-		struct hermite_helper<deg, hermite_kind::probabilist> {
+		struct hermite_helper<deg, known_polynomials::hermite_kind::probabilist> {
 		private:
-			using hnm1 = typename hermite_helper<deg - 1, hermite_kind::probabilist>::type;
-			using hnm2 = typename hermite_helper<deg - 2, hermite_kind::probabilist>::type;
+			using hnm1 = typename hermite_helper<deg - 1, known_polynomials::hermite_kind::probabilist>::type;
+			using hnm2 = typename hermite_helper<deg - 2, known_polynomials::hermite_kind::probabilist>::type;
 
 		public:
 			using type = typename pi64::template sub_t<
@@ -3538,10 +3549,10 @@ namespace aerobus {
 		};
 
 		template<size_t deg>
-		struct hermite_helper<deg, hermite_kind::physicist> {
+		struct hermite_helper<deg, known_polynomials::hermite_kind::physicist> {
 		private:
-			using hnm1 = typename hermite_helper<deg - 1, hermite_kind::physicist>::type;
-			using hnm2 = typename hermite_helper<deg - 2, hermite_kind::physicist>::type;
+			using hnm1 = typename hermite_helper<deg - 1, known_polynomials::hermite_kind::physicist>::type;
+			using hnm2 = typename hermite_helper<deg - 2, known_polynomials::hermite_kind::physicist>::type;
 
 		public:
 			using type = typename pi64::template sub_t<
@@ -3556,49 +3567,51 @@ namespace aerobus {
 		};
 
 		template<>
-		struct hermite_helper<0, hermite_kind::probabilist> {
+		struct hermite_helper<0, known_polynomials::hermite_kind::probabilist> {
 			using type = typename pi64::one;
 		};
 
 		template<>
-		struct hermite_helper<1, hermite_kind::probabilist> {
+		struct hermite_helper<1, known_polynomials::hermite_kind::probabilist> {
 			using type = typename pi64::X;
 		};
 
 		template<>
-		struct hermite_helper<0, hermite_kind::physicist> {
+		struct hermite_helper<0, known_polynomials::hermite_kind::physicist> {
 			using type = typename pi64::one;
 		};
 
 		template<>
-		struct hermite_helper<1, hermite_kind::physicist> {
+		struct hermite_helper<1, known_polynomials::hermite_kind::physicist> {
 			// 2X
 			using type = typename pi64::template val<typename i64::template inject_constant_t<2>, typename i64::zero>;
 		};
 	}
 
-	/// @brief Chebyshev polynomials of first kind
-	/// @tparam deg degree of polynomial
-	template<size_t deg>
-	using chebyshev_T = typename internal::chebyshev_helper<1, deg>::type;
+	namespace known_polynomials {
+		/// @brief Chebyshev polynomials of first kind
+		/// @tparam deg degree of polynomial
+		template <size_t deg>
+		using chebyshev_T = typename internal::chebyshev_helper<1, deg>::type;
 
-	/// @brief Chebyshev polynomials of second kind
-	/// @tparam deg degree of polynomial
-	template<size_t deg>
-	using chebyshev_U = typename internal::chebyshev_helper<2, deg>::type;
+		/// @brief Chebyshev polynomials of second kind
+		/// @tparam deg degree of polynomial
+		template <size_t deg>
+		using chebyshev_U = typename internal::chebyshev_helper<2, deg>::type;
 
-	/// @brief Laguerre polynomials
-	/// @tparam deg degree of polynomial
-	template<size_t deg>
-	using laguerre = typename internal::laguerre_helper<deg>::type;
+		/// @brief Laguerre polynomials
+		/// @tparam deg degree of polynomial
+		template <size_t deg>
+		using laguerre = typename internal::laguerre_helper<deg>::type;
 
-	/// @brief Hermite polynomials, probabilist form
-	/// @tparam deg degree of polynomial
-	template<size_t deg>
-	using hermite_prob = typename internal::hermite_helper<deg, hermite_kind::probabilist>::type;
+		/// @brief Hermite polynomials, probabilist form
+		/// @tparam deg degree of polynomial
+		template <size_t deg>
+		using hermite_prob = typename internal::hermite_helper<deg, hermite_kind::probabilist>::type;
 
-	/// @brief Hermite polynomials, physicist form
-	/// @tparam deg degree of polynomial
-	template<size_t deg>
-	using hermite_phys = typename internal::hermite_helper<deg, hermite_kind::physicist>::type;
+		/// @brief Hermite polynomials, physicist form
+		/// @tparam deg degree of polynomial
+		template <size_t deg>
+		using hermite_phys = typename internal::hermite_helper<deg, hermite_kind::physicist>::type;
+	}
 }
