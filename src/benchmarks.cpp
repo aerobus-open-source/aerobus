@@ -53,7 +53,7 @@ INLINED double aero_laguerre(const double x) {
 	// 1 - L_12
 	using H = typename aerobus::pq64::template sub_t<
 		typename aerobus::pq64::one,
-		typename aerobus::laguerre<deg>>;
+		typename aerobus::known_polynomials::laguerre<deg>>;
 	return H::template eval<double>(x);
 }
 
@@ -97,7 +97,7 @@ void aerobush4(double* const __restrict output, const double* const __restrict i
 template<int deg>
 INLINED
 double sin_12(const double x) {
-	using AERO_SIN = aerobus::sin<aerobus::i64, deg>;
+	using AERO_SIN = aerobus::functions::sin<aerobus::i64, deg>;
 	return AERO_SIN::eval(AERO_SIN::eval(AERO_SIN::eval(AERO_SIN::eval(AERO_SIN::eval(AERO_SIN::eval(
 		AERO_SIN::eval(AERO_SIN::eval(AERO_SIN::eval(AERO_SIN::eval(AERO_SIN::eval(AERO_SIN::eval(x))))))))))));
 }
@@ -214,10 +214,10 @@ int main() {
 		printf("#######################################################\n");
 		printf("Evaluation of sin(x) compound 12 times with various methods\n");
 		printf("\n\n");
-		double* in = static_cast<double*>(aerobus::aligned_malloc<double>(N, 64));
-		double* out_aero = static_cast<double*>(aerobus::aligned_malloc<double>(N, 64));
-		double* out_std = static_cast<double*>(aerobus::aligned_malloc<double>(N, 64));
-		double* out_vml = static_cast<double*>(aerobus::aligned_malloc<double>(N, 64));
+		double* in = static_cast<double*>(aerobus::memory::aligned_malloc<double>(N, 64));
+		double* out_aero = static_cast<double*>(aerobus::memory::aligned_malloc<double>(N, 64));
+		double* out_std = static_cast<double*>(aerobus::memory::aligned_malloc<double>(N, 64));
+		double* out_vml = static_cast<double*>(aerobus::memory::aligned_malloc<double>(N, 64));
 		memset((void*)out_aero, 0, N * sizeof(double));
 		memset((void*)out_std, 0, N * sizeof(double));
 		memset((void*)out_vml, 0, N * sizeof(double));
@@ -294,9 +294,9 @@ int main() {
 		printf("Evaluation of 1-L12(x) compound 12 times with different methods\n");
 		printf("Where L12 is the Laguerre polynomial of degree 12\n");
 		printf("\n");
-		double* input = aerobus::aligned_malloc<double>(N, 1024);
-		double* std_output = aerobus::aligned_malloc<double>(N, 1024);
-		double* aero_output = aerobus::aligned_malloc<double>(N, 1024);
+		double* input = aerobus::memory::aligned_malloc<double>(N, 1024);
+		double* std_output = aerobus::memory::aligned_malloc<double>(N, 1024);
+		double* aero_output = aerobus::memory::aligned_malloc<double>(N, 1024);
 
 		for (size_t i = 0; i < N; ++i) {
 			input[i] = drand(0.000000001, 0.0000001);
@@ -343,7 +343,7 @@ int main() {
 			max_error = error > max_error ? error : max_error;
 			average_error += error;
 		}
-		printf("Laguerre average error : %.3e\n", average_error / (double)N);
-		printf("Laguerre     max error : %.3e\n", max_error);
+		printf("Laguerre average (relative) error : %.3e\n", average_error / (double)N);
+		printf("Laguerre     max (relative) error : %.3e\n", max_error);
 	}
 }
