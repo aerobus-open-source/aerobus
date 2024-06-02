@@ -263,12 +263,17 @@ Compile with -std=c++20 (at least)
 see [conformance view](https://godbolt.org/z/z6Wbdr15s)
 
 ### Test and bench
+Install [OpenMP](https://www.openmp.org/resources/openmp-compilers-tools/) (necessary for benchmarks)
+
+
 Move to the top directory then : 
 ```bash
 mkdir build
 cd build
 cmake ..
 ```
+
+Then use the appropriate way to compile executables (either using clang++/g++ or visual studio, depending on your OS)
 
 This creates (in the `build` directory) an `aerobus_test` executable which runs all tests and prints
 `ALL TESTS OK` 
@@ -277,18 +282,48 @@ if everything went fine
 
 ## benchmarks
 Benchmarks are written for Intel CPUs having AVX512f and AVX512vl flags. 
+They work only on linux, with g++ installed
 
-then run `make benchmarks`
+```bash
+cd src
+make benchmarks
+```
 
 results on my laptop : 
 
 ```
-[aerobus] time for 33554432 sin  (compound 12 times) : 0.132519
-[aerobus] achieved Gflops : 39.499793
-[std::math] time for 33554432 sin (compound 12 times) : 0.527655
-[std::math] achieved Gflops : 9.920292
-[vml] time for 33554432 sin  (compound 12 times) : 0.278653
-[vml] achieved Gflops : 18.784980
+./benchmarks_avx512.exe
+[std math] 5.358e-01 Gsin/s
+[std fast math] 3.389e+00 Gsin/s
+[aerobus deg 1] 1.871e+01 Gsin/s
+average error (vs std) : 4.36e-02
+max error (vs std) : 1.50e-01
+[aerobus deg 3] 1.943e+01 Gsin/s
+average error (vs std) : 1.85e-04
+max error (vs std) : 8.17e-04
+[aerobus deg 5] 1.335e+01 Gsin/s
+average error (vs std) : 6.07e-07
+max error (vs std) : 3.63e-06
+[aerobus deg 7] 8.634e+00 Gsin/s
+average error (vs std) : 1.27e-09
+max error (vs std) : 9.75e-09
+[aerobus deg 9] 6.171e+00 Gsin/s
+average error (vs std) : 1.89e-12
+max error (vs std) : 1.78e-11
+[aerobus deg 11] 4.731e+00 Gsin/s
+average error (vs std) : 2.12e-15
+max error (vs std) : 2.40e-14
+[aerobus deg 13] 3.862e+00 Gsin/s
+average error (vs std) : 3.16e-17
+max error (vs std) : 3.33e-16
+[aerobus deg 15] 3.359e+00 Gsin/s
+average error (vs std) : 3.13e-17
+max error (vs std) : 3.33e-16
+[aerobus deg 17] 2.947e+00 Gsin/s
+average error (vs std) : 3.13e-17
+max error (vs std) : 3.33e-16
+average error (vs std) : 3.13e-17
+max error (vs std) : 3.33e-16
 ```
 
 
