@@ -1,3 +1,5 @@
+#ifndef IMPORTS_CONWAYPOLYNOMIALS_H_
+#define IMPORTS_CONWAYPOLYNOMIALS_H_
 template<int p, int n>
 struct ConwayPolynomial;
 
@@ -1944,3 +1946,4 @@ template<> struct ConwayPolynomial<997, 6> { using ZPZ = aerobus::zpz<997>; usin
 template<> struct ConwayPolynomial<997, 7> { using ZPZ = aerobus::zpz<997>; using type = POLYV<ZPZV<1>, ZPZV<0>, ZPZV<0>, ZPZV<0>, ZPZV<0>, ZPZV<0>, ZPZV<1>, ZPZV<990>>; };
 template<> struct ConwayPolynomial<997, 8> { using ZPZ = aerobus::zpz<997>; using type = POLYV<ZPZV<1>, ZPZV<0>, ZPZV<0>, ZPZV<0>, ZPZV<0>, ZPZV<934>, ZPZV<473>, ZPZV<241>, ZPZV<7>>; };
 template<> struct ConwayPolynomial<997, 9> { using ZPZ = aerobus::zpz<997>; using type = POLYV<ZPZV<1>, ZPZV<0>, ZPZV<0>, ZPZV<0>, ZPZV<0>, ZPZV<0>, ZPZV<39>, ZPZV<732>, ZPZV<616>, ZPZV<990>>; };
+#endif  // IMPORTS_CONWAYPOLYNOMIALS_H_
