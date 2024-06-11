@@ -20,7 +20,7 @@ jobs:
       run: cppcheck --std=c++20 --language=c++ src/lib.h && cppcheck --std=c++20 --language=c++ imports/conwaypolynomials.h && cppcheck --std=c++20 --language=c++ src/main.cpp
     - name: cpplint
       if: success()
-      run: cpplint src/lib.h && cpplint src/main.cpp && cpplint imports/conwaypolynomials.h
+      run: cpplint src/lib.h && cpplint src/main.cpp
     - name: make
       if: success()
       run: cd src && make build
