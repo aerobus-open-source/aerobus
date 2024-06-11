@@ -254,11 +254,9 @@ namespace aerobus
 ```
 
 ## HOW TO
-Clone or download the repo somewhere
-
-include "lib.h" in code
-
-Compile with -std=c++20 (at least)
+- Clone or download the repo somewhere
+- include "lib.h" in code
+- Compile with -std=c++20 (at least) -I<install_location>
 
 see [conformance view](https://godbolt.org/z/z6Wbdr15s)
 
@@ -275,8 +273,15 @@ cmake ..
 
 Then use the appropriate way to compile executables (either using clang++/g++ or visual studio, depending on your OS)
 
-This creates (in the `build` directory) an `aerobus_test` executable which runs all tests and prints
-`ALL TESTS OK` 
+This creates (in the `build` directory) an `aerobus_test` executable which runs all tests and prints: 
+```bash
+test_name1 succeeded
+test_name_2 succeeded
+...
+
+ALL TESTS OK
+``` 
+
 if everything went fine
 
 
