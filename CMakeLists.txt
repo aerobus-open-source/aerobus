@@ -10,6 +10,34 @@ find_package(OpenMP REQUIRED)
 include(CheckCXXSourceRuns)
 set(AVX_FLAGS)
 set(CMAKE_REQUIRED_FLAGS)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+
+include(FetchContent)
+FetchContent_Declare(
+  googletest
+  URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
+)
+
+FetchContent_MakeAvailable(googletest)
+
+enable_testing()
+
+add_executable(
+  lib_tests
+  src/lib_tests.cpp
+)
+
+target_link_libraries(
+  lib_tests
+  GTest::gtest_main
+)
+
+include(GoogleTest)
+gtest_discover_tests(lib_tests)
+
+
 
 check_cxx_source_runs("
         #include <immintrin.h>
@@ -31,16 +59,12 @@ check_cxx_source_runs("
         }"
         HAVE_AVX512_EXTENSIONS)
 
-
-set(CMAKE_CXX_STANDARD 20)
-
 if(MSVC) 
   set(CMAKE_CXX_FLAGS "${OpenMP_CXX_FLAGS} /O2 /we4309 /we4756 /D_USE_MATH_DEFINES /Wall /wd4711 /wd4710 /wd4127 /wd4577 /wd4100")
 else()
   set(CMAKE_CXX_FLAGS "${OpenMP_CXX_FLAGS} -O3 -ftemplate-depth=30000 -ftemplate-backtrace-limit=0 -Werror=overflow -Wall")
 endif()
 
-add_executable(aerobus_test src/main.cpp src/lib.h imports/conwaypolynomials.h)
 if(HAVE_AVX512_EXTENSIONS)
     message("AVX512 detected, adding benchmarks")
     if(MSVC)
