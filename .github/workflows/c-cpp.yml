@@ -17,16 +17,13 @@ jobs:
       run: sudo apt-get install -y clang g++ libomp-dev cppcheck cpplint
     - name: cppcheck
       if: success()
-      run: cppcheck --std=c++20 --language=c++ src/lib.h && cppcheck --std=c++20 --language=c++ imports/conwaypolynomials.h && cppcheck --std=c++20 --language=c++ src/main.cpp
+      run: cppcheck --std=c++20 --language=c++ src/lib.h && cppcheck --std=c++20 --language=c++ imports/conwaypolynomials.h && cppcheck --std=c++20 --language=c++ src/lib_tests.cpp
     - name: cpplint
       if: success()
-      run: cpplint src/lib.h && cpplint src/main.cpp
-    - name: make
-      if: success()
-      run: cd src && make build
+      run: cpplint src/lib.h && cpplint src/lib_tests.cpp
     - name: test
       if: success()
-      run: cd src && make run
+      run: cmake -S . -B build && cmake --build build && cd build && ctest
   paper:
     runs-on: ubuntu-latest
     name: Paper Draft
