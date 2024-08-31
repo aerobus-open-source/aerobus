@@ -3,6 +3,7 @@
 #include <array>
 #include <cmath>
 #include <cstdlib>
+#include <gtest/gtest.h>
 
 #include "./lib.h"
 #include "../imports/conwaypolynomials.h"
@@ -15,95 +16,61 @@
 
 using namespace aerobus;  // NOLINT
 
-int test_type_at() {
-    if (!std::is_same<internal::type_at_t<0, float, int, int64_t>, float>::value) {
-        return 1;
-    }
-    if (!std::is_same<internal::type_at_t<1, float, int, int64_t>, int>::value) {
-        return 1;
-    }
-    if (!std::is_same<internal::type_at_t<2, float, int, int64_t>, int64_t>::value) {
-        return 1;
-    }
-
-    return 0;
+TEST(utilies, type_at) {
+    EXPECT_TRUE((std::is_same<internal::type_at_t<0, float, int, int64_t>, float>::value));
+    EXPECT_TRUE((std::is_same<internal::type_at_t<1, float, int, int64_t>, int>::value));
+    EXPECT_TRUE((std::is_same<internal::type_at_t<2, float, int, int64_t>, int64_t>::value));
 }
 
-int test_poly_simplify() {
+TEST(polynomials, simplify) {
     using poly1 = polynomial<i32>::val<i32::val<0>, i32::val<1>, i32::val<2>>;
     using simplified1 = polynomial<i32>::simplify_t<poly1>;
     using expected1 = polynomial<i32>::val<i32::val<1>, i32::val<2>>;
-    if (!std::is_same<expected1, simplified1>::value) {
-        return 1;
-    }
+    EXPECT_TRUE((std::is_same<expected1, simplified1>::value));
 
     using poly2 = polynomial<i32>::val<i32::val<12>>;
     using simplified2 = polynomial<i32>::simplify_t<poly2>;
-    if (!std::is_same<poly2, simplified2>::value) {
-        return 1;
-    }
-
-    return 0;
+    EXPECT_TRUE((std::is_same<poly2, simplified2>::value));
 }
 
-int test_poly_eval() {
+TEST(polynomials, eval) {
     // 1 + 2x + 3x^2
     using poly = polynomial<i32>::val<i32::val<3>, i32::val<2>, i32::val<1>>;
     constexpr int v = poly::eval(1);
-    if (v != 6) {
-        return 1;
-    }
+    EXPECT_EQ(v, 6);
     constexpr float vv = poly::eval(1.0f);
-    if (vv != 6.0f) {
-        return 1;
-    }
+    EXPECT_EQ(vv, 6.0f);
 
     // 1/2 + 3x/2
     using polyf = polynomial<q32>::val<q32::val<i32::val<3>, i32::val<2>>, q32::val<i32::val<1>, i32::val<2>>>;
     constexpr float vvv = polyf::eval(1.0f);
-    if (vvv != 2.0f) {
-        return 1;
-    }
-    constexpr double vvvv = polyf::eval(-1.0);
-    if (vvvv != -1.0) {
-        return 1;
-    }
+    EXPECT_EQ(vvv, 2.0f);
 
-    return 0;
+    constexpr double vvvv = polyf::eval(-1.0);
+    EXPECT_EQ(vvvv, -1.0);
 }
 
-int test_fraction_field_eval() {
+TEST(fraction_field, eval) {
     using half = q32::val<i32::one, i32::val<2>>;
     constexpr float x = half::eval(2.0f);
-    if (x != 0.5f) {
-        return 1;
-    }
+    EXPECT_EQ(x, 0.5f);
+
     using thirdhalf = q32::val<i32::val<3>, i32::val<2>>;
     constexpr float y = thirdhalf::eval(1.0f);
-    if (y != 1.5f) {
-        return 1;
-    }
+    EXPECT_EQ(y, 1.5f);
 
     // 3/2 + x / 2
     using polyA = polynomial<q32>::val<half, thirdhalf>;
     constexpr float a = polyA::eval(2.0f);
-    if (a != 2.5F) {
-        return 1;
-    }
+    EXPECT_EQ(a, 2.5f);
+
     // 1/2 + x
     using polyB = polynomial<q32>::val<q32::one, half>;
     using F = fpq32::val<polyA, polyB>;
     constexpr float z = F::eval(2.0f);
-    if (z != 1.0f) {
-        return 1;
-    }
+    EXPECT_EQ(z, 1.0f);
     constexpr float zz = F::eval(-1.0f);
-    if (zz != -2.0f) {
-        return 1;
-    }
-
-
-    return 0;
+    EXPECT_EQ(zz, -2.0f);
 }
 
 int test_coeff_at() {
@@ -1209,43 +1176,43 @@ int test_chebyshev() {
             printf("%s succeeded\n", #test_name); \
         }
 
-int main(int argc, char* argv[]) {
-    RUN_TEST(test_chebyshev);
-    RUN_TEST(test_continued_fraction)
-    RUN_TEST(test_concept_ring)
-    RUN_TEST(test_type_list)
-    RUN_TEST(test_type_at)
-    RUN_TEST(test_poly_simplify)
-    RUN_TEST(test_coeff_at)
-    RUN_TEST(test_poly_add)
-    RUN_TEST(test_poly_sub)
-    RUN_TEST(test_poly_derive)
-    RUN_TEST(test_poly_eq)
-    RUN_TEST(test_gcd)
-    RUN_TEST(test_poly_mul)
-    RUN_TEST(test_poly_to_string)
-    RUN_TEST(test_monomial)
-    RUN_TEST(test_poly_gcd)
-    RUN_TEST(test_poly_eval)
-    RUN_TEST(test_add_q32)
-    RUN_TEST(test_gt_q32)
-    RUN_TEST(test_is_zero_q32)
-    RUN_TEST(test_fraction_field_eval)
-    RUN_TEST(test_sub_q32)
-    RUN_TEST(test_mul_q32)
-    RUN_TEST(test_div_q32)
-    RUN_TEST(test_eq_q32)
-    RUN_TEST(test_fraction_field_of_fraction_field)
-    RUN_TEST(test_quotient_ring_is_z2z)
-    RUN_TEST(test_instanciate_F4)
-    RUN_TEST(test_instanciate_large_finite_field)
-    RUN_TEST(test_factorial)
-    RUN_TEST(test_combination)
-    RUN_TEST(test_bernouilli)
-    RUN_TEST(test_alternate)
-    RUN_TEST(test_exp)
-    RUN_TEST(test_is_prime)
-    RUN_TEST(test_zpz)
-    printf("ALL TESTS OK\n");
-    return 0;
-}
+// int main(int argc, char* argv[]) {
+//     RUN_TEST(test_chebyshev);
+//     RUN_TEST(test_continued_fraction)
+//     RUN_TEST(test_concept_ring)
+//     RUN_TEST(test_type_list)
+//     RUN_TEST(test_type_at)
+//     RUN_TEST(test_poly_simplify)
+//     RUN_TEST(test_coeff_at)
+//     RUN_TEST(test_poly_add)
+//     RUN_TEST(test_poly_sub)
+//     RUN_TEST(test_poly_derive)
+//     RUN_TEST(test_poly_eq)
+//     RUN_TEST(test_gcd)
+//     RUN_TEST(test_poly_mul)
+//     RUN_TEST(test_poly_to_string)
+//     RUN_TEST(test_monomial)
+//     RUN_TEST(test_poly_gcd)
+//     RUN_TEST(test_poly_eval)
+//     RUN_TEST(test_add_q32)
+//     RUN_TEST(test_gt_q32)
+//     RUN_TEST(test_is_zero_q32)
+//     RUN_TEST(test_fraction_field_eval)
+//     RUN_TEST(test_sub_q32)
+//     RUN_TEST(test_mul_q32)
+//     RUN_TEST(test_div_q32)
+//     RUN_TEST(test_eq_q32)
+//     RUN_TEST(test_fraction_field_of_fraction_field)
+//     RUN_TEST(test_quotient_ring_is_z2z)
+//     RUN_TEST(test_instanciate_F4)
+//     RUN_TEST(test_instanciate_large_finite_field)
+//     RUN_TEST(test_factorial)
+//     RUN_TEST(test_combination)
+//     RUN_TEST(test_bernouilli)
+//     RUN_TEST(test_alternate)
+//     RUN_TEST(test_exp)
+//     RUN_TEST(test_is_prime)
+//     RUN_TEST(test_zpz)
+//     printf("ALL TESTS OK\n");
+//     return 0;
+// }
