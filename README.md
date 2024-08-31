@@ -11,6 +11,82 @@ Unlike most competing libraries, it's quite easy to add a custom function as Aer
 
 Code is tested against MSVC, CLANG and GCC, see report [here](https://godbolt.org/z/qnfP99KWv)
 
+
+## HOW TO
+- Clone or download the repository somewhere, or just download the aerobus.h
+- In your code, add : `#include "aerobus.h"`
+- Compile with -std=c++20 (at least) -I<install_location>
+  
+Aerobus provide a definition for low-degree (up to 997) conway polynomials. To use them, define AEROBUS_CONWAY_IMPORTS before including aerobus.h
+
+### Unit Test
+Install [Cmake](https://cmake.org/download/)
+Install a recent compiler (supporting c++20), such as MSVC, G++ or Clang++
+
+Move to the top directory then : 
+```bash
+cmake -S . -B build
+cmake --build build
+cd build && ctest
+```
+
+Terminal should write : 
+``` 
+100% tests passed, 0 tests failed out of 38
+```
+
+### Benchmarks
+Benchmarks are written for Intel CPUs having AVX512f and AVX512vl flags, they work only on Linux operating system using g++. 
+
+In addition of Cmake and compiler, install [OpenMP](https://www.openmp.org/resources/openmp-compilers-tools/).
+Then move to top directory : 
+
+```bash
+rm -rf build 
+mkdir build
+cd build
+cmake ..
+make aerobus_benchmarks
+./aerobus_benchmarks
+```
+
+results on my laptop : 
+
+```
+./benchmarks_avx512.exe
+[std math] 5.358e-01 Gsin/s
+[std fast math] 3.389e+00 Gsin/s
+[aerobus deg 1] 1.871e+01 Gsin/s
+average error (vs std) : 4.36e-02
+max error (vs std) : 1.50e-01
+[aerobus deg 3] 1.943e+01 Gsin/s
+average error (vs std) : 1.85e-04
+max error (vs std) : 8.17e-04
+[aerobus deg 5] 1.335e+01 Gsin/s
+average error (vs std) : 6.07e-07
+max error (vs std) : 3.63e-06
+[aerobus deg 7] 8.634e+00 Gsin/s
+average error (vs std) : 1.27e-09
+max error (vs std) : 9.75e-09
+[aerobus deg 9] 6.171e+00 Gsin/s
+average error (vs std) : 1.89e-12
+max error (vs std) : 1.78e-11
+[aerobus deg 11] 4.731e+00 Gsin/s
+average error (vs std) : 2.12e-15
+max error (vs std) : 2.40e-14
+[aerobus deg 13] 3.862e+00 Gsin/s
+average error (vs std) : 3.16e-17
+max error (vs std) : 3.33e-16
+[aerobus deg 15] 3.359e+00 Gsin/s
+average error (vs std) : 3.13e-17
+max error (vs std) : 3.33e-16
+[aerobus deg 17] 2.947e+00 Gsin/s
+average error (vs std) : 3.13e-17
+max error (vs std) : 3.33e-16
+average error (vs std) : 3.13e-17
+max error (vs std) : 3.33e-16
+```
+
 ## examples
 ### pure compile time
 Let us consider the following program, featuring function exp - 1, with 13 64 bits coefficients
@@ -253,83 +329,6 @@ namespace aerobus
 }
 ```
 
-## HOW TO
-- Clone or download the repo somewhere
-- include "lib.h" in code
-- Compile with -std=c++20 (at least) -I<install_location>
-
-see [conformance view](https://godbolt.org/z/z6Wbdr15s)
-
-### Test and bench
-Install [OpenMP](https://www.openmp.org/resources/openmp-compilers-tools/) (necessary for benchmarks)
-
-
-Move to the top directory then : 
-```bash
-mkdir build
-cd build
-cmake ..
-```
-
-Then use the appropriate way to compile executables (either using clang++/g++ or visual studio, depending on your OS)
-
-This creates (in the `build` directory) an `aerobus_test` executable which runs all tests and prints: 
-```bash
-test_name1 succeeded
-test_name_2 succeeded
-...
-
-ALL TESTS OK
-``` 
-
-if everything went fine
-
-
-## benchmarks
-Benchmarks are written for Intel CPUs having AVX512f and AVX512vl flags. 
-They work only on linux, with g++ installed
-
-```bash
-cd src
-make benchmarks
-```
-
-results on my laptop : 
-
-```
-./benchmarks_avx512.exe
-[std math] 5.358e-01 Gsin/s
-[std fast math] 3.389e+00 Gsin/s
-[aerobus deg 1] 1.871e+01 Gsin/s
-average error (vs std) : 4.36e-02
-max error (vs std) : 1.50e-01
-[aerobus deg 3] 1.943e+01 Gsin/s
-average error (vs std) : 1.85e-04
-max error (vs std) : 8.17e-04
-[aerobus deg 5] 1.335e+01 Gsin/s
-average error (vs std) : 6.07e-07
-max error (vs std) : 3.63e-06
-[aerobus deg 7] 8.634e+00 Gsin/s
-average error (vs std) : 1.27e-09
-max error (vs std) : 9.75e-09
-[aerobus deg 9] 6.171e+00 Gsin/s
-average error (vs std) : 1.89e-12
-max error (vs std) : 1.78e-11
-[aerobus deg 11] 4.731e+00 Gsin/s
-average error (vs std) : 2.12e-15
-max error (vs std) : 2.40e-14
-[aerobus deg 13] 3.862e+00 Gsin/s
-average error (vs std) : 3.16e-17
-max error (vs std) : 3.33e-16
-[aerobus deg 15] 3.359e+00 Gsin/s
-average error (vs std) : 3.13e-17
-max error (vs std) : 3.33e-16
-[aerobus deg 17] 2.947e+00 Gsin/s
-average error (vs std) : 3.13e-17
-max error (vs std) : 3.33e-16
-average error (vs std) : 3.13e-17
-max error (vs std) : 3.33e-16
-```
 
 
 [![DOI](https://zenodo.org/badge/499577459.svg)](https://zenodo.org/badge/latestdoi/499577459)
