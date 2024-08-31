@@ -1,9 +1,9 @@
+#include <gtest/gtest.h>
 #include <cstdio>
 #include <typeinfo>
 #include <array>
 #include <cmath>
 #include <cstdlib>
-#include <gtest/gtest.h>
 
 #include "./lib.h"
 #include "../imports/conwaypolynomials.h"
