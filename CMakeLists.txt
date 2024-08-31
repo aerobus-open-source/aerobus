@@ -37,7 +37,13 @@ target_link_libraries(
 include(GoogleTest)
 gtest_discover_tests(lib_tests)
 
+set(CMAKE_REQUIRED_FLAGS_SAVED, "${CMAKE_REQUIRED_FLAGS}")
 
+if(MSVC) 
+  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} /arch:AVX512")
+else()
+  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -mavx512f -mavx512vl")
+endif()
 
 check_cxx_source_runs("
         #include <immintrin.h>
@@ -46,10 +52,10 @@ check_cxx_source_runs("
           __m512d a, b, c;
           const double src[8] = { 1., 2., 3., 4., 5., 6., 7., 8. };
           double dst[8];
-          a =  _mm512_loadu_pd((__m512d*)src);
-          b =  _mm512_loadu_pd((__m512d*)src);
+          a =  _mm512_loadu_pd(reinterpret_cast<const __m512d*>(src));
+          b =  _mm512_loadu_pd(reinterpret_cast<const __m512d*>(src));
           c = _mm512_add_pd(a, b);
-          _mm512_storeu_pd((__m512d*)dst, c);
+          _mm512_storeu_pd(reinterpret_cast<__m512d*>(dst), c);
           for(int i = 0; i < 8; i++) {
             if((src[i] + src[i]) != dst[i]) {
               return -1;
@@ -58,6 +64,8 @@ check_cxx_source_runs("
           return 0;
         }"
         HAVE_AVX512_EXTENSIONS)
+
+set(CMAKE_REQUIRED_FLAGS, "${CMAKE_REQUIRED_FLAGS_SAVED}")
 
 if(MSVC) 
   set(CMAKE_CXX_FLAGS "${OpenMP_CXX_FLAGS} /O2 /we4309 /we4756 /D_USE_MATH_DEFINES /Wall /wd4711 /wd4710 /wd4127 /wd4577 /wd4100")
@@ -72,7 +80,7 @@ if(HAVE_AVX512_EXTENSIONS)
     else()
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx512f -mavx512vl")
     endif()
-    add_executable(aerobus_benchmarks src/benchmarks.cpp src/lib.h imports/conwaypolynomials.)
+    add_executable(aerobus_benchmarks src/benchmarks.cpp src/aerobus.h)
 else()
     message("AVX512 not detected, benchmarks need manual configuration")
 endif()

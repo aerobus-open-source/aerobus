@@ -5,8 +5,8 @@
 #include <cmath>
 #include <cstdlib>
 
-#include "./lib.h"
-#include "../imports/conwaypolynomials.h"
+#define AEROBUS_CONWAY_IMPORTS
+#include "./aerobus.h"
 
 #ifdef _MSC_VER
 #define _USE_MATH_DEFINES
