@@ -6,7 +6,7 @@ clean:
 	rm -rf build
 
 doc:
-	cd doxygen Doxyfile
+	doxygen Doxyfile
 	cd documentation/latex && make
 
 tests:
