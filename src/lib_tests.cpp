@@ -31,6 +31,11 @@ TEST(polynomials, simplify) {
     using poly2 = polynomial<i32>::val<i32::val<12>>;
     using simplified2 = polynomial<i32>::simplify_t<poly2>;
     EXPECT_TRUE((std::is_same_v<poly2, simplified2>));
+
+    using poly3 = polynomial<i32>::val<i32::val<0>, i32::val<0>, i32::val<1>, i32::val<2>>;
+    using simplified3 = polynomial<i32>::simplify_t<poly3>;
+    using expected3 = polynomial<i32>::val<i32::val<1>, i32::val<2>>;
+    EXPECT_TRUE((std::is_same_v<expected3, simplified3>));
 }
 
 TEST(polynomials, eval) {
@@ -197,6 +202,13 @@ TEST(polynomials, sub) {
     }
 }
 
+TEST(i32, eq) {
+    using a = i32::inject_constant_t<2>;
+    using b = i32::inject_constant_t<3>;
+    using c = i32::val<2>;
+    EXPECT_TRUE((i32::eq_v<a, c>));
+    EXPECT_FALSE((i32::eq_v<a, b>));
+}
 
 TEST(polynomials, eq) {
     {
@@ -685,7 +697,7 @@ TEST(utilities, alternate) {
     EXPECT_EQ(a2, 1);
 }
 
-TEST(utilites, type_list) {
+TEST(type_list, basic_assertions) {
     using A = type_list<int, float>;
     EXPECT_EQ(A::length, 2);
     EXPECT_TRUE((std::is_same_v<A::at<0>, int>));
@@ -705,6 +717,30 @@ TEST(utilites, type_list) {
     EXPECT_EQ(D::tail::length, 1);
     EXPECT_TRUE((std::is_same_v<D::head::at<0>, float>));
     EXPECT_TRUE((std::is_same_v<D::tail::at<0>, double>));
+}
+
+TEST(type_list, more_complex_assertions) {
+    {
+        using t = type_list<float, int, double>;
+        using t2 = t::remove<1>;
+        EXPECT_EQ(t2::length, 2);
+        EXPECT_TRUE((std::is_same_v<t2::at<0>, float>));
+        EXPECT_TRUE((std::is_same_v<t2::at<1>, double>));
+    }
+    {
+        using t = type_list<float, double>;
+        using t2 = t::insert<int, 1>;
+        EXPECT_EQ(t2::length, 3);
+        EXPECT_TRUE((std::is_same_v<t2::at<0>, float>));
+        EXPECT_TRUE((std::is_same_v<t2::at<1>, int>));
+        EXPECT_TRUE((std::is_same_v<t2::at<2>, double>));
+    }
+    {
+        using t = type_list<>;
+        using t2 = t::insert<float, 0>;
+        EXPECT_EQ(t2::length, 1);
+        EXPECT_TRUE((std::is_same_v<t2::at<0>, float>));
+    }
 }
 
 TEST(concepts, ring) {
