@@ -708,65 +708,84 @@ namespace aerobus {
 
      public:
         /// @brief addition operator
+        /// @tparam v1 : an element of aerobus::i64::val
+        /// @tparam v2 : an element of aerobus::i64::val
         template<typename v1, typename v2>
         using add_t = typename add<v1, v2>::type;
 
         /// @brief substraction operator
+        /// @tparam v1 : an element of aerobus::i64::val
+        /// @tparam v2 : an element of aerobus::i64::val
         template<typename v1, typename v2>
         using sub_t = typename sub<v1, v2>::type;
 
         /// @brief multiplication operator
+        /// @tparam v1 : an element of aerobus::i64::val
+        /// @tparam v2 : an element of aerobus::i64::val
         template<typename v1, typename v2>
         using mul_t = typename mul<v1, v2>::type;
 
         /// @brief division operator
+        /// @tparam v1 : an element of aerobus::i64::val
+        /// @tparam v2 : an element of aerobus::i64::val
         template<typename v1, typename v2>
         using div_t = typename div<v1, v2>::type;
 
         /// @brief modulus operator
+        /// @tparam v1 : an element of aerobus::i64::val
+        /// @tparam v2 : an element of aerobus::i64::val
         template<typename v1, typename v2>
         using mod_t = typename remainder<v1, v2>::type;
 
         /// @brief strictly greater operator (v1 > v2) - type
+        /// @tparam v1 : an element of aerobus::i64::val
+        /// @tparam v2 : an element of aerobus::i64::val
         template<typename v1, typename v2>
         using gt_t = typename gt<v1, v2>::type;
 
         /// @brief strictly greater operator (v1 > v2) - boolean value
-        /// @tparam v1
-        /// @tparam v2
+        /// @tparam v1 : an element of aerobus::i64::val
+        /// @tparam v2 : an element of aerobus::i64::val
         template<typename v1, typename v2>
         static constexpr bool gt_v = gt_t<v1, v2>::value;
 
         /// @brief strict less operator (v1 < v2)
+        /// @tparam v1 : an element of aerobus::i64::val
+        /// @tparam v2 : an element of aerobus::i64::val
         template<typename v1, typename v2>
         using lt_t = typename lt<v1, v2>::type;
 
         /// @brief strictly smaller operator (v1 < v2) - boolean value
-        /// @tparam v1
-        /// @tparam v2
+        /// @tparam v1 : an element of aerobus::i64::val
+        /// @tparam v2 : an element of aerobus::i64::val
         template<typename v1, typename v2>
         static constexpr bool lt_v = lt_t<v1, v2>::value;
 
         /// @brief equality operator (type)
+        /// @tparam v1 : an element of aerobus::i64::val
+        /// @tparam v2 : an element of aerobus::i64::val
         template<typename v1, typename v2>
         using eq_t = typename eq<v1, v2>::type;
 
         /// @brief equality operator (boolean value)
-        /// @tparam v1
-        /// @tparam v2
+        /// @tparam v1 : an element of aerobus::i64::val
+        /// @tparam v2 : an element of aerobus::i64::val
         template<typename v1, typename v2>
         static constexpr bool eq_v = eq_t<v1, v2>::value;
 
         /// @brief greatest common divisor
+        /// @tparam v1 : an element of aerobus::i64::val
+        /// @tparam v2 : an element of aerobus::i64::val
         template<typename v1, typename v2>
         using gcd_t = gcd_t<i64, v1, v2>;
 
         /// @brief is v posititive (type)
+        /// @tparam v1 : an element of aerobus::i64::val
         template<typename v>
         using pos_t = typename pos<v>::type;
 
         /// @brief positivity (boolean value)
-        /// @tparam v
+        /// @tparam v : an element of aerobus::i64::val
         template<typename v>
         static constexpr bool pos_v = pos_t<v>::value;
     };
@@ -973,7 +992,9 @@ namespace aerobus {
             /// @return P(x)
             template<typename valueRing>
             static constexpr valueRing eval(const valueRing& x) {
-                return eval_helper<valueRing, val>::template inner<0, degree + 1>::func(static_cast<valueRing>(0), x);
+                return horner_evaluation<valueRing, val>
+                        ::template inner<0, degree + 1>
+                        ::func(static_cast<valueRing>(0), x);
             }
         };
 
@@ -1321,14 +1342,15 @@ namespace aerobus {
             using type = val<coeff>;
         };
 
+        /// \private
         template<typename valueRing, typename P>
-        struct eval_helper {
+        struct horner_evaluation {
             template<size_t index, size_t stop>
             struct inner {
                 static constexpr valueRing func(const valueRing& accum, const valueRing& x) {
                     constexpr valueRing coeff =
                         static_cast<valueRing>(P::template coeff_at_t<P::degree - index>::template get<valueRing>());
-                    return eval_helper<valueRing, P>::template inner<index + 1, stop>::func(x * accum + coeff, x);
+                    return horner_evaluation<valueRing, P>::template inner<index + 1, stop>::func(x * accum + coeff, x);
                 }
             };
 
@@ -1862,6 +1884,8 @@ namespace aerobus {
     using q64 = FractionField<i64>;
     /// @brief polynomial with 64 bits integers coefficients
     using pi64 = polynomial<i64>;
+    /// @brief polynomial with 64 bits rationals coefficients
+    using pq64 = polynomial<q64>;
     /// @brief polynomial with 64 bits rational coefficients
     using fpq64 = FractionField<polynomial<q64>>;
     /// @brief helper type : the rational V1/V2 in the field of fractions of Ring
@@ -2436,16 +2460,21 @@ namespace aerobus {
 // continued fractions
 namespace aerobus {
     /// @brief represents a continued fraction a0 + 1/(a1 + 1/(...))
-    /// @tparam ...values
+    /// @tparam ...values are aerobus::i64
     template<int64_t... values>
     struct ContinuedFraction {};
 
+    /// @brief Specialization for only one coefficient, technically just 'a0'
+    /// @tparam a0 an integer (aerobus::i64)
     template<int64_t a0>
     struct ContinuedFraction<a0> {
         using type = typename q64::template inject_constant_t<a0>;
         static constexpr double val = type::template get<double>();
     };
 
+    /// @brief specialization for multiple coefficients (strictly more than one)
+    /// @tparam a0 an integer (aerobus::i64)
+    /// @tparam ...rest integers (aerobus::i64)
     template<int64_t a0, int64_t... rest>
     struct ContinuedFraction<a0, rest...> {
         using type = q64::template add_t<
@@ -2473,18 +2502,19 @@ namespace aerobus {
 
 // known polynomials
 namespace aerobus {
+    // CChebyshev
     namespace internal {
         template<int kind, int deg>
         struct chebyshev_helper {
             using type = typename pi64::template sub_t<
                 typename pi64::template mul_t<
-                    typename pi64::template mul_t<
-                        pi64::inject_constant_t<2>,
-                        typename pi64::X
-                    >,
-                    typename chebyshev_helper<kind, deg-1>::type
+                typename pi64::template mul_t<
+                pi64::inject_constant_t<2>,
+                typename pi64::X
                 >,
-                typename chebyshev_helper<kind, deg-2>::type
+                typename chebyshev_helper<kind, deg - 1>::type
+                >,
+                typename chebyshev_helper<kind, deg - 2>::type
             >;
         };
 
@@ -2506,20 +2536,151 @@ namespace aerobus {
         template<>
         struct chebyshev_helper<2, 1> {
             using type = typename pi64::template mul_t<
-                            typename pi64::inject_constant_t<2>,
-                            typename pi64::X>;
+                typename pi64::inject_constant_t<2>,
+                typename pi64::X>;
         };
     }  // namespace internal
 
-    /// @brief chebyshev polynomial of first kind, coefficients in aerobus::i64
-    /// @tparam deg degree of polynomial
-    template<size_t deg>
-    using chebyshev_T = typename internal::chebyshev_helper<1, deg>::type;
+    // Laguerre
+    namespace internal {
+        template<size_t deg>
+        struct laguerre_helper {
+         private:
+            // Lk = (1 / k) * ((2 * k - 1 - x) * lkm1 - (k - 2)Lkm2)
+            using lnm2 = typename laguerre_helper<deg - 2>::type;
+            using lnm1 = typename laguerre_helper<deg - 1>::type;
+            // -x + 2k-1
+            using p = typename pq64::template val<
+                typename q64::template inject_constant_t<-1>,
+                typename q64::template inject_constant_t<2 * deg - 1>>;
+            // 1/n
+            using factor = typename pq64::template inject_ring_t<
+                q64::val<typename i64::one, typename i64::template inject_constant_t<deg>>>;
 
-    /// @brief chebyshev polynomial of second kind, coefficients in aerobus::i64
-    /// @tparam deg degree of polynomial
-    template<size_t deg>
-    using chebyshev_U = typename internal::chebyshev_helper<2, deg>::type;
+         public:
+            using type = typename pq64::template mul_t <
+                factor,
+                typename pq64::template sub_t<
+                    typename pq64::template mul_t<
+                        p,
+                        lnm1
+                    >,
+                    typename pq64::template mul_t<
+                        typename pq64::template inject_constant_t<deg-1>,
+                        lnm2
+                    >
+                >
+            >;
+
+        };
+
+        template<>
+        struct laguerre_helper<0> {
+            using type = typename pq64::one;
+        };
+
+        template<>
+        struct laguerre_helper<1> {
+            using type = typename pq64::template sub_t<typename pq64::one, typename pq64::X>;
+        };
+    }  // namespace internal
+
+    namespace known_polynomials {
+        /// @brief form of Hermite polynomials
+        enum hermite_kind {
+            probabilist,
+            physicist
+        };
+    }
+
+    namespace internal {
+        template<size_t deg, known_polynomials::hermite_kind kind>
+        struct hermite_helper {};
+
+        template<size_t deg>
+        struct hermite_helper<deg, known_polynomials::hermite_kind::probabilist> {
+         private:
+            using hnm1 = typename hermite_helper<deg - 1, known_polynomials::hermite_kind::probabilist>::type;
+            using hnm2 = typename hermite_helper<deg - 2, known_polynomials::hermite_kind::probabilist>::type;
+
+         public:
+            using type = typename pi64::template sub_t<
+                typename pi64::template mul_t<typename pi64::X, hnm1>,
+                typename pi64::template mul_t<
+                    typename pi64::template inject_constant_t<deg - 1>,
+                    hnm2
+                >
+            >;
+        };
+
+        template<size_t deg>
+        struct hermite_helper<deg, known_polynomials::hermite_kind::physicist> {
+         private:
+            using hnm1 = typename hermite_helper<deg - 1, known_polynomials::hermite_kind::physicist>::type;
+            using hnm2 = typename hermite_helper<deg - 2, known_polynomials::hermite_kind::physicist>::type;
+
+         public:
+            using type = typename pi64::template sub_t<
+                // 2X Hn-1
+                typename pi64::template mul_t<
+                    typename pi64::val<typename i64::template inject_constant_t<2>,
+                    typename i64::zero>, hnm1>,
+
+                typename pi64::template mul_t<
+                    typename pi64::template inject_constant_t<2*(deg - 1)>,
+                    hnm2
+                >
+            >;
+        };
+
+        template<>
+        struct hermite_helper<0, known_polynomials::hermite_kind::probabilist> {
+            using type = typename pi64::one;
+        };
+
+        template<>
+        struct hermite_helper<1, known_polynomials::hermite_kind::probabilist> {
+            using type = typename pi64::X;
+        };
+
+        template<>
+        struct hermite_helper<0, known_polynomials::hermite_kind::physicist> {
+            using type = typename pi64::one;
+        };
+
+        template<>
+        struct hermite_helper<1, known_polynomials::hermite_kind::physicist> {
+            // 2X
+            using type = typename pi64::template val<typename i64::template inject_constant_t<2>, typename i64::zero>;
+        };
+    }  // namespace internal
+
+    namespace known_polynomials {
+        /// @brief Chebyshev polynomials of first kind
+        /// @tparam deg degree of polynomial
+        template <size_t deg>
+        using chebyshev_T = typename internal::chebyshev_helper<1, deg>::type;
+
+        /// @brief Chebyshev polynomials of second kind
+        /// @tparam deg degree of polynomial
+        template <size_t deg>
+        using chebyshev_U = typename internal::chebyshev_helper<2, deg>::type;
+
+        /// @brief Laguerre polynomials
+        /// @tparam deg degree of polynomial
+        template <size_t deg>
+        using laguerre = typename internal::laguerre_helper<deg>::type;
+
+        /// @brief Hermite polynomials, probabilist form
+        /// @tparam deg degree of polynomial
+        template <size_t deg>
+        using hermite_prob = typename internal::hermite_helper<deg, hermite_kind::probabilist>::type;
+
+        /// @brief Hermite polynomials, physicist form
+        /// @tparam deg degree of polynomial
+        template <size_t deg>
+        using hermite_phys = typename internal::hermite_helper<deg, hermite_kind::physicist>::type;
+    }  // namespace known_polynomials
 }  // namespace aerobus
 
 

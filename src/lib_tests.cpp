@@ -769,8 +769,8 @@ TEST(continuous_fractions, basic_assertions) {
     EXPECT_FALSE((::fabs(A_SQRT3 - 1.7320508075688772935) > 0));
 }
 
-TEST(utilities, chebyshev) {
-    using T4 = aerobus::chebyshev_T<4>;
+TEST(known_polynomials, chebyshev) {
+    using T4 = known_polynomials::chebyshev_T<4>;
 
     EXPECT_EQ(T4::degree, 4);
     EXPECT_EQ((T4::template coeff_at_t<4>::v), 8);
@@ -779,11 +779,59 @@ TEST(utilities, chebyshev) {
     EXPECT_EQ((T4::template coeff_at_t<1>::v), 0);
     EXPECT_EQ((T4::template coeff_at_t<0>::v), 1);
 
-    using U4 = chebyshev_U<4>;
+    using U4 = known_polynomials::chebyshev_U<4>;
     EXPECT_EQ(U4::degree, 4);
     EXPECT_EQ((U4::template coeff_at_t<4>::v), 16);
     EXPECT_EQ((U4::template coeff_at_t<3>::v), 0);
     EXPECT_EQ((U4::template coeff_at_t<2>::v), -12);
     EXPECT_EQ((U4::template coeff_at_t<1>::v), 0);
     EXPECT_EQ((U4::template coeff_at_t<0>::v), 1);
+}
+
+
+TEST(known_polynomials, laguerre) {
+    {
+        using L2 = known_polynomials::laguerre<2>;
+        EXPECT_EQ((L2::coeff_at_t<2>::template get<float>()), 0.5F);
+        EXPECT_EQ((L2::coeff_at_t<1>::template get<float>()),  -2.0F);
+        EXPECT_EQ((L2::coeff_at_t<0>::template get<float>()),  1.0F);
+    }
+    {
+        using L3 = known_polynomials::laguerre<3>;
+        EXPECT_EQ((L3::coeff_at_t<3>::x::v), -1);
+        EXPECT_EQ((L3::coeff_at_t<3>::y::v), 6);
+        EXPECT_EQ((L3::coeff_at_t<2>::template get<float>()), 1.5F);
+        EXPECT_EQ((L3::coeff_at_t<1>::template get<float>()), -3.0F);
+        EXPECT_EQ((L3::coeff_at_t<0>::template get<float>()), 1.0F);
+    }
+}
+
+
+TEST(known_polynomials, hermite) {
+    {
+        using H2 = known_polynomials::hermite_prob<2>;
+        EXPECT_EQ((H2::coeff_at_t<2>::get<float>()), 1.0F);
+        EXPECT_EQ((H2::coeff_at_t<1>::get<float>()), 0.0F);
+        EXPECT_EQ((H2::coeff_at_t<0>::get<float>()), -1.0F);
+    }
+    {
+        using H3 = known_polynomials::hermite_prob<3>;
+        EXPECT_EQ((H3::coeff_at_t<3>::get<float>()), 1.0F);
+        EXPECT_EQ((H3::coeff_at_t<2>::get<float>()), 0.0F);
+        EXPECT_EQ((H3::coeff_at_t<1>::get<float>()), -3.0F);
+        EXPECT_EQ((H3::coeff_at_t<0>::get<float>()), 0.0F);
+    }
+    {
+        using H2 = known_polynomials::hermite_phys<2>;
+        EXPECT_EQ((H2::coeff_at_t<2>::get<float>()), 4.0F);
+        EXPECT_EQ((H2::coeff_at_t<1>::get<float>()), 0.0F);
+        EXPECT_EQ((H2::coeff_at_t<0>::get<float>()), -2.0F);
+    }
+    {
+        using H3 = known_polynomials::hermite_phys<3>;
+        EXPECT_EQ((H3::coeff_at_t<3>::get<float>()), 8.0F);
+        EXPECT_EQ((H3::coeff_at_t<2>::get<float>()), 0.0F);
+        EXPECT_EQ((H3::coeff_at_t<1>::get<float>()), -12.0F);
+        EXPECT_EQ((H3::coeff_at_t<0>::get<float>()), 0.0F);
+    }
 }
