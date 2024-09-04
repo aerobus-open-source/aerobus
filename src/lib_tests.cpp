@@ -697,6 +697,30 @@ TEST(utilities, alternate) {
     EXPECT_EQ(a2, 1);
 }
 
+TEST(utilities, pow) {
+    constexpr int a0 = pow_t<i32, 2, 3>::v;
+    EXPECT_EQ(a0, 8);
+    constexpr int a1 = pow_t<i32, 2, 4>::v;
+    EXPECT_EQ(a1, 16);
+    constexpr int a2 = pow_t<i32, 0, 0>::v;
+    EXPECT_EQ(a2, 1);
+    constexpr int a3 = pow_v<i32, 3, 3>;
+    EXPECT_EQ(a3, 27);
+}
+
+TEST(utilities, stirling) {
+    constexpr int s00 = stirling_signed_v<i64, 0, 0>;
+    EXPECT_EQ(s00, 1);
+    constexpr int s01 = stirling_signed_v<i64, 0, 1>;
+    EXPECT_EQ(s01, 0);
+    constexpr int s11 = stirling_signed_v<i64, 1, 1>;
+    EXPECT_EQ(s11, 1);
+    constexpr int s53 = stirling_signed_v<i64, 5, 3>;
+    EXPECT_EQ(s53, 35);
+    constexpr int s94 = stirling_signed_v<i64, 9, 4>;
+    EXPECT_EQ(s94, -67284);
+}
+
 TEST(type_list, basic_assertions) {
     using A = type_list<int, float>;
     EXPECT_EQ(A::length, 2);

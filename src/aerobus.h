@@ -2072,28 +2072,95 @@ namespace aerobus {
     template<typename T, int k>
     using alternate_t = typename internal::alternate<T, k>::type;
 
+    namespace internal {
+        template<typename T, int n, int k, typename E = void>
+        struct stirling_helper {};
+
+        template<typename T>
+        struct stirling_helper<T, 0, 0> {
+            using type = typename T::one;
+        };
+
+        template<typename T, int n>
+        struct stirling_helper<T, n, 0, std::enable_if_t<(n > 0)>> {
+            using type = typename T::zero;
+        };
+
+        template<typename T, int n>
+        struct stirling_helper<T, 0, n, std::enable_if_t<(n > 0)>> {
+            using type = typename T::zero;
+        };
+
+        template<typename T, int n, int k>
+        struct stirling_helper<T, n, k, std::enable_if_t<(k > 0) && (n > 0)>> {
+            using type = typename T::sub_t<
+                            typename stirling_helper<T, n-1, k-1>::type,
+                            typename T::mul_t<
+                                typename T::inject_constant_t<n-1>,
+                                typename stirling_helper<T, n-1, k>::type
+                            >>;
+        };
+    }  // namespace internal
+
+    /// @brief Stirling number of first king (signed) -- as types
+    /// @tparam T (ring type, such as aerobus::i64)
+    /// @tparam n (integer)
+    /// @tparam k (integer)
+    template<typename T, int n, int k>
+    using stirling_signed_t = typename internal::stirling_helper<T, n, k>::type;
+
+    /// @brief Stirling number of first king (signed) -- as value
+    /// @tparam T (ring type, such as aerobus::i64)
+    /// @tparam n (integer)
+    /// @tparam k (integer)
+    template<typename T, int n, int k>
+    static constexpr typename T::inner_type stirling_signed_v = internal::stirling_helper<T, n, k>::type::v;
+
     /// @brief (-1)^k as value from T
     /// @tparam T Ring type, aerobus::i64 for example, then result will be an int64_t
     template<typename T, size_t k>
     inline constexpr typename T::inner_type alternate_v = internal::alternate<T, k>::value;
 
-    /// pow (TODO(jeawave) : optimize)
     namespace internal {
+        template<typename T, auto p, auto n, typename E = void>
+        struct pow {};
+
         template<typename T, auto p, auto n>
-        struct pow {
-            using type = typename T::template mul_t<typename T::template val<p>, typename pow<T, p, n - 1>::type>;
+        struct pow<T, p, n, std::enable_if_t<(n > 0 && n % 2 == 0)>> {
+            using type = typename T::mul_t<
+                typename pow<T, p, n/2>::type,
+                typename pow<T, p, n/2>::type
+            >;
+        };
+
+        template<typename T, auto p, auto n>
+        struct pow<T, p, n, std::enable_if_t<(n % 2 == 1)>> {
+            using type = typename T::mul_t<
+                typename T::inject_constant_t<p>,
+                typename T::mul_t<
+                    typename pow<T, p, n/2>::type,
+                    typename pow<T, p, n/2>::type
+                >
+            >;
         };
 
         template<typename T, auto p>
         struct pow<T, p, 0> { using type = typename T::one; };
-    }
+    }  // namespace internal
 
-    /// @brief p^n
+    /// @brief p^n (as 'val' type in T)
     /// @tparam T (some ring type, such as aerobus::i64)
-    /// @tparam p
-    /// @tparam n
+    /// @tparam p (from T::inner_type, such as int64_t)
+    /// @tparam n (from T::inner_type, such as int64_t)
     template<typename T, auto p, auto n>
     using pow_t = typename internal::pow<T, p, n>::type;
+
+    /// @brief p^n (as value in T::inner_type)
+    /// @tparam T (some ring type, such as aerobus::i64)
+    /// @tparam p (from T::inner_type, such as int64_t)
+    /// @tparam n (from T::inner_type, such as int64_t)
+    template<typename T, auto p, auto n>
+    static constexpr T::inner_type pow_v = internal::pow<T, p, n>::type::v;
 
     namespace internal {
         template<typename, template<typename, size_t> typename, class>
