@@ -17,7 +17,7 @@ Code is tested against MSVC, CLANG and GCC, see report [here](https://godbolt.or
 - In your code, add : `#include "aerobus.h"`
 - Compile with -std=c++20 (at least) -I<install_location>
   
-Aerobus provide a definition for low-degree (up to 997) conway polynomials. To use them, define AEROBUS_CONWAY_IMPORTS before including aerobus.h
+Aerobus provide a definition for low-degree (up to 997) conway polynomials. To use them, define AEROBUS_CONWAY_IMPORTS before including aerobus.h.
 
 ### Unit Test
 Install [Cmake](https://cmake.org/download/)
@@ -34,6 +34,12 @@ Terminal should write :
 ``` 
 100% tests passed, 0 tests failed out of 38
 ```
+
+Alternate way : 
+```bash
+make tests
+```
+from top directory.
 
 ### Benchmarks
 Benchmarks are written for Intel CPUs having AVX512f and AVX512vl flags, they work only on Linux operating system using g++. 
