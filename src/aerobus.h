@@ -38,26 +38,6 @@ namespace aerobus {
         return static_cast<T*>(aligned_alloc(alignment, count * sizeof(T)));
         #endif
     }
-
-    /// <summary>
-    /// checks if v is in arr
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <typeparam name="N"></typeparam>
-    /// <param name="arr"></param>
-    /// <param name="v"></param>
-    /// <returns></returns>
-    template<typename T, size_t N>
-    constexpr bool contains(const std::array<T, N>& arr, const T& v) {
-        for (const auto& vv : arr) {
-            if (v == vv) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
 }  // namespace aerobus
 
 // concepts
