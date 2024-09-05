@@ -23,7 +23,7 @@ jobs:
       run: cpplint src/lib.h && cpplint src/lib_tests.cpp
     - name: test
       if: success()
-      run: cmake -S . -B build && cmake --build build && cd build && ctest
+      run: make clean tests
   paper:
     runs-on: ubuntu-latest
     name: Paper Draft
