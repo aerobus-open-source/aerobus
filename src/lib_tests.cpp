@@ -1,3 +1,6 @@
+#ifdef _MSC_VER
+#define _USE_MATH_DEFINES
+#endif
 #include <gtest/gtest.h>
 #include <cstdio>
 #include <typeinfo>
@@ -8,11 +11,8 @@
 #define AEROBUS_CONWAY_IMPORTS
 #include "./aerobus.h"
 
-#ifdef _MSC_VER
-#define _USE_MATH_DEFINES
-#endif
 
-// conformance : https://godbolt.org/z/qnfP99KWv
+// conformance : https://godbolt.org/z/Pn6s841bj
 
 using namespace aerobus;  // NOLINT
 
@@ -708,6 +708,16 @@ TEST(utilities, pow) {
     EXPECT_EQ(a3, 27);
 }
 
+TEST(utilities, abs) {
+    using a0 = abs_t<i32::inject_constant_t<-1>>;
+    EXPECT_EQ(a0::v, 1);
+    using a1 = abs_t<i64::inject_constant_t<1>>;
+    EXPECT_EQ(a1::v, 1);
+    using a2 = abs_t<pi64::val<i64::val<-1>, i64::val<1>>>;
+    using expected = pi64::val<i64::val<1>, i64::val<-1>>;
+    EXPECT_TRUE((std::is_same_v<a2, expected>));
+}
+
 TEST(utilities, stirling) {
     constexpr int s00 = stirling_signed_v<i64, 0, 0>;
     EXPECT_EQ(s00, 1);
@@ -719,6 +729,8 @@ TEST(utilities, stirling) {
     EXPECT_EQ(s53, 35);
     constexpr int s94 = stirling_signed_v<i64, 9, 4>;
     EXPECT_EQ(s94, -67284);
+    constexpr int u94 = stirling_unsigned_v<i64, 9, 4>;
+    EXPECT_EQ(u94, 67284);
 }
 
 TEST(type_list, basic_assertions) {
