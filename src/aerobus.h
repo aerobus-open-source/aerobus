@@ -22,6 +22,9 @@
 #define INLINED __attribute__((always_inline)) inline
 #endif
 
+/// \file
+/// aerobus.h
+
 // aligned allocation
 namespace aerobus {
     /**
@@ -341,13 +344,13 @@ namespace aerobus {
         static constexpr bool is_euclidean_domain = true;
 
         /// @brief inject a 'constant' in quotient ring
-        /// for example : QuotientRing<i32, i32::val<2>>::inject_constant_t<1>
+        /// @example QuotientRing<i32, i32::val<2>>::inject_constant_t<1>
         /// @tparam x a 'constant' from Ring point of view
         template<auto x>
         using inject_constant_t = val<typename Ring::template inject_constant_t<x>>;
 
         /// @brief projects a value of Ring onto the quotient
-        /// for example : QuotientRing<i32, i32::val<2>>::inject_ring_t<i32::val<1>>
+        /// @example QuotientRing<i32, i32::val<2>>::inject_ring_t<i32::val<1>>
         /// @tparam v a value in Ring
         template<typename v>
         using inject_ring_t = val<v>;
@@ -407,7 +410,7 @@ namespace aerobus {
     }  // namespace internal
 
     /// @brief A list of types
-    /// for example type_list<int, double, float>
+    /// @example type_list<int, double, float>
     /// @tparam ...Ts types to store and manipulate at compile time
     template <typename... Ts>
     struct type_list {
@@ -596,53 +599,95 @@ namespace aerobus {
 
      public:
         /// @brief addition operator
+        /// yields v1 + v2
+        /// @example i32::add_t<i32::val<2>, i32::val<3>>
+        /// @tparam v1 a value in i32
+        /// @tparam v2 a value in i32
         template<typename v1, typename v2>
         using add_t = typename add<v1, v2>::type;
 
         /// @brief substraction operator
+        /// yields v1 - v2
+        /// @example i32::sub_t<i32::val<3>, i32::val<2>>
+        /// @tparam v1 a value in i32
+        /// @tparam v2 a value in i32
         template<typename v1, typename v2>
         using sub_t = typename sub<v1, v2>::type;
 
         /// @brief multiplication operator
+        /// yields v1 * v2
+        /// @example i32::mul_t<i32::val<3>, i32::val<2>>
+        /// @tparam v1 a value in i32
+        /// @tparam v2 a value in i32
         template<typename v1, typename v2>
         using mul_t = typename mul<v1, v2>::type;
 
         /// @brief division operator
+        /// yields v1 / v2
+        /// @example i32::div_t<i32::val<7>, i32::val<2>> -> i32::val<3>
+        /// @tparam v1 a value in i32
+        /// @tparam v2 a value in i32
         template<typename v1, typename v2>
         using div_t = typename div<v1, v2>::type;
 
         /// @brief modulus operator
+        /// yields v1 % v2
+        /// for example : i32::mod_t<i32::val<7>, i32::val<2>>
+        /// @tparam v1 a value in i32
+        /// @tparam v2 a value in i32
         template<typename v1, typename v2>
         using mod_t = typename remainder<v1, v2>::type;
 
         /// @brief strictly greater operator (v1 > v2)
+        /// yields v1 > v2
+        /// @example i32::gt_t<i32::val<7>, i32::val<2>>
+        /// @tparam v1 a value in i32
+        /// @tparam v2 a value in i32
         template<typename v1, typename v2>
         using gt_t = typename gt<v1, v2>::type;
 
         /// @brief strict less operator (v1 < v2)
+        /// yields v1 < v2
+        /// @example i32::div_t<i32::val<7>, i32::val<2>>
+        /// @tparam v1 a value in i32
+        /// @tparam v2 a value in i32
         template<typename v1, typename v2>
         using lt_t = typename lt<v1, v2>::type;
 
         /// @brief equality operator (type)
+        /// yields v1 == v2 as std::integral_constant<bool>
+        /// @example i32::eq_t<i32::val<2>, i32::val<2>>
+        /// @tparam v1 a value in i32
+        /// @tparam v2 a value in i32
         template<typename v1, typename v2>
         using eq_t = typename eq<v1, v2>::type;
 
         /// @brief equality operator (boolean value)
         /// @tparam v1
         /// @tparam v2
+        /// @example i32::eq_v<i32::val<1>, i32::val<1>>
         template<typename v1, typename v2>
         static constexpr bool eq_v = eq_t<v1, v2>::value;
 
         /// @brief greatest common divisor
+        /// yields GCD(v1, v2)
+        /// @example i32::gcd_t<i32::val<6>, i32::val<15>>
+        /// @tparam v1 a value in i32
+        /// @tparam v2 a value in i32
         template<typename v1, typename v2>
         using gcd_t = gcd_t<i32, v1, v2>;
 
-        /// @brief positivity (type)(v > 0)
+        /// @brief positivity operator
+        /// yields v > 0 as std::true_type or std::false_type
+        /// @example i32::pos_t<i32::val<1
+        /// @tparam v a value in i32
         template<typename v>
         using pos_t = typename pos<v>::type;
 
         /// @brief positivity (boolean value)
-        /// @tparam v
+        /// yields v > 0 as boolean value
+        /// @tparam v a value in i32
+        /// @example i32::pos_v<i32::val<1>>
         template<typename v>
         static constexpr bool pos_v = pos_t<v>::value;
     };
@@ -690,6 +735,10 @@ namespace aerobus {
         template<auto x>
         using inject_constant_t = val<static_cast<int64_t>(x)>;
 
+        /// @brief injects a value
+        /// used for internal consistency and quotient rings implementations
+        /// for example i64::inject_ring_t<i64::val<1>> -> i64::val<1>
+        /// @tparam v a value in i64
         template<typename v>
         using inject_ring_t = v;
 
@@ -752,82 +801,105 @@ namespace aerobus {
         /// @brief addition operator
         /// @tparam v1 : an element of aerobus::i64::val
         /// @tparam v2 : an element of aerobus::i64::val
+        /// @example i64::add_t<i64::val<1>, i64::val<2>>
         template<typename v1, typename v2>
         using add_t = typename add<v1, v2>::type;
 
         /// @brief substraction operator
         /// @tparam v1 : an element of aerobus::i64::val
         /// @tparam v2 : an element of aerobus::i64::val
+        /// @example i64::sub_t<i64::val<1>, i64::val<2>>
         template<typename v1, typename v2>
         using sub_t = typename sub<v1, v2>::type;
 
         /// @brief multiplication operator
         /// @tparam v1 : an element of aerobus::i64::val
         /// @tparam v2 : an element of aerobus::i64::val
+        /// @example i64::mul_t<i64::val<1>, i64::val<2>>
         template<typename v1, typename v2>
         using mul_t = typename mul<v1, v2>::type;
 
         /// @brief division operator
+        /// integer division
         /// @tparam v1 : an element of aerobus::i64::val
         /// @tparam v2 : an element of aerobus::i64::val
+        /// @example i64::div_t<i64::val<1>, i64::val<2>>
         template<typename v1, typename v2>
         using div_t = typename div<v1, v2>::type;
 
         /// @brief modulus operator
         /// @tparam v1 : an element of aerobus::i64::val
         /// @tparam v2 : an element of aerobus::i64::val
+        /// @example i64::mod_t<i64::val<6>, i64::val<15>>
         template<typename v1, typename v2>
         using mod_t = typename remainder<v1, v2>::type;
 
-        /// @brief strictly greater operator (v1 > v2) - type
+        /// @brief strictly greater operator
+        /// yields v1 > v2 as std::true_type or std::false_type
         /// @tparam v1 : an element of aerobus::i64::val
         /// @tparam v2 : an element of aerobus::i64::val
+        /// @example i64::gt_t<i64::val<2>, i64::val<1>>
         template<typename v1, typename v2>
         using gt_t = typename gt<v1, v2>::type;
 
-        /// @brief strictly greater operator (v1 > v2) - boolean value
+        /// @brief strictly greater operator
+        /// yields v1 > v2 as boolean value
         /// @tparam v1 : an element of aerobus::i64::val
         /// @tparam v2 : an element of aerobus::i64::val
         template<typename v1, typename v2>
         static constexpr bool gt_v = gt_t<v1, v2>::value;
 
-        /// @brief strict less operator (v1 < v2)
+        /// @brief strict less operator
+        /// yields v1 < v2 as std::true_type or std::false_type
         /// @tparam v1 : an element of aerobus::i64::val
         /// @tparam v2 : an element of aerobus::i64::val
+        /// @example i64::lt_t<i64::val<1>, i64::val<2>>
         template<typename v1, typename v2>
         using lt_t = typename lt<v1, v2>::type;
 
-        /// @brief strictly smaller operator (v1 < v2) - boolean value
+        /// @brief strictly smaller operator
+        /// yields v1 < v2 as boolean value
         /// @tparam v1 : an element of aerobus::i64::val
         /// @tparam v2 : an element of aerobus::i64::val
+        /// @example i64::lt_v<i64::val<1>, i64::val<2>>
         template<typename v1, typename v2>
         static constexpr bool lt_v = lt_t<v1, v2>::value;
 
-        /// @brief equality operator (type)
+        /// @brief equality operator
+        /// yields v1 == v2 as std::true_type or std::false_type
         /// @tparam v1 : an element of aerobus::i64::val
         /// @tparam v2 : an element of aerobus::i64::val
+        /// @example i64::eq_t<i64::val<2>, i64::val<2>>
         template<typename v1, typename v2>
         using eq_t = typename eq<v1, v2>::type;
 
-        /// @brief equality operator (boolean value)
+        /// @brief equality operator
+        /// yields v1 == v2 as boolean value
         /// @tparam v1 : an element of aerobus::i64::val
         /// @tparam v2 : an element of aerobus::i64::val
+        /// @example i64::eq_v<i64::val<2>, i64::val<2>>
         template<typename v1, typename v2>
         static constexpr bool eq_v = eq_t<v1, v2>::value;
 
         /// @brief greatest common divisor
+        /// yields GCD(v1, v2) as instanciation of i64::val
         /// @tparam v1 : an element of aerobus::i64::val
         /// @tparam v2 : an element of aerobus::i64::val
+        /// @example i64::gcd_t<i64::val<6>, i64::val<15>>
         template<typename v1, typename v2>
         using gcd_t = gcd_t<i64, v1, v2>;
 
-        /// @brief is v posititive (type)
+        /// @brief is v posititive
+        /// yields v > 0 as std::true_type or std::false_type
         /// @tparam v1 : an element of aerobus::i64::val
+        /// @example i64::pos_t<i64::val<1>>
         template<typename v>
         using pos_t = typename pos<v>::type;
 
-        /// @brief positivity (boolean value)
+        /// @brief positivity
+        /// yields v > 0 as boolean value
         /// @tparam v : an element of aerobus::i64::val
+        /// @example i64::pos_v<i64::val<1>>
         template<typename v>
         static constexpr bool pos_v = pos_t<v>::value;
     };
@@ -919,58 +991,84 @@ namespace aerobus {
 
      public:
         /// @brief addition operator
+        /// @tparam v1 a value in zpz::val
+        /// @tparam v2 a value in zpz::val
         template<typename v1, typename v2>
         using add_t = typename add<v1, v2>::type;
 
         /// @brief substraction operator
+        /// @tparam v1 a value in zpz::val
+        /// @tparam v2 a value in zpz::val
         template<typename v1, typename v2>
         using sub_t = typename sub<v1, v2>::type;
 
         /// @brief multiplication operator
+        /// @tparam v1 a value in zpz::val
+        /// @tparam v2 a value in zpz::val
         template<typename v1, typename v2>
         using mul_t = typename mul<v1, v2>::type;
 
         /// @brief division operator
+        /// @tparam v1 a value in zpz::val
+        /// @tparam v2 a value in zpz::val
         template<typename v1, typename v2>
         using div_t = typename div<v1, v2>::type;
 
         /// @brief modulo operator
+        /// @tparam v1 a value in zpz::val
+        /// @tparam v2 a value in zpz::val
         template<typename v1, typename v2>
         using mod_t = typename remainder<v1, v2>::type;
 
         /// @brief strictly greater operator (type)
+        /// @tparam v1 a value in zpz::val
+        /// @tparam v2 a value in zpz::val
         template<typename v1, typename v2>
         using gt_t = typename gt<v1, v2>::type;
 
         /// @brief strictly greater operator (booleanvalue)
+        /// @tparam v1 a value in zpz::val
+        /// @tparam v2 a value in zpz::val
         template<typename v1, typename v2>
         static constexpr bool gt_v = gt_t<v1, v2>::value;
 
         /// @brief strictly smaller operator (type)
+        /// @tparam v1 a value in zpz::val
+        /// @tparam v2 a value in zpz::val
         template<typename v1, typename v2>
         using lt_t = typename lt<v1, v2>::type;
 
         /// @brief strictly smaller operator (booleanvalue)
+        /// @tparam v1 a value in zpz::val
+        /// @tparam v2 a value in zpz::val
         template<typename v1, typename v2>
         static constexpr bool lt_v = lt_t<v1, v2>::value;
 
         /// @brief equality operator (type)
+        /// @tparam v1 a value in zpz::val
+        /// @tparam v2 a value in zpz::val
         template<typename v1, typename v2>
         using eq_t = typename eq<v1, v2>::type;
 
         /// @brief equality operator (booleanvalue)
+        /// @tparam v1 a value in zpz::val
+        /// @tparam v2 a value in zpz::val
         template<typename v1, typename v2>
         static constexpr bool eq_v = eq_t<v1, v2>::value;
 
         /// @brief greatest common divisor
+        /// @tparam v1 a value in zpz::val
+        /// @tparam v2 a value in zpz::val
         template<typename v1, typename v2>
         using gcd_t = gcd_t<i32, v1, v2>;
 
         /// @brief positivity operator (type)
+        /// @tparam v1 a value in zpz::val
         template<typename v1>
         using pos_t = typename pos<v1>::type;
 
         /// @brief positivity operator (boolean value)
+        /// @tparam v1 a value in zpz::val
         template<typename v>
         static constexpr bool pos_v = pos_t<v>::value;
     };
@@ -1392,7 +1490,6 @@ namespace aerobus {
             using type = val<coeff>;
         };
 
-        /// \private
         template<typename valueRing, typename P>
         struct horner_evaluation {
             template<size_t index, size_t stop>
@@ -1523,6 +1620,8 @@ namespace aerobus {
         template<typename v>
         using pos_t = typename Ring::template pos_t<typename v::aN>;
 
+        /// @brief positivity operator
+        /// @tparam v a value in polynomial::val
         template<typename v>
         static constexpr bool pos_v = pos_t<v>::value;
 
@@ -1850,49 +1949,85 @@ namespace aerobus {
 
          public:
             /// @brief addition operator
+            /// @tparam v1 a value
+            /// @tparam v2 a value
+            /// @example q32::add_t<q32::val<i32::val<1>, i32::val<2>>, q32::val<i32::val<1>, i32::val<3>>>
             template<typename v1, typename v2>
             using add_t = typename add<v1, v2>::type;
+
             /// @brief modulus operator
+            /// @tparam v1 a value
+            /// @tparam v2 a value
+            /// Since FractionField is by construction a field, modulus operator always returns zero
             template<typename v1, typename v2>
             using mod_t = zero;
+
             /// @brief greatest common divisor
             /// @tparam v1
             /// @tparam v2
+            /// Since FractionFIeld is by construction a field, we choose to return v1 as v1/v2
             template<typename v1, typename v2>
             using gcd_t = v1;
+
             /// @brief adds multiple elements (a1 + a2 + ... + an
             /// @tparam ...vs
             template<typename... vs>
             using vadd_t = typename vadd<vs...>::type;
+
             /// @brief multiplies multiple elements (a1 * a2 * ... * an)
             /// @tparam ...vs
             template<typename... vs>
             using vmul_t = typename vmul<vs...>::type;
+
             /// @brief substraction operator
+            /// @tparam v1 a value
+            /// @tparam v2 a value
             template<typename v1, typename v2>
             using sub_t = typename sub<v1, v2>::type;
+
             /// @brief multiplication operator
+            /// @tparam v1 a value
+            /// @tparam v2 a value
             template<typename v1, typename v2>
             using mul_t = typename mul<v1, v2>::type;
+
             /// @brief division operator
+            /// @tparam v1 a value
+            /// @tparam v2 a value
             template<typename v1, typename v2>
             using div_t = typename div<v1, v2>::type;
+
             /// @brief equality operator (type)
+            /// @tparam v1 a value
+            /// @tparam v2 a value
             template<typename v1, typename v2>
             using eq_t = typename eq<v1, v2>::type;
+
             /// @brief equality operator (value)
+            /// @tparam v1 a value
+            /// @tparam v2 a value
             template<typename v1, typename v2>
             static constexpr bool eq_v = eq<v1, v2>::type::value;
+
             /// @brief comparison (strictly greater - type)
+            /// @tparam v1 a value
+            /// @tparam v2 a value
             template<typename v1, typename v2>
             using gt_t = typename gt<v1, v2>::type;
+
             /// @brief comparison (strictly greater -- value)
+            /// @tparam v1 a value
+            /// @tparam v2 a value
             template<typename v1, typename v2>
             static constexpr bool gt_v = gt<v1, v2>::type::value;
+
             /// @brief is v1 positive (type)
+            /// @tparam v1 a value
             template<typename v1>
             using pos_t = typename pos<v1>::type;
+
             /// @brief is v1 positive (value)
+            /// @tparam v1 a value
             template<typename v>
             static constexpr bool pos_v = pos_t<v>::value;
         };
@@ -1918,6 +2053,9 @@ namespace aerobus {
         };
     }  // namespace internal
 
+    /// @brief Fraction field of an euclidean domain, such as Q for Z
+    /// @tparam Ring
+    /// @example FractionField<i64> is q64 (rationals with 64 bits numerator and denominator)
     template<typename Ring>
     requires IsEuclideanDomain<Ring>
     using FractionField = typename internal::FractionFieldImpl<Ring>::type;
@@ -1926,10 +2064,13 @@ namespace aerobus {
 // short names for common types
 namespace aerobus {
     /// @brief 32 bits rationals
+    /// rationals with 32 bits numerator and denominator
     using q32 = FractionField<i32>;
-    /// @brief polynomial with 32 bits rational coefficients
+    /// @brief rational fractions with 32 bits rational coefficients
+    /// rational fractions with rationals coefficients (32 bits numerator and denominator)
     using fpq32 = FractionField<polynomial<q32>>;
     /// @brief 64 bits rationals
+    /// rationals with 64 bits numerator and denominator
     using q64 = FractionField<i64>;
     /// @brief polynomial with 64 bits integers coefficients
     using pi64 = polynomial<i64>;
@@ -2635,15 +2776,14 @@ namespace aerobus {
 namespace aerobus {
     // CChebyshev
     namespace internal {
-        template<int kind, int deg>
+        template<int kind, size_t deg>
         struct chebyshev_helper {
             using type = typename pi64::template sub_t<
                 typename pi64::template mul_t<
-                typename pi64::template mul_t<
-                pi64::inject_constant_t<2>,
-                typename pi64::X
-                >,
-                typename chebyshev_helper<kind, deg - 1>::type
+                    typename pi64::template mul_t<
+                        pi64::inject_constant_t<2>,
+                        typename pi64::X>,
+                    typename chebyshev_helper<kind, deg - 1>::type
                 >,
                 typename chebyshev_helper<kind, deg - 2>::type
             >;
@@ -2713,6 +2853,45 @@ namespace aerobus {
         template<>
         struct laguerre_helper<1> {
             using type = typename pq64::template sub_t<typename pq64::one, typename pq64::X>;
+        };
+    }  // namespace internal
+
+    // Bernstein
+    namespace internal {
+        template<size_t i, size_t m, typename E = void>
+        struct bernstein_helper {};
+
+        template<>
+        struct bernstein_helper<0, 0> {
+            using type = typename pi64::one;
+        };
+
+        template<size_t i, size_t m>
+        struct bernstein_helper<i, m, std::enable_if_t<
+                    (m > 0) && (i == 0)>> {
+            using type = typename pi64::mul_t<
+                    typename pi64::sub_t<typename pi64::one, typename pi64::X>,
+                    typename bernstein_helper<i, m-1>::type>;
+        };
+
+        template<size_t i, size_t m>
+        struct bernstein_helper<i, m, std::enable_if_t<
+                    (m > 0) && (i == m)>> {
+            using type = typename pi64::template mul_t<
+                    typename pi64::X,
+                    typename bernstein_helper<i-1, m-1>::type>;
+        };
+
+        template<size_t i, size_t m>
+        struct bernstein_helper<i, m, std::enable_if_t<
+                    (m > 0) && (i > 0) && (i < m)>> {
+            using type = typename pi64::add_t<
+                    typename pi64::mul_t<
+                        typename pi64::sub_t<typename pi64::one, typename pi64::X>,
+                        typename bernstein_helper<i, m-1>::type>,
+                    typename pi64::mul_t<
+                        typename pi64::X,
+                        typename bernstein_helper<i-1, m-1>::type>>;
         };
     }  // namespace internal
 
@@ -2811,6 +2990,12 @@ namespace aerobus {
         /// @tparam deg degree of polynomial
         template <size_t deg>
         using hermite_phys = typename internal::hermite_helper<deg, hermite_kind::physicist>::type;
+
+        /// @brief Bernstein polynomials
+        /// @tparam i index of polynomial (between 0 and m)
+        /// @tparam m degree of polynomial
+        template<size_t i, size_t m>
+        using bernstein = typename internal::bernstein_helper<i, m>::type;
     }  // namespace known_polynomials
 }  // namespace aerobus
 

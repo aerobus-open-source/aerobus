@@ -64,7 +64,7 @@ void fast_math_vsin_12(double * in, double * out) {
     in = reinterpret_cast<double*>(__builtin_assume_aligned(in, 64));
     out = reinterpret_cast<double*>(__builtin_assume_aligned(out, 64));
     #pragma omp parallel for
-    for (unsigned int i = 0; i < N; i += 8) {
+    for (size_t i = 0; i < N; i += 8) {
         _mm512_store_pd(reinterpret_cast<void*>(out + i),
             _ZGVeN8v_sin(_ZGVeN8v_sin(_ZGVeN8v_sin(_ZGVeN8v_sin(
             _ZGVeN8v_sin(_ZGVeN8v_sin(_ZGVeN8v_sin(_ZGVeN8v_sin(
