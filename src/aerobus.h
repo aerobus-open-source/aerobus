@@ -197,6 +197,7 @@ namespace aerobus {
     template<size_t n>
     static constexpr bool is_prime_v = is_prime<n>::value;
 
+    // gcd
     namespace internal {
         template <std::size_t... Is>
         constexpr auto index_sequence_reverse(std::index_sequence<Is...> const&)
@@ -255,19 +256,60 @@ namespace aerobus {
         };
     }  // namespace internal
 
+    // vadd and vmul
+    namespace internal {
+        template<typename... vals>
+        struct vmul {};
+
+        template<typename v1, typename... vals>
+        struct vmul<v1, vals...> {
+            using type = typename v1::enclosing_type::template mul_t<v1, typename vmul<vals...>::type>;
+        };
+
+        template<typename v1>
+        struct vmul<v1> {
+            using type = v1;
+        };
+
+        template<typename... vals>
+        struct vadd {};
+
+        template<typename v1, typename... vals>
+        struct vadd<v1, vals...> {
+            using type = typename v1::enclosing_type::template add_t<v1, typename vadd<vals...>::type>;
+        };
+
+        template<typename v1>
+        struct vadd<v1> {
+            using type = v1;
+        };
+    }  // namespace internal
+
     /// @brief computes the greatest common divisor or A and B
     /// @tparam T Ring type (must be euclidean domain)
     template<typename T, typename A, typename B>
     using gcd_t = typename internal::gcd<T>::template type<A, B>;
 
+    /// @brief adds multiple values (v1 + v2 + ... + vn)
+    /// vals must have same "enclosing_type" and "enclosing_type" must have an add_t binary operator
+    /// @tparam ...vals
+    template<typename... vals>
+    using vadd_t = typename internal::vadd<vals...>::type;
+
+    /// @brief multiplies multiple values (v1 + v2 + ... + vn)
+    /// vals must have same "enclosing_type" and "enclosing_type" must have an mul_t binary operator
+    /// @tparam ...vals
+    template<typename... vals>
+    using vmul_t = typename internal::vmul<vals...>::type;
+
     /// @brief computes absolute value of 'val'
     /// val must be a 'value' in a Ring satisfying 'IsEuclideanDomain' concept
     /// @tparam val a value in a RIng, such as i64::val<-2>
     template<typename val>
-    requires IsEuclideanDomain<typename val::ring_type>
+    requires IsEuclideanDomain<typename val::enclosing_type>
     using abs_t = std::conditional_t<
-                    val::ring_type::template pos_v<val>,
-                    val, typename val::ring_type::template sub_t<typename val::ring_type::zero, val>>;
+                    val::enclosing_type::template pos_v<val>,
+                    val, typename val::enclosing_type::template sub_t<typename val::enclosing_type::zero, val>>;
 }  // namespace aerobus
 
 namespace aerobus {
@@ -509,7 +551,7 @@ namespace aerobus {
         template<int32_t x>
         struct val {
             /// @brief Enclosing ring type
-            using ring_type = i32;
+            using enclosing_type = i32;
             /// @brief actual value stored in val type
             static constexpr int32_t v = x;
 
@@ -704,7 +746,7 @@ namespace aerobus {
         template<int64_t x>
         struct val {
             /// @brief enclosing ring type
-            using ring_type = i64;
+            using enclosing_type = i64;
             /// @brief actual value
             static constexpr int64_t v = x;
 
@@ -917,7 +959,7 @@ namespace aerobus {
         template<int32_t x>
         struct val {
             /// @brief enclosing ring type
-            using ring_type = zpz<p>;
+            using enclosing_type = zpz<p>;
             /// @brief actual value
             static constexpr int32_t v = x % p;
 
@@ -1093,7 +1135,7 @@ namespace aerobus {
         template<typename coeffN, typename... coeffs>
         struct val {
             /// @brief enclosing ring type
-            using ring_type = polynomial<Ring>;
+            using enclosing_type = polynomial<Ring>;
             /// @brief degree of the polynomial
             static constexpr size_t degree = sizeof...(coeffs);
             /// @brief heavy weight coefficient (non zero)
@@ -1148,7 +1190,7 @@ namespace aerobus {
         template<typename coeffN>
         struct val<coeffN> {
             /// @brief enclosing ring type
-            using ring_type = polynomial<Ring>;
+            using enclosing_type = polynomial<Ring>;
             /// @brief degree
             static constexpr size_t degree = 0;
             using aN = coeffN;
@@ -1710,7 +1752,7 @@ namespace aerobus {
 
                 /// @brief underlying ring type
                 using ring_type = Ring;
-                using field_type = _FractionField<Ring>;
+                using enclosing_type = _FractionField<Ring>;
 
                  /// @brief true if val2 is one,
                  /// meaning val can be seen as an element of underlying ring (boolean value)
@@ -1871,35 +1913,6 @@ namespace aerobus {
                     std::false_type>;
             };
 
-            template<typename TL, typename E = void>
-            struct vadd {};
-
-            template<typename TL>
-            struct vadd<TL, std::enable_if_t<(TL::length > 1)>> {
-                using head = typename TL::pop_front::type;
-                using tail = typename TL::pop_front::tail;
-                using type = typename add<head, typename vadd<tail>::type>::type;
-            };
-
-            template<typename TL>
-            struct vadd<TL, std::enable_if_t<(TL::length == 1)>> {
-                using type = typename TL::template at<0>;
-            };
-
-            template<typename... vals>
-            struct vmul {};
-
-            template<typename v1, typename... vals>
-            struct vmul<v1, vals...> {
-                using type = typename mul<v1, typename vmul<vals...>::type>::type;
-            };
-
-            template<typename v1>
-            struct vmul<v1> {
-                using type = v1;
-            };
-
-
             template<typename v1, typename v2, typename E = void>
             struct gt;
 
@@ -1968,16 +1981,6 @@ namespace aerobus {
             /// Since FractionFIeld is by construction a field, we choose to return v1 as v1/v2
             template<typename v1, typename v2>
             using gcd_t = v1;
-
-            /// @brief adds multiple elements (a1 + a2 + ... + an
-            /// @tparam ...vs
-            template<typename... vs>
-            using vadd_t = typename vadd<vs...>::type;
-
-            /// @brief multiplies multiple elements (a1 * a2 * ... * an)
-            /// @tparam ...vs
-            template<typename... vs>
-            using vmul_t = typename vmul<vs...>::type;
 
             /// @brief substraction operator
             /// @tparam v1 a value
