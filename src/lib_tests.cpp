@@ -906,13 +906,7 @@ TEST(known_polynomials, bernstein) {
         using B13 = known_polynomials::bernstein<1, 3>;
         using B23 = known_polynomials::bernstein<2, 3>;
         using B33 = known_polynomials::bernstein<3, 3>;
-        using sum = typename pi64::add_t<
-            B03,
-            typename pi64::add_t<
-                B13,
-                typename pi64::add_t<B23, B33>
-            >
-        >;
+        using sum = vadd_t<B03, B13, B23, B33>;
         EXPECT_TRUE((std::is_same_v<sum, typename pi64::one>));
     }
 }
