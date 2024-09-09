@@ -871,3 +871,48 @@ TEST(known_polynomials, hermite) {
         EXPECT_EQ((H3::coeff_at_t<0>::get<float>()), 0.0F);
     }
 }
+
+TEST(known_polynomials, bernstein) {
+    {
+        using B00 = known_polynomials::bernstein<0, 0>;
+        EXPECT_EQ(B00::degree, 0);
+        EXPECT_EQ(B00::coeff_at_t<0>::v, 1);
+    }
+    {
+        // 1 - X
+        using B01 = known_polynomials::bernstein<0, 1>;
+        EXPECT_EQ(B01::degree, 1);
+        EXPECT_EQ(B01::coeff_at_t<0>::v, 1) << "B01(0) != 1";
+        EXPECT_EQ(B01::coeff_at_t<1>::v, -1) << "B01(1) != -1";
+    }
+    {
+        // X
+        using B11 = known_polynomials::bernstein<1, 1>;
+        EXPECT_EQ(B11::degree, 1);
+        EXPECT_EQ(B11::coeff_at_t<0>::v, 0);
+        EXPECT_EQ(B11::coeff_at_t<1>::v, 1);
+    }
+    {
+        // 2X(1-X)
+        using B12 = known_polynomials::bernstein<1, 2>;
+        EXPECT_EQ(B12::degree, 2);
+        EXPECT_EQ(B12::coeff_at_t<0>::v, 0);
+        EXPECT_EQ(B12::coeff_at_t<1>::v, 2);
+        EXPECT_EQ(B12::coeff_at_t<2>::v, -2);
+    }
+    {
+        // partition
+        using B03 = known_polynomials::bernstein<0, 3>;
+        using B13 = known_polynomials::bernstein<1, 3>;
+        using B23 = known_polynomials::bernstein<2, 3>;
+        using B33 = known_polynomials::bernstein<3, 3>;
+        using sum = typename pi64::add_t<
+            B03,
+            typename pi64::add_t<
+                B13,
+                typename pi64::add_t<B23, B33>
+            >
+        >;
+        EXPECT_TRUE((std::is_same_v<sum, typename pi64::one>));
+    }
+}
