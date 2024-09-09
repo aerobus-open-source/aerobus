@@ -629,19 +629,23 @@ TEST(utilities, combination) {
     EXPECT_EQ(zz, 4);
 }
 
-TEST(utilities, bernouilli) {
-    constexpr float b0 = bernouilli_v<float, i32, 0>;
+TEST(utilities, bernoulli) {
+    constexpr float b0 = bernoulli_v<float, i32, 0>;
     EXPECT_EQ(b0, 1.0f);
 
-    constexpr float b1 = bernouilli_v<float, i32, 1>;
+    constexpr float b1 = bernoulli_v<float, i32, 1>;
     EXPECT_EQ(b1, -0.5f);
 
-    using B2 = bernouilli_t<i32, 2>;
+    using B2 = bernoulli_t<i32, 2>;
     EXPECT_EQ(B2::x::v, 1);
     EXPECT_EQ(B2::y::v, 6);
 
-    constexpr double b3 = bernouilli_v<double, i32, 3>;
+    constexpr double b3 = bernoulli_v<double, i32, 3>;
     EXPECT_EQ(b3, 0.0);
+
+    using B4 = bernoulli_t<i64, 4>;
+    EXPECT_EQ(B4::x::v, -1);
+    EXPECT_EQ(B4::y::v, 30);
 }
 
 TEST(zpz, basic_assertions) {
@@ -908,5 +912,42 @@ TEST(known_polynomials, bernstein) {
         using B33 = known_polynomials::bernstein<3, 3>;
         using sum = vadd_t<B03, B13, B23, B33>;
         EXPECT_TRUE((std::is_same_v<sum, typename pi64::one>));
+    }
+}
+
+TEST(known_polynomials, legendre) {
+    {
+        using L1 = known_polynomials::legendre<1>;
+        EXPECT_TRUE((std::is_same_v<L1, typename pq64::X>));
+    }
+    {
+        using L5 = known_polynomials::legendre<5>;
+        EXPECT_TRUE((std::is_same_v<
+            L5::template coeff_at_t<3>,
+            make_q64_t<-70, 8>>)) << L5::template coeff_at_t<3>::to_string();
+    }
+    {
+        using L10 = known_polynomials::legendre<10>;
+        EXPECT_TRUE((std::is_same_v<
+            L10::template coeff_at_t<8>,
+            make_q64_t<-109395, 256>>)) << L10::template coeff_at_t<8>::to_string();
+    }
+}
+
+TEST(known_polynomials, bernoulli) {
+    {
+        using B1 = known_polynomials::bernoulli<1>;
+        EXPECT_EQ(1, B1::degree);
+        EXPECT_TRUE((std::is_same_v<B1::template coeff_at_t<0>, make_q64_t<-1, 2>>));
+        EXPECT_TRUE((std::is_same_v<B1::template coeff_at_t<1>, typename q64::one>));
+    } {
+        using B5 = known_polynomials::bernoulli<5>;
+        EXPECT_EQ(5, B5::degree);
+        EXPECT_TRUE((std::is_same_v<B5::template coeff_at_t<0>, q64::zero>));
+        EXPECT_TRUE((std::is_same_v<B5::template coeff_at_t<1>, make_q64_t<-1, 6>>));
+        EXPECT_TRUE((std::is_same_v<B5::template coeff_at_t<2>, q64::zero>));
+        EXPECT_TRUE((std::is_same_v<B5::template coeff_at_t<3>, make_q64_t<5, 3>>));
+        EXPECT_TRUE((std::is_same_v<B5::template coeff_at_t<4>, make_q64_t<-5, 2>>));
+        EXPECT_TRUE((std::is_same_v<B5::template coeff_at_t<5>, q64::one>));
     }
 }

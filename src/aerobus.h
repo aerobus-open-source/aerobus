@@ -2088,6 +2088,20 @@ namespace aerobus {
     template<typename Ring, typename v1, typename v2>
     using makefraction_t = typename FractionField<Ring>::template val<v1, v2>;
 
+    /// @brief helper type : make a fraction from numerator and denominator
+    /// @tparam p numerator
+    /// @tparam q denominator
+    template<int64_t p, int64_t q>
+    using make_q64_t = typename q64::template simplify_t<
+                typename q64::val<i64::inject_constant_t<p>, i64::inject_constant_t<q>>>;
+
+    /// @brief helper type : make a fraction from numerator and denominator
+    /// @tparam p numerator
+    /// @tparam q denominator
+    template<int32_t p, int32_t q>
+    using make_q32_t = typename q32::template simplify_t<
+                typename q32::val<i32::inject_constant_t<p>, i32::inject_constant_t<q>>>;
+
     /// @brief helper type : adds two fractions
     /// @tparam Ring
     /// @tparam v1 belongs to FractionField<Ring>
@@ -2102,7 +2116,7 @@ namespace aerobus {
     using mulfractions_t = typename FractionField<Ring>::template mul_t<v1, v2>;
 }  // namespace aerobus
 
-// taylor series and common integers (factorial, bernouilli...) appearing in taylor coefficients
+// taylor series and common integers (factorial, bernoulli...) appearing in taylor coefficients
 namespace aerobus {
     namespace internal {
         template<typename T, size_t x, typename E = void>
@@ -2181,11 +2195,11 @@ namespace aerobus {
 
     namespace internal {
         template<typename T, size_t m>
-        struct bernouilli;
+        struct bernoulli;
 
         template<typename T, typename accum, size_t k, size_t m>
-        struct bernouilli_helper {
-            using type = typename bernouilli_helper<
+        struct bernoulli_helper {
+            using type = typename bernoulli_helper<
                 T,
                 addfractions_t<T,
                     accum,
@@ -2193,7 +2207,7 @@ namespace aerobus {
                         makefraction_t<T,
                             combination_t<T, k, m + 1>,
                             typename T::one>,
-                        typename bernouilli<T, k>::type
+                        typename bernoulli<T, k>::type
                     >
                 >,
                 k + 1,
@@ -2201,16 +2215,16 @@ namespace aerobus {
         };
 
         template<typename T, typename accum, size_t m>
-        struct bernouilli_helper<T, accum, m, m> {
+        struct bernoulli_helper<T, accum, m, m> {
             using type = accum;
         };
 
 
 
         template<typename T, size_t m>
-        struct bernouilli {
+        struct bernoulli {
             using type = typename FractionField<T>::template mul_t<
-                typename internal::bernouilli_helper<T, typename FractionField<T>::zero, 0, m>::type,
+                typename internal::bernoulli_helper<T, typename FractionField<T>::zero, 0, m>::type,
                 makefraction_t<T,
                 typename T::template val<static_cast<typename T::inner_type>(-1)>,
                 typename T::template val<static_cast<typename T::inner_type>(m + 1)>
@@ -2222,7 +2236,7 @@ namespace aerobus {
         };
 
         template<typename T>
-        struct bernouilli<T, 0> {
+        struct bernoulli<T, 0> {
             using type = typename FractionField<T>::one;
 
             template<typename floatType>
@@ -2230,18 +2244,18 @@ namespace aerobus {
         };
     }  // namespace internal
 
-    /// @brief nth Bernouilli number as type in T
+    /// @brief nth bernoulli number as type in T
     /// @tparam T Ring type (i64)
     /// @tparam n
     template<typename T, size_t n>
-    using bernouilli_t = typename internal::bernouilli<T, n>::type;
+    using bernoulli_t = typename internal::bernoulli<T, n>::type;
 
-    /// @brief nth Bernouilli number as value in FloatType
+    /// @brief nth bernoulli number as value in FloatType
     /// @tparam FloatType (double or float for example)
     /// @tparam T (aerobus::i64 for example)
     /// @tparam n
     template<typename FloatType, typename T, size_t n >
-    inline constexpr FloatType bernouilli_v = internal::bernouilli<T, n>::template value<FloatType>;
+    inline constexpr FloatType bernoulli_v = internal::bernoulli<T, n>::template value<FloatType>;
 
     namespace internal {
         template<typename T, int k, typename E = void>
@@ -2599,7 +2613,7 @@ namespace aerobus {
                 _4p,
                 FractionField<T>::template mul_t<
                 _4pm1,
-                bernouilli_t<T, (i + 1)>
+                bernoulli_t<T, (i + 1)>
                 >
                 >
             >;
@@ -2628,12 +2642,10 @@ namespace aerobus {
             using _4pm1 = typename FractionField<T>::template sub_t<_4p, typename FractionField<T>::one>;
             using dividend =
                 typename FractionField<T>::template mul_t<
-                _4p,
-                typename FractionField<T>::template mul_t<
-                _4pm1,
-                bernouilli_t<T, (i + 1)>
-                >
-                >::type;
+                    _4p,
+                    typename FractionField<T>::template mul_t<
+                        _4pm1,
+                        bernoulli_t<T, (i + 1)>>>::type;
         public:
             using type = typename FractionField<T>::template div_t<dividend,
                 FractionField<T>::template inject_t<factorial_t<T, i + 1>>>;
@@ -2906,6 +2918,7 @@ namespace aerobus {
         };
     }
 
+    // hermite
     namespace internal {
         template<size_t deg, known_polynomials::hermite_kind kind>
         struct hermite_helper {};
@@ -2968,6 +2981,54 @@ namespace aerobus {
         };
     }  // namespace internal
 
+    // legendre
+    namespace internal {
+        template<size_t n>
+        struct legendre_helper {
+         private:
+            // 1/n constant
+            // (2n-1)/n X
+            using fact_left = typename pq64::monomial_t<make_q64_t<2*n-1, n>, 1>;
+            // (n-1) / n
+            using fact_right = typename pq64::val<make_q64_t<n-1, n>>;
+         public:
+            using type = pq64::template sub_t<
+                    typename pq64::template mul_t<
+                        fact_left,
+                        typename legendre_helper<n-1>::type
+                    >,
+                    typename pq64::template mul_t<
+                        fact_right,
+                        typename legendre_helper<n-2>::type
+                    >
+                >;
+        };
+
+        template<>
+        struct legendre_helper<0> {
+            using type = typename pq64::one;
+        };
+
+        template<>
+        struct legendre_helper<1> {
+            using type = typename pq64::X;
+        };
+    }  // namespace internal
+
+    // bernoulli polynomials
+    namespace internal {
+        template<size_t n>
+        struct bernoulli_coeff {
+            template<typename T, size_t i>
+            struct inner {
+                using type = typename q64::template mul_t<
+                    q64::inject_ring_t<combination_t<i64, i, n>>,
+                    bernoulli_t<i64, n-i>
+                >;
+            };
+        };
+    }  // namespace internal
+
     namespace known_polynomials {
         /// @brief Chebyshev polynomials of first kind
         /// @tparam deg degree of polynomial
@@ -2999,6 +3060,16 @@ namespace aerobus {
         /// @tparam m degree of polynomial
         template<size_t i, size_t m>
         using bernstein = typename internal::bernstein_helper<i, m>::type;
+
+        /// @brief Legendre polynomials
+        /// @tparam deg degree of polynomial
+        template<size_t deg>
+        using legendre = typename internal::legendre_helper<deg>::type;
+
+        /// @brief Bernoulli polynomials
+        /// @tparam deg degree of polynomial
+        template<size_t deg>
+        using bernoulli = taylor<i64, internal::bernoulli_coeff<deg>::template inner, deg>;
     }  // namespace known_polynomials
 }  // namespace aerobus
 
