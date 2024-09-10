@@ -575,9 +575,6 @@ TEST(quotient_ring, i32_z2z) {
 }
 
 TEST(quotient_ring, F4) {
-
-    using aero_atanh = aerobus::atanh<i64, 6>;
-    constexpr float val = aero_atanh::eval(0.1F);
     using F2 = zpz<2>;
     using PF2 = polynomial<F2>;
     using F4 = Quotient<PF2, ConwayPolynomial<2, 2>::type>;
