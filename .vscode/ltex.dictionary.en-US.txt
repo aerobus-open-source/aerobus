@@ -1,0 +1,6 @@
+IsEuclideanDomain
+variadic
+constexpr
+typename
+CUDA
+serie

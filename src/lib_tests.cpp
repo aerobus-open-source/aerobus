@@ -575,6 +575,9 @@ TEST(quotient_ring, i32_z2z) {
 }
 
 TEST(quotient_ring, F4) {
+
+    using aero_atanh = aerobus::atanh<i64, 6>;
+    constexpr float val = aero_atanh::eval(0.1F);
     using F2 = zpz<2>;
     using PF2 = polynomial<F2>;
     using F4 = Quotient<PF2, ConwayPolynomial<2, 2>::type>;
@@ -590,6 +593,8 @@ TEST(quotient_ring, F4) {
     EXPECT_FALSE((F4::eq_v<phi2, one>));
     EXPECT_FALSE((F4::eq_v<phi, phi2>));
 
+    // 1 + 1 = 0
+    EXPECT_TRUE((F4::eq_v<zero, F4::template add_t<one, one>>));
     // one + phi = phi2
     EXPECT_TRUE((F4::eq_v<phi2, F4::template add_t<one, phi>>));
     // one + phi2 = phi
