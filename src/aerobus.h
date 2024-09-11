@@ -761,7 +761,9 @@ namespace aerobus {
             /// @brief cast value in valueType
             /// @tparam valueType (double for example)
             template<typename valueType>
-            static constexpr valueType get() { return static_cast<valueType>(x); }
+            static constexpr valueType get() {
+                return static_cast<valueType>(x);
+            }
 
             /// @brief is value zero
             using is_zero_t = std::bool_constant<x == 0>;

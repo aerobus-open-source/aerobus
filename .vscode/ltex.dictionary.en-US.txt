@@ -4,3 +4,7 @@ constexpr
 typename
 CUDA
 serie
+Chebyshev
+@vml
+metaprogramming
+Horner evaluation

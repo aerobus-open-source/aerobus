@@ -30,11 +30,11 @@ Given these functions are "generated" at compile time and do not rely on inline 
 All these types represent the Ring, meaning the algebraic structure. They have a nested type `val<i>` where `i` is a scalar native value (int32_t or int64_t) to represent actual values in the ring.
 They have the following "operations", required by the IsEuclideanDomain concept :
 
-- add_t : a type (specialization of val), representing addition between two values
-- sub_t : a type (specialization of val), representing subtraction between two values
-- mul_t : a type (specialization of val), representing multiplication between two values
-- div_t : a type (specialization of val), representing division between two values
-- mod_t : a type (specialization of val), representing modulus between two values
+- `add_t` : a type (specialization of val), representing addition between two values
+- `sub_t` : a type (specialization of val), representing subtraction between two values
+- `mul_t` : a type (specialization of val), representing multiplication between two values
+- `div_t` : a type (specialization of val), representing division between two values
+- `mod_t` : a type (specialization of val), representing modulus between two values
 
 and the following "elements" :
 
@@ -62,16 +62,17 @@ using B23 = aerobus::known_polynomials::bernstein<2, 3>; // 3X^2(1-X)
 constexpr float x = B32::eval(2.0F); // -12
 ```
 
-Complete list is:
+They have their coefficients either in `aerobus::i64` or `aerobus::q64`.
+Complete list is (but is meant to be extended):
 
-- chebyshev_T
-- chebyshev_U
-- laguerre
-- hermite_prob
-- hermite_phys
-- bernstein
-- legendre
-- bernoulli
+- `chebyshev_T`
+- `chebyshev_U`
+- `laguerre`
+- `hermite_prob`
+- `hermite_phys`
+- `bernstein`
+- `legendre`
+- `bernoulli`
 
 ### Conway polynomials
 
@@ -99,21 +100,21 @@ constexpr float val = aero_atanh::eval(0.1F); // approximation of arctanh(0.1) u
 
 Exposed functions are:
 
-- exp
-- expm1 \f$e^x - 1\f$
-- lnp1 (\f$\ln(x+1)\f$)
-- geom (\f$\frac{1}{1-x}\f$)
-- sin
-- cos
-- tan
-- sh
-- cosh
-- tanh
-- asin
-- acos
-- acosh
-- asinh
-- atanh
+- `exp`
+- `expm1` \f$e^x - 1\f$
+- `lnp1` (\f$\ln(x+1)\f$)
+- `geom` (\f$\frac{1}{1-x}\f$)
+- `sin`
+- `cos`
+- `tan`
+- `sh`
+- `cosh`
+- `tanh`
+- `asin`
+- `acos`
+- `acosh`
+- `asinh`
+- `atanh`
 
 Having the capacity of specifying the degree is very important, as users may use other formats than `float64` or `float32` which require higher or lower degree to achieve correct or acceptable precision.
 
@@ -130,8 +131,10 @@ struct my_coeff_at {
     using type = typename FractionField<Integers>::one;
 };
 
-template<typename Integers, typename degree>
+template<typename Integers, size_t degree>
 using my_serie = taylor<Integers, my_coeff_at, degree>;
+
+static constexpr double x = my_serie<i64, 3>::eval(3.0);
 ```
 
 On x86-64 and CUDA platforms at least, using proper compiler directives, these functions yield very performant assembly, similar or better than standard library implementation in fast math. For example, this code:
@@ -145,7 +148,7 @@ double compute_expm1(const size_t N, double* in, double* out) {
 }
 ```
 
-Yields this assembly (clang 17, `-ffast-math -mavx512 -O3`):
+Yields this assembly (clang 17, `-mavx2 -O3`) where we can see a pile of Fused-Multiply-Add vector instructions, generated because we unrolled completely the Horner evaluation loop:
 
 ```nasm
 compute_expm1(unsigned long, double const*, double*):
@@ -213,7 +216,16 @@ using Fzmz = FractionField<ZmZ>;
 using Pfzmz = polynomial<Fzmz>;
 ```
 
-The same operation would stand for any set that users would have implemented in place of `ZmZ`. 
+The same operation would stand for any set that users would have implemented in place of `ZmZ`.
+
+For example, we can easily define [rational functions](https://en.wikipedia.org/wiki/Rational_function) by taking the ring of fractions of polynomials:
+
+```cpp
+using namespace aerobus;
+using RF64 = FractionField<polynomial<q64>>;
+```
+
+Which also have an evaluation function, as polynomial do.
 
 ### Quotient
 
