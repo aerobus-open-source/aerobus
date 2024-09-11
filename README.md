@@ -1,51 +1,63 @@
-# Aerobus
-Aerobus is a C++20 template library which expresses algebra concepts in types
+# Introduction
 
-It defines some concepts, such as Ring, IntegralDomain or Field which can be used to construct the field of fractions of a Ring, polynomials with coefficients in such a set or rational fractions, all at compile time. It allows the definition of polynomials over any discrete integral domain (and therefore the corresponding field of fractions), as long as your Ring implementation satisfies the IsIntegralDomain concept. 
+`Aerobus` is a C++-20 pure header library for general algebra on polynomials, discrete rings and associated structures.
 
-It defines Integers (32 or 64 bits) as types, therefore rationals (field of fractions) and modular arithmetic (Z/pZ). Polynomials with integer or rational coefficients are exposed as types, and so are rational fractions (field of fractions of polynomials). 
+Everything in `Aerobus` is expressed as types.
 
-As an interesting application, it provides predefined polynomials, such as the Taylor series of usual functions. Given polynomials can then be evaluated at floating point values, Aerobus therefore defines compile-time versions of usual functions and very efficient implementations for runtime.
+We say that again as it is the most fundamental characteristic of `Aerobus` :
 
-Unlike most competing libraries, it's quite easy to add a custom function as Aerobus provides mechanisms to easily define coefficients and Taylor series. 
+***Everything is expressed as types***
 
-Code is tested against MSVC, CLANG and GCC, see report [here](https://godbolt.org/z/qnfP99KWv)
+The library serves two main purposes :
 
+- Express algebra structures and associated operations in type arithmetic, compile-time;
+- Provide portable and fast evaluation functions for polynomials.
+
+It is designed to be 'quite easily' extensible.
+
+Given these functions are "generated" at compile time and do not rely on inline assembly, they are actually platform independent, yielding exact same results if processors have same capabilities (such as Fused-Multiply-Add instructions).
 
 ## HOW TO
+
 - Clone or download the repository somewhere, or just download the aerobus.h
 - In your code, add : `#include "aerobus.h"`
 - Compile with -std=c++20 (at least) -I<install_location>
   
-Aerobus provide a definition for low-degree (up to 997) conway polynomials. To use them, define AEROBUS_CONWAY_IMPORTS before including aerobus.h.
+`Aerobus` provides a definition for low-degree (up to 997) Conway polynomials. To use them, define `AEROBUS_CONWAY_IMPORTS` before including `aerobus.h`.
 
 ### Unit Test
-Install [Cmake](https://cmake.org/download/)
+
+Install [`Cmake`](https://cmake.org/download/)
 Install a recent compiler (supporting c++20), such as MSVC, G++ or Clang++
 
-Move to the top directory then : 
+Move to the top directory then :
+
 ```bash
 cmake -S . -B build
 cmake --build build
 cd build && ctest
 ```
 
-Terminal should write : 
-``` 
-100% tests passed, 0 tests failed out of 38
+Terminal should write :
+
+```bash
+100% tests passed, 0 tests failed out of 48
 ```
 
-Alternate way : 
+Alternate way :
+
 ```bash
 make tests
 ```
-from top directory.
+
+From top directory.
 
 ### Benchmarks
-Benchmarks are written for Intel CPUs having AVX512f and AVX512vl flags, they work only on Linux operating system using g++. 
 
-In addition of Cmake and compiler, install [OpenMP](https://www.openmp.org/resources/openmp-compilers-tools/).
-Then move to top directory : 
+Benchmarks are written for Intel CPUs having AVX512f and AVX512vl flags, they work only on Linux operating system using g++.
+
+In addition of `Cmake` and compiler, install [OpenMP](https://www.openmp.org/resources/openmp-compilers-tools/).
+Then move to top directory :
 
 ```bash
 rm -rf build 
@@ -56,9 +68,9 @@ make aerobus_benchmarks
 ./aerobus_benchmarks
 ```
 
-results on my laptop : 
+results on my laptop :
 
-```
+```bash
 ./benchmarks_avx512.exe
 [std math] 5.358e-01 Gsin/s
 [std fast math] 3.389e+00 Gsin/s
@@ -93,94 +105,130 @@ average error (vs std) : 3.13e-17
 max error (vs std) : 3.33e-16
 ```
 
-## examples
-### pure compile time
-Let us consider the following program, featuring function exp - 1, with 13 64 bits coefficients
-```cpp
-int main() {
-    using V = aerobus::expm1<aerobus::i64, 13>;
-    static constexpr double xx = V::eval(0.1);
-    printf("%lf\n", xx);
-}
-```
-V AND xx are computed at compile time, yielding the following assembly (clang 17)
+## Structures
 
-```nasm
-.LCPI0_0:
-        .quad   0x3fbaec7b35a00d3a              # double 0.10517091807564763
-main:                                   # @main
-        push    rax
-        lea     rdi, [rip + .L.str]
-        movsd   xmm0, qword ptr [rip + .LCPI0_0] # xmm0 = mem[0],zero
-        mov     al, 1
-        call    printf@PLT
-        xor     eax, eax
-        pop     rcx
-        ret
-.L.str:
-        .asciz  "%lf\n"
-```
-### Evaluations on variables
-On the other hand, one might want to define a runtime function this way : 
+### Predefined discrete euclidean domains
 
-```cpp
-double expm1(const double x) {
-    using V = aerobus::expm1<aerobus::i64, 13>;
-    return V::eval(x);
-}
-```
-again, coefficients are all computed compile time, yielding the following assembly (given processor supports fused multiply-add) : 
-```nasm
-.LCPI0_0:
-        .quad   0x3de6124613a86d09              # double 1.6059043836821613E-10
-.LCPI0_1:
-        .quad   0x3e21eed8eff8d898              # double 2.08767569878681E-9
-.LCPI0_2:
-        .quad   0x3e5ae64567f544e4              # double 2.505210838544172E-8
-.LCPI0_3:
-        .quad   0x3e927e4fb7789f5c              # double 2.7557319223985888E-7
-.LCPI0_4:
-        .quad   0x3ec71de3a556c734              # double 2.7557319223985893E-6
-.LCPI0_5:
-        .quad   0x3efa01a01a01a01a              # double 2.4801587301587302E-5
-.LCPI0_6:
-        .quad   0x3f2a01a01a01a01a              # double 1.9841269841269841E-4
-.LCPI0_7:
-        .quad   0x3f56c16c16c16c17              # double 0.0013888888888888889
-.LCPI0_8:
-        .quad   0x3f81111111111111              # double 0.0083333333333333332
-.LCPI0_9:
-        .quad   0x3fa5555555555555              # double 0.041666666666666664
-.LCPI0_10:
-        .quad   0x3fc5555555555555              # double 0.16666666666666666
-.LCPI0_11:
-        .quad   0x3fe0000000000000              # double 0.5
-.LCPI0_12:
-        .quad   0x3ff0000000000000              # double 1
-expm1(double):                              # @expm1(double)
-        vxorpd  xmm1, xmm1, xmm1
-        vmovsd  xmm2, qword ptr [rip + .LCPI0_0] # xmm2 = mem[0],zero
-        vfmadd231sd     xmm2, xmm0, xmm1        # xmm2 = (xmm0 * xmm1) + xmm2
-        vfmadd213sd     xmm2, xmm0, qword ptr [rip + .LCPI0_1] # xmm2 = (xmm0 * xmm2) +   
-        vfmadd213sd     xmm2, xmm0, qword ptr [rip + .LCPI0_2] # xmm2 = (xmm0 * xmm2) + mem
-        vfmadd213sd     xmm2, xmm0, qword ptr [rip + .LCPI0_3] # xmm2 = (xmm0 * xmm2) + mem
-        vfmadd213sd     xmm2, xmm0, qword ptr [rip + .LCPI0_4] # xmm2 = (xmm0 * xmm2) + mem
-        vfmadd213sd     xmm2, xmm0, qword ptr [rip + .LCPI0_5] # xmm2 = (xmm0 * xmm2) + mem
-        vfmadd213sd     xmm2, xmm0, qword ptr [rip + .LCPI0_6] # xmm2 = (xmm0 * xmm2) + mem
-        vfmadd213sd     xmm2, xmm0, qword ptr [rip + .LCPI0_7] # xmm2 = (xmm0 * xmm2) + mem
-        vfmadd213sd     xmm2, xmm0, qword ptr [rip + .LCPI0_8] # xmm2 = (xmm0 * xmm2) + mem
-        vfmadd213sd     xmm2, xmm0, qword ptr [rip + .LCPI0_9] # xmm2 = (xmm0 * xmm2) + mem
-        vfmadd213sd     xmm2, xmm0, qword ptr [rip + .LCPI0_10] # xmm2 = (xmm0 * xmm2) + mem
-        vfmadd213sd     xmm2, xmm0, qword ptr [rip + .LCPI0_11] # xmm2 = (xmm0 * xmm2) + mem
-        vfmadd213sd     xmm2, xmm0, qword ptr [rip + .LCPI0_12] # xmm2 = (xmm0 * xmm2) + mem
-        vfmadd213sd     xmm0, xmm2, xmm1        # xmm0 = (xmm2 * xmm0) + xmm1
-        ret
-```
-### Apply on vectors and get proper vectorization
-If applied to a vector of data, with proper compiler hints, compilers can easily generate a vectorized version of the code : 
+`Aerobus` predefines several simple euclidean domains, such as :
+
+- `aerobus::i32` : integers (32 bits)
+- `aerobus::i64` : integers (64 bits)
+- `aerobus::zpz<p>` : integers modulo p (prime number) on 32 bits
+
+All these types represent the Ring, meaning the algebraic structure. They have a nested type `val<i>` where `i` is a scalar native value (int32_t or int64_t) to represent actual values in the ring.
+They have the following "operations", required by the IsEuclideanDomain concept :
+
+- `add_t` : a type (specialization of val), representing addition between two values
+- `sub_t` : a type (specialization of val), representing subtraction between two values
+- `mul_t` : a type (specialization of val), representing multiplication between two values
+- `div_t` : a type (specialization of val), representing division between two values
+- `mod_t` : a type (specialization of val), representing modulus between two values
+
+and the following "elements" :
+
+- one : the neutral element for multiplication, val<1>
+- zero : the neutral element for addition, val<0>
+
+### Polynomials
+
+`Aerobus` defines polynomials as a variadic template structure, with coefficient in an arbitrary discrete euclidean domain. As `i32` or `i64`, they are given same operations and elements, which make them a euclidean domain by themselves. Similarly, `aerobus::polynomial` represents the algebraic structure, actual values are in `aerobus::polynomial::val`.
+
+In addition, values have an evaluation function :
 
 ```cpp
-double compute_expm1(const size_t N, const double* const __restrict in, double* const __restrict out) {
+template<typename valueRing> static constexpr valueRing eval(const valueRing& x) {...}
+```
+
+Which can be used at compile time (constexpr evaluation) or runtime.
+
+### Known polynomials
+
+`Aerobus` predefines some well known families of polynomials, such as Hermite or Bernstein :
+
+```cpp
+using B23 = aerobus::known_polynomials::bernstein<2, 3>; // 3X^2(1-X)
+constexpr float x = B32::eval(2.0F); // -12
+```
+
+They have their coefficients either in `aerobus::i64` or `aerobus::q64`.
+Complete list is (but is meant to be extended):
+
+- `chebyshev_T`
+- `chebyshev_U`
+- `laguerre`
+- `hermite_prob`
+- `hermite_phys`
+- `bernstein`
+- `legendre`
+- `bernoulli`
+
+### Conway polynomials
+
+When the tag `AEROBUS_CONWAY_IMPORTS` is defined at compile time (`-DAEROBUS_CONWAY_IMPORTS`), `aerobus` provides definition for all Conway polynomials `CP(p, n)` for `p` up to 997 and low values for `n` (usually less than 10).
+
+They can be used to construct finite fields of order $p^n$ ($\mathbb{F}_{p^n}$):
+
+```cpp
+using F2 = zpz<2>;
+using PF2 = polynomial<F2>;
+using F4 = Quotient<PF2, ConwayPolynomial<2, 2>::type>;
+```
+
+### Taylor series
+
+`Aerobus` provides definition for Taylor expansion of known functions. They are all templates in two parameters, degree of expansion (`size_t`) and Integers (`typename`). Coefficients then live in `FractionField<Integers>`.
+
+They can be used and evaluated:
+
+```cpp
+using namespace aerobus;
+using aero_atanh = atanh<i64, 6>;
+constexpr float val = aero_atanh::eval(0.1F); // approximation of arctanh(0.1) using taylor expansion of degree 6
+```
+
+Exposed functions are:
+
+- `exp`
+- `expm1` $e^x - 1$
+- `lnp1` $\ln(x+1)$
+- `geom` $\frac{1}{1-x}$
+- `sin`
+- `cos`
+- `tan`
+- `sh`
+- `cosh`
+- `tanh`
+- `asin`
+- `acos`
+- `acosh`
+- `asinh`
+- `atanh`
+
+Having the capacity of specifying the degree is very important, as users may use other formats than `float64` or `float32` which require higher or lower degree to achieve correct or acceptable precision.
+
+It's possible to define Taylor expansion by implementing a `coeff_at` structure which must meet the following requirement :
+
+- Being template in Integers (`typename`) and index (`size_t`);
+- Exposing a type alias `type`, some specialization of `FractionField<Integers>::val`.
+
+For example, to define the serie $1+x+x^2+x^3+\ldots$, users may write:
+
+```cpp
+template<typename Integers, size_t i>
+struct my_coeff_at {
+    using type = typename FractionField<Integers>::one;
+};
+
+template<typename Integers, size_t degree>
+using my_serie = taylor<Integers, my_coeff_at, degree>;
+
+static constexpr double x = my_serie<i64, 3>::eval(3.0);
+```
+
+On x86-64 and CUDA platforms at least, using proper compiler directives, these functions yield very performant assembly, similar or better than standard library implementation in fast math. For example, this code:
+
+```cpp
+double compute_expm1(const size_t N, double* in, double* out) {
     using V = aerobus::expm1<aerobus::i64, 13>;
     for (size_t i = 0; i < N; ++i) {
         out[i] = V::eval(in[i]);
@@ -188,153 +236,116 @@ double compute_expm1(const size_t N, const double* const __restrict in, double* 
 }
 ```
 
-yielding : 
+Yields this assembly (clang 17, `-mavx2 -O3`) where we can see a pile of Fused-Multiply-Add vector instructions, generated because we unrolled completely the Horner evaluation loop:
 
 ```nasm
 compute_expm1(unsigned long, double const*, double*):
-        lea     rax, [rdi-1]
-        cmp     rax, 2
-        jbe     .L5
-        mov     rcx, rdi
-        xor     eax, eax
-        vxorpd  xmm1, xmm1, xmm1
-        vbroadcastsd    ymm14, QWORD PTR .LC1[rip]
-        vbroadcastsd    ymm13, QWORD PTR .LC3[rip]
-        shr     rcx, 2
-        vbroadcastsd    ymm12, QWORD PTR .LC5[rip]
-        vbroadcastsd    ymm11, QWORD PTR .LC7[rip]
-        sal     rcx, 5
-        vbroadcastsd    ymm10, QWORD PTR .LC9[rip]
-        vbroadcastsd    ymm9, QWORD PTR .LC11[rip]
-        vbroadcastsd    ymm8, QWORD PTR .LC13[rip]
-        vbroadcastsd    ymm7, QWORD PTR .LC15[rip]
-        vbroadcastsd    ymm6, QWORD PTR .LC17[rip]
-        vbroadcastsd    ymm5, QWORD PTR .LC19[rip]
-        vbroadcastsd    ymm4, QWORD PTR .LC21[rip]
-        vbroadcastsd    ymm3, QWORD PTR .LC23[rip]
-        vbroadcastsd    ymm2, QWORD PTR .LC25[rip]
+  lea     rax, [rdi-1]
+  cmp     rax, 2
+  jbe     .L5
+  mov     rcx, rdi
+  xor     eax, eax
+  vxorpd  xmm1, xmm1, xmm1
+  vbroadcastsd    ymm14, QWORD PTR .LC1[rip]
+  vbroadcastsd    ymm13, QWORD PTR .LC3[rip]
+  shr     rcx, 2
+  vbroadcastsd    ymm12, QWORD PTR .LC5[rip]
+  vbroadcastsd    ymm11, QWORD PTR .LC7[rip]
+  sal     rcx, 5
+  vbroadcastsd    ymm10, QWORD PTR .LC9[rip]
+  vbroadcastsd    ymm9, QWORD PTR .LC11[rip]
+  vbroadcastsd    ymm8, QWORD PTR .LC13[rip]
+  vbroadcastsd    ymm7, QWORD PTR .LC15[rip]
+  vbroadcastsd    ymm6, QWORD PTR .LC17[rip]
+  vbroadcastsd    ymm5, QWORD PTR .LC19[rip]
+  vbroadcastsd    ymm4, QWORD PTR .LC21[rip]
+  vbroadcastsd    ymm3, QWORD PTR .LC23[rip]
+  vbroadcastsd    ymm2, QWORD PTR .LC25[rip]
 .L3:
-        vmovupd ymm15, YMMWORD PTR [rsi+rax]
-        vmovapd ymm0, ymm15
-        vfmadd132pd     ymm0, ymm14, ymm1
-        vfmadd132pd     ymm0, ymm13, ymm15
-        vfmadd132pd     ymm0, ymm12, ymm15
-        vfmadd132pd     ymm0, ymm11, ymm15
-        vfmadd132pd     ymm0, ymm10, ymm15
-        vfmadd132pd     ymm0, ymm9, ymm15
-        vfmadd132pd     ymm0, ymm8, ymm15
-        vfmadd132pd     ymm0, ymm7, ymm15
-        vfmadd132pd     ymm0, ymm6, ymm15
-        vfmadd132pd     ymm0, ymm5, ymm15
-        vfmadd132pd     ymm0, ymm4, ymm15
-        vfmadd132pd     ymm0, ymm3, ymm15
-        vfmadd132pd     ymm0, ymm2, ymm15
-        vfmadd132pd     ymm0, ymm1, ymm15
-        vmovupd YMMWORD PTR [rdx+rax], ymm0
-        add     rax, 32
-        cmp     rcx, rax
-        jne     .L3
-        mov     rax, rdi
-        and     rax, -4
-        vzeroupper
+  vmovupd ymm15, YMMWORD PTR [rsi+rax]
+  vmovapd ymm0, ymm15
+  vfmadd132pd     ymm0, ymm14, ymm1
+  vfmadd132pd     ymm0, ymm13, ymm15
+  vfmadd132pd     ymm0, ymm12, ymm15
+  vfmadd132pd     ymm0, ymm11, ymm15
+  vfmadd132pd     ymm0, ymm10, ymm15
+  vfmadd132pd     ymm0, ymm9, ymm15
+  vfmadd132pd     ymm0, ymm8, ymm15
+  vfmadd132pd     ymm0, ymm7, ymm15
+  vfmadd132pd     ymm0, ymm6, ymm15
+  vfmadd132pd     ymm0, ymm5, ymm15
+  vfmadd132pd     ymm0, ymm4, ymm15
+  vfmadd132pd     ymm0, ymm3, ymm15
+  vfmadd132pd     ymm0, ymm2, ymm15
+  vfmadd132pd     ymm0, ymm1, ymm15
+  vmovupd YMMWORD PTR [rdx+rax], ymm0
+  add     rax, 32
+  cmp     rcx, rax
+  jne     .L3
+  mov     rax, rdi
+  and     rax, -4
+  vzeroupper
 ```
 
-## Predefined functions
-```cpp
-// e^x
-template<typename T, size_t deg>
-using exp = taylor<T, internal::exp_coeff, deg>;
+## Operations
 
-// e^x - 1
-template<typename T, size_t deg>
-using expm1 = typename polynomial<FractionField<T>>::template sub_t<
-        exp<T, deg>,
-        typename polynomial<FractionField<T>>::one>;
+### Field of fractions
 
-/// ln(1+x)
-template<typename T, size_t deg>
-using lnp1 = taylor<T, internal::lnp1_coeff, deg>;
+Given a set (type) satisfies the `IsEuclideanDomain` concept, `Aerobus` allows to define its [field of fractions](https://en.wikipedia.org/wiki/Field_of_fractions).
 
-/// atan(x);
-template<typename T, size_t deg>
-using atan = taylor<T, internal::atan_coeff, deg>;
+This new type is again a euclidean domain, especially a field, and therefore we can define polynomials over it.
 
-/// sin(x)
-template<typename T, size_t deg>
-using sin = taylor<T, internal::sin_coeff, deg>;
-
-/// sh(x)
-template<typename T, size_t deg>
-using sinh = taylor<T, internal::sh_coeff, deg>;
-
-/// ch(x)
-template<typename T, size_t deg>
-using cosh = taylor<T, internal::cosh_coeff, deg>;
-
-/// cos(x)
-template<typename T, size_t deg>
-using cos = taylor<T, internal::cos_coeff, deg>;
-
-/// 1 / (1-x)
-template<typename T, size_t deg>
-using geometric_sum = taylor<T, internal::geom_coeff, deg>;
-
-/// asin(x)
-template<typename T, size_t deg>
-using asin = taylor<T, internal::asin_coeff, deg>;
-
-/// asinh(x)
-template<typename T, size_t deg>
-using asinh = taylor<T, internal::asinh_coeff, deg>;
-
-/// atanh(x)
-template<typename T, size_t deg>
-using atanh = taylor<T, internal::atanh_coeff, deg>;
-
-/// tan(x)
-template<typename T, size_t deg>
-using tan = taylor<T, internal::tan_coeff, deg>;
-
-/// tanh(x)
-template<typename T, size_t deg>
-using tanh = taylor<T, internal::tanh_coeff, deg>;
-```
-
-### extend
-To define another Taylor serie, it's just needed to provide an implementation for coefficients. 
-Aerobus already exposes usual integers (Bernoulli, factorial, alternate, pow) to help users extend the library. 
-
-For example, here is the code of the sin function (at zero) : 
+For example, integers modulo `p` is not a field when `p` is not prime. We then can define its field of fraction and polynomials over it this way:
 
 ```cpp
-namespace aerobus 
-{
-    namespace internal 
-    {
-        template<typename T, size_t i, typename E = void>
-        struct sin_coeff_helper {};
-
-        template<typename T, size_t i>
-        struct sin_coeff_helper<T, i, typename std::enable_if<(i & 1) == 0>::type> {
-            using type = typename FractionField<T>::zero;
-        };
-
-        template<typename T, size_t i>
-        struct sin_coeff_helper<T, i, typename std::enable_if<(i & 1) == 1>::type> {
-            using type = typename FractionField<T>::template val<typename alternate<T, i / 2>::type, typename factorial<T, i>::type>;
-        };
-
-        template<typename T, size_t i>
-        struct sin_coeff {
-            using type = typename sin_coeff_helper<T, i>::type;
-        };
-    }
-
-    template<typename T, size_t deg>
-    using sin = taylor<T, internal::sin_coeff, deg>;
-}
+using namespace aerobus;
+using ZmZ = zpz<8>;
+using Fzmz = FractionField<ZmZ>;
+using Pfzmz = polynomial<Fzmz>;
 ```
 
+The same operation would stand for any set that users would have implemented in place of `ZmZ`.
 
+For example, we can easily define [rational functions](https://en.wikipedia.org/wiki/Rational_function) by taking the ring of fractions of polynomials:
+
+```cpp
+using namespace aerobus;
+using RF64 = FractionField<polynomial<q64>>;
+```
+
+Which also have an evaluation function, as polynomial do.
+
+### Quotient
+
+Given a ring `R`, `Aerobus` provides automatic implementation for [quotient ring](https://en.wikipedia.org/wiki/Quotient_ring) $R/X$ where X is a principal ideal generated by some element, as we know this kind of ideal is two-sided as long as `R` is commutative (and we assume it is).
+
+For example, if we want `R` to be $\mathbb{Z}$ represented as `aerobus::i64`, we can express arithmetic modulo 17 using:
+
+```cpp
+using namespace aerobus;
+using ZpZ = Quotient<i64, i64::val<17>>;
+```
+
+As we could have using `zpz<17>`.
+
+This is mainly used to define finite fields of order $p^n$ using Conway polynomials but may have other applications.
+
+## Misc
+
+### Continued Fractions
+
+`Aerobus` gives an implementation for [continued fractions](https://en.wikipedia.org/wiki/Continued_fraction). It can be used this way:
+
+```cpp
+using namespace aerobus;
+using T = ContinuedFraction<1,2,3,4>;
+constexpr double x = T::val;
+```
+
+As practical examples, `aerobus` gives continued fractions of $\pi$, $e$, $\sqrt{2}$ and $\sqrt{3}$:
+
+```cpp
+constexpr double A_SQRT3 = aerobus::SQRT3_fraction::val; // 1.7320508075688772935
+```
 
 [![DOI](https://zenodo.org/badge/499577459.svg)](https://zenodo.org/badge/latestdoi/499577459)
