@@ -747,12 +747,14 @@ namespace aerobus {
 namespace aerobus {
     /// @brief 64 bits signed integers, seen as a algebraic ring with related operations
     struct i64 {
-        /// @brief type for actual values
+        /// @brief type of represented values
         using inner_type = int64_t;
         /// @brief values in i64
         /// @tparam x an actual integer
         template<int64_t x>
         struct val {
+            /// @brief type of represented values
+            using inner_type = int32_t;
             /// @brief enclosing ring type
             using enclosing_type = i64;
             /// @brief actual value
@@ -2267,6 +2269,55 @@ namespace aerobus {
     template<typename FloatType, typename T, size_t n >
     inline constexpr FloatType bernoulli_v = internal::bernoulli<T, n>::template value<FloatType>;
 
+    // bell numbers
+    namespace internal {
+        template<typename T, size_t n, typename E = void>
+        struct bell_helper;
+
+        template <typename T, size_t n>
+        struct bell_helper<T, n, std::enable_if_t<(n > 1)>> {
+            template<typename accum, size_t i, size_t stop>
+            struct sum_helper {
+             private:
+                using left = typename T::template mul_t<
+                            combination_t<T, i, n-1>,
+                            typename bell_helper<T, i>::type>;
+                using new_accum = typename T::template add_t<accum, left>;
+             public:
+                using type = typename sum_helper<new_accum, i+1, stop>::type;
+            };
+
+            template<typename accum, size_t stop>
+            struct sum_helper<accum, stop, stop> {
+                using type = accum;
+            };
+
+            using type = typename sum_helper<typename T::zero, 0, n>::type;
+        };
+
+        template<typename T>
+        struct bell_helper<T, 0> {
+            using type = typename T::one;
+        };
+
+        template<typename T>
+        struct bell_helper<T, 1> {
+            using type = typename T::one;
+        };
+    }  // namespace internal
+
+    /// @brief Bell numbers
+    /// @tparam T ring type, such as aerobus::i64
+    /// @tparam n index
+    template<typename T, size_t n>
+    using bell_t = typename internal::bell_helper<T, n>::type;
+
+    /// @brief Bell number as value (int64_t for example)
+    /// @tparam T ring type for calculation (aerobus::i64 for example)
+    /// @tparam n
+    template<typename T, size_t n>
+    static constexpr typename T::inner_type bell_v = bell_t<T, n>::v;
+
     namespace internal {
         template<typename T, int k, typename E = void>
         struct alternate {};
@@ -2354,10 +2405,20 @@ namespace aerobus {
     inline constexpr typename T::inner_type alternate_v = internal::alternate<T, k>::value;
 
     namespace internal {
-        template<typename T, auto p, auto n, typename E = void>
-        struct pow {};
+        template<typename T>
+        struct pow_scalar {
+            template<size_t p>
+            static constexpr T func(const T& x) { return p == 0 ? static_cast<T>(1) :
+                p % 2 == 0 ? func<p/2>(x) * func<p/2>(x) :
+                x * func<p/2>(x) * func<p/2>(x);
+            }
+        };
 
-        template<typename T, auto p, auto n>
+        template<typename T, typename p, size_t n, typename E = void>
+        requires IsEuclideanDomain<T>
+        struct pow;
+
+        template<typename T, typename p, size_t n>
         struct pow<T, p, n, std::enable_if_t<(n > 0 && n % 2 == 0)>> {
             using type = typename T::template mul_t<
                 typename pow<T, p, n/2>::type,
@@ -2365,10 +2426,10 @@ namespace aerobus {
             >;
         };
 
-        template<typename T, auto p, auto n>
+        template<typename T, typename p, size_t n>
         struct pow<T, p, n, std::enable_if_t<(n % 2 == 1)>> {
             using type = typename T::template mul_t<
-                typename T::template inject_constant_t<p>,
+                p,
                 typename T::template mul_t<
                     typename pow<T, p, n/2>::type,
                     typename pow<T, p, n/2>::type
@@ -2376,23 +2437,26 @@ namespace aerobus {
             >;
         };
 
-        template<typename T, auto n, auto p>
-        struct pow<T, n, p, std::enable_if_t<p == 0>> { using type = typename T::one; };
+        template<typename T, typename p, size_t n>
+        struct pow<T, p, n, std::enable_if_t<n == 0>> { using type = typename T::one; };
     }  // namespace internal
 
     /// @brief p^n (as 'val' type in T)
     /// @tparam T (some ring type, such as aerobus::i64)
-    /// @tparam p (from T::inner_type, such as int64_t)
-    /// @tparam n (from T::inner_type, such as int64_t)
-    template<typename T, auto p, auto n>
+    /// @tparam p must be an instantiation of T::val
+    /// @tparam n power
+    template<typename T, typename p, size_t n>
     using pow_t = typename internal::pow<T, p, n>::type;
 
-    /// @brief p^n (as value in T::inner_type)
+    /// @brief p^n (as 'val' type in T) as value in T::inner_type
     /// @tparam T (some ring type, such as aerobus::i64)
-    /// @tparam p (from T::inner_type, such as int64_t)
-    /// @tparam n (from T::inner_type, such as int64_t)
-    template<typename T, auto p, auto n>
+    /// @tparam p must be an instantiation of T::val
+    /// @tparam n power
+    template<typename T, typename p, size_t n>
     static constexpr typename T::inner_type pow_v = internal::pow<T, p, n>::type::v;
+
+    template<typename T, size_t p>
+    static constexpr T pow_scalar(const T& x) { return internal::pow_scalar<T>::template func<p>(x); }
 
     namespace internal {
         template<typename, template<typename, size_t> typename, class>
@@ -2522,8 +2586,8 @@ namespace aerobus {
                 typename T::template mul_t<
                     typename T::template val<i>,
                     T::template mul_t<
-                        pow_t<T, 4, i / 2>,
-                        pow<T, factorial<T, i / 2>::value, 2
+                        pow_t<T, typename T::template inject_constant_t<4>, i / 2>,
+                        pow<T, factorial_t<T, i / 2>, 2
                     >
                 >
                 >>;
@@ -2562,9 +2626,9 @@ namespace aerobus {
                 typename T::template mul_t<
                     typename T::template mul_t<
                         typename T::template val<i>,
-                        pow_t<T, (factorial<T, i / 2>::value), 2>
+                        pow_t<T, factorial_t<T, i / 2>, 2>
                     >,
-                    pow_t<T, 4, i / 2>
+                    pow_t<T, typename T::template inject_constant_t<4>, i / 2>
                 >
             >;
         };
@@ -2612,7 +2676,8 @@ namespace aerobus {
         struct tan_coeff_helper<T, i, std::enable_if_t<(i % 2) != 0>> {
         private:
             // 4^((i+1)/2)
-            using _4p = typename FractionField<T>::template inject_t<pow_t<T, 4, (i + 1) / 2>>;
+            using _4p = typename FractionField<T>::template inject_t<
+                pow_t<T, typename T::template inject_constant_t<4>, (i + 1) / 2>>;
             // 4^((i+1)/2) - 1
             using _4pm1 = typename FractionField<T>::template sub_t<_4p, typename FractionField<T>::one>;
             // (-1)^((i-1)/2)
@@ -2648,7 +2713,8 @@ namespace aerobus {
         template<typename T, size_t i>
         struct tanh_coeff_helper<T, i, std::enable_if_t<(i % 2) != 0>> {
         private:
-            using _4p = typename FractionField<T>::template inject_t<pow_t<T, 4, (i + 1) / 2>>;
+            using _4p = typename FractionField<T>::template inject_t<
+                pow_t<T, typename T::template inject_constant_t<4>, (i + 1) / 2>>;
             using _4pm1 = typename FractionField<T>::template sub_t<_4p, typename FractionField<T>::one>;
             using dividend =
                 typename FractionField<T>::template mul_t<

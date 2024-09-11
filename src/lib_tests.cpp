@@ -650,6 +650,19 @@ TEST(utilities, bernoulli) {
     EXPECT_EQ(B4::y::v, 30);
 }
 
+TEST(utilities, bell) {
+    constexpr int64_t B0 = bell_v<i64, 0>;
+    EXPECT_EQ(B0, 1);
+    constexpr int64_t B1 = bell_v<i64, 1>;
+    EXPECT_EQ(B1, 1);
+    constexpr int64_t B2 = bell_v<i64, 2>;
+    EXPECT_EQ(B2, 2);
+    constexpr int64_t B3 = bell_v<i64, 3>;
+    EXPECT_EQ(B3, 5);
+    constexpr int64_t B4 = bell_v<i64, 4>;
+    EXPECT_EQ(B4, 15);
+}
+
 TEST(zpz, basic_assertions) {
     using Z2Z = zpz<2>;
     EXPECT_EQ((Z2Z::template add_t<typename Z2Z::val<1>, typename Z2Z::val<1>>::v), 0);
@@ -704,14 +717,28 @@ TEST(utilities, alternate) {
 }
 
 TEST(utilities, pow) {
-    constexpr int a0 = pow_t<i32, 2, 3>::v;
+    constexpr int32_t a0 = pow_t<i32, typename i32::inject_constant_t<2>, 3>::v;
     EXPECT_EQ(a0, 8);
-    constexpr int a1 = pow_t<i32, 2, 4>::v;
+    constexpr int32_t a1 = pow_t<i32, typename i32::inject_constant_t<2>, 4>::v;
     EXPECT_EQ(a1, 16);
-    constexpr int a2 = pow_t<i32, 0, 0>::v;
+    constexpr int32_t a2 = pow_t<i32, i32::zero, 0>::v;
     EXPECT_EQ(a2, 1);
-    constexpr int a3 = pow_v<i32, 3, 3>;
+    constexpr int64_t a3 = pow_v<i64, typename i64::inject_constant_t<3>, 3>;
     EXPECT_EQ(a3, 27);
+}
+
+TEST(utilities, pow_scalar) {
+    constexpr int32_t a0 = pow_scalar<int32_t, 2>(2);
+    EXPECT_EQ(a0, 4);
+
+    constexpr double x = pow_scalar<double, 3>(3.0);
+    EXPECT_EQ(x, 27.0);
+
+    constexpr double one = pow_scalar<size_t, 0>(12);
+    EXPECT_EQ(one, 1);
+
+    constexpr double zone = pow_scalar<size_t, 0>(0);
+    EXPECT_EQ(zone, 1);
 }
 
 TEST(utilities, abs) {
