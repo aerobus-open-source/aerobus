@@ -15,12 +15,19 @@
 
 /** @file */
 
+
 #ifdef _MSC_VER
 #define ALIGNED(x) __declspec(align(x))
 #define INLINED __forceinline
 #else
 #define ALIGNED(x) __attribute__((aligned(x)))
 #define INLINED __attribute__((always_inline)) inline
+#endif
+
+#ifdef __CUDACC__
+#define DEVICE __host__ __device__
+#else
+#define DEVICE
 #endif
 
 //! \namespace aerobus main namespace for all publicly exposed types or functions
@@ -566,7 +573,7 @@ namespace aerobus {
             /// @brief cast x into valueType
             /// @tparam valueType double for example
             template<typename valueType>
-            static constexpr valueType get() { return static_cast<valueType>(x); }
+            static constexpr INLINED DEVICE valueType get() { return static_cast<valueType>(x); }
 
             /// @brief is value zero
             using is_zero_t = std::bool_constant<x == 0>;
@@ -579,7 +586,7 @@ namespace aerobus {
             /// @brief cast x into valueRing
             /// @tparam valueRing double for example
             template<typename valueRing>
-            static constexpr valueRing eval(const valueRing& v) {
+            static constexpr DEVICE INLINED valueRing eval(const valueRing& v) {
                 return static_cast<valueRing>(x);
             }
         };
@@ -763,7 +770,7 @@ namespace aerobus {
             /// @brief cast value in valueType
             /// @tparam valueType (double for example)
             template<typename valueType>
-            static constexpr valueType get() {
+            static constexpr DEVICE INLINED valueType get() {
                 return static_cast<valueType>(x);
             }
 
@@ -778,7 +785,7 @@ namespace aerobus {
             /// @brief cast value in valueRing
             /// @tparam valueRing (double for example)
             template<typename valueRing>
-            static constexpr valueRing eval(const valueRing& v) {
+            static constexpr DEVICE INLINED valueRing eval(const valueRing& v) {
                 return static_cast<valueRing>(x);
             }
         };
@@ -976,7 +983,7 @@ namespace aerobus {
             static constexpr int32_t v = x % p;
 
             template<typename valueType>
-            static constexpr valueType get() { return static_cast<valueType>(x % p); }
+            static constexpr DEVICE INLINED valueType get() { return static_cast<valueType>(x % p); }
 
             using is_zero_t = std::bool_constant<x% p == 0>;
             static std::string to_string() {
@@ -984,7 +991,7 @@ namespace aerobus {
             }
 
             template<typename valueRing>
-            static constexpr valueRing eval(const valueRing& v) {
+            static constexpr DEVICE INLINED valueRing eval(const valueRing& v) {
                 return static_cast<valueRing>(x % p);
             }
         };
@@ -1190,7 +1197,7 @@ namespace aerobus {
             /// @param x value
             /// @return P(x)
             template<typename valueRing>
-            static constexpr valueRing eval(const valueRing& x) {
+            static constexpr DEVICE INLINED valueRing eval(const valueRing& x) {
                 return horner_evaluation<valueRing, val>
                         ::template inner<0, degree + 1>
                         ::func(static_cast<valueRing>(0), x);
@@ -1232,7 +1239,7 @@ namespace aerobus {
             }
 
             template<typename valueRing>
-            static constexpr valueRing eval(const valueRing& x) {
+            static constexpr DEVICE INLINED valueRing eval(const valueRing& x) {
                 return static_cast<valueRing>(aN::template get<valueRing>());
             }
         };
@@ -1548,7 +1555,7 @@ namespace aerobus {
         struct horner_evaluation {
             template<size_t index, size_t stop>
             struct inner {
-                static constexpr valueRing func(const valueRing& accum, const valueRing& x) {
+                static constexpr DEVICE INLINED valueRing func(const valueRing& accum, const valueRing& x) {
                     constexpr valueRing coeff =
                         static_cast<valueRing>(P::template coeff_at_t<P::degree - index>::template get<valueRing>());
                     return horner_evaluation<valueRing, P>::template inner<index + 1, stop>::func(x * accum + coeff, x);
@@ -1557,7 +1564,7 @@ namespace aerobus {
 
             template<size_t stop>
             struct inner<stop, stop> {
-                static constexpr valueRing func(const valueRing& accum, const valueRing& x) {
+                static constexpr DEVICE INLINED valueRing func(const valueRing& accum, const valueRing& x) {
                     return accum;
                 }
             };
@@ -1774,7 +1781,9 @@ namespace aerobus {
                 /// @tparam valueType likely double or float
                 /// @return
                 template<typename valueType>
-                static constexpr valueType get() { return static_cast<valueType>(x::v) / static_cast<valueType>(y::v); }
+                static constexpr DEVICE INLINED valueType get() {
+                    return static_cast<valueType>(x::v) / static_cast<valueType>(y::v);
+                }
 
                 /// @brief represents value as string
                 /// @return something like val1 / val2
@@ -1787,7 +1796,7 @@ namespace aerobus {
                 /// @param v
                 /// @return
                 template<typename valueRing>
-                static constexpr valueRing eval(const valueRing& v) {
+                static constexpr DEVICE INLINED valueRing eval(const valueRing& v) {
                     return x::eval(v) / y::eval(v);
                 }
             };
@@ -2408,7 +2417,7 @@ namespace aerobus {
         template<typename T>
         struct pow_scalar {
             template<size_t p>
-            static constexpr T func(const T& x) { return p == 0 ? static_cast<T>(1) :
+            static constexpr DEVICE INLINED T func(const T& x) { return p == 0 ? static_cast<T>(1) :
                 p % 2 == 0 ? func<p/2>(x) * func<p/2>(x) :
                 x * func<p/2>(x) * func<p/2>(x);
             }
@@ -2456,7 +2465,7 @@ namespace aerobus {
     static constexpr typename T::inner_type pow_v = internal::pow<T, p, n>::type::v;
 
     template<typename T, size_t p>
-    static constexpr T pow_scalar(const T& x) { return internal::pow_scalar<T>::template func<p>(x); }
+    static constexpr DEVICE INLINED T pow_scalar(const T& x) { return internal::pow_scalar<T>::template func<p>(x); }
 
     namespace internal {
         template<typename, template<typename, size_t> typename, class>
