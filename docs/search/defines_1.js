@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['inlined_0',['INLINED',['../aerobus_8h.html#a74132fd0517f56e437c3da3283ac40b2',1,'aerobus.h']]]
+  ['device_0',['DEVICE',['../aerobus_8h.html#a775d096fbc3988fb7ed858b79ef44e22',1,'aerobus.h']]]
 ];

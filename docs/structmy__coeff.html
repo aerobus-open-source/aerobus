@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Aerobus: File Members</title>
+<title>Aerobus: my_coeff&lt; T, i &gt; Struct Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -53,7 +53,6 @@ $(function() {
 /* @license-end */
 </script>
 <div id="main-nav"></div>
-</div><!-- top -->
 <!-- window showing the filter options -->
 <div id="MSearchSelectWindow"
      onmouseover="return searchBox.OnSearchSelectShow()"
@@ -75,9 +74,42 @@ $(function() {
 </div>
 </div>
 
+</div><!-- top -->
+<div class="header">
+  <div class="summary">
+<a href="#pub-types">Public Types</a> &#124;
+<a href="structmy__coeff-members.html">List of all members</a>  </div>
+  <div class="headertitle"><div class="title">my_coeff&lt; T, i &gt; Struct Template Reference</div></div>
+</div><!--header-->
 <div class="contents">
-<div class="textblock">Here is a list of all functions with links to the files they belong to:</div><ul>
-<li>main()&#160;:&#160;<a class="el" href="custom__taylor_8cpp.html#ae66f6b31b5ad750f1fe042a706a4e3d4">custom_taylor.cpp</a>, <a class="el" href="hermite_8cpp.html#ae66f6b31b5ad750f1fe042a706a4e3d4">hermite.cpp</a></li>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:a16ae01b85df00941eb8b138a263629d1" id="r_a16ae01b85df00941eb8b138a263629d1"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmy__coeff.html#a16ae01b85df00941eb8b138a263629d1">type</a> = <a class="el" href="namespaceaerobus.html#ad6131688419c73974730ec7c12be5506">aerobus::makefraction_t</a>&lt; T, <a class="el" href="namespaceaerobus.html#a9af35213e35f442ba1ad88f8acf0a59c">aerobus::bell_t</a>&lt; T, i &gt;, <a class="el" href="namespaceaerobus.html#ad2b9b4561a536a30dc1d19693db6f649">aerobus::factorial_t</a>&lt; T, i &gt; &gt;</td></tr>
+<tr class="separator:a16ae01b85df00941eb8b138a263629d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><div class="compoundTemplParams">template&lt;typename T, size_t i&gt;<br />
+struct my_coeff&lt; T, i &gt;</div><p>Example demonstrating how to implement a custom taylor serie, here function is f(x) = exp(exp(x) - 1) for which we know the development : f(x) = sum{B_n / n! x^n} where B_n is the nth Bell number </p>
+</div><h2 class="groupheader">Member Typedef Documentation</h2>
+<a id="a16ae01b85df00941eb8b138a263629d1" name="a16ae01b85df00941eb8b138a263629d1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a16ae01b85df00941eb8b138a263629d1">&#9670;&#160;</a></span>type</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T , size_t i&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="structmy__coeff.html">my_coeff</a>&lt; T, i &gt;::type =  <a class="el" href="namespaceaerobus.html#ad6131688419c73974730ec7c12be5506">aerobus::makefraction_t</a>&lt;T, <a class="el" href="namespaceaerobus.html#a9af35213e35f442ba1ad88f8acf0a59c">aerobus::bell_t</a>&lt;T, i&gt;, <a class="el" href="namespaceaerobus.html#ad2b9b4561a536a30dc1d19693db6f649">aerobus::factorial_t</a>&lt;T, i&gt; &gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<hr/>The documentation for this struct was generated from the following file:<ul>
+<li>examples/<a class="el" href="custom__taylor_8cpp.html">custom_taylor.cpp</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->

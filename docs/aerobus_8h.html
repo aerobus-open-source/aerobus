@@ -204,6 +204,8 @@ Macros</h2></td></tr>
 <tr class="separator:a8e7a3bf6003d72a62606f343c2db6245"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a74132fd0517f56e437c3da3283ac40b2" id="r_a74132fd0517f56e437c3da3283ac40b2"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="aerobus_8h.html#a74132fd0517f56e437c3da3283ac40b2">INLINED</a>&#160;&#160;&#160;__attribute__((always_inline)) inline</td></tr>
 <tr class="separator:a74132fd0517f56e437c3da3283ac40b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a775d096fbc3988fb7ed858b79ef44e22" id="r_a775d096fbc3988fb7ed858b79ef44e22"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="aerobus_8h.html#a775d096fbc3988fb7ed858b79ef44e22">DEVICE</a></td></tr>
+<tr class="separator:a775d096fbc3988fb7ed858b79ef44e22"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
 Typedefs</h2></td></tr>
@@ -282,6 +284,10 @@ Typedefs</h2></td></tr>
 <tr class="memitem:a8c797bc2f7093dd7d2aa91bb6e44e173"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceaerobus.html#a8c797bc2f7093dd7d2aa91bb6e44e173">aerobus::bernoulli_t</a> = typename internal::bernoulli&lt; T, n &gt;::type</td></tr>
 <tr class="memdesc:a8c797bc2f7093dd7d2aa91bb6e44e173"><td class="mdescLeft">&#160;</td><td class="mdescRight">nth bernoulli number as type in T  <br /></td></tr>
 <tr class="separator:a8c797bc2f7093dd7d2aa91bb6e44e173"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9af35213e35f442ba1ad88f8acf0a59c" id="r_a9af35213e35f442ba1ad88f8acf0a59c"><td class="memTemplParams" colspan="2">template&lt;typename T , size_t n&gt; </td></tr>
+<tr class="memitem:a9af35213e35f442ba1ad88f8acf0a59c"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceaerobus.html#a9af35213e35f442ba1ad88f8acf0a59c">aerobus::bell_t</a> = typename internal::bell_helper&lt; T, n &gt;::type</td></tr>
+<tr class="memdesc:a9af35213e35f442ba1ad88f8acf0a59c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Bell numbers.  <br /></td></tr>
+<tr class="separator:a9af35213e35f442ba1ad88f8acf0a59c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aeb076a87e5967a0ae427b45b573fbb9c" id="r_aeb076a87e5967a0ae427b45b573fbb9c"><td class="memTemplParams" colspan="2">template&lt;typename T , int k&gt; </td></tr>
 <tr class="memitem:aeb076a87e5967a0ae427b45b573fbb9c"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceaerobus.html#aeb076a87e5967a0ae427b45b573fbb9c">aerobus::alternate_t</a> = typename internal::alternate&lt; T, k &gt;::type</td></tr>
 <tr class="memdesc:aeb076a87e5967a0ae427b45b573fbb9c"><td class="mdescLeft">&#160;</td><td class="mdescRight">(-1)^k as type in T  <br /></td></tr>
@@ -294,7 +300,7 @@ Typedefs</h2></td></tr>
 <tr class="memitem:afae9e53016a69b68009472929f3a640e"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceaerobus.html#afae9e53016a69b68009472929f3a640e">aerobus::stirling_unsigned_t</a> = <a class="el" href="namespaceaerobus.html#a1750820f1846e5c6827f7b08f563a8ce">abs_t</a>&lt; typename internal::stirling_helper&lt; T, n, k &gt;::type &gt;</td></tr>
 <tr class="memdesc:afae9e53016a69b68009472929f3a640e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stirling number of first king (unsigned) &ndash; as types.  <br /></td></tr>
 <tr class="separator:afae9e53016a69b68009472929f3a640e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6ea42acce47e7abb30f821afecfe8fc1" id="r_a6ea42acce47e7abb30f821afecfe8fc1"><td class="memTemplParams" colspan="2">template&lt;typename T , auto p, auto n&gt; </td></tr>
+<tr class="memitem:a6ea42acce47e7abb30f821afecfe8fc1" id="r_a6ea42acce47e7abb30f821afecfe8fc1"><td class="memTemplParams" colspan="2">template&lt;typename T , typename p , size_t n&gt; </td></tr>
 <tr class="memitem:a6ea42acce47e7abb30f821afecfe8fc1"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceaerobus.html#a6ea42acce47e7abb30f821afecfe8fc1">aerobus::pow_t</a> = typename internal::pow&lt; T, p, n &gt;::type</td></tr>
 <tr class="memdesc:a6ea42acce47e7abb30f821afecfe8fc1"><td class="mdescLeft">&#160;</td><td class="mdescRight">p^n (as 'val' type in T)  <br /></td></tr>
 <tr class="separator:a6ea42acce47e7abb30f821afecfe8fc1"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -453,6 +459,20 @@ Variables</h2></td></tr>
           <td class="paramtype">&#160;</td>
           <td class="paramname">x</td><td>)</td>
           <td>&#160;&#160;&#160;__attribute__((aligned(x)))</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a775d096fbc3988fb7ed858b79ef44e22" name="a775d096fbc3988fb7ed858b79ef44e22"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a775d096fbc3988fb7ed858b79ef44e22">&#9670;&#160;</a></span>DEVICE</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define DEVICE</td>
         </tr>
       </table>
 </div><div class="memdoc">

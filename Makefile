@@ -8,6 +8,7 @@ clean:
 doc:
 	doxygen Doxyfile
 	cd documentation/latex && make
+	rm -rf docs/ && mkdir -p docs && cp -r documentation/html/* docs/
 
 tests:
 	echo "RUNNING TESTS WITH GCC"

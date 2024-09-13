@@ -6,7 +6,7 @@ digraph "src/aerobus.h"
   node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
   Node1 [id="Node000001",label="src/aerobus.h",height=0.2,width=0.4,color="gray40", fillcolor="grey60", style="filled", fontcolor="black",tooltip=" "];
   Node1 -> Node2 [id="edge1_Node000001_Node000002",dir="back",color="steelblue1",style="solid",tooltip=" "];
-  Node2 [id="Node000002",label="src/benchmarks.cpp",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$benchmarks_8cpp.html",tooltip=" "];
+  Node2 [id="Node000002",label="examples/custom_taylor.cpp",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$custom__taylor_8cpp.html",tooltip=" "];
   Node1 -> Node3 [id="edge2_Node000001_Node000003",dir="back",color="steelblue1",style="solid",tooltip=" "];
-  Node3 [id="Node000003",label="src/lib_tests.cpp",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$lib__tests_8cpp.html",tooltip=" "];
+  Node3 [id="Node000003",label="examples/hermite.cpp",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$hermite_8cpp.html",tooltip=" "];
 }

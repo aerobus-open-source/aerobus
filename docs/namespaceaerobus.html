@@ -217,6 +217,10 @@ Typedefs</h2></td></tr>
 <tr class="memitem:a8c797bc2f7093dd7d2aa91bb6e44e173"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceaerobus.html#a8c797bc2f7093dd7d2aa91bb6e44e173">bernoulli_t</a> = typename internal::bernoulli&lt; T, n &gt;::type</td></tr>
 <tr class="memdesc:a8c797bc2f7093dd7d2aa91bb6e44e173"><td class="mdescLeft">&#160;</td><td class="mdescRight">nth bernoulli number as type in T  <br /></td></tr>
 <tr class="separator:a8c797bc2f7093dd7d2aa91bb6e44e173"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9af35213e35f442ba1ad88f8acf0a59c" id="r_a9af35213e35f442ba1ad88f8acf0a59c"><td class="memTemplParams" colspan="2">template&lt;typename T , size_t n&gt; </td></tr>
+<tr class="memitem:a9af35213e35f442ba1ad88f8acf0a59c"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceaerobus.html#a9af35213e35f442ba1ad88f8acf0a59c">bell_t</a> = typename internal::bell_helper&lt; T, n &gt;::type</td></tr>
+<tr class="memdesc:a9af35213e35f442ba1ad88f8acf0a59c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Bell numbers.  <br /></td></tr>
+<tr class="separator:a9af35213e35f442ba1ad88f8acf0a59c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aeb076a87e5967a0ae427b45b573fbb9c" id="r_aeb076a87e5967a0ae427b45b573fbb9c"><td class="memTemplParams" colspan="2">template&lt;typename T , int k&gt; </td></tr>
 <tr class="memitem:aeb076a87e5967a0ae427b45b573fbb9c"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceaerobus.html#aeb076a87e5967a0ae427b45b573fbb9c">alternate_t</a> = typename internal::alternate&lt; T, k &gt;::type</td></tr>
 <tr class="memdesc:aeb076a87e5967a0ae427b45b573fbb9c"><td class="mdescLeft">&#160;</td><td class="mdescRight">(-1)^k as type in T  <br /></td></tr>
@@ -229,7 +233,7 @@ Typedefs</h2></td></tr>
 <tr class="memitem:afae9e53016a69b68009472929f3a640e"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceaerobus.html#afae9e53016a69b68009472929f3a640e">stirling_unsigned_t</a> = <a class="el" href="namespaceaerobus.html#a1750820f1846e5c6827f7b08f563a8ce">abs_t</a>&lt; typename internal::stirling_helper&lt; T, n, k &gt;::type &gt;</td></tr>
 <tr class="memdesc:afae9e53016a69b68009472929f3a640e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stirling number of first king (unsigned) &ndash; as types.  <br /></td></tr>
 <tr class="separator:afae9e53016a69b68009472929f3a640e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6ea42acce47e7abb30f821afecfe8fc1" id="r_a6ea42acce47e7abb30f821afecfe8fc1"><td class="memTemplParams" colspan="2">template&lt;typename T , auto p, auto n&gt; </td></tr>
+<tr class="memitem:a6ea42acce47e7abb30f821afecfe8fc1" id="r_a6ea42acce47e7abb30f821afecfe8fc1"><td class="memTemplParams" colspan="2">template&lt;typename T , typename p , size_t n&gt; </td></tr>
 <tr class="memitem:a6ea42acce47e7abb30f821afecfe8fc1"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceaerobus.html#a6ea42acce47e7abb30f821afecfe8fc1">pow_t</a> = typename internal::pow&lt; T, p, n &gt;::type</td></tr>
 <tr class="memdesc:a6ea42acce47e7abb30f821afecfe8fc1"><td class="mdescLeft">&#160;</td><td class="mdescRight">p^n (as 'val' type in T)  <br /></td></tr>
 <tr class="separator:a6ea42acce47e7abb30f821afecfe8fc1"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -501,6 +505,31 @@ template&lt;typename Integers , size_t deg&gt; </div>
   <table class="tparams">
     <tr><td class="paramname">Integers</td><td>Ring type (for example <a class="el" href="structaerobus_1_1i64.html" title="64 bits signed integers, seen as a algebraic ring with related operations">i64</a>) </td></tr>
     <tr><td class="paramname">deg</td><td>taylor approximation degree </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a9af35213e35f442ba1ad88f8acf0a59c" name="a9af35213e35f442ba1ad88f8acf0a59c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9af35213e35f442ba1ad88f8acf0a59c">&#9670;&#160;</a></span>bell_t</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T , size_t n&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="namespaceaerobus.html#a9af35213e35f442ba1ad88f8acf0a59c">aerobus::bell_t</a> = typedef typename internal::bell_helper&lt;T, n&gt;::type</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Bell numbers. </p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">T</td><td>ring type, such as <a class="el" href="structaerobus_1_1i64.html" title="64 bits signed integers, seen as a algebraic ring with related operations">aerobus::i64</a> </td></tr>
+    <tr><td class="paramname">n</td><td>index </td></tr>
   </table>
   </dd>
 </dl>
@@ -955,7 +984,7 @@ template&lt;typename Ring , typename v1 , typename v2 &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , auto p, auto n&gt; </div>
+template&lt;typename T , typename p , size_t n&gt; </div>
       <table class="memname">
         <tr>
           <td class="memname">using <a class="el" href="namespaceaerobus.html#a6ea42acce47e7abb30f821afecfe8fc1">aerobus::pow_t</a> = typedef typename internal::pow&lt;T, p, n&gt;::type</td>
@@ -967,8 +996,8 @@ template&lt;typename T , auto p, auto n&gt; </div>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">T</td><td>(some ring type, such as <a class="el" href="structaerobus_1_1i64.html" title="64 bits signed integers, seen as a algebraic ring with related operations">aerobus::i64</a>) </td></tr>
-    <tr><td class="paramname">p</td><td>(from T::inner_type, such as int64_t) </td></tr>
-    <tr><td class="paramname">n</td><td>(from T::inner_type, such as int64_t) </td></tr>
+    <tr><td class="paramname">p</td><td>must be an instantiation of T::val </td></tr>
+    <tr><td class="paramname">n</td><td>power </td></tr>
   </table>
   </dd>
 </dl>

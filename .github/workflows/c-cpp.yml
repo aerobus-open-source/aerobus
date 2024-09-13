@@ -26,7 +26,7 @@ jobs:
       run: make clean tests
     - name: documentation
       if: success()
-      run: rm -rf docs/ && make doc && mkdir docs && mv -v documentation/html/* docs/
+      run: make doc
   paper:
     runs-on: ubuntu-latest
     name: Paper Draft
