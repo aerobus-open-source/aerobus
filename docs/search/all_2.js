@@ -1,7 +1,7 @@
 var searchData=
 [
-  ['chebyshev_5ft_0',['chebyshev_T',['../namespaceaerobus_1_1known__polynomials.html#af5f3f05bcd8c00aa30d6c9fcf647c807',1,'aerobus::known_polynomials']]],
-  ['chebyshev_5fu_1',['chebyshev_U',['../namespaceaerobus_1_1known__polynomials.html#a88309d5936109bd00f3331bf626a4463',1,'aerobus::known_polynomials']]],
+  ['chebyshev_5ft_0',['chebyshev_T',['../namespaceaerobus_1_1known__polynomials.html#a05e368563e41050cce06d99626ee2f84',1,'aerobus::known_polynomials']]],
+  ['chebyshev_5fu_1',['chebyshev_U',['../namespaceaerobus_1_1known__polynomials.html#a556155679d6e2b1055335b1ba59bdaa3',1,'aerobus::known_polynomials']]],
   ['coeff_5fat_2',['coeff_at',['../structaerobus_1_1polynomial_1_1val_3_01coeff_n_01_4_1_1coeff__at.html',1,'aerobus::polynomial::val&lt; coeffN &gt;']]],
   ['coeff_5fat_3c_20index_2c_20std_3a_3aenable_5fif_5ft_3c_28index_3c_200_7c_7cindex_20_3e_200_29_3e_20_3e_3',['coeff_at&lt; index, std::enable_if_t&lt;(index&lt; 0||index &gt; 0)&gt; &gt;',['../structaerobus_1_1polynomial_1_1val_3_01coeff_n_01_4_1_1coeff__at_3_01index_00_01std_1_1enable__i0b7e5753f1ff8befd506df4faeccf95f.html',1,'aerobus::polynomial::val&lt; coeffN &gt;']]],
   ['coeff_5fat_3c_20index_2c_20std_3a_3aenable_5fif_5ft_3c_28index_3d_3d0_29_3e_20_3e_4',['coeff_at&lt; index, std::enable_if_t&lt;(index==0)&gt; &gt;',['../structaerobus_1_1polynomial_1_1val_3_01coeff_n_01_4_1_1coeff__at_3_01index_00_01std_1_1enable__if__t_3_07index_0a_0a0_08_4_01_4.html',1,'aerobus::polynomial::val&lt; coeffN &gt;']]],
