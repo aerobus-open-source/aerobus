@@ -2894,121 +2894,136 @@ namespace aerobus {
 namespace aerobus {
     // CChebyshev
     namespace internal {
-        template<int kind, size_t deg>
+        template<int kind, size_t deg, typename I>
         struct chebyshev_helper {
-            using type = typename pi64::template sub_t<
-                typename pi64::template mul_t<
-                    typename pi64::template mul_t<
-                        pi64::inject_constant_t<2>,
-                        typename pi64::X>,
-                    typename chebyshev_helper<kind, deg - 1>::type
+            using type = typename polynomial<I>::template sub_t<
+                typename polynomial<I>::template mul_t<
+                    typename polynomial<I>::template mul_t<
+                        typename polynomial<I>::template inject_constant_t<2>,
+                        typename polynomial<I>::X>,
+                    typename chebyshev_helper<kind, deg - 1, I>::type
                 >,
-                typename chebyshev_helper<kind, deg - 2>::type
+                typename chebyshev_helper<kind, deg - 2, I>::type
             >;
         };
 
-        template<>
-        struct chebyshev_helper<1, 0> {
-            using type = typename pi64::one;
+        template<typename I>
+        struct chebyshev_helper<1, 0, I> {
+            using type = typename polynomial<I>::one;
         };
 
-        template<>
-        struct chebyshev_helper<1, 1> {
-            using type = typename pi64::X;
+        template<typename I>
+        struct chebyshev_helper<1, 1, I> {
+            using type = typename polynomial<I>::X;
         };
 
-        template<>
-        struct chebyshev_helper<2, 0> {
-            using type = typename pi64::one;
+        template<typename I>
+        struct chebyshev_helper<2, 0, I> {
+            using type = typename polynomial<I>::one;
         };
 
-        template<>
-        struct chebyshev_helper<2, 1> {
-            using type = typename pi64::template mul_t<
-                typename pi64::inject_constant_t<2>,
-                typename pi64::X>;
+        template<typename I>
+        struct chebyshev_helper<2, 1, I> {
+            using type = typename polynomial<I>::template mul_t<
+                typename polynomial<I>::template inject_constant_t<2>,
+                typename polynomial<I>::X>;
         };
     }  // namespace internal
 
     // Laguerre
     namespace internal {
-        template<size_t deg>
+        template<size_t deg, typename I>
         struct laguerre_helper {
+            using Q = FractionField<I>;
+            using PQ = polynomial<Q>;
+
          private:
             // Lk = (1 / k) * ((2 * k - 1 - x) * lkm1 - (k - 2)Lkm2)
-            using lnm2 = typename laguerre_helper<deg - 2>::type;
-            using lnm1 = typename laguerre_helper<deg - 1>::type;
+            using lnm2 = typename laguerre_helper<deg - 2, I>::type;
+            using lnm1 = typename laguerre_helper<deg - 1, I>::type;
             // -x + 2k-1
-            using p = typename pq64::template val<
-                typename q64::template inject_constant_t<-1>,
-                typename q64::template inject_constant_t<2 * deg - 1>>;
+            using p = typename PQ::template val<
+                typename Q::template inject_constant_t<-1>,
+                typename Q::template inject_constant_t<2 * deg - 1>>;
             // 1/n
-            using factor = typename pq64::template inject_ring_t<
-                q64::val<typename i64::one, typename i64::template inject_constant_t<deg>>>;
+            using factor = typename PQ::template inject_ring_t<
+                typename Q::template val<typename I::one, typename I::template inject_constant_t<deg>>>;
 
          public:
-            using type = typename pq64::template mul_t <
+            using type = typename PQ::template mul_t <
                 factor,
-                typename pq64::template sub_t<
-                    typename pq64::template mul_t<
+                typename PQ::template sub_t<
+                    typename PQ::template mul_t<
                         p,
                         lnm1
                     >,
-                    typename pq64::template mul_t<
-                        typename pq64::template inject_constant_t<deg-1>,
+                    typename PQ::template mul_t<
+                        typename PQ::template inject_constant_t<deg-1>,
                         lnm2
                     >
                 >
             >;
         };
 
-        template<>
-        struct laguerre_helper<0> {
-            using type = typename pq64::one;
+        template<typename I>
+        struct laguerre_helper<0, I> {
+            using type = typename polynomial<FractionField<I>>::one;
         };
 
-        template<>
-        struct laguerre_helper<1> {
-            using type = typename pq64::template sub_t<typename pq64::one, typename pq64::X>;
+        template<typename I>
+        struct laguerre_helper<1, I> {
+         private:
+            using PQ = polynomial<FractionField<I>>;
+         public:
+            using type = typename PQ::template sub_t<typename PQ::one, typename PQ::X>;
         };
     }  // namespace internal
 
     // Bernstein
     namespace internal {
-        template<size_t i, size_t m, typename E = void>
+        template<size_t i, size_t m, typename I, typename E = void>
         struct bernstein_helper {};
 
-        template<>
-        struct bernstein_helper<0, 0> {
-            using type = typename pi64::one;
+        template<typename I>
+        struct bernstein_helper<0, 0, I> {
+            using type = typename polynomial<I>::one;
         };
 
-        template<size_t i, size_t m>
-        struct bernstein_helper<i, m, std::enable_if_t<
+        template<size_t i, size_t m, typename I>
+        struct bernstein_helper<i, m, I, std::enable_if_t<
                     (m > 0) && (i == 0)>> {
-            using type = typename pi64::mul_t<
-                    typename pi64::sub_t<typename pi64::one, typename pi64::X>,
-                    typename bernstein_helper<i, m-1>::type>;
+         private:
+            using P = polynomial<I>;
+         public:
+            using type = typename P::template mul_t<
+                    typename P::template sub_t<typename P::one, typename P::X>,
+                    typename bernstein_helper<i, m-1, I>::type>;
         };
 
-        template<size_t i, size_t m>
-        struct bernstein_helper<i, m, std::enable_if_t<
+        template<size_t i, size_t m, typename I>
+        struct bernstein_helper<i, m, I, std::enable_if_t<
                     (m > 0) && (i == m)>> {
-            using type = typename pi64::template mul_t<
-                    typename pi64::X,
-                    typename bernstein_helper<i-1, m-1>::type>;
+         private:
+            using P = polynomial<I>;
+         public:
+            using type = typename P::template mul_t<
+                    typename P::X,
+                    typename bernstein_helper<i-1, m-1, I>::type>;
         };
 
-        template<size_t i, size_t m>
-        struct bernstein_helper<i, m, std::enable_if_t<
+        template<size_t i, size_t m, typename I>
+        struct bernstein_helper<i, m, I, std::enable_if_t<
                     (m > 0) && (i > 0) && (i < m)>> {
-            using type = typename pi64::add_t<
-                    typename pi64::mul_t<
-                        typename pi64::sub_t<typename pi64::one, typename pi64::X>,
-                        typename bernstein_helper<i, m-1>::type>,
-                    typename pi64::mul_t<
-                        typename pi64::X,
-                        typename bernstein_helper<i-1, m-1>::type>>;
+         private:
+            using P = polynomial<I>;
+         public:
+            using type = typename P::template add_t<
+                    typename P::template mul_t<
+                        typename P::template sub_t<typename P::one, typename P::X>,
+                        typename bernstein_helper<i, m-1, I>::type>,
+                    typename P::template mul_t<
+                        typename P::X,
+                        typename bernstein_helper<i-1, m-1, I>::type>>;
         };
     }  // namespace internal
 
@@ -3024,98 +3039,111 @@ namespace aerobus {
 
     // hermite
     namespace internal {
-        template<size_t deg, known_polynomials::hermite_kind kind>
+        template<size_t deg, known_polynomials::hermite_kind kind, typename I>
         struct hermite_helper {};
 
-        template<size_t deg>
-        struct hermite_helper<deg, known_polynomials::hermite_kind::probabilist> {
+        template<size_t deg, typename I>
+        struct hermite_helper<deg, known_polynomials::hermite_kind::probabilist, I> {
          private:
-            using hnm1 = typename hermite_helper<deg - 1, known_polynomials::hermite_kind::probabilist>::type;
-            using hnm2 = typename hermite_helper<deg - 2, known_polynomials::hermite_kind::probabilist>::type;
+            using hnm1 = typename hermite_helper<deg - 1, known_polynomials::hermite_kind::probabilist, I>::type;
+            using hnm2 = typename hermite_helper<deg - 2, known_polynomials::hermite_kind::probabilist, I>::type;
 
          public:
-            using type = typename pi64::template sub_t<
-                typename pi64::template mul_t<typename pi64::X, hnm1>,
-                typename pi64::template mul_t<
-                    typename pi64::template inject_constant_t<deg - 1>,
+            using type = typename polynomial<I>::template sub_t<
+                typename polynomial<I>::template mul_t<typename polynomial<I>::X, hnm1>,
+                typename polynomial<I>::template mul_t<
+                    typename polynomial<I>::template inject_constant_t<deg - 1>,
                     hnm2
                 >
             >;
         };
 
-        template<size_t deg>
-        struct hermite_helper<deg, known_polynomials::hermite_kind::physicist> {
+        template<size_t deg, typename I>
+        struct hermite_helper<deg, known_polynomials::hermite_kind::physicist, I> {
          private:
-            using hnm1 = typename hermite_helper<deg - 1, known_polynomials::hermite_kind::physicist>::type;
-            using hnm2 = typename hermite_helper<deg - 2, known_polynomials::hermite_kind::physicist>::type;
+            using hnm1 = typename hermite_helper<deg - 1, known_polynomials::hermite_kind::physicist, I>::type;
+            using hnm2 = typename hermite_helper<deg - 2, known_polynomials::hermite_kind::physicist, I>::type;
 
          public:
-            using type = typename pi64::template sub_t<
+            using type = typename polynomial<I>::template sub_t<
                 // 2X Hn-1
-                typename pi64::template mul_t<
-                    typename pi64::val<typename i64::template inject_constant_t<2>,
-                    typename i64::zero>, hnm1>,
+                typename polynomial<I>::template mul_t<
+                    typename pi64::val<typename I::template inject_constant_t<2>,
+                    typename I::zero>, hnm1>,
 
-                typename pi64::template mul_t<
-                    typename pi64::template inject_constant_t<2*(deg - 1)>,
+                typename polynomial<I>::template mul_t<
+                    typename polynomial<I>::template inject_constant_t<2*(deg - 1)>,
                     hnm2
                 >
             >;
         };
 
-        template<>
-        struct hermite_helper<0, known_polynomials::hermite_kind::probabilist> {
+        template<typename I>
+        struct hermite_helper<0, known_polynomials::hermite_kind::probabilist, I> {
+            using type = typename polynomial<I>::one;
+        };
+
+        template<typename I>
+        struct hermite_helper<1, known_polynomials::hermite_kind::probabilist, I> {
+            using type = typename polynomial<I>::X;
+        };
+
+        template<typename I>
+        struct hermite_helper<0, known_polynomials::hermite_kind::physicist, I> {
             using type = typename pi64::one;
         };
 
-        template<>
-        struct hermite_helper<1, known_polynomials::hermite_kind::probabilist> {
-            using type = typename pi64::X;
-        };
-
-        template<>
-        struct hermite_helper<0, known_polynomials::hermite_kind::physicist> {
-            using type = typename pi64::one;
-        };
-
-        template<>
-        struct hermite_helper<1, known_polynomials::hermite_kind::physicist> {
+        template<typename I>
+        struct hermite_helper<1, known_polynomials::hermite_kind::physicist, I> {
             // 2X
-            using type = typename pi64::template val<typename i64::template inject_constant_t<2>, typename i64::zero>;
+            using type = typename polynomial<I>::template val<
+                typename I::template inject_constant_t<2>,
+                typename I::zero>;
         };
     }  // namespace internal
 
     // legendre
     namespace internal {
-        template<size_t n>
+        template<size_t n, typename I>
         struct legendre_helper {
          private:
+            using Q = FractionField<I>;
+            using PQ = polynomial<Q>;
             // 1/n constant
             // (2n-1)/n X
-            using fact_left = typename pq64::monomial_t<make_q64_t<2*n-1, n>, 1>;
+            using fact_left = typename PQ::template monomial_t<
+                makefraction_t<I,
+                    typename I::template inject_constant_t<2*n-1>,
+                    typename I::template inject_constant_t<n>
+                >,
+            1>;
             // (n-1) / n
-            using fact_right = typename pq64::val<make_q64_t<n-1, n>>;
+            using fact_right = typename PQ::template val<
+                makefraction_t<I,
+                    typename I::template inject_constant_t<n-1>,
+                    typename I::template inject_constant_t<n>>>;
+
          public:
-            using type = pq64::template sub_t<
-                    typename pq64::template mul_t<
+            using type = PQ::template sub_t<
+                    typename PQ::template mul_t<
                         fact_left,
-                        typename legendre_helper<n-1>::type
+                        typename legendre_helper<n-1, I>::type
                     >,
-                    typename pq64::template mul_t<
+                    typename PQ::template mul_t<
                         fact_right,
-                        typename legendre_helper<n-2>::type
+                        typename legendre_helper<n-2, I>::type
                     >
                 >;
         };
 
-        template<>
-        struct legendre_helper<0> {
-            using type = typename pq64::one;
+        template<typename I>
+        struct legendre_helper<0, I> {
+            using type = typename polynomial<FractionField<I>>::one;
         };
 
-        template<>
-        struct legendre_helper<1> {
-            using type = typename pq64::X;
+        template<typename I>
+        struct legendre_helper<1, I> {
+            using type = typename polynomial<FractionField<I>>::X;
         };
     }  // namespace internal
 
@@ -3143,27 +3171,34 @@ namespace aerobus {
          * @see [See in Wikipedia](https://en.wikipedia.org/wiki/Chebyshev_polynomials)
          *
          * @tparam deg degree of polynomial
+         * @tparam integer rings (defaults to aerobus::i64)
          */
-        template <size_t deg>
-        using chebyshev_T = typename internal::chebyshev_helper<1, deg>::type;
+        template <size_t deg, typename I = aerobus::i64>
+        using chebyshev_T = typename internal::chebyshev_helper<1, deg, I>::type;
 
         /** @brief Chebyshev polynomials of second kind
+         * 
+         * Lives in polynomial<I>
          * 
          * @see [See in Wikipedia](https://en.wikipedia.org/wiki/Chebyshev_polynomials)
          *
          * @tparam deg degree of polynomial
+         * @tparam integer rings (defaults to aerobus::i64)
          */
-        template <size_t deg>
-        using chebyshev_U = typename internal::chebyshev_helper<2, deg>::type;
+        template <size_t deg, typename I = aerobus::i64>
+        using chebyshev_U = typename internal::chebyshev_helper<2, deg, I>::type;
 
         /** @brief Laguerre polynomials
+         * 
+         * Lives in polynomial<FractionField<I>>
          * 
          * @see [See in Wikipedia](https://en.wikipedia.org/wiki/Laguerre_polynomials)
          *
          * @tparam deg degree of polynomial
+         * @tparam I Integers ring (defaults to aerobus::i64)
          */
-        template <size_t deg>
-        using laguerre = typename internal::laguerre_helper<deg>::type;
+        template <size_t deg, typename I = aerobus::i64>
+        using laguerre = typename internal::laguerre_helper<deg, I>::type;
 
         /** @brief Hermite polynomials - probabilist form
          *
@@ -3171,8 +3206,8 @@ namespace aerobus {
          *
          * @tparam deg degree of polynomial
          */
-        template <size_t deg>
-        using hermite_prob = typename internal::hermite_helper<deg, hermite_kind::probabilist>::type;
+        template <size_t deg, typename I = aerobus::i64>
+        using hermite_prob = typename internal::hermite_helper<deg, hermite_kind::probabilist, I>::type;
 
         /** @brief Hermite polynomials - physicist form
          *
@@ -3180,36 +3215,45 @@ namespace aerobus {
          * 
          * @tparam deg degree of polynomial
          */
-        template <size_t deg>
-        using hermite_phys = typename internal::hermite_helper<deg, hermite_kind::physicist>::type;
+        template <size_t deg, typename I = aerobus::i64>
+        using hermite_phys = typename internal::hermite_helper<deg, hermite_kind::physicist, I>::type;
 
         /** @brief Bernstein polynomials
+         * 
+         * Lives in polynomial<I>
          * 
          * @see [See in Wikipedia](https://en.wikipedia.org/wiki/Bernstein_polynomial)
          *
          * @tparam i index of polynomial (between 0 and m)
          * @tparam m degree of polynomial
+         * @tparam I Integers ring (defaults to aerobus::i64)
          */
-        template<size_t i, size_t m>
-        using bernstein = typename internal::bernstein_helper<i, m>::type;
+        template<size_t i, size_t m, typename I = aerobus::i64>
+        using bernstein = typename internal::bernstein_helper<i, m, I>::type;
 
         /** @brief Legendre polynomials
+         * 
+         * Lives in polynomial<FractionField<I>>
          * 
          * @see [See in Wikipedia](https://en.wikipedia.org/wiki/Legendre_polynomials)
          *
          * @tparam deg degree of polynomial
+         * @tparam I Integers Ring (defaults to aerobus::i64)
          */
-        template<size_t deg>
-        using legendre = typename internal::legendre_helper<deg>::type;
+        template<size_t deg, typename I = aerobus::i64>
+        using legendre = typename internal::legendre_helper<deg, I>::type;
 
         /** @brief Bernoulli polynomials
+         * 
+         * Lives in polynomial<FractionField<I>>
          * 
          * @see [See in Wikipedia](https://en.wikipedia.org/wiki/Bernoulli_polynomials)
          *
          * @tparam deg degree of polynomial
+         * @tparam I Integers ring (defaults to aerobus::i64)
          */
-        template<size_t deg>
-        using bernoulli = taylor<i64, internal::bernoulli_coeff<deg>::template inner, deg>;
+        template<size_t deg, typename I = aerobus::i64>
+        using bernoulli = taylor<I, internal::bernoulli_coeff<deg>::template inner, deg>;
     }  // namespace known_polynomials
 }  // namespace aerobus
 
