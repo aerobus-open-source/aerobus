@@ -11,7 +11,7 @@ jobs:
 
     runs-on: ubuntu-latest
     container:
-      image: comua/aerobus-open-source:build-1.0
+      image: comua/aerobus-open-source:build-1.1
 
     steps:
     - uses: actions/checkout@v4
