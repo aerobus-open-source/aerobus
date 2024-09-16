@@ -10,11 +10,11 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    container:
+      image: comua/aerobus-open-source:build-1.0
 
     steps:
     - uses: actions/checkout@v4
-    - name: Install compilers and lib
-      run: sudo apt install -y clang g++ libomp-dev cppcheck cpplint doxygen texlive-latex-base texlive-fonts-recommended texlive-fonts-extra texlive-latex-extra
     - name: cppcheck
       if: success()
       run: cppcheck --std=c++20 --language=c++ src/aerobus.h && cppcheck --std=c++20 --language=c++ src/lib_tests.cpp
