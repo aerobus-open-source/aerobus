@@ -2166,6 +2166,34 @@ namespace aerobus {
 
 // short names for common types
 namespace aerobus {
+    /// @brief generic addition
+    /// @tparam X a value in a ring providing add_t operator
+    /// @tparam Y a value in same ring
+    template<typename X, typename Y>
+    requires(std::is_same_v<typename X::enclosing_type, typename Y::enclosing_type>)
+    using add_t = typename X::enclosing_type::template add_t<X, Y>;
+
+    /// @brief generic subtraction
+    /// @tparam X a value in a ring providing sub_t operator
+    /// @tparam Y a value in same ring
+    template<typename X, typename Y>
+    requires(std::is_same_v<typename X::enclosing_type, typename Y::enclosing_type>)
+    using sub_t = typename X::enclosing_type::template sub_t<X, Y>;
+
+    /// @brief generic multiplication
+    /// @tparam X a value in a ring providing mul_t operator
+    /// @tparam Y a value in same ring
+    template<typename X, typename Y>
+    requires(std::is_same_v<typename X::enclosing_type, typename Y::enclosing_type>)
+    using mul_t = typename X::enclosing_type::template mul_t<X, Y>;
+
+    /// @brief generic division
+    /// @tparam X a value in a ring providing div_t operator
+    /// @tparam Y a value in same ring
+    template<typename X, typename Y>
+    requires(std::is_same_v<typename X::enclosing_type, typename Y::enclosing_type>)
+    using div_t = typename X::enclosing_type::template div_t<X, Y>;
+
     /// @brief 32 bits rationals
     /// rationals with 32 bits numerator and denominator
     using q32 = FractionField<i32>;

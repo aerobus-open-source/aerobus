@@ -109,7 +109,7 @@ TEST(polynomials, add) {
         // 1 + x + x^2
         using P2 = IX<Int<1>, Int<1>, Int<1>>;
         // 2 + 2x + x^2
-        using A = polynomial<i32>::add_t<P1, P2>;
+        using A = add_t<P1, P2>;
 
         EXPECT_EQ((A::coeff_at_t<0>::v), 2);
         EXPECT_EQ((A::coeff_at_t<1>::v), 2);
@@ -119,11 +119,11 @@ TEST(polynomials, add) {
 
     {
         // 1 + x - x^2
-        using P1 = polynomial<i32>::val<i32::val<-1>, i32::val<1>, i32::val<1>>;
+        using P1 = make_int_polynomial_t<i32, -1, 1, 1>;
         // 1 + x + x^2
-        using P2 = polynomial<i32>::val<i32::val<1>, i32::val<1>, i32::val<1>>;
+        using P2 = make_int_polynomial_t<i32, 1, 1, 1>;
         // 2 + 2x
-        using A = polynomial<i32>::add_t<P1, P2>;
+        using A = add_t<P1, P2>;
 
         EXPECT_EQ((A::coeff_at_t<0>::v), 2);
         EXPECT_EQ((A::coeff_at_t<1>::v), 2);
@@ -195,7 +195,7 @@ TEST(polynomials, sub) {
         // 1 + x + x^2
         using P2 = polynomial<i32>::val<i32::val<1>, i32::val<1>, i32::val<1>>;
         // 0
-        using A = polynomial<i32>::sub_t<P2, P1>;
+        using A = sub_t<P2, P1>;
 
         EXPECT_EQ((A::coeff_at_t<0>::v), 0);
         EXPECT_EQ(A::degree, 0);
@@ -253,21 +253,21 @@ TEST(polynomials, mul) {
     {
         using A = polynomial<i32>::val<i32::val<1>, i32::val<-1>>;
         using B = polynomial<i32>::val<i32::val<1>, i32::val<1>>;
-        using mul = polynomial<i32>::mul_t<A, B>;
+        using mul = mul_t<A, B>;
         using expected = polynomial<i32>::val<i32::val<1>, i32::zero, i32::val<-1>>;
         EXPECT_TRUE((std::is_same_v<expected, mul>));
     }
     {
         using A = polynomial<i32>::val<i32::val<1>, i32::val<1>>;
         using B = polynomial<i32>::val<i32::val<1>, i32::val<1>>;
-        using mul = polynomial<i32>::mul_t<A, B>;
+        using mul = mul_t<A, B>;
         using expected = polynomial<i32>::val<i32::val<1>, i32::val<2>, i32::val<1>>;
         EXPECT_TRUE((std::is_same_v<expected, mul>));
     }
     {
         using A = polynomial<i32>::val<i32::val<1>, i32::val<1>>;
         using B = polynomial<i32>::val<i32::val<2>>;
-        using mul = polynomial<i32>::mul_t<A, B>;
+        using mul = mul_t<A, B>;
         using expected = polynomial<i32>::val<i32::val<2>, i32::val<2>>;
         EXPECT_TRUE((std::is_same_v<expected, mul>));
     }
@@ -292,7 +292,7 @@ TEST(polynomials, div) {
         // x - 1
         using B = polynomial<i32>::val<i32::val<1>, i32::val<-1>>;
         // x + 1
-        using Q = polynomial<i32>::div_t<A, B>;
+        using Q = aerobus::div_t<A, B>;
         using R = polynomial<i32>::mod_t<A, B>;
         EXPECT_TRUE(R::is_zero_v);
         EXPECT_EQ(Q::degree, 1);

@@ -91,18 +91,19 @@ $(function() {
 <h2 class="groupheader">Concept definition</h2>
 <div class="fragment"><div class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> R&gt;</div>
 <div class="line"><span class="keyword">concept </span><a class="code hl_concept" href="conceptaerobus_1_1_is_euclidean_domain.html">aerobus::IsEuclideanDomain</a> =  <a class="code hl_concept" href="conceptaerobus_1_1_is_ring.html">IsRing&lt;R&gt;</a> &amp;&amp; <span class="keyword">requires</span> {</div>
-<div class="line">        <span class="keyword">typename</span> R::template div_t&lt;typename R::one, typename R::one&gt;;</div>
-<div class="line">        <span class="keyword">typename</span> R::template mod_t&lt;typename R::one, typename R::one&gt;;</div>
-<div class="line">        <span class="keyword">typename</span> R::template gcd_t&lt;typename R::one, typename R::one&gt;;</div>
-<div class="line">        <span class="keyword">typename</span> R::template eq_t&lt;typename R::one, typename R::one&gt;;</div>
-<div class="line">        <span class="keyword">typename</span> R::template pos_t&lt;typename R::one&gt;;</div>
+<div class="line">        <span class="keyword">typename</span> R::template <a class="code hl_typedef" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">div_t&lt;typename R::one, typename R::one&gt;</a>;</div>
+<div class="line">        <span class="keyword">typename</span> R::template <a class="code hl_typedef" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">mod_t&lt;typename R::one, typename R::one&gt;</a>;</div>
+<div class="line">        <span class="keyword">typename</span> R::template <a class="code hl_typedef" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">gcd_t&lt;typename R::one, typename R::one&gt;</a>;</div>
+<div class="line">        <span class="keyword">typename</span> R::template <a class="code hl_typedef" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">eq_t&lt;typename R::one, typename R::one&gt;</a>;</div>
+<div class="line">        <span class="keyword">typename</span> R::template <a class="code hl_typedef" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">pos_t&lt;typename R::one&gt;</a>;</div>
 <div class="line"> </div>
-<div class="line">        R::template pos_v&lt;typename R::one&gt; == <span class="keyword">true</span>;</div>
+<div class="line">        R::template <a class="code hl_typedef" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">pos_v&lt;typename R::one&gt;</a> == <span class="keyword">true</span>;</div>
 <div class="line">        </div>
 <div class="line">        R::is_euclidean_domain == <span class="keyword">true</span>;</div>
 <div class="line">    }</div>
 <div class="ttc" id="aconceptaerobus_1_1_is_euclidean_domain_html"><div class="ttname"><a href="conceptaerobus_1_1_is_euclidean_domain.html">aerobus::IsEuclideanDomain</a></div><div class="ttdoc">Concept to express R is an euclidean domain.</div><div class="ttdef"><b>Definition</b> aerobus.h:71</div></div>
 <div class="ttc" id="aconceptaerobus_1_1_is_ring_html"><div class="ttname"><a href="conceptaerobus_1_1_is_ring.html">aerobus::IsRing</a></div><div class="ttdoc">Concept to express R is a Ring.</div><div class="ttdef"><b>Definition</b> aerobus.h:61</div></div>
+<div class="ttc" id="anamespaceaerobus_html_af2df7a000fdd68789190b23dc5b34274"><div class="ttname"><a href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">aerobus::add_t</a></div><div class="ttdeci">typename X::enclosing_type::template add_t&lt; X, Y &gt; add_t</div><div class="ttdoc">generic addition</div><div class="ttdef"><b>Definition</b> aerobus.h:2174</div></div>
 </div><!-- fragment --><a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Concept to express R is an euclidean domain. </p>
 </div></div><!-- contents -->
