@@ -325,6 +325,10 @@ namespace aerobus {
 
 // embedding
 namespace aerobus {
+    /// @brief embedding - struct forward declaration
+    /// @tparam Small a ring which can be embedded in Large
+    /// @tparam Large a ring in which Small can be embedded
+    /// @tparam E some default type (unused -- implementation related)
     template<typename Small, typename Large, typename E = void>
     struct Embed;
 }  // namespace aerobus
@@ -420,8 +424,13 @@ namespace aerobus {
         using inject_ring_t = val<v>;
     };
 
+    /// @brief embeds Quotient<Ring, X> into Ring
+    /// @tparam Ring a Euclidean ring
+    /// @tparam X a value in Ring
     template<typename Ring, typename X>
     struct Embed<Quotient<Ring, X>, Ring> {
+        /// @brief Ring reprensentation of val
+        /// @tparam val a value in Quotient<Ring, X>
         template<typename val>
         using type = typename val::raw_t;
     };
@@ -978,8 +987,11 @@ namespace aerobus {
         static constexpr bool pos_v = pos_t<v>::value;
     };
 
+    /// @brief embeds i32 into i64
     template<>
     struct Embed<i32, i64> {
+        /// @brief the i64 representation of val
+        /// @tparam val a value in i32
         template<typename val>
         using type = i64::val<static_cast<int64_t>(val::v)>;
     };
@@ -987,13 +999,18 @@ namespace aerobus {
 
 // z/pz
 namespace aerobus {
-    /**
-     * congruence classes of integers for a modulus
-     * if p is prime, zpz is a field, otherwise an integral domain with all related operations
-    */
+    /// @brief congruence classes of integers modulo p (32 bits)
+    ///
+    /// if p is prime, zpz<p> is a field
+    ///
+    /// @tparam p a integer
     template<int32_t p>
     struct zpz {
+        /// @brief underlying type for values
         using inner_type = int32_t;
+
+        /// @brief values in zpz<p>
+        /// @tparam x an integer
         template<int32_t x>
         struct val {
             /// @brief enclosing ring type
@@ -1001,10 +1018,19 @@ namespace aerobus {
             /// @brief actual value
             static constexpr int32_t v = x % p;
 
+            /// @brief get value as valueType
+            /// @tparam valueType an arithmetic type, such as float
             template<typename valueType>
             static constexpr DEVICE INLINED valueType get() { return static_cast<valueType>(x % p); }
 
-            using is_zero_t = std::bool_constant<x% p == 0>;
+            /// @brief true_type if zero
+            using is_zero_t = std::bool_constant<v == 0>;
+
+            /// @brief true if zero
+            using is_zero_v = v == 0;
+
+            /// @brief string representation
+            /// @return a string representation
             static std::string to_string() {
                 return std::to_string(x % p);
             }
@@ -1015,12 +1041,21 @@ namespace aerobus {
             }
         };
 
+        /// @brief injects a constant integer into zpz
+        /// @tparam x an integer
         template<auto x>
         using inject_constant_t = val<static_cast<int32_t>(x)>;
 
+        /// @brief zero value
         using zero = val<0>;
+
+        /// @brief one value
         using one = val<1>;
+
+        /// @brief true iff p is prime
         static constexpr bool is_field = is_prime<p>::value;
+
+        /// @brief always true
         static constexpr bool is_euclidean_domain = true;
 
      private:
@@ -1153,8 +1188,12 @@ namespace aerobus {
         static constexpr bool pos_v = pos_t<v>::value;
     };
 
+    /// @brief embeds zpz values into i32
+    /// @tparam x an integer
     template<int32_t x>
     struct Embed<zpz<x>, i32> {
+        /// @brief  the i32 reprensentation of val
+        /// @tparam val a value in zpz<x>
         template <typename val>
         using type = i32::val<val::v>;
     };
@@ -2113,8 +2152,12 @@ namespace aerobus {
     requires IsEuclideanDomain<Ring>
     using FractionField = typename internal::FractionFieldImpl<Ring>::type;
 
+    /// @brief embeds values from Ring to its field of fractions
+    /// @tparam Ring an integers ring, such as i32
     template<typename Ring>
     struct Embed<Ring, FractionField<Ring>> {
+        /// @brief FractionField<Ring> reprensentation of v
+        /// @tparam v a Ring value
         template<typename v>
         using type = typename FractionField<Ring>::template val<v, typename Ring::one>;
     };
@@ -2156,7 +2199,7 @@ namespace aerobus {
     /// Lives in polynomial<FractionField<Ring>>
     ///
     /// @tparam Ring Integers
-    /// @tparam a valu in polynomial<Ring>
+    /// @tparam a value in polynomial<Ring>
     template<typename v>
     using embed_int_poly_in_fractions_t =
             typename Embed<
@@ -2190,12 +2233,18 @@ namespace aerobus {
     template<typename Ring, typename v1, typename v2>
     using mulfractions_t = typename FractionField<Ring>::template mul_t<v1, v2>;
 
+    /// @brief embeds q32 into q64
     template<>
     struct Embed<q32, q64> {
+        /// @brief q64 representation of v
+        /// @tparam v a value in q32
         template<typename v>
         using type = make_q64_t<static_cast<int64_t>(v::x::v), static_cast<int64_t>(v::y::v)>;
     };
 
+    /// @brief embeds polynomial<Small> into polynomial<Large>
+    /// @tparam Small a rings which can be embedded in Large
+    /// @tparam Large a ring in which Small can be embedded
     template<typename Small, typename Large>
     struct Embed<polynomial<Small>, polynomial<Large>> {
      private:
@@ -2213,6 +2262,8 @@ namespace aerobus {
         };
 
      public:
+        /// @brief the polynomial<Large> reprensentation of v
+        /// @tparam v a value in polynomial<Small>
         template<typename v>
         using type = typename at_low<v, typename internal::make_index_sequence_reverse<v::degree + 1>>::type;
     };
@@ -2934,14 +2985,8 @@ namespace aerobus {
 
 // continued fractions
 namespace aerobus {
-    /** @brief represents a continued fraction a0 + \f$\frac{1}{a_1+\frac{1}{a_2 + \ldots}}\f$
-     * 
-     * [https://en.wikipedia.org/wiki/Continued_fraction](See in Wikipedia)
-     * 
-     * @tparam ...values are int64_t
-     * 
-     * @example aerobus::ContinuedFraction<1, 1, 1> represents \f$1+\frac{1}{\frac{1}{1}}\f$
-     */
+    /// @brief represents a continued fraction a0 + \f$\frac{1}{a_1+\frac{1}{a_2 + \ldots}}\f$
+    /// @tparam ...values are int64_t
     template<int64_t... values>
     struct ContinuedFraction {};
 
@@ -2949,9 +2994,9 @@ namespace aerobus {
     /// @tparam a0 an integer int64_t
     template<int64_t a0>
     struct ContinuedFraction<a0> {
-        /// represented value as aerobus::q64
+        /// @brief represented value as aerobus::q64
         using type = typename q64::template inject_constant_t<a0>;
-        /// represented value as double
+        /// @brief represented value as double
         static constexpr double val = static_cast<double>(a0);
     };
 
@@ -2960,14 +3005,15 @@ namespace aerobus {
     /// @tparam ...rest integers (int64_t)
     template<int64_t a0, int64_t... rest>
     struct ContinuedFraction<a0, rest...> {
-        /// represented value as aerobus::q64
+        /// @brief represented value as aerobus::q64
         using type = q64::template add_t<
                 typename q64::template inject_constant_t<a0>,
                 typename q64::template div_t<
                     typename q64::one,
                     typename ContinuedFraction<rest...>::type
                 >>;
-        /// represented value as double
+
+        /// @brief reprensented value as double
         static constexpr double val = type::template get<double>();
     };
 
