@@ -1027,7 +1027,7 @@ namespace aerobus {
             using is_zero_t = std::bool_constant<v == 0>;
 
             /// @brief true if zero
-            using is_zero_v = v == 0;
+            static constexpr bool is_zero_v = v == 0;
 
             /// @brief string representation
             /// @return a string representation
