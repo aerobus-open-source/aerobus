@@ -111,6 +111,20 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structaerobus_1_1_conway_polynomial.html">ConwayPolynomial</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structaerobus_1_1_embed.html">Embed</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structaerobus_1_1_embed_3_01i32_00_01i64_01_4.html">Embed&lt; i32, i64 &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structaerobus_1_1_embed_3_01polynomial_3_01_small_01_4_00_01polynomial_3_01_large_01_4_01_4.html">Embed&lt; polynomial&lt; Small &gt;, polynomial&lt; Large &gt; &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structaerobus_1_1_embed_3_01q32_00_01q64_01_4.html">Embed&lt; q32, q64 &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structaerobus_1_1_embed_3_01_quotient_3_01_ring_00_01_x_01_4_00_01_ring_01_4.html">Embed&lt; Quotient&lt; Ring, X &gt;, Ring &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structaerobus_1_1_embed_3_01_ring_00_01_fraction_field_3_01_ring_01_4_01_4.html">Embed&lt; Ring, FractionField&lt; Ring &gt; &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structaerobus_1_1_embed_3_01zpz_3_01x_01_4_00_01i32_01_4.html">Embed&lt; zpz&lt; x &gt;, i32 &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structaerobus_1_1i32.html">i32</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">32 bits signed integers, seen as a algebraic ring with related operations  <a href="structaerobus_1_1i32.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -189,6 +203,10 @@ Typedefs</h2></td></tr>
 <tr class="memitem:ad6131688419c73974730ec7c12be5506"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceaerobus.html#ad6131688419c73974730ec7c12be5506">makefraction_t</a> = typename <a class="el" href="namespaceaerobus.html#aa213858a9b029fd67d4865a933e73c2d">FractionField</a>&lt; Ring &gt;::template val&lt; v1, v2 &gt;</td></tr>
 <tr class="memdesc:ad6131688419c73974730ec7c12be5506"><td class="mdescLeft">&#160;</td><td class="mdescRight">helper type : the rational V1/V2 in the field of fractions of Ring  <br /></td></tr>
 <tr class="separator:ad6131688419c73974730ec7c12be5506"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4e40135d7fde5eabd6f772c3b9836a5f" id="r_a4e40135d7fde5eabd6f772c3b9836a5f"><td class="memTemplParams" colspan="2">template&lt;typename v &gt; </td></tr>
+<tr class="memitem:a4e40135d7fde5eabd6f772c3b9836a5f"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceaerobus.html#a4e40135d7fde5eabd6f772c3b9836a5f">embed_int_poly_in_fractions_t</a> = typename <a class="el" href="structaerobus_1_1_embed.html">Embed</a>&lt; <a class="el" href="structaerobus_1_1polynomial.html">polynomial</a>&lt; typename v::ring_type &gt;, <a class="el" href="structaerobus_1_1polynomial.html">polynomial</a>&lt; <a class="el" href="namespaceaerobus.html#aa213858a9b029fd67d4865a933e73c2d">FractionField</a>&lt; typename v::ring_type &gt; &gt; &gt;::template type&lt; v &gt;</td></tr>
+<tr class="memdesc:a4e40135d7fde5eabd6f772c3b9836a5f"><td class="mdescLeft">&#160;</td><td class="mdescRight">embed a polynomial with integers coefficients into rational coefficients polynomials  <br /></td></tr>
+<tr class="separator:a4e40135d7fde5eabd6f772c3b9836a5f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aee2f03d44403c4b32e623fb00f6b7e94" id="r_aee2f03d44403c4b32e623fb00f6b7e94"><td class="memTemplParams" colspan="2">template&lt;int64_t p, int64_t q&gt; </td></tr>
 <tr class="memitem:aee2f03d44403c4b32e623fb00f6b7e94"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceaerobus.html#aee2f03d44403c4b32e623fb00f6b7e94">make_q64_t</a> = typename q64::template simplify_t&lt; typename q64::val&lt; <a class="el" href="structaerobus_1_1i64.html#a02657a7cbfaf232ec560e87abcececf7">i64::inject_constant_t</a>&lt; p &gt;, <a class="el" href="structaerobus_1_1i64.html#a02657a7cbfaf232ec560e87abcececf7">i64::inject_constant_t</a>&lt; q &gt; &gt; &gt;</td></tr>
 <tr class="memdesc:aee2f03d44403c4b32e623fb00f6b7e94"><td class="mdescLeft">&#160;</td><td class="mdescRight">helper type : make a fraction from numerator and denominator  <br /></td></tr>
@@ -205,6 +223,14 @@ Typedefs</h2></td></tr>
 <tr class="memitem:a06821698ef9283f85f1cc8255a62784d"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceaerobus.html#a06821698ef9283f85f1cc8255a62784d">mulfractions_t</a> = typename <a class="el" href="namespaceaerobus.html#aa213858a9b029fd67d4865a933e73c2d">FractionField</a>&lt; Ring &gt;::template mul_t&lt; v1, v2 &gt;</td></tr>
 <tr class="memdesc:a06821698ef9283f85f1cc8255a62784d"><td class="mdescLeft">&#160;</td><td class="mdescRight">helper type : multiplies two fractions  <br /></td></tr>
 <tr class="separator:a06821698ef9283f85f1cc8255a62784d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af48b5fca25aadd54def6a1164274d10d" id="r_af48b5fca25aadd54def6a1164274d10d"><td class="memTemplParams" colspan="2">template&lt;typename Ring , auto... xs&gt; </td></tr>
+<tr class="memitem:af48b5fca25aadd54def6a1164274d10d"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceaerobus.html#af48b5fca25aadd54def6a1164274d10d">make_int_polynomial_t</a> = typename <a class="el" href="structaerobus_1_1polynomial.html">polynomial</a>&lt; Ring &gt;::template val&lt; typename Ring::template inject_constant_t&lt; xs &gt;... &gt;</td></tr>
+<tr class="memdesc:af48b5fca25aadd54def6a1164274d10d"><td class="mdescLeft">&#160;</td><td class="mdescRight">make a polynomial with coefficients in Ring  <br /></td></tr>
+<tr class="separator:af48b5fca25aadd54def6a1164274d10d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a98e07a830870ea26444a4e1df9cb13fa" id="r_a98e07a830870ea26444a4e1df9cb13fa"><td class="memTemplParams" colspan="2">template&lt;typename Ring , auto... xs&gt; </td></tr>
+<tr class="memitem:a98e07a830870ea26444a4e1df9cb13fa"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceaerobus.html#a98e07a830870ea26444a4e1df9cb13fa">make_frac_polynomial_t</a> = typename <a class="el" href="structaerobus_1_1polynomial.html">polynomial</a>&lt; <a class="el" href="namespaceaerobus.html#aa213858a9b029fd67d4865a933e73c2d">FractionField</a>&lt; Ring &gt; &gt;::template val&lt; typename <a class="el" href="namespaceaerobus.html#aa213858a9b029fd67d4865a933e73c2d">FractionField</a>&lt; Ring &gt;::template inject_constant_t&lt; xs &gt;... &gt;</td></tr>
+<tr class="memdesc:a98e07a830870ea26444a4e1df9cb13fa"><td class="mdescLeft">&#160;</td><td class="mdescRight">make a polynomial with coefficients in FractionField&lt;Ring&gt;  <br /></td></tr>
+<tr class="separator:a98e07a830870ea26444a4e1df9cb13fa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad2b9b4561a536a30dc1d19693db6f649" id="r_ad2b9b4561a536a30dc1d19693db6f649"><td class="memTemplParams" colspan="2">template&lt;typename T , size_t i&gt; </td></tr>
 <tr class="memitem:ad2b9b4561a536a30dc1d19693db6f649"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceaerobus.html#ad2b9b4561a536a30dc1d19693db6f649">factorial_t</a> = typename internal::factorial&lt; T, i &gt;::type</td></tr>
 <tr class="memdesc:ad2b9b4561a536a30dc1d19693db6f649"><td class="mdescLeft">&#160;</td><td class="mdescRight">computes factorial(i), as type  <br /></td></tr>
@@ -649,6 +675,32 @@ template&lt;typename Integers , size_t deg&gt; </div>
 
 </div>
 </div>
+<a id="a4e40135d7fde5eabd6f772c3b9836a5f" name="a4e40135d7fde5eabd6f772c3b9836a5f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4e40135d7fde5eabd6f772c3b9836a5f">&#9670;&#160;</a></span>embed_int_poly_in_fractions_t</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename v &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="namespaceaerobus.html#a4e40135d7fde5eabd6f772c3b9836a5f">aerobus::embed_int_poly_in_fractions_t</a> = typedef typename <a class="el" href="structaerobus_1_1_embed.html">Embed</a>&lt; <a class="el" href="structaerobus_1_1polynomial.html">polynomial</a>&lt;typename v::ring_type&gt;, <a class="el" href="structaerobus_1_1polynomial.html">polynomial</a>&lt;<a class="el" href="namespaceaerobus.html#aa213858a9b029fd67d4865a933e73c2d">FractionField</a>&lt;typename v::ring_type&gt; &gt;&gt;::template type&lt;v&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>embed a polynomial with integers coefficients into rational coefficients polynomials </p>
+<p>Lives in polynomial&lt;FractionField&lt;Ring&gt;&gt;</p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">Ring</td><td>Integers </td></tr>
+    <tr><td class="paramname">a</td><td>valu in polynomial&lt;Ring&gt; </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="ac768600ce3d47e2e1c08eb439b9b6964" name="ac768600ce3d47e2e1c08eb439b9b6964"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ac768600ce3d47e2e1c08eb439b9b6964">&#9670;&#160;</a></span>exp</h2>
 
@@ -840,6 +892,56 @@ template&lt;typename Integers , size_t deg&gt; </div>
   <table class="tparams">
     <tr><td class="paramname">T</td><td>Ring type (for example <a class="el" href="structaerobus_1_1i64.html" title="64 bits signed integers, seen as a algebraic ring with related operations">i64</a>) </td></tr>
     <tr><td class="paramname">deg</td><td>taylor approximation degree </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a98e07a830870ea26444a4e1df9cb13fa" name="a98e07a830870ea26444a4e1df9cb13fa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a98e07a830870ea26444a4e1df9cb13fa">&#9670;&#160;</a></span>make_frac_polynomial_t</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename Ring , auto... xs&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="namespaceaerobus.html#a98e07a830870ea26444a4e1df9cb13fa">aerobus::make_frac_polynomial_t</a> = typedef typename <a class="el" href="structaerobus_1_1polynomial.html">polynomial</a>&lt;<a class="el" href="namespaceaerobus.html#aa213858a9b029fd67d4865a933e73c2d">FractionField</a>&lt;Ring&gt; &gt;::template val&lt; typename <a class="el" href="namespaceaerobus.html#aa213858a9b029fd67d4865a933e73c2d">FractionField</a>&lt;Ring&gt;::template inject_constant_t&lt;xs&gt;...&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>make a polynomial with coefficients in FractionField&lt;Ring&gt; </p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">Ring</td><td>integers </td></tr>
+    <tr><td class="paramname">...xs</td><td>values </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="af48b5fca25aadd54def6a1164274d10d" name="af48b5fca25aadd54def6a1164274d10d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af48b5fca25aadd54def6a1164274d10d">&#9670;&#160;</a></span>make_int_polynomial_t</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename Ring , auto... xs&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="namespaceaerobus.html#af48b5fca25aadd54def6a1164274d10d">aerobus::make_int_polynomial_t</a> = typedef typename <a class="el" href="structaerobus_1_1polynomial.html">polynomial</a>&lt;Ring&gt;::template val&lt; typename Ring::template inject_constant_t&lt;xs&gt;...&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>make a polynomial with coefficients in Ring </p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">Ring</td><td>integers </td></tr>
+    <tr><td class="paramname">...xs</td><td>coefficients </td></tr>
   </table>
   </dd>
 </dl>
