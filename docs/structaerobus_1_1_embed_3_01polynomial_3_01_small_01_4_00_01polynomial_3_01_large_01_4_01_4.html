@@ -88,15 +88,29 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
+<p>embeds polynomial&lt;Small&gt; into polynomial&lt;Large&gt;  
+ <a href="structaerobus_1_1_embed_3_01polynomial_3_01_small_01_4_00_01polynomial_3_01_large_01_4_01_4.html#details">More...</a></p>
+
 <p><code>#include &lt;<a class="el" href="aerobus_8h_source.html">aerobus.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
 <tr class="memitem:a0221b96026e00e2fa1fe4fe729fcfb01" id="r_a0221b96026e00e2fa1fe4fe729fcfb01"><td class="memTemplParams" colspan="2">template&lt;typename v &gt; </td></tr>
 <tr class="memitem:a0221b96026e00e2fa1fe4fe729fcfb01"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structaerobus_1_1_embed_3_01polynomial_3_01_small_01_4_00_01polynomial_3_01_large_01_4_01_4.html#a0221b96026e00e2fa1fe4fe729fcfb01">type</a> = typename at_low&lt; v, typename <a class="el" href="namespaceaerobus_1_1internal.html#afdd9f3c36e539296bcd0808ae8a38ab1">internal::make_index_sequence_reverse</a>&lt; v::degree+1 &gt; &gt;::type</td></tr>
+<tr class="memdesc:a0221b96026e00e2fa1fe4fe729fcfb01"><td class="mdescLeft">&#160;</td><td class="mdescRight">the polynomial&lt;Large&gt; reprensentation of v  <br /></td></tr>
 <tr class="separator:a0221b96026e00e2fa1fe4fe729fcfb01"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<h2 class="groupheader">Member Typedef Documentation</h2>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><div class="compoundTemplParams">template&lt;typename Small, typename Large&gt;<br />
+struct aerobus::Embed&lt; polynomial&lt; Small &gt;, polynomial&lt; Large &gt; &gt;</div><p>embeds polynomial&lt;Small&gt; into polynomial&lt;Large&gt; </p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">Small</td><td>a rings which can be embedded in Large </td></tr>
+    <tr><td class="paramname">Large</td><td>a ring in which Small can be embedded </td></tr>
+  </table>
+  </dd>
+</dl>
+</div><h2 class="groupheader">Member Typedef Documentation</h2>
 <a id="a0221b96026e00e2fa1fe4fe729fcfb01" name="a0221b96026e00e2fa1fe4fe729fcfb01"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a0221b96026e00e2fa1fe4fe729fcfb01">&#9670;&#160;</a></span>type</h2>
 
@@ -112,6 +126,14 @@ template&lt;typename v &gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>the polynomial&lt;Large&gt; reprensentation of v </p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">v</td><td>a value in polynomial&lt;Small&gt; </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
