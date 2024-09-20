@@ -1,14 +1,11 @@
-#include <immintrin.h>
 #include <cstdio>
 #include <cstdlib>
 #include <chrono> // NOLINT
 #include <cmath>
 #include "./aerobus.h"
 
-const size_t N = 134217728/2;
+const size_t N = 134217728/8;
 
-
-extern "C" __m512d _ZGVeN8v_sin(__m512d x);
 
 #ifndef DEGREE
 #define DEGREE 13
@@ -16,60 +13,43 @@ extern "C" __m512d _ZGVeN8v_sin(__m512d x);
 
 template<int deg>
 INLINED
-double sin_12(const double x) {
-    using AERO_SIN = aerobus::sin<aerobus::i64, deg>;
-    return AERO_SIN::eval(AERO_SIN::eval(AERO_SIN::eval(AERO_SIN::eval(AERO_SIN::eval(AERO_SIN::eval(
-        AERO_SIN::eval(AERO_SIN::eval(AERO_SIN::eval(AERO_SIN::eval(AERO_SIN::eval(AERO_SIN::eval(x))))))))))));
+double exp_12(const double x) {
+    using EXP = aerobus::expm1<aerobus::i64, deg>;
+    return EXP::eval(EXP::eval(EXP::eval(EXP::eval(EXP::eval(EXP::eval(
+        EXP::eval(EXP::eval(EXP::eval(EXP::eval(EXP::eval(EXP::eval(x))))))))))));
 }
 
 template<size_t N, int deg>
 INLINED
-void vsin_12(double * in, double * out) {
+void vexp_12(double * in, double * out) {
     static_assert(N % 32 == 0);
     in = reinterpret_cast<double*>(__builtin_assume_aligned(in, 64));
     out = reinterpret_cast<double*>(__builtin_assume_aligned(out, 64));
 #pragma omp parallel for
     for (size_t i = 0; i < N; i += 8) {
         for (size_t j = i; j < i+8; ++j) {
-            out[j] = sin_12<deg>(in[j]);
+            out[j] = exp_12<deg>(in[j]);
         }
     }
 }
 
 INLINED
-double sin_12_slow(const double x) {
-    return ::sin(::sin(::sin(::sin(::sin(::sin(
-        ::sin(::sin(::sin(::sin(::sin(::sin(x))))))))))));
+double exp_12_slow(const double x) {
+    return ::expm1(::expm1(::expm1(::expm1(::expm1(::expm1(
+        ::expm1(::expm1(::expm1(::expm1(::expm1(::expm1(x))))))))))));
 }
 
 template<size_t N>
 INLINED
-void vsin_slow(double * in, double * out) {
+void vexp_12_slow(double * in, double * out) {
     static_assert(N % 32 == 0);
     in = reinterpret_cast<double*>(__builtin_assume_aligned(in, 64));
     out = reinterpret_cast<double*>(__builtin_assume_aligned(out, 64));
 #pragma omp parallel for
     for (size_t i = 0; i < N; i += 8) {
         for (size_t j = i; j < i+8; ++j) {
-            out[j] = sin_12_slow(in[j]);
+            out[j] = exp_12_slow(in[j]);
         }
-    }
-}
-
-
-template<size_t N>
-INLINED
-void fast_math_vsin_12(double * in, double * out) {
-    static_assert(N % 32 == 0);
-    in = reinterpret_cast<double*>(__builtin_assume_aligned(in, 64));
-    out = reinterpret_cast<double*>(__builtin_assume_aligned(out, 64));
-    #pragma omp parallel for
-    for (size_t i = 0; i < N; i += 8) {
-        _mm512_store_pd(reinterpret_cast<void*>(out + i),
-            _ZGVeN8v_sin(_ZGVeN8v_sin(_ZGVeN8v_sin(_ZGVeN8v_sin(
-            _ZGVeN8v_sin(_ZGVeN8v_sin(_ZGVeN8v_sin(_ZGVeN8v_sin(
-            _ZGVeN8v_sin(_ZGVeN8v_sin(_ZGVeN8v_sin(_ZGVeN8v_sin(
-                _mm512_load_pd(reinterpret_cast<void*>(in + i)))))))))))))));
     }
 }
 
@@ -82,13 +62,13 @@ double rand(double min, double max) {
 template<int deg>
 void run_aero(double* in, double* out_aero) {
     // warmup
-    vsin_12<N, deg>(in, out_aero);
-    vsin_12<N, deg>(in, out_aero);
-    vsin_12<N, deg>(in, out_aero);
+    vexp_12<N, deg>(in, out_aero);
+    vexp_12<N, deg>(in, out_aero);
+    vexp_12<N, deg>(in, out_aero);
     double best = 1.0E9;
     for (int i = 0; i < 10; ++i) {
         auto start = std::chrono::steady_clock::now();
-        vsin_12<N, deg>(in, out_aero);
+        vexp_12<N, deg>(in, out_aero);
         auto stop = std::chrono::steady_clock::now();
         std::chrono::duration<double> time = stop - start;
         if (time.count() < best) {
@@ -96,7 +76,7 @@ void run_aero(double* in, double* out_aero) {
         }
     }
 
-    printf("[aerobus deg %d] %.3e Gsin/s\n", deg, (12.0E-9 * static_cast<double>(N)) / best);
+    printf("[aerobus deg %d] %.3e Gexp/s\n", deg, (12.0E-9 * static_cast<double>(N)) / best);
 }
 
 void verify(double* out_aero, double* out_std) {
@@ -121,21 +101,20 @@ int main() {
     double* out_vml = static_cast<double*>(aerobus::aligned_malloc<double>(N, 64));
     memset(reinterpret_cast<void*>(out_aero), 0, N * sizeof(double));
     memset(reinterpret_cast<void*>(out_std), 0, N * sizeof(double));
-    memset(reinterpret_cast<void*>(out_vml), 0, N * sizeof(double));
     #pragma omp parallel for
     for (size_t i = 0; i < N; ++i) {
-        in[i] = rand(-0.5, 0.5);  // pi / 6
+        in[i] = rand(-0.01, 0.01);  // pi / 6
     }
 
     {
         // warmup
-        vsin_slow<N>(in, out_std);
-        vsin_slow<N>(in, out_std);
-        vsin_slow<N>(in, out_std);
+        vexp_12_slow<N>(in, out_std);
+        vexp_12_slow<N>(in, out_std);
+        vexp_12_slow<N>(in, out_std);
         double best = 1.0E9;
         for (int i = 0; i < 10; ++i) {
             auto start = std::chrono::steady_clock::now();
-            vsin_slow<N>(in, out_std);
+            vexp_12_slow<N>(in, out_std);
             auto stop = std::chrono::steady_clock::now();
             std::chrono::duration<double> time = stop - start;
             if (time.count() < best) {
@@ -143,25 +122,7 @@ int main() {
             }
         }
 
-        printf("[std math] %.3e Gsin/s\n", (12.0E-9 * static_cast<double>(N)) / best);
-    }
-    {
-        // warmup
-        fast_math_vsin_12<N>(in, out_vml);
-        fast_math_vsin_12<N>(in, out_vml);
-        fast_math_vsin_12<N>(in, out_vml);
-        double best = 1.0E9;
-        for (int i = 0; i < 10; ++i) {
-            auto start = std::chrono::steady_clock::now();
-            fast_math_vsin_12<N>(in, out_vml);
-            auto stop = std::chrono::steady_clock::now();
-            std::chrono::duration<double> time = stop - start;
-            if (time.count() < best) {
-                best = time.count();
-            }
-        }
-
-        printf("[std fast math] %.3e Gsin/s\n", (12.0E-9 * static_cast<double>(N)) / best);
+        printf("[std math] %.3e Gexp/s\n", (12.0E-9 * static_cast<double>(N)) / best);
     }
 
     {
