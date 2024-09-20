@@ -12,6 +12,10 @@
 #include <string>
 #include <concepts> // NOLINT
 #include <array>
+#ifdef WITH_CUDA_FP16
+#include <bit>
+#include <cuda_fp16.h>
+#endif
 
 /** @file */
 
@@ -85,6 +89,123 @@ namespace aerobus {
     concept IsField = IsEuclideanDomain<R> && requires {
         R::is_field == true;
     };
+}  // namespace aerobus
+
+#ifdef WITH_CUDA_FP16
+// all this shit is required because of NVIDIA bug https://developer.nvidia.com/bugs/4863696
+namespace aerobus {
+    namespace internal {
+        static consteval uint16_t my_internal_float2half(
+            const float f, uint32_t &sign, uint32_t &remainder) {
+            uint32_t x;
+            uint32_t u;
+            uint32_t result;
+            x = std::bit_cast<int32_t>(f);
+            u = (x & 0x7fffffffU);
+            sign = ((x >> 16U) & 0x8000U);
+            // NaN/+Inf/-Inf
+            if (u >= 0x7f800000U) {
+                remainder = 0U;
+                result = ((u == 0x7f800000U) ? (sign | 0x7c00U) : 0x7fffU);
+            } else if (u > 0x477fefffU) {  // Overflows
+                remainder = 0x80000000U;
+                result = (sign | 0x7bffU);
+            } else if (u >= 0x38800000U) {  // Normal numbers
+                remainder = u << 19U;
+                u -= 0x38000000U;
+                result = (sign | (u >> 13U));
+            } else if (u < 0x33000001U) {  // +0/-0
+                remainder = u;
+                result = sign;
+            } else {  // Denormal numbers
+                const uint32_t exponent = u >> 23U;
+                const uint32_t shift = 0x7eU - exponent;
+                uint32_t mantissa = (u & 0x7fffffU);
+                mantissa |= 0x800000U;
+                remainder = mantissa << (32U - shift);
+                result = (sign | (mantissa >> shift));
+                result &= 0x0000FFFFU;
+            }
+            return static_cast<uint16_t>(result);
+        }
+
+        static consteval __half my_float2half_rn(const float a) {
+            __half val;
+            __half_raw r;
+            uint32_t sign = 0U;
+            uint32_t remainder = 0U;
+            r.x = my_internal_float2half(a, sign, remainder);
+            if ((remainder > 0x80000000U) || ((remainder == 0x80000000U) && ((r.x & 0x1U) != 0U))) {
+                r.x++;
+            }
+
+            val = std::bit_cast<__half>(r);
+            return val;
+        }
+
+        template<int16_t i>
+        static constexpr __half convert_int16_to_half = my_float2half_rn(static_cast<float>(i));
+    }  // namespace internal
+}  // namespace aerobus
+#endif
+
+// fma_helper, required because nvidia fails to reconstruct fma
+namespace aerobus {
+    namespace internal {
+        template<typename T>
+        struct fma_helper;
+
+        template<>
+        struct fma_helper<double> {
+            static constexpr INLINED DEVICE double eval(const double x, const double y, const double z) {
+                return x * y + z;
+            }
+        };
+
+        template<>
+        struct fma_helper<float> {
+            static constexpr INLINED DEVICE float eval(const float x, const float y, const float z) {
+                return x * y + z;
+            }
+        };
+
+        template<>
+        struct fma_helper<int32_t> {
+            static constexpr INLINED DEVICE int32_t eval(const int32_t x, const int32_t y, const int32_t z) {
+                return x * y + z;
+            }
+        };
+
+        template<>
+        struct fma_helper<int64_t> {
+            static constexpr INLINED DEVICE int64_t eval(const int64_t x, const int64_t y, const int64_t z) {
+                return x * y + z;
+            }
+        };
+
+        #ifdef WITH_CUDA_FP16
+        template<>
+        struct fma_helper<__half> {
+            static constexpr INLINED DEVICE __half eval(const __half x, const __half y, const __half z) {
+                #ifdef __CUDA_ARCH__
+                return __hfma(x, y, z);
+                #else
+                return x * y + z;
+                #endif
+            }
+        };
+        template<>
+        struct fma_helper<__half2> {
+            static constexpr INLINED DEVICE __half2 eval(const __half2 x, const __half2 y, const __half2 z) {
+                #ifdef __CUDA_ARCH__
+                return __hfma2(x, y, z);
+                #else
+                return x * y + z;
+                #endif
+            }
+        };
+        #endif
+    }  // namespace internal
 }  // namespace aerobus
 
 // utilities
@@ -578,6 +699,222 @@ namespace aerobus {
     };
 }  // namespace aerobus
 
+// i16
+#ifdef WITH_CUDA_FP16
+// i16
+namespace aerobus {
+    namespace internal {
+        template<int16_t x, typename Out, typename E = void>
+        struct int16_convert_helper;
+
+        template<int16_t x, typename Out>
+        struct int16_convert_helper<x, Out, std::enable_if_t<
+            !std::is_same_v<Out, __half> &&
+            !std::is_same_v<Out, __half2>
+        >> {
+            static constexpr Out value = static_cast<Out>(x);
+        };
+
+        template<int16_t x>
+        struct int16_convert_helper<x, __half> {
+            static constexpr __half value = internal::convert_int16_to_half<x>;
+        };
+
+        // this won't compile because of NVIDIA https://developer.nvidia.com/bugs/4872028
+        template<int16_t x>
+        struct int16_convert_helper<x, __half2> {
+            static constexpr __half2 value = {
+                internal::convert_int16_to_half<x>,
+                internal::convert_int16_to_half<x>
+            };
+        };
+    }  // namespace internal
+    /// @brief 16 bits signed integers, seen as a algebraic ring with related operations
+    struct i16 {
+        using inner_type = int16_t;
+        /// @brief values in i16, again represented as types
+        /// @tparam x an actual integer
+        template<int16_t x>
+        struct val {
+            /// @brief Enclosing ring type
+            using enclosing_type = i16;
+            /// @brief actual value stored in val type
+            static constexpr int16_t v = x;
+
+            /// @brief cast x into valueType
+            /// @tparam valueType double for example
+            template<typename valueType>
+            static constexpr valueType get = internal::template int16_convert_helper<x, valueType>::value;
+
+            /// @brief is value zero
+            using is_zero_t = std::bool_constant<x == 0>;
+
+            /// @brief string representation of value
+            static std::string to_string() {
+                return std::to_string(x);
+            }
+        };
+
+        /// @brief constant zero
+        using zero = val<0>;
+        /// @brief constant one
+        using one = val<1>;
+        /// @brief integers are not a field
+        static constexpr bool is_field = false;
+        /// @brief integers are an euclidean domain
+        static constexpr bool is_euclidean_domain = true;
+        /// @brief inject a native constant
+        /// @tparam x
+        /// @example i16::template inject_constant_2<2> -> i16::template val<2>
+        template<auto x>
+        using inject_constant_t = val<static_cast<int16_t>(x)>;
+
+        template<typename v>
+        using inject_ring_t = v;
+
+     private:
+        template<typename v1, typename v2>
+        struct add {
+            using type = val<v1::v + v2::v>;
+        };
+
+        template<typename v1, typename v2>
+        struct sub {
+            using type = val<v1::v - v2::v>;
+        };
+
+        template<typename v1, typename v2>
+        struct mul {
+            using type = val<v1::v* v2::v>;
+        };
+
+        template<typename v1, typename v2>
+        struct div {
+            using type = val<v1::v / v2::v>;
+        };
+
+        template<typename v1, typename v2>
+        struct remainder {
+            using type = val<v1::v % v2::v>;
+        };
+
+        template<typename v1, typename v2>
+        struct gt {
+            using type = std::conditional_t<(v1::v > v2::v), std::true_type, std::false_type>;
+        };
+
+        template<typename v1, typename v2>
+        struct lt {
+            using type = std::conditional_t<(v1::v < v2::v), std::true_type, std::false_type>;
+        };
+
+        template<typename v1, typename v2>
+        struct eq {
+            using type = std::conditional_t<(v1::v == v2::v), std::true_type, std::false_type>;
+        };
+
+        template<typename v1>
+        struct pos {
+            using type = std::bool_constant<(v1::v > 0)>;
+        };
+
+     public:
+        /// @brief addition operator
+        /// yields v1 + v2
+        /// @example i16::add_t<i16::val<2>, i16::val<3>>
+        /// @tparam v1 a value in i16
+        /// @tparam v2 a value in i16
+        template<typename v1, typename v2>
+        using add_t = typename add<v1, v2>::type;
+
+        /// @brief substraction operator
+        /// yields v1 - v2
+        /// @example i16::sub_t<i16::val<3>, i16::val<2>>
+        /// @tparam v1 a value in i16
+        /// @tparam v2 a value in i16
+        template<typename v1, typename v2>
+        using sub_t = typename sub<v1, v2>::type;
+
+        /// @brief multiplication operator
+        /// yields v1 * v2
+        /// @example i16::mul_t<i16::val<3>, i16::val<2>>
+        /// @tparam v1 a value in i16
+        /// @tparam v2 a value in i16
+        template<typename v1, typename v2>
+        using mul_t = typename mul<v1, v2>::type;
+
+        /// @brief division operator
+        /// yields v1 / v2
+        /// @example i16::div_t<i16::val<7>, i16::val<2>> -> i16::val<3>
+        /// @tparam v1 a value in i16
+        /// @tparam v2 a value in i16
+        template<typename v1, typename v2>
+        using div_t = typename div<v1, v2>::type;
+
+        /// @brief modulus operator
+        /// yields v1 % v2
+        /// for example : i16::mod_t<i16::val<7>, i16::val<2>>
+        /// @tparam v1 a value in i16
+        /// @tparam v2 a value in i16
+        template<typename v1, typename v2>
+        using mod_t = typename remainder<v1, v2>::type;
+
+        /// @brief strictly greater operator (v1 > v2)
+        /// yields v1 > v2
+        /// @example i16::gt_t<i16::val<7>, i16::val<2>>
+        /// @tparam v1 a value in i16
+        /// @tparam v2 a value in i16
+        template<typename v1, typename v2>
+        using gt_t = typename gt<v1, v2>::type;
+
+        /// @brief strict less operator (v1 < v2)
+        /// yields v1 < v2
+        /// @example i16::div_t<i16::val<7>, i16::val<2>>
+        /// @tparam v1 a value in i16
+        /// @tparam v2 a value in i16
+        template<typename v1, typename v2>
+        using lt_t = typename lt<v1, v2>::type;
+
+        /// @brief equality operator (type)
+        /// yields v1 == v2 as std::integral_constant<bool>
+        /// @example i16::eq_t<i16::val<2>, i16::val<2>>
+        /// @tparam v1 a value in i16
+        /// @tparam v2 a value in i16
+        template<typename v1, typename v2>
+        using eq_t = typename eq<v1, v2>::type;
+
+        /// @brief equality operator (boolean value)
+        /// @tparam v1
+        /// @tparam v2
+        /// @example i16::eq_v<i16::val<1>, i16::val<1>>
+        template<typename v1, typename v2>
+        static constexpr bool eq_v = eq_t<v1, v2>::value;
+
+        /// @brief greatest common divisor
+        /// yields GCD(v1, v2)
+        /// @example i16::gcd_t<i16::val<6>, i16::val<15>>
+        /// @tparam v1 a value in i16
+        /// @tparam v2 a value in i16
+        template<typename v1, typename v2>
+        using gcd_t = gcd_t<i16, v1, v2>;
+
+        /// @brief positivity operator
+        /// yields v > 0 as std::true_type or std::false_type
+        /// @example i16::pos_t<i16::val<1
+        /// @tparam v a value in i16
+        template<typename v>
+        using pos_t = typename pos<v>::type;
+
+        /// @brief positivity (boolean value)
+        /// yields v > 0 as boolean value
+        /// @tparam v a value in i16
+        /// @example i16::pos_v<i16::val<1>>
+        template<typename v>
+        static constexpr bool pos_v = pos_t<v>::value;
+    };
+}  // namespace aerobus
+#endif
+
 // i32
 namespace aerobus {
     /// @brief 32 bits signed integers, seen as a algebraic ring with related operations
@@ -595,7 +932,7 @@ namespace aerobus {
             /// @brief cast x into valueType
             /// @tparam valueType double for example
             template<typename valueType>
-            static constexpr INLINED DEVICE valueType get() { return static_cast<valueType>(x); }
+            static constexpr valueType get = static_cast<valueType>(x);
 
             /// @brief is value zero
             using is_zero_t = std::bool_constant<x == 0>;
@@ -603,13 +940,6 @@ namespace aerobus {
             /// @brief string representation of value
             static std::string to_string() {
                 return std::to_string(x);
-            }
-
-            /// @brief cast x into valueRing
-            /// @tparam valueRing double for example
-            template<typename valueRing>
-            static constexpr DEVICE INLINED valueRing eval(const valueRing& v) {
-                return static_cast<valueRing>(x);
             }
         };
 
@@ -792,9 +1122,7 @@ namespace aerobus {
             /// @brief cast value in valueType
             /// @tparam valueType (double for example)
             template<typename valueType>
-            static constexpr DEVICE INLINED valueType get() {
-                return static_cast<valueType>(x);
-            }
+            static constexpr valueType get = static_cast<valueType>(x);
 
             /// @brief is value zero
             using is_zero_t = std::bool_constant<x == 0>;
@@ -802,13 +1130,6 @@ namespace aerobus {
             /// @brief string representation
             static std::string to_string() {
                 return std::to_string(x);
-            }
-
-            /// @brief cast value in valueRing
-            /// @tparam valueRing (double for example)
-            template<typename valueRing>
-            static constexpr DEVICE INLINED valueRing eval(const valueRing& v) {
-                return static_cast<valueRing>(x);
             }
         };
 
@@ -1021,7 +1342,7 @@ namespace aerobus {
             /// @brief get value as valueType
             /// @tparam valueType an arithmetic type, such as float
             template<typename valueType>
-            static constexpr DEVICE INLINED valueType get() { return static_cast<valueType>(x % p); }
+            static constexpr valueType get = static_cast<valueType>(x % p);
 
             /// @brief true_type if zero
             using is_zero_t = std::bool_constant<v == 0>;
@@ -1033,11 +1354,6 @@ namespace aerobus {
             /// @return a string representation
             static std::string to_string() {
                 return std::to_string(x % p);
-            }
-
-            template<typename valueRing>
-            static constexpr DEVICE INLINED valueRing eval(const valueRing& v) {
-                return static_cast<valueRing>(x % p);
             }
         };
 
@@ -1264,9 +1580,19 @@ namespace aerobus {
             /// @return P(x)
             template<typename valueRing>
             static constexpr DEVICE INLINED valueRing eval(const valueRing& x) {
+                #ifdef WITH_CUDA_FP16
+                valueRing start;
+                if constexpr (std::is_same_v<valueRing, __half2>) {
+                    start = { 0, 0 };
+                } else {
+                    start = static_cast<valueRing>(0);
+                }
+                #else
+                valueRing start = static_cast<valueRing>(0);
+                #endif
                 return horner_evaluation<valueRing, val>
                         ::template inner<0, degree + 1>
-                        ::func(static_cast<valueRing>(0), x);
+                        ::func(start, x);
             }
         };
 
@@ -1304,11 +1630,6 @@ namespace aerobus {
 
             static std::string to_string() {
                 return string_helper<coeffN>::func();
-            }
-
-            template<typename valueRing>
-            static constexpr DEVICE INLINED valueRing eval(const valueRing& x) {
-                return static_cast<valueRing>(aN::template get<valueRing>());
             }
         };
 
@@ -1625,8 +1946,9 @@ namespace aerobus {
             struct inner {
                 static constexpr DEVICE INLINED valueRing func(const valueRing& accum, const valueRing& x) {
                     constexpr valueRing coeff =
-                        static_cast<valueRing>(P::template coeff_at_t<P::degree - index>::template get<valueRing>());
-                    return horner_evaluation<valueRing, P>::template inner<index + 1, stop>::func(x * accum + coeff, x);
+                        static_cast<valueRing>(P::template coeff_at_t<P::degree - index>::template get<valueRing>);
+                    return horner_evaluation<valueRing, P>::template inner<index + 1, stop>::func(
+                        internal::fma_helper<valueRing>::eval(x, accum, coeff), x);
                 }
             };
 
@@ -1849,9 +2171,7 @@ namespace aerobus {
                 /// @tparam valueType likely double or float
                 /// @return
                 template<typename valueType>
-                static constexpr DEVICE INLINED valueType get() {
-                    return static_cast<valueType>(x::v) / static_cast<valueType>(y::v);
-                }
+                static constexpr valueType get = static_cast<valueType>(x::v) / static_cast<valueType>(y::v);
 
                 /// @brief represents value as string
                 /// @return something like val1 / val2
@@ -1859,7 +2179,7 @@ namespace aerobus {
                     return to_string_helper<val1, val2>::func();
                 }
 
-                /// @brief evaluates fraction in valueRing : used for rational fractions
+                /// @brief evaluates fraction in valueRing : only used for rational fractions
                 /// @tparam valueRing : something like double
                 /// @param v
                 /// @return
@@ -2170,28 +2490,32 @@ namespace aerobus {
     /// @tparam X a value in a ring providing add_t operator
     /// @tparam Y a value in same ring
     template<typename X, typename Y>
-    requires(std::is_same_v<typename X::enclosing_type, typename Y::enclosing_type>)
+    requires IsRing<typename X::enclosing_type> &&
+        (std::is_same_v<typename X::enclosing_type, typename Y::enclosing_type>)
     using add_t = typename X::enclosing_type::template add_t<X, Y>;
 
     /// @brief generic subtraction
     /// @tparam X a value in a ring providing sub_t operator
     /// @tparam Y a value in same ring
     template<typename X, typename Y>
-    requires(std::is_same_v<typename X::enclosing_type, typename Y::enclosing_type>)
+    requires IsRing<typename X::enclosing_type> &&
+        (std::is_same_v<typename X::enclosing_type, typename Y::enclosing_type>)
     using sub_t = typename X::enclosing_type::template sub_t<X, Y>;
 
     /// @brief generic multiplication
     /// @tparam X a value in a ring providing mul_t operator
     /// @tparam Y a value in same ring
     template<typename X, typename Y>
-    requires(std::is_same_v<typename X::enclosing_type, typename Y::enclosing_type>)
+    requires IsRing<typename X::enclosing_type> &&
+        (std::is_same_v<typename X::enclosing_type, typename Y::enclosing_type>)
     using mul_t = typename X::enclosing_type::template mul_t<X, Y>;
 
     /// @brief generic division
-    /// @tparam X a value in a ring providing div_t operator
-    /// @tparam Y a value in same ring
+    /// @tparam X a value in a a euclidean domain
+    /// @tparam Y a value in same Euclidean domain
     template<typename X, typename Y>
-    requires(std::is_same_v<typename X::enclosing_type, typename Y::enclosing_type>)
+    requires IsEuclideanDomain<typename X::enclosing_type> &&
+        (std::is_same_v<typename X::enclosing_type, typename Y::enclosing_type>)
     using div_t = typename X::enclosing_type::template div_t<X, Y>;
 
     /// @brief 32 bits rationals
@@ -2324,14 +2648,14 @@ namespace aerobus {
             friend struct factorial;
         public:
             using type = typename T::template mul_t<typename T::template val<x>, typename factorial<T, x - 1>::type>;
-            static constexpr typename T::inner_type value = type::template get<typename T::inner_type>();
+            static constexpr typename T::inner_type value = type::template get<typename T::inner_type>;
         };
 
         template<typename T>
         struct factorial<T, 0> {
          public:
             using type = typename T::one;
-            static constexpr typename T::inner_type value = type::template get<typename T::inner_type>();
+            static constexpr typename T::inner_type value = type::template get<typename T::inner_type>;
         };
     }  // namespace internal
 
@@ -2372,7 +2696,7 @@ namespace aerobus {
         struct combination {
             using type = typename internal::combination_helper<T, k, n>::type::x;
             static constexpr typename T::inner_type value =
-                        internal::combination_helper<T, k, n>::type::template get<typename T::inner_type>();
+                        internal::combination_helper<T, k, n>::type::template get<typename T::inner_type>;
         };
     }  // namespace internal
 
@@ -2427,7 +2751,7 @@ namespace aerobus {
             >;
 
             template<typename floatType>
-            static constexpr floatType value = type::template get<floatType>();
+            static constexpr floatType value = type::template get<floatType>;
         };
 
         template<typename T>
@@ -2435,7 +2759,7 @@ namespace aerobus {
             using type = typename FractionField<T>::one;
 
             template<typename floatType>
-            static constexpr floatType value = type::template get<floatType>();
+            static constexpr floatType value = type::template get<floatType>;
         };
     }  // namespace internal
 
@@ -2508,13 +2832,13 @@ namespace aerobus {
         template<typename T, int k>
         struct alternate<T, k, std::enable_if_t<k % 2 == 0>> {
             using type = typename T::one;
-            static constexpr typename T::inner_type value = type::template get<typename T::inner_type>();
+            static constexpr typename T::inner_type value = type::template get<typename T::inner_type>;
         };
 
         template<typename T, int k>
         struct alternate<T, k, std::enable_if_t<k % 2 != 0>> {
             using type = typename T::template sub_t<typename T::zero, typename T::one>;
-            static constexpr typename T::inner_type value = type::template get<typename T::inner_type>();
+            static constexpr typename T::inner_type value = type::template get<typename T::inner_type>;
         };
     }  // namespace internal
 
@@ -3042,7 +3366,7 @@ namespace aerobus {
                 >>;
 
         /// @brief reprensented value as double
-        static constexpr double val = type::template get<double>();
+        static constexpr double val = type::template get<double>;
     };
 
     /**
