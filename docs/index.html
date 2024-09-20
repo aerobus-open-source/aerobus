@@ -93,7 +93,7 @@ $(function() {
 <h1><a class="anchor" id="autotoc_md1"></a>
 HOW TO</h1>
 <ul>
-<li>Clone or download the repository somewhere, or just download the <a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274" title="generic addition">aerobus.h</a></li>
+<li>Clone or download the repository somewhere, or just download <code><a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274" title="generic addition">aerobus.h</a></code></li>
 <li>In your code, add : <code>#include "aerobus.h"</code></li>
 <li>Compile with -std=c++20 (at least) -I&lt;install_location&gt;</li>
 </ul>
@@ -113,7 +113,7 @@ Unit Test</h2>
 <h2><a class="anchor" id="autotoc_md3"></a>
 Benchmarks</h2>
 <p>Benchmarks are written for Intel CPUs having AVX512f and AVX512vl flags, they work only on Linux operating system using g++.</p>
-<p>In addition of <code>Cmake</code> and compiler, install <a href="https://www.openmp.org/resources/openmp-compilers-tools/">OpenMP</a>. Then move to top directory :</p>
+<p>In addition of <code>Cmake</code> and compiler, install <a href="https://www.openmp.org/resources/openmp-compilers-tools/"><code>OpenMP</code></a>. Then move to top directory :</p>
 <div class="fragment"><div class="line">rm -rf build </div>
 <div class="line">mkdir build</div>
 <div class="line">cd build</div>
@@ -338,7 +338,13 @@ Continued Fractions</h2>
 <div class="line"><span class="keyword">constexpr</span> <span class="keywordtype">double</span> x = T::val;</div>
 </div><!-- fragment --><p>As practical examples, <code>aerobus</code> gives continued fractions of \(\pi\), \(e\), \(\sqrt{2}\) and \(\sqrt{3}\):</p>
 <div class="fragment"><div class="line"><span class="keyword">constexpr</span> <span class="keywordtype">double</span> <a class="code hl_typedef" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">A_SQRT3</a> = aerobus::SQRT3_fraction::val; <span class="comment">// 1.7320508075688772935</span></div>
-</div><!-- fragment --><p><a href="https://zenodo.org/badge/latestdoi/499577459"><img src="https://zenodo.org/badge/499577459.svg" alt="DOI" style="pointer-events: none;" class="inline"/></a> </p>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md15"></a>
+CUDA</h1>
+<p>When compiled with <code>nvcc</code> and the flag <code>WITH_CUDA_FP16</code>, <code>Aerobus</code> provides some kind of support of 16 bits integers and floats (aka <code>__half</code>).</p>
+<p>Unfortunately, NVIDIA did not put enough constexpr in its <code>cuda_fp16.h</code> header, so we had to implement our own constexpr static_cast from int16_t to <code>__half</code> to make integers polynomials work with <code>__half</code>. See <a href="https://developer.nvidia.com/bugs/4863696">this bug</a>.</p>
+<p>More, it's (at this time), not possible to make it work for <code>__half2</code> because of <a href="https://developer.nvidia.com/bugs/4872028">another bug</a>.</p>
+<p>Please push to make these bug fixed by NVIDIA.</p>
+<p><a href="https://zenodo.org/badge/latestdoi/499577459"><img src="https://zenodo.org/badge/499577459.svg" alt="DOI" style="pointer-events: none;" class="inline"/></a> </p>
 </div></div><!-- PageDoc -->
 </div><!-- contents -->
 <!-- start footer part -->

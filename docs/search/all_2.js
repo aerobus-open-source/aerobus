@@ -8,7 +8,7 @@ var searchData=
   ['coeff_5fat_5ft_5',['coeff_at_t',['../structaerobus_1_1polynomial_1_1val.html#a546639fc51ca19f9cb462d2d1e292f77',1,'aerobus::polynomial::val::coeff_at_t'],['../structaerobus_1_1polynomial_1_1val_3_01coeff_n_01_4.html#a9ebe492293501701059da06b68458e3c',1,'aerobus::polynomial::val&lt; coeffN &gt;::coeff_at_t']]],
   ['combination_5ft_6',['combination_t',['../namespaceaerobus.html#a74d880d6b9dc16548bc38b385848b023',1,'aerobus']]],
   ['combination_5fv_7',['combination_v',['../namespaceaerobus.html#a955977c0ad8c09d52d085d623deae46b',1,'aerobus']]],
-  ['concat_8',['concat',['../structaerobus_1_1type__list.html#a14004503997bb4a74124989632c2c5af',1,'aerobus::type_list::concat'],['../structaerobus_1_1type__list_3_4.html#a0139f4483bc6d36f78f83439287cac6e',1,'aerobus::type_list&lt;&gt;::concat']]],
+  ['concat_8',['concat',['../structaerobus_1_1type__list_3_4.html#a0139f4483bc6d36f78f83439287cac6e',1,'aerobus::type_list&lt;&gt;::concat'],['../structaerobus_1_1type__list.html#a14004503997bb4a74124989632c2c5af',1,'aerobus::type_list::concat']]],
   ['continued_20fractions_9',['Continued Fractions',['../index.html#autotoc_md14',1,'']]],
   ['continuedfraction_10',['ContinuedFraction',['../structaerobus_1_1_continued_fraction.html',1,'aerobus']]],
   ['continuedfraction_3c_20a0_20_3e_11',['ContinuedFraction&lt; a0 &gt;',['../structaerobus_1_1_continued_fraction_3_01a0_01_4.html',1,'aerobus']]],
@@ -16,5 +16,6 @@ var searchData=
   ['conway_20polynomials_13',['Conway polynomials',['../index.html#autotoc_md8',1,'']]],
   ['conwaypolynomial_14',['ConwayPolynomial',['../structaerobus_1_1_conway_polynomial.html',1,'aerobus']]],
   ['cos_15',['cos',['../namespaceaerobus.html#ac33c647eca09200afb77b6ebcfea8cd7',1,'aerobus']]],
-  ['cosh_16',['cosh',['../namespaceaerobus.html#a42165075ac48c1e2b227d959e0a8bf22',1,'aerobus']]]
+  ['cosh_16',['cosh',['../namespaceaerobus.html#a42165075ac48c1e2b227d959e0a8bf22',1,'aerobus']]],
+  ['cuda_17',['CUDA',['../index.html#autotoc_md15',1,'']]]
 ];

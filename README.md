@@ -19,7 +19,7 @@ Given these functions are "generated" at compile time and do not rely on inline 
 
 ## HOW TO
 
-- Clone or download the repository somewhere, or just download the aerobus.h
+- Clone or download the repository somewhere, or just download `aerobus.h`
 - In your code, add : `#include "aerobus.h"`
 - Compile with -std=c++20 (at least) -I<install_location>
   
@@ -56,7 +56,7 @@ From top directory.
 
 Benchmarks are written for Intel CPUs having AVX512f and AVX512vl flags, they work only on Linux operating system using g++.
 
-In addition of `Cmake` and compiler, install [OpenMP](https://www.openmp.org/resources/openmp-compilers-tools/).
+In addition of `Cmake` and compiler, install [`OpenMP`](https://www.openmp.org/resources/openmp-compilers-tools/).
 Then move to top directory :
 
 ```bash
@@ -347,5 +347,15 @@ As practical examples, `aerobus` gives continued fractions of $\pi$, $e$, $\sqrt
 ```cpp
 constexpr double A_SQRT3 = aerobus::SQRT3_fraction::val; // 1.7320508075688772935
 ```
+
+## CUDA
+
+When compiled with `nvcc` and the flag `WITH_CUDA_FP16`, `Aerobus` provides some kind of support of 16 bits integers and floats (aka `__half`).
+
+Unfortunately, NVIDIA did not put enough constexpr in its `cuda_fp16.h` header, so we had to implement our own constexpr static_cast from int16_t to `__half` to make integers polynomials work with `__half`. See [this bug](https://developer.nvidia.com/bugs/4863696).
+
+More, it's (at this time), not possible to make it work for `__half2` because of [another bug](https://developer.nvidia.com/bugs/4872028).
+
+Please push to make these bug fixed by NVIDIA.
 
 [![DOI](https://zenodo.org/badge/499577459.svg)](https://zenodo.org/badge/latestdoi/499577459)
