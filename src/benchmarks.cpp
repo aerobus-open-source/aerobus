@@ -98,7 +98,6 @@ int main() {
     double* in = static_cast<double*>(aerobus::aligned_malloc<double>(N, 64));
     double* out_aero = static_cast<double*>(aerobus::aligned_malloc<double>(N, 64));
     double* out_std = static_cast<double*>(aerobus::aligned_malloc<double>(N, 64));
-    double* out_vml = static_cast<double*>(aerobus::aligned_malloc<double>(N, 64));
     memset(reinterpret_cast<void*>(out_aero), 0, N * sizeof(double));
     memset(reinterpret_cast<void*>(out_std), 0, N * sizeof(double));
     #pragma omp parallel for
