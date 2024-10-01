@@ -46,19 +46,19 @@ These functions are usually exposed by the standard library (`<cmath>`) with hig
 
 Hardware vendors provide high-performance libraries such as [@wang2014intel], but implementation is often hidden and not extensible.
 
-Some others can provide vectorized functions, such as @vml does. But libraries like VML are highly tight to one architecture by their use of intrinsic or inline assembly. In addition, they only provide a restricted list of math functions and do not expose capabilities to generate high-performance versions of other functions such as `arctanh`. It is the same for the standard library compiled with `-Ofast`: it generates a vectorized version of some functions (such as exp) but with no control of precision and no extensibility.
+Some others can provide vectorized functions, such as @vml does. But libraries like VML are highly tight to one architecture by their use of intrinsic or inline assembly. In addition, they only provide a restricted list of math functions and do not expose capabilities to generate high-performance versions of other functions such as `arctanh`. It is the same for the standard library compiled with `-Ofast`: it generates a vectorized version of some functions (such as exp) but with no control of precision and no extensibility. In addition, `fast-math` versions are compiler and architecture dependent, which can be a problem for results reproducibility.
 
-`Aerobus` provides automatic generation of such functions, in a hardware-independent way.
+`Aerobus` provides automatic generation of such functions, in a hardware-independent way, as tested on x86 and CUDA platforms.
 In addition, `Aerobus` provides a way to control the precision of the generated function by changing the degree of Taylor expansion, which can't be used in competing libraries without reimplementing the whole function.
 
 ## Mathematic definitions
 
-For the sake of completeness, we give basic definitions of the mathematical concepts which the library deals with. However, readers desiring complete and rigorous definitions of the concepts explained below should refer to some mathematical books on algebra, such as @lang2012algebra or @bourbaki2013algebra.
+For the sake of completeness, we give basic definitions of the mathematical concepts which the library deals with. However, readers desiring complete and rigorous definitions of the concepts explained below should refer to a mathematical book on algebra, such as @lang2012algebra or @bourbaki2013algebra.
 
 A `ring` $\mathbb{A}$ is a nonempty set with two internal laws, addition and multiplication. There is a neutral element for both, zero and one.
 Addition is commutative and associative and every element $x$ has an inverse $-x$. Multiplication is commutative, associative and distributive over addition, meaning that $a(b+c) = ab+ac$ for every $a, b, c$ element. We call it `discrete` if it is countable.
 
-An `integral domain` is a ring with one additional property. For every elements $a, b, c$ such as $ab = ac$, then either $a = 0$ or $b = c$. Such a ring is not always a field, such as $\mathbb{Z}$ shows it.
+A `integral domain` is a ring with one additional property. For every element $a, b, c$ such as $ab = ac$, then either $a = 0$ or $b = c$. Such a ring is not always a field, such as $\mathbb{Z}$ shows it.
 
 A `euclidean domain` is an integral domain that can be endowed with a euclidean division.
 
@@ -125,13 +125,6 @@ The same is done for the field of fractions: implementation does not rely on the
 
 Doing that way, $\mathbb{Q}$ has the same implementation as rational fractions of polynomials. Users could also get the field of fractions of any ring of their convenience, as long as they implement the required concepts.
 
-For example, rationals and rational fractions with rational coefficients are exposed through type aliases:
-
-```cpp
-using q32 = FractionField<i32>;
-using fpq32 = FractionField<polynomial<q32>>;
-```
-
 ### Native types
 
 `Aerobus` exposes several pre-implemented types, as they are common and necessary to do actual computations:
@@ -181,30 +174,7 @@ And Taylor series for these functions:
 - `atanh`
 
 Additionally, the library comes with a type designed to help the users implement other Taylor series.
-If users provide a type `mycoeff` satisfying the following template:
-
-```cpp
-template<typename Integers, size_t i>
-struct mycoeff {
-    using type = (something in FractionField<Integers>);
-  };
-};
-```
-
-Where `Integers` is the integers ring (such as `aerobus::i64`), the corresponding Taylor expansion can be built using:
-
-```cpp
-template<typename T, size_t deg>
-using myfunc = taylor<T, mycoeff, deg>;
-```
-
-and then evaluated using:
-
-```cpp
-double myfunc_eval(const double x) {
-  return myfunc::val<double>(x);
-}
-```
+If users provide a type `mycoeff` satisfying the appropriate template (depending on the `Ring` of coefficients and degree), the corresponding Taylor expansion can be built automatically as a polynomial over this `Ring` and then, evaluated at some value in a native arithmetic type (such as double).
 
 ## Misc
 
@@ -212,27 +182,12 @@ double myfunc_eval(const double x) {
 
 `Aerobus` provides [continued fractions](https://en.wikipedia.org/wiki/Continued_fraction), seen as an example of what is possible when you have a proper type representation of the field of fractions.
 One can get a rational approximation of numbers using their known representation, given by the On-Line Encyclopedia of Integer Sequences [@OEIS].
-
-For example, an approximation of $\pi$ is given by:
-
-```cpp
-using PI_fraction = ContinuedFraction<
-      3, 7, 15, 1, 292, 1, 1, 
-      1, 2, 1, 3, 1, 14, 2, 1, 
-      1, 2, 2, 2, 2, 1>
-```
-
-then, you can have the corresponding rational number by using `PI_fraction::type` and a computation with `PI_fraction::val`.
+Some useful math constants, such as $\pi$ or $e$ are provided preimplemented, from which user can have the corresponding rational number by using (for example) `PI_fraction::type` and a computation with `PI_fraction::val`.
 
 ### Known polynomials
 
 There existe many orthogonal polynomial bases used in various domains, from number theory to quantum physics.
-`Aerobus` provide predefined implementation for some of them (Laguerre, Hermite, Bernstein, ...).
-
-```cpp
-using T4 = chebyshev_T<4>; // first kind
-using U4 = chebyshev_U<4>; // second kind
-```
+`Aerobus` provide predefined implementation for some of them (Laguerre, Hermite, Bernstein, Bessel, ...). These polynomials have integers coefficients by default, but can be defined (specialized) with coefficients in any `Ring` (such as $\mathbb{Z}/2\mathbb{2}$).
 
 ### Quotient rings and Galois fields
 
@@ -267,8 +222,6 @@ We make sure data is properly aligned and fits exactly an integer number of avx5
 We use different versions of sinus, varying the degree of the Taylor expansion from 1 to 17.
 
 For each version, we note performance (in billions of sinus per second) and error relative to `std::math`.
-
-![Performance (Gsin/s) and error (log scale) of aerobus, depending on the degree of the Taylor expansion of sinus](performance_and_error.png)
 
 Peak performance is reached for degree 3 with 20 billions sinus per second (error $\sim 10^{-4}$).
 Error is minimal ($10^{-16}$) for degree 13 with performance still significantly higher than fastmath.

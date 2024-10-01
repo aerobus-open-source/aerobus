@@ -102,7 +102,7 @@ int main() {
     memset(reinterpret_cast<void*>(out_std), 0, N * sizeof(double));
     #pragma omp parallel for
     for (size_t i = 0; i < N; ++i) {
-        in[i] = rand(-0.01, 0.01);  // pi / 6
+        in[i] = rand(-0.1, 0.1);  // pi / 6
     }
 
     {
