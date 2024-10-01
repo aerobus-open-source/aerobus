@@ -111,6 +111,7 @@ var menudata={children:[
 {text:"r",url:"functions_type.html#index_r"},
 {text:"s",url:"functions_type.html#index_s"},
 {text:"t",url:"functions_type.html#index_t"},
+{text:"v",url:"functions_type.html#index_v"},
 {text:"x",url:"functions_type.html#index_x"},
 {text:"z",url:"functions_type.html#index_z"}]}]}]},
 {text:"Files",url:"files.html",children:[

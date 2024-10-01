@@ -1,5 +1,5 @@
 /**
- * Example demonstating how to use aerobus "pow" function and "hermite" polynomials
+ * Example demonstrating how to use aerobus "pow" function and "hermite" polynomials
  */
 
 #include <cmath>

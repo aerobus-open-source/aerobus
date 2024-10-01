@@ -70,7 +70,7 @@ set(CMAKE_REQUIRED_FLAGS, "${CMAKE_REQUIRED_FLAGS_SAVED}")
 if(MSVC) 
   set(CMAKE_CXX_FLAGS "${OpenMP_CXX_FLAGS} /O2 /we4309 /we4756 /D_USE_MATH_DEFINES /Wall /wd4711 /wd4710 /wd4127 /wd4577 /wd4100")
 else()
-  set(CMAKE_CXX_FLAGS "${OpenMP_CXX_FLAGS} -O3 -ftemplate-depth=30000 -ftemplate-backtrace-limit=0 -Werror=overflow -Wall")
+  set(CMAKE_CXX_FLAGS "${OpenMP_CXX_FLAGS} -ffast-math -O3 -ftemplate-depth=30000 -ftemplate-backtrace-limit=0 -Werror=overflow -Wall")
 endif()
 
 if(HAVE_AVX512_EXTENSIONS)

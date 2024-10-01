@@ -95,13 +95,13 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:a0221b96026e00e2fa1fe4fe729fcfb01" id="r_a0221b96026e00e2fa1fe4fe729fcfb01"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">typename</a> v &gt; </td></tr>
-<tr class="memitem:a0221b96026e00e2fa1fe4fe729fcfb01"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">using</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structaerobus_1_1_embed_3_01polynomial_3_01_small_01_4_00_01polynomial_3_01_large_01_4_01_4.html#a0221b96026e00e2fa1fe4fe729fcfb01">type</a> = <a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">typename</a> <a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">at_low</a>&lt; v, <a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">typename</a> <a class="el" href="namespaceaerobus_1_1internal.html#afdd9f3c36e539296bcd0808ae8a38ab1">internal::make_index_sequence_reverse</a>&lt; v::degree+1 &gt; &gt;::type</td></tr>
+<tr class="memitem:a0221b96026e00e2fa1fe4fe729fcfb01" id="r_a0221b96026e00e2fa1fe4fe729fcfb01"><td class="memTemplParams" colspan="2">template&lt;typename v &gt; </td></tr>
+<tr class="memitem:a0221b96026e00e2fa1fe4fe729fcfb01"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structaerobus_1_1_embed_3_01polynomial_3_01_small_01_4_00_01polynomial_3_01_large_01_4_01_4.html#a0221b96026e00e2fa1fe4fe729fcfb01">type</a> = typename at_low&lt; v, typename <a class="el" href="namespaceaerobus_1_1internal.html#afdd9f3c36e539296bcd0808ae8a38ab1">internal::make_index_sequence_reverse</a>&lt; v::degree+1 &gt; &gt;::type</td></tr>
 <tr class="memdesc:a0221b96026e00e2fa1fe4fe729fcfb01"><td class="mdescLeft">&#160;</td><td class="mdescRight">the polynomial&lt;Large&gt; reprensentation of v  <br /></td></tr>
 <tr class="separator:a0221b96026e00e2fa1fe4fe729fcfb01"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><div class="compoundTemplParams">template&lt;<a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">typename</a> <a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">Small</a>, <a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">typename</a> <a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">Large</a>&gt;<br />
+<div class="textblock"><div class="compoundTemplParams">template&lt;typename Small, typename Large&gt;<br />
 struct aerobus::Embed&lt; polynomial&lt; Small &gt;, polynomial&lt; Large &gt; &gt;</div><p>embeds polynomial&lt;Small&gt; into polynomial&lt;Large&gt; </p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
@@ -117,12 +117,12 @@ struct aerobus::Embed&lt; polynomial&lt; Small &gt;, polynomial&lt; Large &gt; &
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">typename</a> <a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">Small</a> , <a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">typename</a> <a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">Large</a> &gt; </div>
+template&lt;typename Small , typename Large &gt; </div>
 <div class="memtemplate">
-template&lt;<a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">typename</a> v &gt; </div>
+template&lt;typename v &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">using</a> <a class="el" href="structaerobus_1_1_embed.html">aerobus::Embed</a>&lt; <a class="el" href="structaerobus_1_1polynomial.html">polynomial</a>&lt; <a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">Small</a> &gt;, <a class="el" href="structaerobus_1_1polynomial.html">polynomial</a>&lt; <a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">Large</a> &gt; &gt;::type =  <a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">typename</a> <a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">at_low</a>&lt;v, <a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">typename</a> <a class="el" href="namespaceaerobus_1_1internal.html#afdd9f3c36e539296bcd0808ae8a38ab1">internal::make_index_sequence_reverse</a>&lt;v::degree + 1&gt; &gt;::type</td>
+          <td class="memname">using <a class="el" href="structaerobus_1_1_embed.html">aerobus::Embed</a>&lt; <a class="el" href="structaerobus_1_1polynomial.html">polynomial</a>&lt; Small &gt;, <a class="el" href="structaerobus_1_1polynomial.html">polynomial</a>&lt; Large &gt; &gt;::type =  typename at_low&lt;v, typename <a class="el" href="namespaceaerobus_1_1internal.html#afdd9f3c36e539296bcd0808ae8a38ab1">internal::make_index_sequence_reverse</a>&lt;v::degree + 1&gt; &gt;::type</td>
         </tr>
       </table>
 </div><div class="memdoc">

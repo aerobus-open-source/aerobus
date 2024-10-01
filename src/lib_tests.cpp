@@ -990,6 +990,18 @@ TEST(known_polynomials, bernoulli) {
     }
 }
 
+TEST(known_polynomials, bessel) {
+    using B5 = known_polynomials::bessel<5>;
+    EXPECT_EQ(5, B5::degree);
+    std::cout << B5::to_string() << std::endl;
+    EXPECT_TRUE((std::is_same_v<B5::template coeff_at_t<0>, i64::one>));
+    EXPECT_TRUE((std::is_same_v<B5::template coeff_at_t<1>, i64::val<15>>));
+    EXPECT_TRUE((std::is_same_v<B5::template coeff_at_t<2>, i64::val<105>>));
+    EXPECT_TRUE((std::is_same_v<B5::template coeff_at_t<3>, i64::val<420>>));
+    EXPECT_TRUE((std::is_same_v<B5::template coeff_at_t<4>, i64::val<945>>));
+    EXPECT_TRUE((std::is_same_v<B5::template coeff_at_t<5>, i64::val<945>>));
+}
+
 TEST(embedding, simple) {
     {
         using Small = Quotient<i32, i32::val<4>>;

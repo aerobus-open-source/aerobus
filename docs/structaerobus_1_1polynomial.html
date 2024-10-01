@@ -93,6 +93,9 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial_1_1horner__reduction__t.html">horner_reduction_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Used to evaluate polynomials over a value in Ring.  <a href="structaerobus_1_1polynomial_1_1horner__reduction__t.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial_1_1val.html">val</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">values (seen as types) in polynomial ring  <a href="structaerobus_1_1polynomial_1_1val.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -102,89 +105,93 @@ Classes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:a6e1bcbe14fff600c30a6850ac7527b77" id="r_a6e1bcbe14fff600c30a6850ac7527b77"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#a6e1bcbe14fff600c30a6850ac7527b77">zero</a> = <a class="el" href="structaerobus_1_1polynomial_1_1val.html">val</a>&lt; <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> Ring::zero &gt;</td></tr>
+<tr class="memitem:a6e1bcbe14fff600c30a6850ac7527b77" id="r_a6e1bcbe14fff600c30a6850ac7527b77"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#a6e1bcbe14fff600c30a6850ac7527b77">zero</a> = <a class="el" href="structaerobus_1_1polynomial_1_1val.html">val</a>&lt; typename Ring::zero &gt;</td></tr>
 <tr class="memdesc:a6e1bcbe14fff600c30a6850ac7527b77"><td class="mdescLeft">&#160;</td><td class="mdescRight">constant zero  <br /></td></tr>
 <tr class="separator:a6e1bcbe14fff600c30a6850ac7527b77"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae68d0b7a24fb15563afd9fda33146f2c" id="r_ae68d0b7a24fb15563afd9fda33146f2c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#ae68d0b7a24fb15563afd9fda33146f2c">one</a> = <a class="el" href="structaerobus_1_1polynomial_1_1val.html">val</a>&lt; <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> Ring::one &gt;</td></tr>
+<tr class="memitem:ae68d0b7a24fb15563afd9fda33146f2c" id="r_ae68d0b7a24fb15563afd9fda33146f2c"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#ae68d0b7a24fb15563afd9fda33146f2c">one</a> = <a class="el" href="structaerobus_1_1polynomial_1_1val.html">val</a>&lt; typename Ring::one &gt;</td></tr>
 <tr class="memdesc:ae68d0b7a24fb15563afd9fda33146f2c"><td class="mdescLeft">&#160;</td><td class="mdescRight">constant one  <br /></td></tr>
 <tr class="separator:ae68d0b7a24fb15563afd9fda33146f2c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5eb448a2bc40ffd3c5b808fcd99e1bd9" id="r_a5eb448a2bc40ffd3c5b808fcd99e1bd9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#a5eb448a2bc40ffd3c5b808fcd99e1bd9">X</a> = <a class="el" href="structaerobus_1_1polynomial_1_1val.html">val</a>&lt; <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> Ring::one, <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> Ring::zero &gt;</td></tr>
+<tr class="memitem:a5eb448a2bc40ffd3c5b808fcd99e1bd9" id="r_a5eb448a2bc40ffd3c5b808fcd99e1bd9"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#a5eb448a2bc40ffd3c5b808fcd99e1bd9">X</a> = <a class="el" href="structaerobus_1_1polynomial_1_1val.html">val</a>&lt; typename Ring::one, typename Ring::zero &gt;</td></tr>
 <tr class="memdesc:a5eb448a2bc40ffd3c5b808fcd99e1bd9"><td class="mdescLeft">&#160;</td><td class="mdescRight">generator  <br /></td></tr>
 <tr class="separator:a5eb448a2bc40ffd3c5b808fcd99e1bd9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4749bc36f451d5cd2b2624333f64d9d7" id="r_a4749bc36f451d5cd2b2624333f64d9d7"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> P &gt; </td></tr>
-<tr class="memitem:a4749bc36f451d5cd2b2624333f64d9d7"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">using</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#a4749bc36f451d5cd2b2624333f64d9d7">simplify_t</a> = <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> simplify&lt; P &gt;::type</td></tr>
+<tr class="memitem:a4749bc36f451d5cd2b2624333f64d9d7" id="r_a4749bc36f451d5cd2b2624333f64d9d7"><td class="memTemplParams" colspan="2">template&lt;typename P &gt; </td></tr>
+<tr class="memitem:a4749bc36f451d5cd2b2624333f64d9d7"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#a4749bc36f451d5cd2b2624333f64d9d7">simplify_t</a> = typename simplify&lt; P &gt;::type</td></tr>
 <tr class="memdesc:a4749bc36f451d5cd2b2624333f64d9d7"><td class="mdescLeft">&#160;</td><td class="mdescRight">simplifies a polynomial (recursively deletes highest degree if zero, do nothing otherwise)  <br /></td></tr>
 <tr class="separator:a4749bc36f451d5cd2b2624333f64d9d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1c1e63a1c6bac445a05d517e1147889d" id="r_a1c1e63a1c6bac445a05d517e1147889d"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v1</a> , <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v2</a> &gt; </td></tr>
-<tr class="memitem:a1c1e63a1c6bac445a05d517e1147889d"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">using</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">add_t</a> = <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> add&lt; <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v1</a>, <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v2</a> &gt;::type</td></tr>
+<tr class="memitem:a1c1e63a1c6bac445a05d517e1147889d" id="r_a1c1e63a1c6bac445a05d517e1147889d"><td class="memTemplParams" colspan="2">template&lt;typename v1 , typename v2 &gt; </td></tr>
+<tr class="memitem:a1c1e63a1c6bac445a05d517e1147889d"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">add_t</a> = typename add&lt; v1, v2 &gt;::type</td></tr>
 <tr class="memdesc:a1c1e63a1c6bac445a05d517e1147889d"><td class="mdescLeft">&#160;</td><td class="mdescRight">adds two polynomials  <br /></td></tr>
 <tr class="separator:a1c1e63a1c6bac445a05d517e1147889d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae778b93f48bef15abea771b76d352a69" id="r_ae778b93f48bef15abea771b76d352a69"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v1</a> , <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v2</a> &gt; </td></tr>
-<tr class="memitem:ae778b93f48bef15abea771b76d352a69"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">using</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#ae778b93f48bef15abea771b76d352a69">sub_t</a> = <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> sub&lt; <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v1</a>, <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v2</a> &gt;::type</td></tr>
+<tr class="memitem:ae778b93f48bef15abea771b76d352a69" id="r_ae778b93f48bef15abea771b76d352a69"><td class="memTemplParams" colspan="2">template&lt;typename v1 , typename v2 &gt; </td></tr>
+<tr class="memitem:ae778b93f48bef15abea771b76d352a69"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#ae778b93f48bef15abea771b76d352a69">sub_t</a> = typename sub&lt; v1, v2 &gt;::type</td></tr>
 <tr class="memdesc:ae778b93f48bef15abea771b76d352a69"><td class="mdescLeft">&#160;</td><td class="mdescRight">substraction of two polynomials  <br /></td></tr>
 <tr class="separator:ae778b93f48bef15abea771b76d352a69"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0e030a48e869a04dc4146f3ba906b83c" id="r_a0e030a48e869a04dc4146f3ba906b83c"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v1</a> , <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v2</a> &gt; </td></tr>
-<tr class="memitem:a0e030a48e869a04dc4146f3ba906b83c"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">using</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#a0e030a48e869a04dc4146f3ba906b83c">mul_t</a> = <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> mul&lt; <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v1</a>, <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v2</a> &gt;::type</td></tr>
+<tr class="memitem:a0e030a48e869a04dc4146f3ba906b83c" id="r_a0e030a48e869a04dc4146f3ba906b83c"><td class="memTemplParams" colspan="2">template&lt;typename v1 , typename v2 &gt; </td></tr>
+<tr class="memitem:a0e030a48e869a04dc4146f3ba906b83c"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#a0e030a48e869a04dc4146f3ba906b83c">mul_t</a> = typename mul&lt; v1, v2 &gt;::type</td></tr>
 <tr class="memdesc:a0e030a48e869a04dc4146f3ba906b83c"><td class="mdescLeft">&#160;</td><td class="mdescRight">multiplication of two polynomials  <br /></td></tr>
 <tr class="separator:a0e030a48e869a04dc4146f3ba906b83c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3f8497fb15ae18b07d188d7ea19d275b" id="r_a3f8497fb15ae18b07d188d7ea19d275b"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v1</a> , <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v2</a> &gt; </td></tr>
-<tr class="memitem:a3f8497fb15ae18b07d188d7ea19d275b"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">using</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#a3f8497fb15ae18b07d188d7ea19d275b">eq_t</a> = <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> eq_helper&lt; <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v1</a>, <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v2</a> &gt;::type</td></tr>
+<tr class="memitem:a3f8497fb15ae18b07d188d7ea19d275b" id="r_a3f8497fb15ae18b07d188d7ea19d275b"><td class="memTemplParams" colspan="2">template&lt;typename v1 , typename v2 &gt; </td></tr>
+<tr class="memitem:a3f8497fb15ae18b07d188d7ea19d275b"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#a3f8497fb15ae18b07d188d7ea19d275b">eq_t</a> = typename eq_helper&lt; v1, v2 &gt;::type</td></tr>
 <tr class="memdesc:a3f8497fb15ae18b07d188d7ea19d275b"><td class="mdescLeft">&#160;</td><td class="mdescRight">equality operator  <br /></td></tr>
 <tr class="separator:a3f8497fb15ae18b07d188d7ea19d275b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a031eb96b495e4ccfddad68380b70bddf" id="r_a031eb96b495e4ccfddad68380b70bddf"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v1</a> , <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v2</a> &gt; </td></tr>
-<tr class="memitem:a031eb96b495e4ccfddad68380b70bddf"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">using</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#a031eb96b495e4ccfddad68380b70bddf">lt_t</a> = <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> lt_helper&lt; <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v1</a>, <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v2</a> &gt;::type</td></tr>
+<tr class="memitem:a031eb96b495e4ccfddad68380b70bddf" id="r_a031eb96b495e4ccfddad68380b70bddf"><td class="memTemplParams" colspan="2">template&lt;typename v1 , typename v2 &gt; </td></tr>
+<tr class="memitem:a031eb96b495e4ccfddad68380b70bddf"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#a031eb96b495e4ccfddad68380b70bddf">lt_t</a> = typename lt_helper&lt; v1, v2 &gt;::type</td></tr>
 <tr class="memdesc:a031eb96b495e4ccfddad68380b70bddf"><td class="mdescLeft">&#160;</td><td class="mdescRight">strict less operator  <br /></td></tr>
 <tr class="separator:a031eb96b495e4ccfddad68380b70bddf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad225530da6521f0d8916fc72772bb390" id="r_ad225530da6521f0d8916fc72772bb390"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v1</a> , <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v2</a> &gt; </td></tr>
-<tr class="memitem:ad225530da6521f0d8916fc72772bb390"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">using</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#ad225530da6521f0d8916fc72772bb390">gt_t</a> = <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> gt_helper&lt; <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v1</a>, <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v2</a> &gt;::type</td></tr>
+<tr class="memitem:ad225530da6521f0d8916fc72772bb390" id="r_ad225530da6521f0d8916fc72772bb390"><td class="memTemplParams" colspan="2">template&lt;typename v1 , typename v2 &gt; </td></tr>
+<tr class="memitem:ad225530da6521f0d8916fc72772bb390"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#ad225530da6521f0d8916fc72772bb390">gt_t</a> = typename gt_helper&lt; v1, v2 &gt;::type</td></tr>
 <tr class="memdesc:ad225530da6521f0d8916fc72772bb390"><td class="mdescLeft">&#160;</td><td class="mdescRight">strict greater operator  <br /></td></tr>
 <tr class="separator:ad225530da6521f0d8916fc72772bb390"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a60fc94b3bdd48c6b22ecd02c05c3f65b" id="r_a60fc94b3bdd48c6b22ecd02c05c3f65b"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v1</a> , <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v2</a> &gt; </td></tr>
-<tr class="memitem:a60fc94b3bdd48c6b22ecd02c05c3f65b"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">using</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#a60fc94b3bdd48c6b22ecd02c05c3f65b">div_t</a> = <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> div&lt; <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v1</a>, <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v2</a> &gt;::q_type</td></tr>
+<tr class="memitem:a60fc94b3bdd48c6b22ecd02c05c3f65b" id="r_a60fc94b3bdd48c6b22ecd02c05c3f65b"><td class="memTemplParams" colspan="2">template&lt;typename v1 , typename v2 &gt; </td></tr>
+<tr class="memitem:a60fc94b3bdd48c6b22ecd02c05c3f65b"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#a60fc94b3bdd48c6b22ecd02c05c3f65b">div_t</a> = typename div&lt; v1, v2 &gt;::q_type</td></tr>
 <tr class="memdesc:a60fc94b3bdd48c6b22ecd02c05c3f65b"><td class="mdescLeft">&#160;</td><td class="mdescRight">division operator  <br /></td></tr>
 <tr class="separator:a60fc94b3bdd48c6b22ecd02c05c3f65b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad8113cd1c1ef0a65fc74a13b12934f26" id="r_ad8113cd1c1ef0a65fc74a13b12934f26"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v1</a> , <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v2</a> &gt; </td></tr>
-<tr class="memitem:ad8113cd1c1ef0a65fc74a13b12934f26"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">using</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#ad8113cd1c1ef0a65fc74a13b12934f26">mod_t</a> = <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> div_helper&lt; <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v1</a>, <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v2</a>, <a class="el" href="structaerobus_1_1polynomial.html#a6e1bcbe14fff600c30a6850ac7527b77">zero</a>, <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v1</a> &gt;::mod_type</td></tr>
+<tr class="memitem:ad8113cd1c1ef0a65fc74a13b12934f26" id="r_ad8113cd1c1ef0a65fc74a13b12934f26"><td class="memTemplParams" colspan="2">template&lt;typename v1 , typename v2 &gt; </td></tr>
+<tr class="memitem:ad8113cd1c1ef0a65fc74a13b12934f26"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#ad8113cd1c1ef0a65fc74a13b12934f26">mod_t</a> = typename div_helper&lt; v1, v2, <a class="el" href="structaerobus_1_1polynomial.html#a6e1bcbe14fff600c30a6850ac7527b77">zero</a>, v1 &gt;::mod_type</td></tr>
 <tr class="memdesc:ad8113cd1c1ef0a65fc74a13b12934f26"><td class="mdescLeft">&#160;</td><td class="mdescRight">modulo operator  <br /></td></tr>
 <tr class="separator:ad8113cd1c1ef0a65fc74a13b12934f26"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aecd4fd737faa70d1c9aaf6ca87594776" id="r_aecd4fd737faa70d1c9aaf6ca87594776"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">coeff</a> , <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">size_t</a> deg&gt; </td></tr>
-<tr class="memitem:aecd4fd737faa70d1c9aaf6ca87594776"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">using</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#aecd4fd737faa70d1c9aaf6ca87594776">monomial_t</a> = <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> monomial&lt; <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">coeff</a>, <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">deg</a> &gt;::type</td></tr>
+<tr class="memitem:aecd4fd737faa70d1c9aaf6ca87594776" id="r_aecd4fd737faa70d1c9aaf6ca87594776"><td class="memTemplParams" colspan="2">template&lt;typename coeff , size_t deg&gt; </td></tr>
+<tr class="memitem:aecd4fd737faa70d1c9aaf6ca87594776"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#aecd4fd737faa70d1c9aaf6ca87594776">monomial_t</a> = typename monomial&lt; coeff, deg &gt;::type</td></tr>
 <tr class="memdesc:aecd4fd737faa70d1c9aaf6ca87594776"><td class="mdescLeft">&#160;</td><td class="mdescRight">monomial : coeff X^deg  <br /></td></tr>
 <tr class="separator:aecd4fd737faa70d1c9aaf6ca87594776"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a06c036dbd2ba0fbbcce395602f730671" id="r_a06c036dbd2ba0fbbcce395602f730671"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> v &gt; </td></tr>
-<tr class="memitem:a06c036dbd2ba0fbbcce395602f730671"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">using</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#a06c036dbd2ba0fbbcce395602f730671">derive_t</a> = <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> derive_helper&lt; v &gt;::type</td></tr>
+<tr class="memitem:a06c036dbd2ba0fbbcce395602f730671" id="r_a06c036dbd2ba0fbbcce395602f730671"><td class="memTemplParams" colspan="2">template&lt;typename v &gt; </td></tr>
+<tr class="memitem:a06c036dbd2ba0fbbcce395602f730671"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#a06c036dbd2ba0fbbcce395602f730671">derive_t</a> = typename derive_helper&lt; v &gt;::type</td></tr>
 <tr class="memdesc:a06c036dbd2ba0fbbcce395602f730671"><td class="mdescLeft">&#160;</td><td class="mdescRight">derivation operator  <br /></td></tr>
 <tr class="separator:a06c036dbd2ba0fbbcce395602f730671"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6a2eeace3c346bbfd843647cf870d492" id="r_a6a2eeace3c346bbfd843647cf870d492"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> v &gt; </td></tr>
-<tr class="memitem:a6a2eeace3c346bbfd843647cf870d492"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">using</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#a6a2eeace3c346bbfd843647cf870d492">pos_t</a> = <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> Ring::template <a class="el" href="structaerobus_1_1polynomial.html#a6a2eeace3c346bbfd843647cf870d492">pos_t</a>&lt; <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> v::aN &gt;</td></tr>
+<tr class="memitem:a6a2eeace3c346bbfd843647cf870d492" id="r_a6a2eeace3c346bbfd843647cf870d492"><td class="memTemplParams" colspan="2">template&lt;typename v &gt; </td></tr>
+<tr class="memitem:a6a2eeace3c346bbfd843647cf870d492"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#a6a2eeace3c346bbfd843647cf870d492">pos_t</a> = typename Ring::template <a class="el" href="structaerobus_1_1polynomial.html#a6a2eeace3c346bbfd843647cf870d492">pos_t</a>&lt; typename v::aN &gt;</td></tr>
 <tr class="memdesc:a6a2eeace3c346bbfd843647cf870d492"><td class="mdescLeft">&#160;</td><td class="mdescRight">checks for positivity (an &gt; 0)  <br /></td></tr>
 <tr class="separator:a6a2eeace3c346bbfd843647cf870d492"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a728b466cf578575bb8be01aa70134a88" id="r_a728b466cf578575bb8be01aa70134a88"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v1</a> , <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v2</a> &gt; </td></tr>
-<tr class="memitem:a728b466cf578575bb8be01aa70134a88"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">using</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#a728b466cf578575bb8be01aa70134a88">gcd_t</a> = std::conditional_t&lt; Ring::is_euclidean_domain, <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> make_unit&lt; <a class="el" href="structaerobus_1_1polynomial.html#a728b466cf578575bb8be01aa70134a88">gcd_t</a>&lt; <a class="el" href="structaerobus_1_1polynomial.html">polynomial</a>&lt; <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt;, <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v1</a>, <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v2</a> &gt; &gt;::type, <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">void</a> &gt;</td></tr>
+<tr class="memitem:a728b466cf578575bb8be01aa70134a88" id="r_a728b466cf578575bb8be01aa70134a88"><td class="memTemplParams" colspan="2">template&lt;typename v1 , typename v2 &gt; </td></tr>
+<tr class="memitem:a728b466cf578575bb8be01aa70134a88"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#a728b466cf578575bb8be01aa70134a88">gcd_t</a> = std::conditional_t&lt; Ring::is_euclidean_domain, typename make_unit&lt; <a class="el" href="structaerobus_1_1polynomial.html#a728b466cf578575bb8be01aa70134a88">gcd_t</a>&lt; <a class="el" href="structaerobus_1_1polynomial.html">polynomial</a>&lt; Ring &gt;, v1, v2 &gt; &gt;::type, void &gt;</td></tr>
 <tr class="memdesc:a728b466cf578575bb8be01aa70134a88"><td class="mdescLeft">&#160;</td><td class="mdescRight">greatest common divisor of two polynomials  <br /></td></tr>
 <tr class="separator:a728b466cf578575bb8be01aa70134a88"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aeb56ba70a70b380bb984ff5736a1649e" id="r_aeb56ba70a70b380bb984ff5736a1649e"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">auto</a> x&gt; </td></tr>
-<tr class="memitem:aeb56ba70a70b380bb984ff5736a1649e"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">using</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#aeb56ba70a70b380bb984ff5736a1649e">inject_constant_t</a> = <a class="el" href="structaerobus_1_1polynomial_1_1val.html">val</a>&lt; <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> Ring::template <a class="el" href="structaerobus_1_1polynomial.html#aeb56ba70a70b380bb984ff5736a1649e">inject_constant_t</a>&lt; x &gt; &gt;</td></tr>
+<tr class="memitem:aeb56ba70a70b380bb984ff5736a1649e" id="r_aeb56ba70a70b380bb984ff5736a1649e"><td class="memTemplParams" colspan="2">template&lt;auto x&gt; </td></tr>
+<tr class="memitem:aeb56ba70a70b380bb984ff5736a1649e"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#aeb56ba70a70b380bb984ff5736a1649e">inject_constant_t</a> = <a class="el" href="structaerobus_1_1polynomial_1_1val.html">val</a>&lt; typename Ring::template <a class="el" href="structaerobus_1_1polynomial.html#aeb56ba70a70b380bb984ff5736a1649e">inject_constant_t</a>&lt; x &gt; &gt;</td></tr>
+<tr class="memdesc:aeb56ba70a70b380bb984ff5736a1649e"><td class="mdescLeft">&#160;</td><td class="mdescRight">makes the constant (native type) polynomial a_0  <br /></td></tr>
 <tr class="separator:aeb56ba70a70b380bb984ff5736a1649e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3be1323f5e2e81c8920ed0cf3f08f268" id="r_a3be1323f5e2e81c8920ed0cf3f08f268"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> v &gt; </td></tr>
-<tr class="memitem:a3be1323f5e2e81c8920ed0cf3f08f268"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">using</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#a3be1323f5e2e81c8920ed0cf3f08f268">inject_ring_t</a> = <a class="el" href="structaerobus_1_1polynomial_1_1val.html">val</a>&lt; v &gt;</td></tr>
+<tr class="memitem:a3be1323f5e2e81c8920ed0cf3f08f268" id="r_a3be1323f5e2e81c8920ed0cf3f08f268"><td class="memTemplParams" colspan="2">template&lt;typename v &gt; </td></tr>
+<tr class="memitem:a3be1323f5e2e81c8920ed0cf3f08f268"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#a3be1323f5e2e81c8920ed0cf3f08f268">inject_ring_t</a> = <a class="el" href="structaerobus_1_1polynomial_1_1val.html">val</a>&lt; v &gt;</td></tr>
+<tr class="memdesc:a3be1323f5e2e81c8920ed0cf3f08f268"><td class="mdescLeft">&#160;</td><td class="mdescRight">makes the constant (ring type) polynomial a_0  <br /></td></tr>
 <tr class="separator:a3be1323f5e2e81c8920ed0cf3f08f268"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
-<tr class="memitem:a67d833005683e601b5c71d46a1023581" id="r_a67d833005683e601b5c71d46a1023581"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">static</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">constexpr</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#a67d833005683e601b5c71d46a1023581">is_field</a> = <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">false</a></td></tr>
+<tr class="memitem:a67d833005683e601b5c71d46a1023581" id="r_a67d833005683e601b5c71d46a1023581"><td class="memItemLeft" align="right" valign="top">static constexpr bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#a67d833005683e601b5c71d46a1023581">is_field</a> = false</td></tr>
 <tr class="separator:a67d833005683e601b5c71d46a1023581"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a515df4ea5fa46c05be92a056b6767d51" id="r_a515df4ea5fa46c05be92a056b6767d51"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">static</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">constexpr</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#a515df4ea5fa46c05be92a056b6767d51">is_euclidean_domain</a> = Ring::is_euclidean_domain</td></tr>
+<tr class="memitem:a515df4ea5fa46c05be92a056b6767d51" id="r_a515df4ea5fa46c05be92a056b6767d51"><td class="memItemLeft" align="right" valign="top">static constexpr bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#a515df4ea5fa46c05be92a056b6767d51">is_euclidean_domain</a> = Ring::is_euclidean_domain</td></tr>
 <tr class="separator:a515df4ea5fa46c05be92a056b6767d51"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6709746f1689142dec21b7a8bfe93d71" id="r_a6709746f1689142dec21b7a8bfe93d71"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> v &gt; </td></tr>
-<tr class="memitem:a6709746f1689142dec21b7a8bfe93d71"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">static</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">constexpr</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">bool</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#a6709746f1689142dec21b7a8bfe93d71">pos_v</a> = <a class="el" href="structaerobus_1_1polynomial.html#a6a2eeace3c346bbfd843647cf870d492">pos_t</a>&lt;v&gt;::value</td></tr>
+<tr class="memitem:a6709746f1689142dec21b7a8bfe93d71" id="r_a6709746f1689142dec21b7a8bfe93d71"><td class="memTemplParams" colspan="2">template&lt;typename v &gt; </td></tr>
+<tr class="memitem:a6709746f1689142dec21b7a8bfe93d71"><td class="memTemplItemLeft" align="right" valign="top">static constexpr bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial.html#a6709746f1689142dec21b7a8bfe93d71">pos_v</a> = <a class="el" href="structaerobus_1_1polynomial.html#a6a2eeace3c346bbfd843647cf870d492">pos_t</a>&lt;v&gt;::value</td></tr>
 <tr class="memdesc:a6709746f1689142dec21b7a8bfe93d71"><td class="mdescLeft">&#160;</td><td class="mdescRight">positivity operator  <br /></td></tr>
 <tr class="separator:a6709746f1689142dec21b7a8bfe93d71"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><div class="compoundTemplParams">template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a>&gt;<br />
-requires IsEuclideanDomain&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a>&gt;<br />
+<div class="textblock"><div class="compoundTemplParams">template&lt;typename Ring&gt;<br />
+requires IsEuclideanDomain&lt;Ring&gt;<br />
 struct aerobus::polynomial&lt; Ring &gt;</div><p>polynomial with coefficients in Ring Ring must be an integral domain </p>
+<dl class="section examples"><dt>Examples</dt><dd><a class="el" href="examples_2make_polynomial_8cpp-example.html#_a0">examples/make_polynomial.cpp</a>, and <a class="el" href="examples_2modular_arithmetic_8cpp-example.html#_a1">examples/modular_arithmetic.cpp</a>.</dd>
+</dl>
 </div><h2 class="groupheader">Member Typedef Documentation</h2>
 <a id="a1c1e63a1c6bac445a05d517e1147889d" name="a1c1e63a1c6bac445a05d517e1147889d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a1c1e63a1c6bac445a05d517e1147889d">&#9670;&#160;</a></span>add_t</h2>
@@ -192,12 +199,12 @@ struct aerobus::polynomial&lt; Ring &gt;</div><p>polynomial with coefficients in
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt; </div>
+template&lt;typename Ring &gt; </div>
 <div class="memtemplate">
-template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v1</a> , <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v2</a> &gt; </div>
+template&lt;typename v1 , typename v2 &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">using</a> <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt;::add_t =  <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> add&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v1</a>, <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v2</a>&gt;::type</td>
+          <td class="memname">using <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; Ring &gt;::add_t =  typename add&lt;v1, v2&gt;::type</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -219,12 +226,12 @@ template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac4
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt; </div>
+template&lt;typename Ring &gt; </div>
 <div class="memtemplate">
-template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> v &gt; </div>
+template&lt;typename v &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">using</a> <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt;::derive_t =  <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> derive_helper&lt;v&gt;::type</td>
+          <td class="memname">using <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; Ring &gt;::derive_t =  typename derive_helper&lt;v&gt;::type</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -245,12 +252,12 @@ template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac4
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt; </div>
+template&lt;typename Ring &gt; </div>
 <div class="memtemplate">
-template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v1</a> , <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v2</a> &gt; </div>
+template&lt;typename v1 , typename v2 &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">using</a> <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt;::div_t =  <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> div&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v1</a>, <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v2</a>&gt;::q_type</td>
+          <td class="memname">using <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; Ring &gt;::div_t =  typename div&lt;v1, v2&gt;::q_type</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -272,12 +279,12 @@ template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac4
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt; </div>
+template&lt;typename Ring &gt; </div>
 <div class="memtemplate">
-template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v1</a> , <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v2</a> &gt; </div>
+template&lt;typename v1 , typename v2 &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">using</a> <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt;::eq_t =  <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> eq_helper&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v1</a>, <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v2</a>&gt;::type</td>
+          <td class="memname">using <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; Ring &gt;::eq_t =  typename eq_helper&lt;v1, v2&gt;::type</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -299,12 +306,12 @@ template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac4
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt; </div>
+template&lt;typename Ring &gt; </div>
 <div class="memtemplate">
-template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v1</a> , <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v2</a> &gt; </div>
+template&lt;typename v1 , typename v2 &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">using</a> <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt;::gcd_t =  std::conditional_t&lt; Ring::is_euclidean_domain, <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> make_unit&lt;<a class="el" href="structaerobus_1_1polynomial.html#a728b466cf578575bb8be01aa70134a88">gcd_t</a>&lt;<a class="el" href="structaerobus_1_1polynomial.html">polynomial</a>&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a>&gt;, <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v1</a>, <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v2</a>&gt; &gt;::type, <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">void</a>&gt;</td>
+          <td class="memname">using <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; Ring &gt;::gcd_t =  std::conditional_t&lt; Ring::is_euclidean_domain, typename make_unit&lt;<a class="el" href="structaerobus_1_1polynomial.html#a728b466cf578575bb8be01aa70134a88">gcd_t</a>&lt;<a class="el" href="structaerobus_1_1polynomial.html">polynomial</a>&lt;Ring&gt;, v1, v2&gt; &gt;::type, void&gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -326,12 +333,12 @@ template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac4
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt; </div>
+template&lt;typename Ring &gt; </div>
 <div class="memtemplate">
-template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v1</a> , <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v2</a> &gt; </div>
+template&lt;typename v1 , typename v2 &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">using</a> <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt;::gt_t =  <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> gt_helper&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v1</a>, <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v2</a>&gt;::type</td>
+          <td class="memname">using <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; Ring &gt;::gt_t =  typename gt_helper&lt;v1, v2&gt;::type</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -353,15 +360,23 @@ template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac4
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt; </div>
+template&lt;typename Ring &gt; </div>
 <div class="memtemplate">
-template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">auto</a> x&gt; </div>
+template&lt;auto x&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">using</a> <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt;::inject_constant_t =  <a class="el" href="structaerobus_1_1polynomial_1_1val.html">val</a>&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> Ring::template <a class="el" href="structaerobus_1_1polynomial.html#aeb56ba70a70b380bb984ff5736a1649e">inject_constant_t</a>&lt;x&gt; &gt;</td>
+          <td class="memname">using <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; Ring &gt;::inject_constant_t =  <a class="el" href="structaerobus_1_1polynomial_1_1val.html">val</a>&lt;typename Ring::template <a class="el" href="structaerobus_1_1polynomial.html#aeb56ba70a70b380bb984ff5736a1649e">inject_constant_t</a>&lt;x&gt; &gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>makes the constant (native type) polynomial a_0 </p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">x</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -371,15 +386,23 @@ template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac4
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt; </div>
+template&lt;typename Ring &gt; </div>
 <div class="memtemplate">
-template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> v &gt; </div>
+template&lt;typename v &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">using</a> <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt;::inject_ring_t =  <a class="el" href="structaerobus_1_1polynomial_1_1val.html">val</a>&lt;v&gt;</td>
+          <td class="memname">using <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; Ring &gt;::inject_ring_t =  <a class="el" href="structaerobus_1_1polynomial_1_1val.html">val</a>&lt;v&gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>makes the constant (ring type) polynomial a_0 </p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">v</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -389,12 +412,12 @@ template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac4
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt; </div>
+template&lt;typename Ring &gt; </div>
 <div class="memtemplate">
-template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v1</a> , <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v2</a> &gt; </div>
+template&lt;typename v1 , typename v2 &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">using</a> <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt;::lt_t =  <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> lt_helper&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v1</a>, <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v2</a>&gt;::type</td>
+          <td class="memname">using <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; Ring &gt;::lt_t =  typename lt_helper&lt;v1, v2&gt;::type</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -416,12 +439,12 @@ template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac4
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt; </div>
+template&lt;typename Ring &gt; </div>
 <div class="memtemplate">
-template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v1</a> , <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v2</a> &gt; </div>
+template&lt;typename v1 , typename v2 &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">using</a> <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt;::mod_t =  <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> div_helper&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v1</a>, <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v2</a>, <a class="el" href="structaerobus_1_1polynomial.html#a6e1bcbe14fff600c30a6850ac7527b77">zero</a>, <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v1</a>&gt;::mod_type</td>
+          <td class="memname">using <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; Ring &gt;::mod_t =  typename div_helper&lt;v1, v2, <a class="el" href="structaerobus_1_1polynomial.html#a6e1bcbe14fff600c30a6850ac7527b77">zero</a>, v1&gt;::mod_type</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -443,12 +466,12 @@ template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac4
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt; </div>
+template&lt;typename Ring &gt; </div>
 <div class="memtemplate">
-template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">coeff</a> , <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">size_t</a> deg&gt; </div>
+template&lt;typename coeff , size_t deg&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">using</a> <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt;::monomial_t =  <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> monomial&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">coeff</a>, <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">deg</a>&gt;::type</td>
+          <td class="memname">using <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; Ring &gt;::monomial_t =  typename monomial&lt;coeff, deg&gt;::type</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -470,12 +493,12 @@ template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac4
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt; </div>
+template&lt;typename Ring &gt; </div>
 <div class="memtemplate">
-template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v1</a> , <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v2</a> &gt; </div>
+template&lt;typename v1 , typename v2 &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">using</a> <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt;::mul_t =  <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> mul&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v1</a>, <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v2</a>&gt;::type</td>
+          <td class="memname">using <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; Ring &gt;::mul_t =  typename mul&lt;v1, v2&gt;::type</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -497,10 +520,10 @@ template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac4
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt; </div>
+template&lt;typename Ring &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">using</a> <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt;::one =  <a class="el" href="structaerobus_1_1polynomial_1_1val.html">val</a>&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> Ring::one&gt;</td>
+          <td class="memname">using <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; Ring &gt;::one =  <a class="el" href="structaerobus_1_1polynomial_1_1val.html">val</a>&lt;typename Ring::one&gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -515,12 +538,12 @@ template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac4
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt; </div>
+template&lt;typename Ring &gt; </div>
 <div class="memtemplate">
-template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> v &gt; </div>
+template&lt;typename v &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">using</a> <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt;::pos_t =  <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> Ring::template <a class="el" href="structaerobus_1_1polynomial.html#a6a2eeace3c346bbfd843647cf870d492">pos_t</a>&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> v::aN&gt;</td>
+          <td class="memname">using <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; Ring &gt;::pos_t =  typename Ring::template <a class="el" href="structaerobus_1_1polynomial.html#a6a2eeace3c346bbfd843647cf870d492">pos_t</a>&lt;typename v::aN&gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -541,12 +564,12 @@ template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac4
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt; </div>
+template&lt;typename Ring &gt; </div>
 <div class="memtemplate">
-template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> P &gt; </div>
+template&lt;typename P &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">using</a> <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt;::simplify_t =  <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> simplify&lt;P&gt;::type</td>
+          <td class="memname">using <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; Ring &gt;::simplify_t =  typename simplify&lt;P&gt;::type</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -567,12 +590,12 @@ template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac4
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt; </div>
+template&lt;typename Ring &gt; </div>
 <div class="memtemplate">
-template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v1</a> , <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v2</a> &gt; </div>
+template&lt;typename v1 , typename v2 &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">using</a> <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt;::sub_t =  <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> sub&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v1</a>, <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">v2</a>&gt;::type</td>
+          <td class="memname">using <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; Ring &gt;::sub_t =  typename sub&lt;v1, v2&gt;::type</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -594,10 +617,10 @@ template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac4
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt; </div>
+template&lt;typename Ring &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">using</a> <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt;::X =  <a class="el" href="structaerobus_1_1polynomial_1_1val.html">val</a>&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> Ring::one, <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> Ring::zero&gt;</td>
+          <td class="memname">using <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; Ring &gt;::X =  <a class="el" href="structaerobus_1_1polynomial_1_1val.html">val</a>&lt;typename Ring::one, typename Ring::zero&gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -612,10 +635,10 @@ template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac4
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt; </div>
+template&lt;typename Ring &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">using</a> <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt;::zero =  <a class="el" href="structaerobus_1_1polynomial_1_1val.html">val</a>&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> Ring::zero&gt;</td>
+          <td class="memname">using <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; Ring &gt;::zero =  <a class="el" href="structaerobus_1_1polynomial_1_1val.html">val</a>&lt;typename Ring::zero&gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -631,13 +654,13 @@ template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac4
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt; </div>
+template&lt;typename Ring &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">constexpr</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">bool</a> <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt;::is_euclidean_domain = Ring::is_euclidean_domain</td>
+          <td class="memname">constexpr bool <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; Ring &gt;::is_euclidean_domain = Ring::is_euclidean_domain</td>
         </tr>
       </table>
   </td>
@@ -655,13 +678,13 @@ template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac4
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt; </div>
+template&lt;typename Ring &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">constexpr</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">bool</a> <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt;::is_field = <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">false</a></td>
+          <td class="memname">constexpr bool <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; Ring &gt;::is_field = false</td>
         </tr>
       </table>
   </td>
@@ -679,15 +702,15 @@ template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac4
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt; </div>
+template&lt;typename Ring &gt; </div>
 <div class="memtemplate">
-template&lt;<a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">typename</a> v &gt; </div>
+template&lt;typename v &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">constexpr</a> <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">bool</a> <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; <a class="el" href="structaerobus_1_1polynomial.html#a1c1e63a1c6bac445a05d517e1147889d">Ring</a> &gt;::pos_v = <a class="el" href="structaerobus_1_1polynomial.html#a6a2eeace3c346bbfd843647cf870d492">pos_t</a>&lt;v&gt;::value</td>
+          <td class="memname">constexpr bool <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; Ring &gt;::pos_v = <a class="el" href="structaerobus_1_1polynomial.html#a6a2eeace3c346bbfd843647cf870d492">pos_t</a>&lt;v&gt;::value</td>
         </tr>
       </table>
   </td>

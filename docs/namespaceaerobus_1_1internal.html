@@ -124,6 +124,10 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><b>_is_prime&lt; n, i, std::enable_if_t&lt;(n &gt;=9 &amp;&amp;i *i &gt; n)&gt; &gt;</b></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><b>AllOneHelper</b></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><b>AllOneHelper&lt; 0, I &gt;</b></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><b>alternate</b></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><b>alternate&lt; T, k, std::enable_if_t&lt; k % 2 !=0 &gt; &gt;</b></td></tr>
@@ -189,6 +193,12 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><b>bernstein_helper&lt; i, m, I, std::enable_if_t&lt;(m &gt; 0) &amp;&amp;(i==0)&gt; &gt;</b></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><b>bernstein_helper&lt; i, m, I, std::enable_if_t&lt;(m &gt; 0) &amp;&amp;(i==m)&gt; &gt;</b></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><b>BesselHelper</b></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><b>BesselHelper&lt; 0, I &gt;</b></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><b>BesselHelper&lt; 1, I &gt;</b></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><b>chebyshev_helper</b></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -380,23 +390,23 @@ Classes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
 Typedefs</h2></td></tr>
-<tr class="memitem:a1252fe8d24a9139b8d54e86de62cf8ec" id="r_a1252fe8d24a9139b8d54e86de62cf8ec"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">size_t</a> i, typename... Ts&gt; </td></tr>
-<tr class="memitem:a1252fe8d24a9139b8d54e86de62cf8ec"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">using</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceaerobus_1_1internal.html#a1252fe8d24a9139b8d54e86de62cf8ec">type_at_t</a> = <a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">typename</a> type_at&lt; <a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">i</a>, Ts... &gt;::type</td></tr>
+<tr class="memitem:a1252fe8d24a9139b8d54e86de62cf8ec" id="r_a1252fe8d24a9139b8d54e86de62cf8ec"><td class="memTemplParams" colspan="2">template&lt;size_t i, typename... Ts&gt; </td></tr>
+<tr class="memitem:a1252fe8d24a9139b8d54e86de62cf8ec"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceaerobus_1_1internal.html#a1252fe8d24a9139b8d54e86de62cf8ec">type_at_t</a> = typename type_at&lt; i, Ts... &gt;::type</td></tr>
 <tr class="separator:a1252fe8d24a9139b8d54e86de62cf8ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afdd9f3c36e539296bcd0808ae8a38ab1" id="r_afdd9f3c36e539296bcd0808ae8a38ab1"><td class="memTemplParams" colspan="2">template&lt;std::size_t N&gt; </td></tr>
-<tr class="memitem:afdd9f3c36e539296bcd0808ae8a38ab1"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">using</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceaerobus_1_1internal.html#afdd9f3c36e539296bcd0808ae8a38ab1">make_index_sequence_reverse</a> = <a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">decltype</a>(<a class="el" href="namespaceaerobus_1_1internal.html#a9c651cd814fc03ece0a5e58d88a46d8d">index_sequence_reverse</a>(std::make_index_sequence&lt; <a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">N</a> &gt;{}))</td></tr>
+<tr class="memitem:afdd9f3c36e539296bcd0808ae8a38ab1"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceaerobus_1_1internal.html#afdd9f3c36e539296bcd0808ae8a38ab1">make_index_sequence_reverse</a> = decltype(<a class="el" href="namespaceaerobus_1_1internal.html#a9c651cd814fc03ece0a5e58d88a46d8d">index_sequence_reverse</a>(std::make_index_sequence&lt; N &gt;{}))</td></tr>
 <tr class="separator:afdd9f3c36e539296bcd0808ae8a38ab1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:a9c651cd814fc03ece0a5e58d88a46d8d" id="r_a9c651cd814fc03ece0a5e58d88a46d8d"><td class="memTemplParams" colspan="2">template&lt;std::size_t... Is&gt; </td></tr>
-<tr class="memitem:a9c651cd814fc03ece0a5e58d88a46d8d"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">constexpr</a> <a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">auto</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceaerobus_1_1internal.html#a9c651cd814fc03ece0a5e58d88a46d8d">index_sequence_reverse</a> (std::index_sequence&lt; Is... &gt; <a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">const</a> &amp;) -&gt; <a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">decltype</a>(std::index_sequence&lt; sizeof...(<a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">Is</a>) - 1<a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">U</a> - Is... &gt;{})</td></tr>
+<tr class="memitem:a9c651cd814fc03ece0a5e58d88a46d8d"><td class="memTemplItemLeft" align="right" valign="top">constexpr auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceaerobus_1_1internal.html#a9c651cd814fc03ece0a5e58d88a46d8d">index_sequence_reverse</a> (std::index_sequence&lt; Is... &gt; const &amp;) -&gt; decltype(std::index_sequence&lt; sizeof...(Is) - 1U - Is... &gt;{})</td></tr>
 <tr class="separator:a9c651cd814fc03ece0a5e58d88a46d8d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
 Variables</h2></td></tr>
-<tr class="memitem:ab20b0f3c6b6ca2021bbf9e226d8b402f" id="r_ab20b0f3c6b6ca2021bbf9e226d8b402f"><td class="memTemplParams" colspan="2">template&lt;template&lt; typename... &gt; <a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">typename</a> TT, <a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">typename</a> <a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">T</a> &gt; </td></tr>
-<tr class="memitem:ab20b0f3c6b6ca2021bbf9e226d8b402f"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">constexpr</a> <a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">bool</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceaerobus_1_1internal.html#ab20b0f3c6b6ca2021bbf9e226d8b402f">is_instantiation_of_v</a> = is_instantiation_of&lt;<a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">TT</a>, <a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">T</a>&gt;::value</td></tr>
+<tr class="memitem:ab20b0f3c6b6ca2021bbf9e226d8b402f" id="r_ab20b0f3c6b6ca2021bbf9e226d8b402f"><td class="memTemplParams" colspan="2">template&lt;template&lt; typename... &gt; typename TT, typename T &gt; </td></tr>
+<tr class="memitem:ab20b0f3c6b6ca2021bbf9e226d8b402f"><td class="memTemplItemLeft" align="right" valign="top">constexpr bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceaerobus_1_1internal.html#ab20b0f3c6b6ca2021bbf9e226d8b402f">is_instantiation_of_v</a> = is_instantiation_of&lt;TT, T&gt;::value</td></tr>
 <tr class="separator:ab20b0f3c6b6ca2021bbf9e226d8b402f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -411,7 +421,7 @@ Variables</h2></td></tr>
 template&lt;std::size_t N&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">using</a> <a class="el" href="namespaceaerobus_1_1internal.html#afdd9f3c36e539296bcd0808ae8a38ab1">aerobus::internal::make_index_sequence_reverse</a> = <a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">typedef</a> <a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">decltype</a>(<a class="el" href="namespaceaerobus_1_1internal.html#a9c651cd814fc03ece0a5e58d88a46d8d">index_sequence_reverse</a>(std::make_index_sequence&lt;<a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">N</a>&gt;{}))</td>
+          <td class="memname">using <a class="el" href="namespaceaerobus_1_1internal.html#afdd9f3c36e539296bcd0808ae8a38ab1">aerobus::internal::make_index_sequence_reverse</a> = typedef decltype(<a class="el" href="namespaceaerobus_1_1internal.html#a9c651cd814fc03ece0a5e58d88a46d8d">index_sequence_reverse</a>(std::make_index_sequence&lt;N&gt;{}))</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -424,10 +434,10 @@ template&lt;std::size_t N&gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">size_t</a> i, typename... Ts&gt; </div>
+template&lt;size_t i, typename... Ts&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">using</a> <a class="el" href="namespaceaerobus_1_1internal.html#a1252fe8d24a9139b8d54e86de62cf8ec">aerobus::internal::type_at_t</a> = <a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">typedef</a> <a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">typename</a> type_at&lt;<a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">i</a>, Ts...&gt;::type</td>
+          <td class="memname">using <a class="el" href="namespaceaerobus_1_1internal.html#a1252fe8d24a9139b8d54e86de62cf8ec">aerobus::internal::type_at_t</a> = typedef typename type_at&lt;i, Ts...&gt;::type</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -447,11 +457,11 @@ template&lt;std::size_t... Is&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">constexpr</a> <a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">auto</a> aerobus::internal::index_sequence_reverse </td>
+          <td class="memname">constexpr auto aerobus::internal::index_sequence_reverse </td>
           <td>(</td>
-          <td class="paramtype">std::index_sequence&lt; Is... &gt; <a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">const</a> &amp;&#160;</td>
+          <td class="paramtype">std::index_sequence&lt; Is... &gt; const &amp;&#160;</td>
           <td class="paramname"></td><td>)</td>
-          <td> -&gt;  <a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">decltype</a>(std::index_sequence&lt; sizeof...(<a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">Is</a>) - 1<a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">U</a> - Is... &gt;{})</td>
+          <td> -&gt;  decltype(std::index_sequence&lt; sizeof...(Is) - 1U - Is... &gt;{})</td>
         </tr>
       </table>
   </td>
@@ -470,13 +480,13 @@ template&lt;std::size_t... Is&gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;template&lt; typename... &gt; <a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">typename</a> TT, <a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">typename</a> <a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">T</a> &gt; </div>
+template&lt;template&lt; typename... &gt; typename TT, typename T &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">constexpr</a> <a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">bool</a> aerobus::internal::is_instantiation_of_v = is_instantiation_of&lt;<a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">TT</a>, <a class="el" href="namespaceaerobus.html#af2df7a000fdd68789190b23dc5b34274">T</a>&gt;::value</td>
+          <td class="memname">constexpr bool aerobus::internal::is_instantiation_of_v = is_instantiation_of&lt;TT, T&gt;::value</td>
         </tr>
       </table>
   </td>
