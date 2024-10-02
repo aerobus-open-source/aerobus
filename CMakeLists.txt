@@ -7,7 +7,7 @@ project(
 )
 
 find_package(OpenMP REQUIRED)
-find_package(benchmark REQUIRED)
+find_package(benchmark)
 include(CheckCXXSourceRuns)
 set(AVX_FLAGS)
 set(CMAKE_REQUIRED_FLAGS)
