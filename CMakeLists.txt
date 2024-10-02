@@ -7,6 +7,7 @@ project(
 )
 
 find_package(OpenMP REQUIRED)
+find_package(benchmark REQUIRED)
 include(CheckCXXSourceRuns)
 set(AVX_FLAGS)
 set(CMAKE_REQUIRED_FLAGS)
@@ -80,7 +81,20 @@ if(HAVE_AVX512_EXTENSIONS)
     else()
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx512f -mavx512vl")
     endif()
-    add_executable(aerobus_benchmarks src/benchmarks.cpp src/aerobus.h)
+    include_directories(
+      benchmarks
+      benchmark/include
+    )
+    add_executable(benchmarks src/benchmarks.cpp src/aerobus.h)
+    link_directories(
+      benchmarks
+      benchmark/build/src
+    )
+    target_link_libraries(
+      benchmarks
+      benchmark 
+      pthread 
+    )
 else()
     message("AVX512 not detected, benchmarks need manual configuration")
 endif()

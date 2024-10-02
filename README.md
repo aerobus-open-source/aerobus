@@ -57,6 +57,7 @@ From top directory.
 Benchmarks are written for Intel CPUs having AVX512f and AVX512vl flags, they work only on Linux operating system using g++.
 
 In addition of `Cmake` and compiler, install [`OpenMP`](https://www.openmp.org/resources/openmp-compilers-tools/).
+And Google's [Benchmark library](https://github.com/google/benchmark/tree/v2).
 Then move to top directory :
 
 ```bash
@@ -64,8 +65,8 @@ rm -rf build
 mkdir build
 cd build
 cmake ..
-make aerobus_benchmarks
-./aerobus_benchmarks
+make benchmarks
+./benchmarks
 ```
 
 ## Structures
