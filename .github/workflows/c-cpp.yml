@@ -11,8 +11,7 @@ jobs:
 
     runs-on: ubuntu-latest
     container:
-      image: comua/aerobus-open-source:build-1.2
-
+      image: comua/aerobus-open-source:build-1.3
     steps:
     - uses: actions/checkout@v4
     - name: cppcheck
