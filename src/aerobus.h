@@ -2889,32 +2889,37 @@ namespace aerobus {
     template<typename T, int k>
     using alternate_t = typename internal::alternate<T, k>::type;
 
+    /// @brief (-1)^k as value from T
+    /// @tparam T Ring type, aerobus::i64 for example, then result will be an int64_t
+    template<typename T, size_t k>
+    inline constexpr typename T::inner_type alternate_v = internal::alternate<T, k>::value;
+
     namespace internal {
         template<typename T, int n, int k, typename E = void>
-        struct stirling_helper {};
+        struct stirling_1_helper {};
 
         template<typename T>
-        struct stirling_helper<T, 0, 0> {
+        struct stirling_1_helper<T, 0, 0> {
             using type = typename T::one;
         };
 
         template<typename T, int n>
-        struct stirling_helper<T, n, 0, std::enable_if_t<(n > 0)>> {
+        struct stirling_1_helper<T, n, 0, std::enable_if_t<(n > 0)>> {
             using type = typename T::zero;
         };
 
         template<typename T, int n>
-        struct stirling_helper<T, 0, n, std::enable_if_t<(n > 0)>> {
+        struct stirling_1_helper<T, 0, n, std::enable_if_t<(n > 0)>> {
             using type = typename T::zero;
         };
 
         template<typename T, int n, int k>
-        struct stirling_helper<T, n, k, std::enable_if_t<(k > 0) && (n > 0)>> {
+        struct stirling_1_helper<T, n, k, std::enable_if_t<(k > 0) && (n > 0)>> {
             using type = typename T::template sub_t<
-                            typename stirling_helper<T, n-1, k-1>::type,
+                            typename stirling_1_helper<T, n-1, k-1>::type,
                             typename T::template mul_t<
                                 typename T::template inject_constant_t<n-1>,
-                                typename stirling_helper<T, n-1, k>::type
+                                typename stirling_1_helper<T, n-1, k>::type
                             >>;
         };
     }  // namespace internal
@@ -2924,34 +2929,72 @@ namespace aerobus {
     /// @tparam n (integer)
     /// @tparam k (integer)
     template<typename T, int n, int k>
-    using stirling_signed_t = typename internal::stirling_helper<T, n, k>::type;
+    using stirling_1_signed_t = typename internal::stirling_1_helper<T, n, k>::type;
 
     /// @brief Stirling number of first king (unsigned) -- as types
     /// @tparam T (ring type, such as aerobus::i64)
     /// @tparam n (integer)
     /// @tparam k (integer)
     template<typename T, int n, int k>
-    using stirling_unsigned_t = abs_t<typename internal::stirling_helper<T, n, k>::type>;
-
-    /// @brief Stirling number of first king (signed) -- as value
-    /// @tparam T (ring type, such as aerobus::i64)
-    /// @tparam n (integer)
-    /// @tparam k (integer)
-    template<typename T, int n, int k>
-    static constexpr typename T::inner_type stirling_signed_v = stirling_signed_t<T, n, k>::v;
-
+    using stirling_1_unsigned_t = abs_t<typename internal::stirling_1_helper<T, n, k>::type>;
 
     /// @brief Stirling number of first king (unsigned) -- as value
     /// @tparam T (ring type, such as aerobus::i64)
     /// @tparam n (integer)
     /// @tparam k (integer)
     template<typename T, int n, int k>
-    static constexpr typename T::inner_type stirling_unsigned_v = stirling_unsigned_t<T, n, k>::v;
+    static constexpr typename T::inner_type stirling_1_unsigned_v = stirling_1_unsigned_t<T, n, k>::v;
 
-    /// @brief (-1)^k as value from T
-    /// @tparam T Ring type, aerobus::i64 for example, then result will be an int64_t
-    template<typename T, size_t k>
-    inline constexpr typename T::inner_type alternate_v = internal::alternate<T, k>::value;
+    /// @brief Stirling number of first king (signed) -- as value
+    /// @tparam T (ring type, such as aerobus::i64)
+    /// @tparam n (integer)
+    /// @tparam k (integer)
+    template<typename T, int n, int k>
+    static constexpr typename T::inner_type stirling_1_signed_v = stirling_1_signed_t<T, n, k>::v;
+
+    namespace internal {
+        template<typename T, int n, int k, typename E = void>
+        struct stirling_2_helper {};
+
+        template<typename T, int n>
+        struct stirling_2_helper<T, n, n, std::enable_if_t<(n >= 0)>> {
+            using type = typename T::one;
+        };
+
+        template<typename T, int n>
+        struct stirling_2_helper<T, n, 0, std::enable_if_t<(n > 0)>> {
+            using type = typename T::zero;
+        };
+
+        template<typename T, int n>
+        struct stirling_2_helper<T, 0, n, std::enable_if_t<(n > 0)>> {
+            using type = typename T::zero;
+        };
+
+        template<typename T, int n, int k>
+        struct stirling_2_helper<T, n, k, std::enable_if_t<(k > 0) && (n > 0) && (k < n)>> {
+            using type = typename T::template add_t<
+                            typename stirling_2_helper<T, n-1, k-1>::type,
+                            typename T::template mul_t<
+                                typename T::template inject_constant_t<k>,
+                                typename stirling_2_helper<T, n-1, k>::type
+                            >>;
+        };
+    }  // namespace internal
+
+    /// @brief Stirling number of second king -- as types
+    /// @tparam T (ring type, such as aerobus::i64)
+    /// @tparam n (integer)
+    /// @tparam k (integer)
+    template<typename T, int n, int k>
+    using stirling_2_t = typename internal::stirling_2_helper<T, n, k>::type;
+
+    /// @brief Stirling number of second king -- as value
+    /// @tparam T (ring type, such as aerobus::i64)
+    /// @tparam n (integer)
+    /// @tparam k (integer)
+    template<typename T, int n, int k>
+    static constexpr typename T::inner_type stirling_2_v = stirling_2_t<T, n, k>::v;
 
     namespace internal {
         template<typename T>
@@ -3751,8 +3794,61 @@ namespace aerobus {
         };
     }  // namespace internal
 
+    namespace internal {
+        template<size_t n>
+        struct touchard_coeff {
+            template<typename T, size_t i>
+            struct inner {
+                using type = stirling_2_t<T, n, i>;
+            };
+        };
+    }  // namespace internal
+
+    namespace internal {
+        template<typename I = aerobus::i64>
+        struct AbelHelper {
+         private:
+            using P = aerobus::polynomial<I>;
+
+         public:
+            // to keep recursion working, we need to operate on a*n and not just a
+            template<size_t deg, I::inner_type an>
+            struct Inner {
+                // abel(n, a) = (x-an) * abel(n-1, a)
+                using type = typename aerobus::mul_t<
+                    typename Inner<deg-1, an>::type,
+                    typename aerobus::sub_t<typename P::X, typename P::template inject_constant_t<an>>
+                >;
+            };
+
+            // abel(0, a) = 1
+            template<I::inner_type an>
+            struct Inner<0, an> {
+                using type = P::one;
+            };
+
+            // abel(1, a) = X
+            template<I::inner_type an>
+            struct Inner<1, an> {
+                using type = P::X;
+            };
+        };
+    }  // namespace internal
+
     //! \namespace Families of well known polynomials, such as Chebyshev or Berstein
     namespace known_polynomials {
+
+        /// @brief Abel polynomials
+        /// live in polynomial<I>
+        ///
+        /// @see [See in Wikipedia](https://en.wikipedia.org/wiki/Abel_polynomials)
+        ///
+        /// @tparam I integers ring (defaults to aerobus::i64)
+        /// @tparam n degree
+        /// @tparam a element of I
+        template<size_t n, auto a, typename I = aerobus::i64>
+        using abel = typename internal::AbelHelper<I>::template Inner<n, a*n>::type;
+
         /** @brief Chebyshev polynomials of first kind
          * 
          * @see [See in Wikipedia](https://en.wikipedia.org/wiki/Chebyshev_polynomials)
@@ -3860,6 +3956,16 @@ namespace aerobus {
         /// @tparam deg degree of polynomial
         template<size_t deg, typename I = aerobus::i64>
         using bessel = typename internal::BesselHelper<deg, I>::type;
+
+        /// @brief Touchar polynomials
+        ///
+        /// Lives in aerobus::polynomial<I>
+        /// @see [See in Wikipedia](https://en.wikipedia.org/wiki/Touchard_polynomials)
+        ///
+        /// @tparam I ring for coefficients, defaults to aerobus::i64
+        /// @tparam deg degree of polynomial
+        template<size_t deg, typename I = aerobus::i64>
+        using touchard = taylor<I, internal::touchard_coeff<deg>::template inner, deg>;
     }  // namespace known_polynomials
 }  // namespace aerobus
 

@@ -79,13 +79,13 @@ $(function() {
   <div class="headertitle"><div class="title">examples/polynomials_over_finite_field.cpp</div></div>
 </div><!--header-->
 <div class="contents">
-<p>How to build a known polynomial (here <a class="el" href="namespaceaerobus_1_1known__polynomials.html#a2825f2be99dbf2d7e9eab62e98460062">aerobus::known_polynomials::allone</a>) with coefficients in a finite field (here aerobus::zpz&lt;2&gt;) and get its value when evaluated at a value in this field (here 1).</p>
+<p>How to build a known polynomial (here aerobus::known_polynomials::allone) with coefficients in a finite field (here aerobus::zpz&lt;2&gt;) and get its value when evaluated at a value in this field (here 1).</p>
 <div class="fragment"><div class="line"> </div>
 <div class="line"><span class="preprocessor">#include &lt;iostream&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &quot;../src/aerobus.h&quot;</span></div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">using </span>GF2 = <a id="_a0" name="_a0"></a><a class="code hl_struct" href="structaerobus_1_1zpz.html">aerobus::zpz&lt;2&gt;</a>;</div>
-<div class="line"><span class="keyword">using </span>P = <a class="code hl_typedef" href="namespaceaerobus_1_1known__polynomials.html#a2825f2be99dbf2d7e9eab62e98460062">aerobus::known_polynomials::allone&lt;8, GF2&gt;</a>;</div>
+<div class="line"><span class="keyword">using </span>P = aerobus::known_polynomials::allone&lt;8, GF2&gt;;</div>
 <div class="line"> </div>
 <div class="line"><span class="keywordtype">int</span> main() {</div>
 <div class="line">    <span class="comment">// at this point, value_at_1 is an instanciation of zpz&lt;2&gt;::val</span></div>
@@ -97,7 +97,6 @@ $(function() {
 <div class="line">    std::cout &lt;&lt; <span class="stringliteral">&quot;computed = &quot;</span> &lt;&lt; x &lt;&lt; std::endl;</div>
 <div class="line">    <span class="keywordflow">return</span> 0;</div>
 <div class="line">}</div>
-<div class="ttc" id="anamespaceaerobus_1_1known__polynomials_html_a2825f2be99dbf2d7e9eab62e98460062"><div class="ttname"><a href="namespaceaerobus_1_1known__polynomials.html#a2825f2be99dbf2d7e9eab62e98460062">aerobus::known_polynomials::allone</a></div><div class="ttdeci">typename internal::AllOneHelper&lt; deg, I &gt;::type allone</div><div class="ttdef"><b>Definition</b> aerobus.h:3852</div></div>
 <div class="ttc" id="astructaerobus_1_1zpz_html"><div class="ttname"><a href="structaerobus_1_1zpz.html">aerobus::zpz</a></div><div class="ttdoc">congruence classes of integers modulo p (32 bits)</div><div class="ttdef"><b>Definition</b> aerobus.h:1328</div></div>
 </div><!-- fragment --> </div><!-- contents -->
 <!-- start footer part -->

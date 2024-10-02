@@ -12,13 +12,12 @@ var searchData=
   ['aerobus_3a_3aknown_5fpolynomials_9',['known_polynomials',['../namespaceaerobus_1_1known__polynomials.html',1,'aerobus']]],
   ['aligned_10',['ALIGNED',['../aerobus_8h.html#a8e7a3bf6003d72a62606f343c2db6245',1,'aerobus.h']]],
   ['aligned_5fmalloc_11',['aligned_malloc',['../namespaceaerobus.html#ac615f12d09a1c8c5669bad004c0f49ab',1,'aerobus']]],
-  ['allone_12',['allone',['../namespaceaerobus_1_1known__polynomials.html#a2825f2be99dbf2d7e9eab62e98460062',1,'aerobus::known_polynomials']]],
-  ['alternate_5ft_13',['alternate_t',['../namespaceaerobus.html#aeb076a87e5967a0ae427b45b573fbb9c',1,'aerobus']]],
-  ['alternate_5fv_14',['alternate_v',['../namespaceaerobus.html#a6cb76a3b2f319241c85b35567737c226',1,'aerobus']]],
-  ['an_15',['an',['../structaerobus_1_1polynomial_1_1val_3_01coeff_n_01_4.html#a427d3edd652af1bd35fc37182822891a',1,'aerobus::polynomial::val&lt; coeffN &gt;::aN'],['../structaerobus_1_1polynomial_1_1val.html#a732a7e75914a76aa9330b9552aa252e8',1,'aerobus::polynomial::val::aN']]],
-  ['asin_16',['asin',['../namespaceaerobus.html#a31287c82fa7ddf56808555099f7e366b',1,'aerobus']]],
-  ['asinh_17',['asinh',['../namespaceaerobus.html#aa16318230f37cb0c8a01378323a7cb69',1,'aerobus']]],
-  ['at_18',['at',['../structaerobus_1_1type__list.html#a9d6231fec63b91dd7b5f2eae41d52345',1,'aerobus::type_list']]],
-  ['atan_19',['atan',['../namespaceaerobus.html#a0a65a3e9ff847c54705b3a4907310f18',1,'aerobus']]],
-  ['atanh_20',['atanh',['../namespaceaerobus.html#a431cc3d1d6fbe9e34a1e303b596650bb',1,'aerobus']]]
+  ['alternate_5ft_12',['alternate_t',['../namespaceaerobus.html#aeb076a87e5967a0ae427b45b573fbb9c',1,'aerobus']]],
+  ['alternate_5fv_13',['alternate_v',['../namespaceaerobus.html#a6cb76a3b2f319241c85b35567737c226',1,'aerobus']]],
+  ['an_14',['an',['../structaerobus_1_1polynomial_1_1val_3_01coeff_n_01_4.html#a427d3edd652af1bd35fc37182822891a',1,'aerobus::polynomial::val&lt; coeffN &gt;::aN'],['../structaerobus_1_1polynomial_1_1val.html#a732a7e75914a76aa9330b9552aa252e8',1,'aerobus::polynomial::val::aN']]],
+  ['asin_15',['asin',['../namespaceaerobus.html#a31287c82fa7ddf56808555099f7e366b',1,'aerobus']]],
+  ['asinh_16',['asinh',['../namespaceaerobus.html#aa16318230f37cb0c8a01378323a7cb69',1,'aerobus']]],
+  ['at_17',['at',['../structaerobus_1_1type__list.html#a9d6231fec63b91dd7b5f2eae41d52345',1,'aerobus::type_list']]],
+  ['atan_18',['atan',['../namespaceaerobus.html#a0a65a3e9ff847c54705b3a4907310f18',1,'aerobus']]],
+  ['atanh_19',['atanh',['../namespaceaerobus.html#a431cc3d1d6fbe9e34a1e303b596650bb',1,'aerobus']]]
 ];
