@@ -3,6 +3,7 @@
 
 
 // let's build Abel polynomials from scratch using Aerobus
+// note : it's now integrated in the main library, but still serves as an example
 
 template<typename I = aerobus::i64>
 struct AbelHelper {

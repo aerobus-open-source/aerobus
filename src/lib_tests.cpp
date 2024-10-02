@@ -760,19 +760,36 @@ TEST(utilities, abs) {
     EXPECT_TRUE((std::is_same_v<a2, expected>));
 }
 
-TEST(utilities, stirling) {
-    constexpr int s00 = stirling_signed_v<i64, 0, 0>;
+TEST(utilities, stirling_first_kind) {
+    constexpr int s00 = stirling_1_signed_v<i64, 0, 0>;
     EXPECT_EQ(s00, 1);
-    constexpr int s01 = stirling_signed_v<i64, 0, 1>;
+    constexpr int s01 = stirling_1_signed_v<i64, 0, 1>;
     EXPECT_EQ(s01, 0);
-    constexpr int s11 = stirling_signed_v<i64, 1, 1>;
+    constexpr int s11 = stirling_1_signed_v<i64, 1, 1>;
     EXPECT_EQ(s11, 1);
-    constexpr int s53 = stirling_signed_v<i64, 5, 3>;
+    constexpr int s53 = stirling_1_signed_v<i64, 5, 3>;
     EXPECT_EQ(s53, 35);
-    constexpr int s94 = stirling_signed_v<i64, 9, 4>;
+    constexpr int s94 = stirling_1_signed_v<i64, 9, 4>;
     EXPECT_EQ(s94, -67284);
-    constexpr int u94 = stirling_unsigned_v<i64, 9, 4>;
+    constexpr int u94 = stirling_1_unsigned_v<i64, 9, 4>;
     EXPECT_EQ(u94, 67284);
+}
+
+TEST(utilities, stirling_second_kind) {
+    constexpr int s00 = stirling_2_v<i64, 0, 0>;
+    EXPECT_EQ(s00, 1);
+    constexpr int s01 = stirling_2_v<i64, 0, 1>;
+    EXPECT_EQ(s01, 0);
+    constexpr int s11 = stirling_2_v<i64, 1, 1>;
+    EXPECT_EQ(s11, 1);
+    constexpr int s21 = stirling_2_v<i64, 2, 1>;
+    EXPECT_EQ(s21, 1);
+    constexpr int s32 = stirling_2_v<i64, 3, 2>;
+    EXPECT_EQ(s32, 3);
+    constexpr int s53 = stirling_2_v<i64, 5, 3>;
+    EXPECT_EQ(s53, 25);
+    constexpr int s94 = stirling_2_v<i64, 9, 4>;
+    EXPECT_EQ(s94, 7770);
 }
 
 TEST(type_list, basic_assertions) {
@@ -993,13 +1010,33 @@ TEST(known_polynomials, bernoulli) {
 TEST(known_polynomials, bessel) {
     using B5 = known_polynomials::bessel<5>;
     EXPECT_EQ(5, B5::degree);
-    std::cout << B5::to_string() << std::endl;
     EXPECT_TRUE((std::is_same_v<B5::template coeff_at_t<0>, i64::one>));
     EXPECT_TRUE((std::is_same_v<B5::template coeff_at_t<1>, i64::val<15>>));
     EXPECT_TRUE((std::is_same_v<B5::template coeff_at_t<2>, i64::val<105>>));
     EXPECT_TRUE((std::is_same_v<B5::template coeff_at_t<3>, i64::val<420>>));
     EXPECT_TRUE((std::is_same_v<B5::template coeff_at_t<4>, i64::val<945>>));
     EXPECT_TRUE((std::is_same_v<B5::template coeff_at_t<5>, i64::val<945>>));
+}
+
+TEST(known_polynomials, touchard) {
+    using T5 = known_polynomials::touchard<5>;
+    EXPECT_EQ(5, T5::degree);
+    EXPECT_TRUE((std::is_same_v<T5::template coeff_at_t<0>, i64::zero>));
+    EXPECT_TRUE((std::is_same_v<T5::template coeff_at_t<1>, i64::val<1>>));
+    EXPECT_TRUE((std::is_same_v<T5::template coeff_at_t<2>, i64::val<15>>));
+    EXPECT_TRUE((std::is_same_v<T5::template coeff_at_t<3>, i64::val<25>>));
+    EXPECT_TRUE((std::is_same_v<T5::template coeff_at_t<4>, i64::val<10>>));
+    EXPECT_TRUE((std::is_same_v<T5::template coeff_at_t<5>, i64::val<1>>));
+    EXPECT_EQ((T5::eval<int64_t>(1)), (bell_v<i64, 5>));
+}
+
+TEST(known_polynomials, abel) {
+    using A32 = known_polynomials::abel<3, 2>;
+    EXPECT_EQ(3, A32::degree);
+    EXPECT_TRUE((std::is_same_v<A32::template coeff_at_t<0>, i64::zero>));
+    EXPECT_TRUE((std::is_same_v<A32::template coeff_at_t<1>, i64::val<36>>));
+    EXPECT_TRUE((std::is_same_v<A32::template coeff_at_t<2>, i64::val<-12>>));
+    EXPECT_TRUE((std::is_same_v<A32::template coeff_at_t<3>, i64::val<1>>));
 }
 
 TEST(embedding, simple) {
