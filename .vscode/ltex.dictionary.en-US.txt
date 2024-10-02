@@ -8,3 +8,4 @@ Chebyshev
 @vml
 metaprogramming
 Horner evaluation
+Horner
