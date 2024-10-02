@@ -23,33 +23,37 @@ bibliography: paper.bib
 C++ comes with high compile-time computations capability, also known as metaprogramming with templates.
 Templates are a language-in-the-language which is Turing-complete, meaning we can run every computation at compile time instead of runtime, as long as input data is known at compile time.
 
-Using these capabilities, vastly extended with the latest versions of the standard, we implemented a library for discrete Euclidean domains, such as $\mathbb{Z}$. We also provide a way to generate the fraction field of such rings (e.g. $\mathbb{Q}$).
+Using these capabilities, vastly extended with the latest versions of the standard, we implemented a library for discrete Euclidean domains (commutative and associative), such as $\mathbb{Z}$. We also provide a way to generate the fraction field of such rings (e.g. $\mathbb{Q}$).
 
 We also implemented polynomials over such discrete rings and fields (e.g. $\mathbb{Q}[X]$). Since polynomials are also a ring, the above implementation gives us rational fractions as the field of fractions of polynomials.
 
-In addition, we expose a way to generate the Taylor series of any math functions as long as coefficients are known.
+In addition, we expose a way to generate Taylor series of analytic functions, known polynomials (e.g. Chebyshev), continued fractions, quotient rings and small degree Conway polynomials to define Galois finite fields.
 
-In addition, we added some useful additional features, such as known polynomials (Chebyshev), continued fractions, quotient rings and some Conway polynomials to define Galois finite fields.
-
-`Aerobus` was designed to be used in high-performance software, teaching purposes or embedded software where as much as possible must be precomputed to shrink binary size. It compiles with major compilers: `gcc`, `clang` and `msvc`. It is quite easily configurable and extensible.
+`Aerobus` was designed to be used in high-performance software, teaching purposes or embedded software. It compiles with major compilers: `gcc`, `clang` and `msvc`. It is quite easily configurable and extensible.
 
 ## Statement of need
 
-By implementing general algebra concepts such as discrete rings, field of fractions and polynomials, `Aerobus` can serve multiple purposes.
+By implementing general algebra concepts such as discrete rings, field of fractions and polynomials, `Aerobus` can serve multiple purposes, mainly polynomial arithmetic at compile time and efficient polynomial evaluation, regardless of the coefficients `ring`.
 
-The main application we want to express in this paper is the automatic (and configurable) generation or Taylor approximation of usual transcendental functions such as `exp` or `sin`.
+The main application we want to express in this paper is the automatic (and configurable) generation or Taylor approximation of analytic functions such as `exp` or `sin`, by using polynomial arithmetic at compile time.
 
-These functions are usually exposed by the standard library (`<cmath>`) with high (guaranteed) precision. However, in high-performance computing, when not compiled with `-Ofast`, evaluating `std::exp` has several flaws:
+Some important software, such as `geographiclib` [karney2013algorithms] evaluate polynomials with a simple loop, expected to be unrolled by compiler. It works really well (on arithmetic types such as `double`) but does not provide a way to manipulate polynomials (addition, multiplication, division, modulus) automatically where `aerobus` does at no runtime cost.
+
+Notable libraries such as [boost](https://live.boost.org/doc/libs/1_86_0/libs/math/doc/html/math_toolkit/polynomials.html) provide polynomial arithmetic, but arithmetic is done at runtime with memory allocations while `aerobus` does it at compile time.
+
+Common analytic functions are usually exposed by the standard library (`<cmath>`) with high (guaranteed) precision. However, in high-performance computing, when not compiled with `-Ofast`, evaluating `std::exp` has several flaws:
 
 - It leads to a `syscall` which is very expensive;
-- It doesn't leverage vector units (AVX, AVX2, AVX512 or equivalent in non-intel hardware).
+- It doesn't leverage vector units (AVX, AVX2, AVX512 or equivalent in non-intel hardware);
+- Results are hardware dependent.
 
 Hardware vendors provide high-performance libraries such as [@wang2014intel], but implementation is often hidden and not extensible.
 
-Some others can provide vectorized functions, such as @vml does. But libraries like VML are highly tight to one architecture by their use of intrinsic or inline assembly. In addition, they only provide a restricted list of math functions and do not expose capabilities to generate high-performance versions of other functions such as `arctanh`. It is the same for the standard library compiled with `-Ofast`: it generates a vectorized version of some functions (such as exp) but with no control of precision and no extensibility. In addition, `fast-math` versions are compiler and architecture dependent, which can be a problem for results reproducibility.
+Some others can provide vectorized functions, such as [@wang2014intel] does. But libraries like VML are highly tight to one architecture by their use of intrinsic or inline assembly. In addition, they only provide a restricted list of math functions and do not expose capabilities to generate high-performance versions of other functions such as `arctanh`. It is the same for the standard library compiled with `-Ofast`: it generates a vectorized version of some functions (such as `exp`) but with no control of precision and no extensibility. In addition, `fast-math` versions are compiler and architecture dependent, which can be a problem for results reproducibility.
 
-`Aerobus` provides automatic generation of such functions, in a hardware-independent way, as tested on x86 and CUDA platforms.
-In addition, `Aerobus` provides a way to control the precision of the generated function by changing the degree of Taylor expansion, which can't be used in competing libraries without reimplementing the whole function.
+`Aerobus` provides automatic generation of such functions, in a hardware-independent way, as tested on x86 and CUDA platforms. In addition, `Aerobus` provides a way to control the precision of the generated function by changing the degree of Taylor expansion, which can't be used in competing libraries without reimplementing the whole function or changing the array of coefficients.
+
+Please note that, `Aerobus` does not provide optimal approximation polynomials the way [chevillard2010sollya] does. However, `Sollya` can be used beforehand to feed `aerobus` with appropriate coefficients. Similarly, `Aerobus` does not perform (yet) compensated Horner scheme like in [graillat2006compensated] or floating point manipulations (domain normalization) to extend domain of approximation, like it is done in standard library.
 
 ## Mathematic definitions
 
@@ -57,6 +61,8 @@ For the sake of completeness, we give basic definitions of the mathematical conc
 
 A `ring` $\mathbb{A}$ is a nonempty set with two internal laws, addition and multiplication. There is a neutral element for both, zero and one.
 Addition is commutative and associative and every element $x$ has an inverse $-x$. Multiplication is commutative, associative and distributive over addition, meaning that $a(b+c) = ab+ac$ for every $a, b, c$ element. We call it `discrete` if it is countable.
+
+In a `field`, in addition to previous properties, each element (except zero), has an inverse for multiplication.
 
 A `integral domain` is a ring with one additional property. For every element $a, b, c$ such as $ab = ac$, then either $a = 0$ or $b = c$. Such a ring is not always a field, such as $\mathbb{Z}$ shows it.
 
@@ -92,15 +98,6 @@ Applied on $\mathbb{Z}$, that operation gives us modular arithmetic and all fini
 All types of Aerobus have the same structure.
 
 An englobing type describes an algebraic structure. It has a nested type `val` which is always a template model describing elements of the set.
-
-For example, integers:
-
-```cpp
-struct i32 {
-    template<int32_t x>
-    struct val {};
-};
-```
 
 This is because we want to operate on types more than on values. This allows generic implementation, for example of `gcd` (see below) without specifying what are the values.
 
@@ -174,7 +171,7 @@ And Taylor series for these functions:
 - `atanh`
 
 Additionally, the library comes with a type designed to help the users implement other Taylor series.
-If users provide a type `mycoeff` satisfying the appropriate template (depending on the `Ring` of coefficients and degree), the corresponding Taylor expansion can be built automatically as a polynomial over this `Ring` and then, evaluated at some value in a native arithmetic type (such as double).
+If users provide a type `mycoeff` satisfying the appropriate template (depending on the `Ring` of coefficients and degree), the corresponding Taylor expansion can be built automatically as a polynomial over this `Ring` and then, evaluated at some value in a native arithmetic type (such as `double`).
 
 ## Misc
 
@@ -213,7 +210,7 @@ Surprisingly, compilation time is not significantly higher when we include `conw
 
 ## Benchmarks
 
-In "benchmarks.cpp", we compare ourselves to std::math and hardcoded fastmath calls. The standard library exposes functions (at link time only) such as `_ZGVeN8v_sin`. They are vectorized versions of `std::sin`, in this case, specialized for avx512 registers.
+In "benchmarks.cpp", we compared ourselves to `std::math` and hardcoded fastmath calls. The standard library exposes functions (at link time only) such as `_ZGVeN8v_sin`. They are vectorized versions of `std::sin`, in this case, specialized for avx512 registers.
 
 Benchmarks are quite simple and test compute-intensive operations: computing sinus (compound twelve times) of all elements of a large double precision buffer of values (larger than cache). We run code on a laptop equipped with an Intel i7-1195G7 at 2.90GHz. The main loop is parallelized using OpenMP (version 201511) with a "parallel for".
 
