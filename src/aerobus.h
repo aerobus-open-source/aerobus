@@ -272,6 +272,71 @@ namespace aerobus {
     }  // namespace internal
 }  // namespace aerobus
 
+// compensated horner utilities
+namespace aerobus {
+    namespace internal {
+        template <typename T>
+        struct FloatLayout;
+
+        template <>
+        struct FloatLayout<double> {
+            static constexpr uint8_t exponent = 11;
+            static constexpr uint8_t mantissa = 53;
+            static constexpr uint8_t r = 27;  // ceil(mantissa/2)
+        };
+
+        template <>
+        struct FloatLayout<float> {
+            static constexpr uint8_t exponent = 8;
+            static constexpr uint8_t mantissa = 24;
+            static constexpr uint8_t r = 12;  // ceil(mantissa/2)
+        };
+
+        #ifdef WITH_CUDA_FP16
+        template <>
+        struct FloatLayout<__half> {
+            static constexpr uint8_t exponent = 5;
+            static constexpr uint8_t mantissa = 11;  // 10 explicitely stored
+            static constexpr uint8_t r = 6;  // ceil(mantissa/2)
+        };
+#endif
+
+        template<typename T>
+        static constexpr INLINED DEVICE void split(T a, T *x, T *y) {
+            T z = a * ((1 << FloatLayout<T>::r) + 1);
+            *x = z - (z - a);
+            *y = a - *x;
+        }
+
+        template<typename T>
+        static constexpr INLINED DEVICE void two_sum(T a, T b, T *x, T *y) {
+            *x = a + b;
+            T z = *x - a;
+            *y = (a - (*x - z)) + (b - z);
+        }
+
+        template<typename T>
+        static constexpr INLINED DEVICE void two_prod(T a, T b, T *x, T *y) {
+            *x = a * b;
+            T ah, al, bh, bl;
+            split(a, &ah, &al);
+            split(b, &bh, &bl);
+            *y = al * bl - (((*x - ah * bh) - al * bh) - ah * bl);
+        }
+
+
+        template<typename T, size_t N>
+        static INLINED DEVICE T horner(T *p1, T *p2, T x) {
+            T r = p1[0] + p2[0];
+            for (int64_t i = N - 1; i >= 0; --i) {
+                r = r * x + p1[N - i] + p2[N - i];
+            }
+
+            return r;
+        }
+    }  // namespace internal
+}  // namespace aerobus
+
 // utilities
 namespace aerobus {
     namespace internal {
@@ -376,7 +441,6 @@ namespace aerobus {
                 (i * i <= n))>> {
             static constexpr bool value = _is_prime<n, i+6>::value;
         };
-
     }  // namespace internal
 
     /// @brief checks if n is prime
@@ -1618,6 +1682,16 @@ namespace aerobus {
                         ::func(start, x);
             }
 
+            /// @brief Evaluate polynomial on x using compensated horner scheme
+            /// This is twice as accurate as simple eval (horner) but cannot be constexpr
+            /// Please not this makes no sense on integer types as arithmetic on integers is exact in IEEE
+            /// @tparam arithmeticType float for example
+            /// @param x
+            template<typename arithmeticType>
+            static DEVICE INLINED arithmeticType compensated_eval(const arithmeticType& x) {
+                return compensated_horner<arithmeticType, val>::func(x);
+            }
+
             template<typename x>
             using value_at_t = horner_reduction_t<val>
                 ::template inner<0, degree + 1>
@@ -1997,6 +2071,38 @@ namespace aerobus {
                     return accum;
                 }
             };
+        };
+
+        template<typename arithmeticType, typename P>
+        struct compensated_horner {
+            template<int64_t index, int ghost>
+            struct EFTHorner {
+                static INLINED void func(
+                        arithmeticType x, arithmeticType *pi, arithmeticType *sigma, arithmeticType *r) {
+                    arithmeticType p;
+                    internal::two_prod(*r, x, &p, pi + P::degree - index - 1);
+                    constexpr arithmeticType coeff = P::template coeff_at_t<index>::template get<arithmeticType>();
+                    internal::two_sum<arithmeticType>(
+                        p, coeff,
+                        r, sigma + P::degree - index - 1);
+                    EFTHorner<index - 1, ghost>::func(x, pi, sigma, r);
+                }
+            };
+
+            template<int ghost>
+            struct EFTHorner<-1, ghost> {
+                static INLINED DEVICE void func(
+                        arithmeticType x, arithmeticType *pi, arithmeticType *sigma, arithmeticType *r) {
+                }
+            };
+
+            static INLINED DEVICE arithmeticType func(arithmeticType x) {
+                arithmeticType pi[P::degree], sigma[P::degree];
+                arithmeticType r = P::template coeff_at_t<P::degree>::template get<arithmeticType>();
+                EFTHorner<P::degree - 1, 0>::func(x, pi, sigma, &r);
+                arithmeticType c = internal::horner<arithmeticType, P::degree - 1>(pi, sigma, x);
+                return r + c;
+            }
         };
 
         template<typename coeff, typename... coeffs>

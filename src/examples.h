@@ -39,4 +39,12 @@
  * How to build a known polynomial (here aerobus::known_polynomials::allone) with coefficients in a finite field
  * (here aerobus::zpz<2>) and get its value when evaluated at a value in this field (here 1). 
  */
+
+/**
+ * \example examples/compensated_horner.cpp
+ * How to use compensated horner evaluation scheme to get better accuracy when evaluating
+ * polynomials close to its roots
+ * 
+ * \see [publication](http://perso.ens-lyon.fr/nicolas.louvet/GrLL08.pdf)
+ */
 #endif  // SRC_EXAMPLES_H_
