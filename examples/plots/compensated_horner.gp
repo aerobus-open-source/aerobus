@@ -1,7 +1,7 @@
 set terminal pngcairo size 1200,800
-set output 'comp_horner.png'
+set output 'comp_horner_vs_horner.png'
 
-set multiplot layout 3,2 title "Evaluation of p(X) = (0.75-X)^5 * (1-X)^11 (expanded form) in the neighborhood of its multiple roots using Horner and CompHorner\nExact line is the evaluation of the factorized form"  # 2 rows, 3 columns
+set multiplot layout 3,2 title "Evaluation of p(X) = (0.75-X)^5 * (1-X)^{11} (expanded form) in the neighborhood of its multiple roots using Horner and CompHorner\nExact line is the evaluation of the factorized form"  # 2 rows, 3 columns
 
 # Plot 1
 set xrange [0.68:1.15]      # Set custom x range

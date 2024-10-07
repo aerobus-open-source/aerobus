@@ -289,7 +289,7 @@ namespace aerobus {
         struct FloatLayout<float> {
             static constexpr uint8_t exponent = 8;
             static constexpr uint8_t mantissa = 24;
-            static constexpr uint8_t r = 12;  // ceil(mantissa/2)
+            static constexpr uint8_t r = 11;  // ceil(mantissa/2)
         };
 
         #ifdef WITH_CUDA_FP16
