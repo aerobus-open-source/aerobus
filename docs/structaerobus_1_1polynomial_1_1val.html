@@ -129,6 +129,10 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a32d3a75eec976ef8deb87003bccb2145"><td class="memTemplItemLeft" align="right" valign="top">static constexpr <a class="el" href="aerobus_8h.html#a775d096fbc3988fb7ed858b79ef44e22">DEVICE</a> <a class="el" href="aerobus_8h.html#a74132fd0517f56e437c3da3283ac40b2">INLINED</a> arithmeticType&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial_1_1val.html#a32d3a75eec976ef8deb87003bccb2145">eval</a> (const arithmeticType &amp;x)</td></tr>
 <tr class="memdesc:a32d3a75eec976ef8deb87003bccb2145"><td class="mdescLeft">&#160;</td><td class="mdescRight">evaluates polynomial seen as a function operating on arithmeticType  <br /></td></tr>
 <tr class="separator:a32d3a75eec976ef8deb87003bccb2145"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab492a73867eee18c4e208b617a2ed46a" id="r_ab492a73867eee18c4e208b617a2ed46a"><td class="memTemplParams" colspan="2">template&lt;typename arithmeticType &gt; </td></tr>
+<tr class="memitem:ab492a73867eee18c4e208b617a2ed46a"><td class="memTemplItemLeft" align="right" valign="top">static <a class="el" href="aerobus_8h.html#a775d096fbc3988fb7ed858b79ef44e22">DEVICE</a> <a class="el" href="aerobus_8h.html#a74132fd0517f56e437c3da3283ac40b2">INLINED</a> arithmeticType&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial_1_1val.html#ab492a73867eee18c4e208b617a2ed46a">compensated_eval</a> (const arithmeticType &amp;x)</td></tr>
+<tr class="memdesc:ab492a73867eee18c4e208b617a2ed46a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Evaluate polynomial on x using compensated horner scheme This is twice as accurate as simple eval (horner) but cannot be constexpr Please not this makes no sense on integer types as arithmetic on integers is exact in IEEE.  <br /></td></tr>
+<tr class="separator:ab492a73867eee18c4e208b617a2ed46a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
@@ -149,6 +153,8 @@ struct aerobus::polynomial&lt; Ring &gt;::val&lt; coeffN, coeffs &gt;</div><p>va
     <tr><td class="paramname">...coeffs</td><td>lower degree coefficients </td></tr>
   </table>
   </dd>
+</dl>
+<dl class="section examples"><dt>Examples</dt><dd><a class="el" href="examples_2compensated_horner_8cpp-example.html#_a3">examples/compensated_horner.cpp</a>.</dd>
 </dl>
 </div><h2 class="groupheader">Member Typedef Documentation</h2>
 <a id="a732a7e75914a76aa9330b9552aa252e8" name="a732a7e75914a76aa9330b9552aa252e8"></a>
@@ -300,6 +306,52 @@ template&lt;typename x &gt; </div>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="ab492a73867eee18c4e208b617a2ed46a" name="ab492a73867eee18c4e208b617a2ed46a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab492a73867eee18c4e208b617a2ed46a">&#9670;&#160;</a></span>compensated_eval()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename Ring &gt; </div>
+<div class="memtemplate">
+template&lt;typename coeffN , typename... coeffs&gt; </div>
+<div class="memtemplate">
+template&lt;typename arithmeticType &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static <a class="el" href="aerobus_8h.html#a775d096fbc3988fb7ed858b79ef44e22">DEVICE</a> <a class="el" href="aerobus_8h.html#a74132fd0517f56e437c3da3283ac40b2">INLINED</a> arithmeticType <a class="el" href="structaerobus_1_1polynomial.html">aerobus::polynomial</a>&lt; Ring &gt;::val&lt; coeffN, coeffs &gt;::compensated_eval </td>
+          <td>(</td>
+          <td class="paramtype">const arithmeticType &amp;&#160;</td>
+          <td class="paramname"><em>x</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Evaluate polynomial on x using compensated horner scheme This is twice as accurate as simple eval (horner) but cannot be constexpr Please not this makes no sense on integer types as arithmetic on integers is exact in IEEE. </p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">arithmeticType</td><td>float for example </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">x</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="a32d3a75eec976ef8deb87003bccb2145" name="a32d3a75eec976ef8deb87003bccb2145"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a32d3a75eec976ef8deb87003bccb2145">&#9670;&#160;</a></span>eval()</h2>
 
