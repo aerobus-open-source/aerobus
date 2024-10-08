@@ -18,6 +18,11 @@ template<typename T>
 struct Expm1Degree;
 
 template<>
+struct Expm1Degree<double> {
+    static constexpr size_t val = 18;
+};
+
+template<>
 struct Expm1Degree<float> {
     static constexpr size_t val = 11;
 };
@@ -27,9 +32,9 @@ struct Expm1Degree<__half2> {
     static constexpr size_t val = 6;
 };
 
-float rand(float min, float max) {
-  float range = (max - min);
-  float div = RAND_MAX / range;
+double rand(double min, double max) {
+  double range = (max - min);
+  double div = RAND_MAX / range;
   return min + (rand() / div);  // NOLINT
 }
 
@@ -37,16 +42,23 @@ template<typename T>
 struct GetRandT;
 
 template<>
-struct GetRandT<float> {
-    static float func(float min, float max) {
+struct GetRandT<double> {
+    static double func(double min, double max) {
         return rand(min, max);
     }
 };
 
 template<>
+struct GetRandT<float> {
+    static float func(double min, double max) {
+        return (float) rand(min, max);
+    }
+};
+
+template<>
 struct GetRandT<__half2> {
-    static __half2 func(float min, float max) {
-        return __half2(__float2half(rand(min, max)), __float2half(rand(min, max)));
+    static __half2 func(double min, double max) {
+        return __half2(__float2half((float)rand(min, max)), __float2half((float)rand(min, max)));
     }
 };
 
