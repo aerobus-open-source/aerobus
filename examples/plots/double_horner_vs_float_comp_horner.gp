@@ -1,5 +1,5 @@
 set terminal pngcairo size 1200,800
-set output 'comp_horner_vs_horner.png'
+set output 'double_vs_comp_float.png'
 
 set multiplot layout 1,2 title "Evaluation of p(X) = (x-1)^{3} (expanded form) in the neighborhood of its root using Horner (double) and CompHorner (float)\nExact line is the evaluation of the factorized form"  # 2 rows, 3 columns
 

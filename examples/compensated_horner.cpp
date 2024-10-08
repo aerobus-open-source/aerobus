@@ -16,12 +16,12 @@ DEVICE INLINED T eval(const T& x) {
 }
 
 template<typename T>
-DEVICE INLINED T exact_large(const T& x) {
+DEVICE T exact_large(const T& x) {
     return pow_scalar<T, 5>(0.75 - x) * pow_scalar<T, 11>(1 - x);
 }
 
 template<typename T>
-DEVICE INLINED T exact_small(const T& x) {
+DEVICE T exact_small(const T& x) {
     return pow_scalar<T, 3>(x - 1);
 }
 
