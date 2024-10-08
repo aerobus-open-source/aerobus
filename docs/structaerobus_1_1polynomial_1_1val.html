@@ -131,7 +131,7 @@ Static Public Member Functions</h2></td></tr>
 <tr class="separator:a32d3a75eec976ef8deb87003bccb2145"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab492a73867eee18c4e208b617a2ed46a" id="r_ab492a73867eee18c4e208b617a2ed46a"><td class="memTemplParams" colspan="2">template&lt;typename arithmeticType &gt; </td></tr>
 <tr class="memitem:ab492a73867eee18c4e208b617a2ed46a"><td class="memTemplItemLeft" align="right" valign="top">static <a class="el" href="aerobus_8h.html#a775d096fbc3988fb7ed858b79ef44e22">DEVICE</a> <a class="el" href="aerobus_8h.html#a74132fd0517f56e437c3da3283ac40b2">INLINED</a> arithmeticType&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structaerobus_1_1polynomial_1_1val.html#ab492a73867eee18c4e208b617a2ed46a">compensated_eval</a> (const arithmeticType &amp;x)</td></tr>
-<tr class="memdesc:ab492a73867eee18c4e208b617a2ed46a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Evaluate polynomial on x using compensated horner scheme This is twice as accurate as simple eval (horner) but cannot be constexpr Please not this makes no sense on integer types as arithmetic on integers is exact in IEEE.  <br /></td></tr>
+<tr class="memdesc:ab492a73867eee18c4e208b617a2ed46a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Evaluate polynomial on x using compensated horner scheme.  <br /></td></tr>
 <tr class="separator:ab492a73867eee18c4e208b617a2ed46a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
@@ -336,7 +336,10 @@ template&lt;typename arithmeticType &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Evaluate polynomial on x using compensated horner scheme This is twice as accurate as simple eval (horner) but cannot be constexpr Please not this makes no sense on integer types as arithmetic on integers is exact in IEEE. </p>
+<p>Evaluate polynomial on x using compensated horner scheme. </p>
+<p>This is twice as accurate as simple eval (horner) but cannot be constexpr</p>
+<p>Please note this makes no sense on integer types as arithmetic on integers is exact in IEEE</p>
+<p>WARNING : this does not work with gcc with -O3 optimization level because gcc does illegal stuff with floating point arithmetic</p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">arithmeticType</td><td>float for example </td></tr>

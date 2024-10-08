@@ -86,8 +86,6 @@ $(function() {
 <div class="line">#define WITH_CUDA_FP16</div>
 <div class="line">#include &quot;../src/aerobus.h&quot;</div>
 <div class="line"> </div>
-<div class="line">constexpr size_t N = 1 &lt;&lt; 24;</div>
-<div class="line"> </div>
 <div class="line">/*</div>
 <div class="line">change int_type to aerobus::i32 (or i64) and float_type to float (resp. double)</div>
 <div class="line">to see how good is the generated assembly compared to what nvcc generates for 16 bits </div>
@@ -96,13 +94,57 @@ $(function() {
 <div class="line">using float_type = __half2;</div>
 <div class="line"> </div>
 <div class="line"> </div>
-<div class="line">float rand(float min, float max) {</div>
-<div class="line">  float range = (max - min);</div>
-<div class="line">  float div = RAND_MAX / range;</div>
+<div class="line">constexpr size_t N = 1 &lt;&lt; 24;</div>
+<div class="line"> </div>
+<div class="line">template&lt;typename T&gt;</div>
+<div class="line">struct Expm1Degree;</div>
+<div class="line"> </div>
+<div class="line">template&lt;&gt;</div>
+<div class="line">struct Expm1Degree&lt;double&gt; {</div>
+<div class="line">    static constexpr size_t val = 18;</div>
+<div class="line">};</div>
+<div class="line"> </div>
+<div class="line">template&lt;&gt;</div>
+<div class="line">struct Expm1Degree&lt;float&gt; {</div>
+<div class="line">    static constexpr size_t val = 11;</div>
+<div class="line">};</div>
+<div class="line"> </div>
+<div class="line">template&lt;&gt;</div>
+<div class="line">struct Expm1Degree&lt;__half2&gt; {</div>
+<div class="line">    static constexpr size_t val = 6;</div>
+<div class="line">};</div>
+<div class="line"> </div>
+<div class="line">double rand(double min, double max) {</div>
+<div class="line">  double range = (max - min);</div>
+<div class="line">  double div = RAND_MAX / range;</div>
 <div class="line">  return min + (rand() / div);  // NOLINT</div>
 <div class="line">}</div>
 <div class="line"> </div>
-<div class="line">using EXPM1 = aerobus::expm1&lt;int_type, 6&gt;;</div>
+<div class="line">template&lt;typename T&gt;</div>
+<div class="line">struct GetRandT;</div>
+<div class="line"> </div>
+<div class="line">template&lt;&gt;</div>
+<div class="line">struct GetRandT&lt;double&gt; {</div>
+<div class="line">    static double func(double min, double max) {</div>
+<div class="line">        return rand(min, max);</div>
+<div class="line">    }</div>
+<div class="line">};</div>
+<div class="line"> </div>
+<div class="line">template&lt;&gt;</div>
+<div class="line">struct GetRandT&lt;float&gt; {</div>
+<div class="line">    static float func(double min, double max) {</div>
+<div class="line">        return (float) rand(min, max);</div>
+<div class="line">    }</div>
+<div class="line">};</div>
+<div class="line"> </div>
+<div class="line">template&lt;&gt;</div>
+<div class="line">struct GetRandT&lt;__half2&gt; {</div>
+<div class="line">    static __half2 func(double min, double max) {</div>
+<div class="line">        return __half2(__float2half((float)rand(min, max)), __float2half((float)rand(min, max)));</div>
+<div class="line">    }</div>
+<div class="line">};</div>
+<div class="line"> </div>
+<div class="line">using EXPM1 = aerobus::expm1&lt;int_type, Expm1Degree&lt;float_type&gt;::val&gt;;</div>
 <div class="line"> </div>
 <div class="line"> </div>
 <div class="line">__device__ INLINED float_type f(float_type x) {</div>
@@ -116,22 +158,22 @@ $(function() {
 <div class="line">}</div>
 <div class="line"> </div>
 <div class="line">int main() {</div>
-<div class="line">    __half2 *d_in, *d_out;</div>
-<div class="line">    cudaMalloc&lt;__half2&gt;(&amp;d_in, N * sizeof(__half2));</div>
-<div class="line">    cudaMalloc&lt;__half2&gt;(&amp;d_out, N * sizeof(__half2));</div>
+<div class="line">    float_type *d_in, *d_out;</div>
+<div class="line">    cudaMalloc&lt;float_type&gt;(&amp;d_in, N * sizeof(float_type));</div>
+<div class="line">    cudaMalloc&lt;float_type&gt;(&amp;d_out, N * sizeof(float_type));</div>
 <div class="line"> </div>
-<div class="line">    __half2 *in = reinterpret_cast&lt;__half2*&gt;(malloc(N * sizeof(__half2)));</div>
-<div class="line">    __half2 *out = reinterpret_cast&lt;__half2*&gt;(malloc(N * sizeof(__half2)));</div>
+<div class="line">    float_type *in = reinterpret_cast&lt;float_type*&gt;(malloc(N * sizeof(float_type)));</div>
+<div class="line">    float_type *out = reinterpret_cast&lt;float_type*&gt;(malloc(N * sizeof(float_type)));</div>
 <div class="line"> </div>
 <div class="line">    for(size_t i = 0; i &lt; N; ++i) {</div>
-<div class="line">        in[i] = __half2(__float2half(rand(-0.01, 0.01)), __float2half(rand(-0.01, 0.01)));</div>
+<div class="line">        in[i] = GetRandT&lt;float_type&gt;::func(-0.01, 0.01);</div>
 <div class="line">    }</div>
 <div class="line"> </div>
-<div class="line">    cudaMemcpy(d_in, in, N * sizeof(__half2), cudaMemcpyHostToDevice);</div>
+<div class="line">    cudaMemcpy(d_in, in, N * sizeof(float_type), cudaMemcpyHostToDevice);</div>
 <div class="line"> </div>
 <div class="line">    run&lt;&lt;&lt;128, 512&gt;&gt;&gt;(N, d_in, d_out);</div>
 <div class="line"> </div>
-<div class="line">    cudaMemcpy(out, d_out, N * sizeof(__half2), cudaMemcpyDeviceToHost);</div>
+<div class="line">    cudaMemcpy(out, d_out, N * sizeof(float_type), cudaMemcpyDeviceToHost);</div>
 <div class="line"> </div>
 <div class="line">    cudaFree(d_in);</div>
 <div class="line">    cudaFree(d_out);</div>

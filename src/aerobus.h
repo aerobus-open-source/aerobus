@@ -318,12 +318,15 @@ namespace aerobus {
         template<typename T>
         static constexpr INLINED DEVICE void two_prod(T a, T b, T *x, T *y) {
             *x = a * b;
+            #ifdef __clang__
+            *y = fma_helper<T>::eval(a, b, -*x);
+            #else
             T ah, al, bh, bl;
             split(a, &ah, &al);
             split(b, &bh, &bl);
             *y = al * bl - (((*x - ah * bh) - al * bh) - ah * bl);
+            #endif
         }
-
 
         template<typename T, size_t N>
         static INLINED DEVICE T horner(T *p1, T *p2, T x) {
@@ -1683,8 +1686,14 @@ namespace aerobus {
             }
 
             /// @brief Evaluate polynomial on x using compensated horner scheme
+            ///
             /// This is twice as accurate as simple eval (horner) but cannot be constexpr
-            /// Please not this makes no sense on integer types as arithmetic on integers is exact in IEEE
+            ///
+            /// Please note this makes no sense on integer types as arithmetic on integers is exact in IEEE
+            ///
+            /// WARNING : this does not work with gcc with -O3 optimization level
+            /// because gcc does illegal stuff with floating point arithmetic
+            ///
             /// \image examples/plots/comp_horner_vs_horner.png
             /// @tparam arithmeticType float for example
             /// @param x
