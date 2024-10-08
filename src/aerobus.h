@@ -220,6 +220,14 @@ namespace aerobus {
         };
 
         template<>
+        struct fma_helper<long double> {
+            static constexpr INLINED DEVICE long double eval(
+                const long double x, const long double y, const long double z) {
+                    return x * y + z;
+            }
+        };
+
+        template<>
         struct fma_helper<float> {
             static constexpr INLINED DEVICE float eval(const float x, const float y, const float z) {
                 return x * y + z;
@@ -277,6 +285,22 @@ namespace aerobus {
     namespace internal {
         template <typename T>
         struct FloatLayout;
+
+        #ifdef _MSC_VER
+        template <>
+        struct FloatLayout<long double> {
+            static constexpr uint8_t exponent = 11;
+            static constexpr uint8_t mantissa = 53;
+            static constexpr uint8_t r = 27;  // ceil(mantissa/2)
+        };
+        #else
+        template <>
+        struct FloatLayout<long double> {
+            static constexpr uint8_t exponent = 15;
+            static constexpr uint8_t mantissa = 63;
+            static constexpr uint8_t r = 32;  // ceil(mantissa/2)
+        };
+        #endif
 
         template <>
         struct FloatLayout<double> {

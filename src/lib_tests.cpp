@@ -731,6 +731,15 @@ TEST(utilities, expm1) {
     EXPECT_TRUE((std::abs(std::expm1(0.1f) - e01) <= 1E-7F));
 }
 
+TEST(utilities, expm1_long_double) {
+    using E = aerobus::expm1<i64, 12>;
+    long double e0 = E::compensated_eval(0.0L);
+    long double e01 = E::compensated_eval(0.1L);
+    EXPECT_EQ(e0, 0.0);
+
+    EXPECT_TRUE((std::abs(std::expm1(0.1) - e01) <= 1E-7));
+}
+
 TEST(utilities, alternate) {
     constexpr int a0 = internal::alternate<i32, 0>::value;
     EXPECT_EQ(a0, 1);
