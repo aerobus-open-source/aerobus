@@ -1685,6 +1685,7 @@ namespace aerobus {
             /// @brief Evaluate polynomial on x using compensated horner scheme
             /// This is twice as accurate as simple eval (horner) but cannot be constexpr
             /// Please not this makes no sense on integer types as arithmetic on integers is exact in IEEE
+            /// \image examples/plots/comp_horner_vs_horner.png
             /// @tparam arithmeticType float for example
             /// @param x
             template<typename arithmeticType>
@@ -1736,6 +1737,11 @@ namespace aerobus {
 
             template<typename arithmeticType>
             static constexpr DEVICE INLINED arithmeticType eval(const arithmeticType& x) {
+                return coeffN::template get<arithmeticType>();
+            }
+
+            template<typename arithmeticType>
+            static DEVICE INLINED arithmeticType compensated_eval(const arithmeticType& x) {
                 return coeffN::template get<arithmeticType>();
             }
 
