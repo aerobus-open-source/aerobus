@@ -165,7 +165,7 @@ Some useful math constants, such as $\pi$ or $e$ are provided preimplemented, fr
 ### Known polynomials
 
 There existe many orthogonal polynomial bases used in various domains, from number theory to quantum physics.
-`Aerobus` provide predefined implementation for some of them (Laguerre, Hermite, Bernstein, Bessel, ...). These polynomials have integers coefficients by default, but can be defined (specialized) with coefficients in any `Ring` (such as $\mathbb{Z}/2\mathbb{2}$).
+`Aerobus` provide predefined implementation for some of them (Laguerre, Hermite, Bernstein, Bessel, ...). These polynomials have integers coefficients by default, but can be defined (specialized) with coefficients in any `Ring` (such as $\mathbb{Z}/2\mathbb{Z}$).
 
 ### Quotient rings and Galois fields
 
