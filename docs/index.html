@@ -180,7 +180,7 @@ Taylor series</h2>
 <div class="line"><span class="keyword">using </span>aero_atanh = <a class="code hl_typedef" href="namespaceaerobus.html#a431cc3d1d6fbe9e34a1e303b596650bb">atanh&lt;i64, 6&gt;</a>;</div>
 <div class="line"><span class="keyword">constexpr</span> <span class="keywordtype">float</span> val = aero_atanh::eval(0.1F); <span class="comment">// approximation of arctanh(0.1) using taylor expansion of degree 6</span></div>
 <div class="ttc" id="anamespaceaerobus_html"><div class="ttname"><a href="namespaceaerobus.html">aerobus</a></div><div class="ttdoc">main namespace for all publicly exposed types or functions</div></div>
-<div class="ttc" id="anamespaceaerobus_html_a431cc3d1d6fbe9e34a1e303b596650bb"><div class="ttname"><a href="namespaceaerobus.html#a431cc3d1d6fbe9e34a1e303b596650bb">aerobus::atanh</a></div><div class="ttdeci">taylor&lt; Integers, internal::atanh_coeff, deg &gt; atanh</div><div class="ttdoc">arc hyperbolic tangent</div><div class="ttdef"><b>Definition</b> aerobus.h:3551</div></div>
+<div class="ttc" id="anamespaceaerobus_html_a431cc3d1d6fbe9e34a1e303b596650bb"><div class="ttname"><a href="namespaceaerobus.html#a431cc3d1d6fbe9e34a1e303b596650bb">aerobus::atanh</a></div><div class="ttdeci">taylor&lt; Integers, internal::atanh_coeff, deg &gt; atanh</div><div class="ttdoc">arc hyperbolic tangent</div><div class="ttdef"><b>Definition</b> aerobus.h:3591</div></div>
 </div><!-- fragment --><p>Exposed functions are:</p>
 <ul>
 <li><code>exp</code></li>
@@ -215,8 +215,8 @@ Taylor series</h2>
 <div class="line"><span class="keyword">using </span>my_serie = <a class="code hl_typedef" href="namespaceaerobus.html#a6b51cf0c9b5dcbc30388f46981b51d49">taylor&lt;Integers, my_coeff_at, degree&gt;</a>;</div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="keywordtype">double</span> x = my_serie&lt;i64, 3&gt;::eval(3.0);</div>
-<div class="ttc" id="anamespaceaerobus_html_a6b51cf0c9b5dcbc30388f46981b51d49"><div class="ttname"><a href="namespaceaerobus.html#a6b51cf0c9b5dcbc30388f46981b51d49">aerobus::taylor</a></div><div class="ttdeci">typename internal::make_taylor_impl&lt; T, coeff_at, internal::make_index_sequence_reverse&lt; deg+1 &gt; &gt;::type taylor</div><div class="ttdef"><b>Definition</b> aerobus.h:3216</div></div>
-<div class="ttc" id="anamespaceaerobus_html_aa213858a9b029fd67d4865a933e73c2d"><div class="ttname"><a href="namespaceaerobus.html#aa213858a9b029fd67d4865a933e73c2d">aerobus::FractionField</a></div><div class="ttdeci">typename internal::FractionFieldImpl&lt; Ring &gt;::type FractionField</div><div class="ttdoc">Fraction field of an euclidean domain, such as Q for Z.</div><div class="ttdef"><b>Definition</b> aerobus.h:2660</div></div>
+<div class="ttc" id="anamespaceaerobus_html_a6b51cf0c9b5dcbc30388f46981b51d49"><div class="ttname"><a href="namespaceaerobus.html#a6b51cf0c9b5dcbc30388f46981b51d49">aerobus::taylor</a></div><div class="ttdeci">typename internal::make_taylor_impl&lt; T, coeff_at, internal::make_index_sequence_reverse&lt; deg+1 &gt; &gt;::type taylor</div><div class="ttdef"><b>Definition</b> aerobus.h:3256</div></div>
+<div class="ttc" id="anamespaceaerobus_html_aa213858a9b029fd67d4865a933e73c2d"><div class="ttname"><a href="namespaceaerobus.html#aa213858a9b029fd67d4865a933e73c2d">aerobus::FractionField</a></div><div class="ttdeci">typename internal::FractionFieldImpl&lt; Ring &gt;::type FractionField</div><div class="ttdoc">Fraction field of an euclidean domain, such as Q for Z.</div><div class="ttdef"><b>Definition</b> aerobus.h:2700</div></div>
 </div><!-- fragment --><p>On x86-64 and CUDA platforms at least, using proper compiler directives, these functions yield very performant assembly, similar or better than standard library implementation in fast math. For example, this code:</p>
 <div class="fragment"><div class="line"><span class="keywordtype">double</span> compute_expm1(<span class="keyword">const</span> <span class="keywordtype">size_t</span> N, <span class="keywordtype">double</span>* in, <span class="keywordtype">double</span>* out) {</div>
 <div class="line">    <span class="keyword">using </span>V = <a class="code hl_typedef" href="namespaceaerobus.html#a0c0f49055faee9b1ba5a8a027773f8b0">aerobus::expm1&lt;aerobus::i64, 13&gt;</a>;</div>
@@ -224,7 +224,7 @@ Taylor series</h2>
 <div class="line">        out[i] = V::eval(in[i]);</div>
 <div class="line">    }</div>
 <div class="line">}</div>
-<div class="ttc" id="anamespaceaerobus_html_a0c0f49055faee9b1ba5a8a027773f8b0"><div class="ttname"><a href="namespaceaerobus.html#a0c0f49055faee9b1ba5a8a027773f8b0">aerobus::expm1</a></div><div class="ttdeci">typename polynomial&lt; FractionField&lt; Integers &gt; &gt;::template sub_t&lt; exp&lt; Integers, deg &gt;, typename polynomial&lt; FractionField&lt; Integers &gt; &gt;::one &gt; expm1</div><div class="ttdef"><b>Definition</b> aerobus.h:3485</div></div>
+<div class="ttc" id="anamespaceaerobus_html_a0c0f49055faee9b1ba5a8a027773f8b0"><div class="ttname"><a href="namespaceaerobus.html#a0c0f49055faee9b1ba5a8a027773f8b0">aerobus::expm1</a></div><div class="ttdeci">typename polynomial&lt; FractionField&lt; Integers &gt; &gt;::template sub_t&lt; exp&lt; Integers, deg &gt;, typename polynomial&lt; FractionField&lt; Integers &gt; &gt;::one &gt; expm1</div><div class="ttdef"><b>Definition</b> aerobus.h:3525</div></div>
 </div><!-- fragment --><p>Yields this assembly (clang 17, <code>-mavx2 -O3</code>) where we can see a pile of Fused-Multiply-Add vector instructions, generated because we unrolled completely the Horner evaluation loop:</p>
 <div class="fragment"><div class="line">compute_expm1(unsigned long, double const*, double*):</div>
 <div class="line">  lea     rax, [rdi-1]</div>
@@ -283,8 +283,8 @@ Field of fractions</h2>
 <div class="line"><span class="keyword">using </span>ZmZ = <a class="code hl_struct" href="structaerobus_1_1zpz.html">zpz&lt;8&gt;</a>;</div>
 <div class="line"><span class="keyword">using </span>Fzmz = <a class="code hl_typedef" href="namespaceaerobus.html#aa213858a9b029fd67d4865a933e73c2d">FractionField&lt;ZmZ&gt;</a>;</div>
 <div class="line"><span class="keyword">using </span>Pfzmz = <a class="code hl_struct" href="structaerobus_1_1polynomial.html">polynomial&lt;Fzmz&gt;</a>;</div>
-<div class="ttc" id="astructaerobus_1_1polynomial_html"><div class="ttname"><a href="structaerobus_1_1polynomial.html">aerobus::polynomial</a></div><div class="ttdef"><b>Definition</b> aerobus.h:1619</div></div>
-<div class="ttc" id="astructaerobus_1_1zpz_html"><div class="ttname"><a href="structaerobus_1_1zpz.html">aerobus::zpz</a></div><div class="ttdoc">congruence classes of integers modulo p (32 bits)</div><div class="ttdef"><b>Definition</b> aerobus.h:1419</div></div>
+<div class="ttc" id="astructaerobus_1_1polynomial_html"><div class="ttname"><a href="structaerobus_1_1polynomial.html">aerobus::polynomial</a></div><div class="ttdef"><b>Definition</b> aerobus.h:1631</div></div>
+<div class="ttc" id="astructaerobus_1_1zpz_html"><div class="ttname"><a href="structaerobus_1_1zpz.html">aerobus::zpz</a></div><div class="ttdoc">congruence classes of integers modulo p (32 bits)</div><div class="ttdef"><b>Definition</b> aerobus.h:1431</div></div>
 </div><!-- fragment --><p>The same operation would stand for any set that users would have implemented in place of <code>ZmZ</code>.</p>
 <p>For example, we can easily define <a href="https://en.wikipedia.org/wiki/Rational_function">rational functions</a> by taking the ring of fractions of polynomials:</p>
 <div class="fragment"><div class="line"><span class="keyword">using namespace </span><a class="code hl_namespace" href="namespaceaerobus.html">aerobus</a>;</div>
@@ -296,7 +296,7 @@ Quotient</h2>
 <p>For example, if we want <code>R</code> to be \(\mathbb{Z}\) represented as <code><a class="el" href="structaerobus_1_1i64.html" title="64 bits signed integers, seen as a algebraic ring with related operations">aerobus::i64</a></code>, we can express arithmetic modulo 17 using:</p>
 <div class="fragment"><div class="line"><span class="keyword">using namespace </span><a class="code hl_namespace" href="namespaceaerobus.html">aerobus</a>;</div>
 <div class="line"><span class="keyword">using </span>ZpZ = <a class="code hl_struct" href="structaerobus_1_1_quotient.html">Quotient&lt;i64, i64::val&lt;17&gt;</a>&gt;;</div>
-<div class="ttc" id="astructaerobus_1_1_quotient_html"><div class="ttname"><a href="structaerobus_1_1_quotient.html">aerobus::Quotient</a></div><div class="ttdoc">Quotient ring by the principal ideal generated by 'X' With i32 as Ring and i32::val&lt;2&gt; as X,...</div><div class="ttdef"><b>Definition</b> aerobus.h:619</div></div>
+<div class="ttc" id="astructaerobus_1_1_quotient_html"><div class="ttname"><a href="structaerobus_1_1_quotient.html">aerobus::Quotient</a></div><div class="ttdoc">Quotient ring by the principal ideal generated by 'X' With i32 as Ring and i32::val&lt;2&gt; as X,...</div><div class="ttdef"><b>Definition</b> aerobus.h:631</div></div>
 </div><!-- fragment --><p>As we could have using <code>zpz&lt;17&gt;</code>.</p>
 <p>This is mainly used to define finite fields of order \(p^n\) using Conway polynomials but may have other applications.</p>
 <h1><a class="anchor" id="autotoc_md13"></a>
@@ -307,7 +307,7 @@ Continued Fractions</h2>
 <div class="fragment"><div class="line"><span class="keyword">using namespace </span><a class="code hl_namespace" href="namespaceaerobus.html">aerobus</a>;</div>
 <div class="line"><span class="keyword">using </span>T = <a class="code hl_struct" href="structaerobus_1_1_continued_fraction.html">ContinuedFraction&lt;1,2,3,4&gt;</a>;</div>
 <div class="line"><span class="keyword">constexpr</span> <span class="keywordtype">double</span> x = T::val;</div>
-<div class="ttc" id="astructaerobus_1_1_continued_fraction_html"><div class="ttname"><a href="structaerobus_1_1_continued_fraction.html">aerobus::ContinuedFraction</a></div><div class="ttdoc">represents a continued fraction a0 +</div><div class="ttdef"><b>Definition</b> aerobus.h:3573</div></div>
+<div class="ttc" id="astructaerobus_1_1_continued_fraction_html"><div class="ttname"><a href="structaerobus_1_1_continued_fraction.html">aerobus::ContinuedFraction</a></div><div class="ttdoc">represents a continued fraction a0 +</div><div class="ttdef"><b>Definition</b> aerobus.h:3613</div></div>
 </div><!-- fragment --><p>As practical examples, <code>aerobus</code> gives continued fractions of \(\pi\), \(e\), \(\sqrt{2}\) and \(\sqrt{3}\):</p>
 <div class="fragment"><div class="line"><span class="keyword">constexpr</span> <span class="keywordtype">double</span> A_SQRT3 = aerobus::SQRT3_fraction::val; <span class="comment">// 1.7320508075688772935</span></div>
 </div><!-- fragment --><h1><a class="anchor" id="autotoc_md15"></a>

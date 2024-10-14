@@ -299,6 +299,7 @@ namespace aerobus {
             static constexpr uint8_t exponent = 15;
             static constexpr uint8_t mantissa = 63;
             static constexpr uint8_t r = 32;  // ceil(mantissa/2)
+            static constexpr long double shift = (1LL << r) + 1;
         };
         #endif
 
@@ -307,6 +308,7 @@ namespace aerobus {
             static constexpr uint8_t exponent = 11;
             static constexpr uint8_t mantissa = 53;
             static constexpr uint8_t r = 27;  // ceil(mantissa/2)
+            static constexpr double shift = (1LL << r) + 1;
         };
 
         template <>
@@ -314,6 +316,7 @@ namespace aerobus {
             static constexpr uint8_t exponent = 8;
             static constexpr uint8_t mantissa = 24;
             static constexpr uint8_t r = 11;  // ceil(mantissa/2)
+            static constexpr float shift = (1 << r) + 1;
         };
 
         #ifdef WITH_CUDA_FP16
@@ -322,12 +325,21 @@ namespace aerobus {
             static constexpr uint8_t exponent = 5;
             static constexpr uint8_t mantissa = 11;  // 10 explicitely stored
             static constexpr uint8_t r = 6;  // ceil(mantissa/2)
+            static constexpr __half shift = internal::int16_convert_helper<__half, 65>::value();
         };
-#endif
+
+        template <>
+        struct FloatLayout<__half2> {
+            static constexpr uint8_t exponent = 5;
+            static constexpr uint8_t mantissa = 11;  // 10 explicitely stored
+            static constexpr uint8_t r = 6;  // ceil(mantissa/2)
+            static constexpr __half2 shift = internal::int16_convert_helper<__half2, 65>::value();
+        };
+        #endif
 
         template<typename T>
         static constexpr INLINED DEVICE void split(T a, T *x, T *y) {
-            T z = a * ((1 << FloatLayout<T>::r) + 1);
+            T z = a * FloatLayout<T>::shift;
             *x = z - (z - a);
             *y = a - *x;
         }
@@ -2349,17 +2361,45 @@ namespace aerobus {
                 using ring_type = Ring;
                 using enclosing_type = _FractionField<Ring>;
 
-                 /// @brief true if val2 is one,
-                 /// meaning val can be seen as an element of underlying ring (boolean value)
-                 static constexpr bool is_integer = std::is_same_v<val2, typename Ring::one>;
+                /// @brief true if val2 is one,
+                /// meaning val can be seen as an element of underlying ring (boolean value)
+                static constexpr bool is_integer = std::is_same_v<val2, typename Ring::one>;
+
+                template<typename valueType, int ghost = 0>
+                struct get_helper {
+                    static constexpr INLINED DEVICE valueType get() {
+                        return internal::staticcast<valueType, typename ring_type::inner_type>::template func<x::v>() /
+                            internal::staticcast<valueType, typename ring_type::inner_type>::template func<y::v>();
+                    }
+                };
+
+                #ifdef WITH_CUDA_FP16
+                template<int ghost>
+                struct get_helper<__half, ghost> {
+                    static constexpr INLINED DEVICE __half get() {
+                        return internal::my_float2half_rn(
+                            internal::staticcast<float, typename ring_type::inner_type>::template func<x::v>() /
+                            internal::staticcast<float, typename ring_type::inner_type>::template func<y::v>());
+                    }
+                };
+
+                template<int ghost>
+                struct get_helper<__half2, ghost> {
+                    static constexpr INLINED DEVICE __half2 get() {
+                        constexpr __half tmp = internal::my_float2half_rn(
+                            internal::staticcast<float, typename ring_type::inner_type>::template func<x::v>() /
+                            internal::staticcast<float, typename ring_type::inner_type>::template func<y::v>());
+                        return __half2(tmp, tmp);
+                    }
+                };
+                #endif
 
                 /// @brief computes fraction value in valueType
                 /// @tparam valueType likely double or float
                 /// @return
                 template<typename valueType>
                 static constexpr INLINED DEVICE valueType get() {
-                    return internal::staticcast<valueType, typename ring_type::inner_type>::template func<x::v>() /
-                        internal::staticcast<valueType, typename ring_type::inner_type>::template func<y::v>();
+                    return get_helper<valueType, 0>::get();
                 }
 
                 /// @brief represents value as string

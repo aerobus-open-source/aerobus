@@ -12,13 +12,13 @@ doc:
 
 tests:
 	echo "RUNNING TESTS WITH GCC"
-	cmake -D CMAKE_C_COMPILER=gcc -D CMAKE_CXX_COMPILER=g++ -S . -B build
-	cmake --build build
+	cmake -D CMAKE_C_COMPILER=gcc -D CMAKE_CXX_COMPILER=g++ -S . -B build 
+	cmake --build build --target lib_tests
 	cd build && ctest
 	rm -rf build
 	echo "RUNNING TESTS WITH CLANG"
 	cmake -D CMAKE_C_COMPILER=clang -D CMAKE_CXX_COMPILER=clang++ -S . -B build
-	cmake --build build
+	cmake --build build --target lib_tests
 	cd build && ctest
 
 all: clean build run

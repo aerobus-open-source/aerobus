@@ -33,7 +33,7 @@ In addition, we expose a way to generate Taylor series of analytic functions, kn
 
 ## Statement of need
 
-By implementing general algebra concepts such as discrete rings, field of fractions and polynomials, `Aerobus` can serve multiple purposes, mainly polynomial arithmetic at compile time and efficient polynomial evaluation, regardless of the coefficients `ring`.
+By implementing general algebra concepts such as discrete rings, field of fractions and polynomials, `Aerobus` can serve multiple purposes, mainly polynomial arithmetic at compile time and efficient [@aerobus_benchmarks_2023] polynomial evaluation, regardless of the coefficients `ring`.
 
 The main application we want to express in this paper is the automatic (and configurable) generation or Taylor approximation of analytic functions such as `exp` or `sin`, by using polynomial arithmetic at compile time.
 
@@ -53,7 +53,7 @@ Some others can provide vectorized functions, such as [@wang2014intel] does. But
 
 `Aerobus` provides automatic generation of such functions, in a hardware-independent way, as tested on x86 and CUDA platforms. In addition, `Aerobus` provides a way to control the precision of the generated function by changing the degree of Taylor expansion, which can't be used in competing libraries without reimplementing the whole function or changing the array of coefficients.
 
-Please note that, `Aerobus` does not provide optimal approximation polynomials the way [@chevillard2010sollya] does. However, `Sollya` can be used beforehand to feed `aerobus` with appropriate coefficients. Similarly, `Aerobus` does not perform (yet) compensated Horner scheme like in [@graillat2006compensated] or floating point manipulations (domain normalization) to extend domain of approximation, like it is done in standard library.
+`Aerobus` does not provide optimal approximation polynomials the way [@chevillard2010sollya] does. However, `Sollya` could be used beforehand to feed `aerobus` with appropriate coefficients. `Aerobus` does not provide floating point manipulations (domain normalization) to extend domain of approximation, like it is done in standard library.
 
 ## Mathematic definitions
 
@@ -143,34 +143,15 @@ $$P(x) = a_0 + X (a_1 + X (a_2 + X(... + X(a_{n-1} + X an))))$$
 
 which is automaticcaly done by `aerobus` using the `polynomial::val::eval` function.
 
-The library also provides built-in integers and functions, such as:
+This evaluation function is `constexpr` and therefore will be completely computed at compile time when called on a constant.
 
-- `is_prime` : checks if an integer is prime;
-- `factorial_t` : factorial of an integer;
-- `pow_t` : power function ($a^n$);
-- `alternate_t` : $(-1)^p$;
-- `combination_t` : combination $\binom{n}{k}$;
-- `bernouilli_t` : Bernoulli numbers (used for some Taylor series).
+Polynomials also expose Compensated Horner scheme like in [@graillat2006compensated], to gain extra precision when evaluating polynomials close to its roots.
 
-And Taylor series for these functions:
+The library also provides built-in integers and functions, such as Bernouilli numbers, factorials or other utilities.
 
-- `exp`
-- `expm1` $e^x - 1$
-- `lnp1` $\ln(x+1)$
-- `geom` $\frac{1}{1-x}$
-- `sin`
-- `cos`
-- `tan`
-- `sh`
-- `cosh`
-- `tanh`
-- `asin`
-- `acos`
-- `acosh`
-- `asinh`
-- `atanh`
+Some well known Taylor series, such as `exp` or `acosh` come preimplemented.
 
-Additionally, the library comes with a type designed to help the users implement other Taylor series.
+The library comes with a type designed to help the users implement other Taylor series.
 If users provide a type `mycoeff` satisfying the appropriate template (depending on the `Ring` of coefficients and degree), the corresponding Taylor expansion can be built automatically as a polynomial over this `Ring` and then, evaluated at some value in a native arithmetic type (such as `double`).
 
 ## Misc
@@ -204,26 +185,9 @@ using PF2 = polynomial<F2>;
 using F4 = Quotient<PF2, ConwayPolynomial<2, 2>::type>;
 ```
 
-In unit tests, we checked that multiplication and addition tables are indeed those of $\mathbb{F}_4$.
+Multiplication and addition tables are checked to be those of $\mathbb{F}_4$.
 
 Surprisingly, compilation time is not significantly higher when we include `conwaypolynomials.h`. However, we chose to make it optional.
-
-## Benchmarks
-
-In "benchmarks.cpp", we compared ourselves to `std::math` and hardcoded fastmath calls. The standard library exposes functions (at link time only) such as `_ZGVeN8v_sin`. They are vectorized versions of `std::sin`, in this case, specialized for avx512 registers.
-
-Benchmarks are quite simple and test compute-intensive operations: computing sinus (compound twelve times) of all elements of a large double precision buffer of values (larger than cache). We run code on a laptop equipped with an Intel i7-1195G7 at 2.90GHz. The main loop is parallelized using OpenMP (version 201511) with a "parallel for".
-
-We make sure data is properly aligned and fits exactly an integer number of avx512 registers. The input vector is filled with random data from 0.5 to 0.5.
-
-We use different versions of sinus, varying the degree of the Taylor expansion from 1 to 17.
-
-For each version, we note performance (in billions of sinus per second) and error relative to `std::math`.
-
-Peak performance is reached for degree 3 with 20 billions sinus per second (error $\sim 10^{-4}$).
-Error is minimal ($10^{-16}$) for degree 13 with performance still significantly higher than fastmath.
-
-As said in the statement of need, users can conveniently choose precision or speed at compile time, which is, as far as we know, not possible in any other library.
 
 ## Acknowledgments
 
