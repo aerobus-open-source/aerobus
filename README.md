@@ -318,7 +318,9 @@ When compiled with `nvcc` and the flag `WITH_CUDA_FP16`, `Aerobus` provides some
 
 Unfortunately, NVIDIA did not put enough constexpr in its `cuda_fp16.h` header, so we had to implement our own constexpr static_cast from int16_t to `__half` to make integers polynomials work with `__half`. See [this bug](https://developer.nvidia.com/bugs/4863696).
 
-More, it's (at this time), not possible to make it work for `__half2` because of [another bug](https://developer.nvidia.com/bugs/4872028).
+More, it's (at this time), not easy to make it work for `__half2` because of [another bug](https://developer.nvidia.com/bugs/4872028).
+
+One workaround is to add `constexpr` modifier on line 5039 of file cuda_fp16.h. Once done, `examples\fp16.cu" compiles and generates proper assembly. 
 
 Please push to make these bug fixed by NVIDIA.
 
