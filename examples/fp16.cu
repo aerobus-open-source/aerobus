@@ -1,4 +1,5 @@
 // TO compile with nvcc -O3 -std=c++20 -arch=sm_90 fp16.cu
+// TO GET optimal performances, modify cuda_fp16.h by adding __CUDA_FP16_CONSTEXPR__ to line 5039 (version 12.6)
 #include <cstdio>
 
 #define WITH_CUDA_FP16
@@ -32,6 +33,11 @@ struct Expm1Degree<__half2> {
     static constexpr size_t val = 6;
 };
 
+template<>
+struct Expm1Degree<__half> {
+    static constexpr size_t val = 6;
+};
+
 double rand(double min, double max) {
   double range = (max - min);
   double div = RAND_MAX / range;
@@ -62,6 +68,13 @@ struct GetRandT<__half2> {
     }
 };
 
+template<>
+struct GetRandT<__half> {
+    static __half func(double min, double max) {
+        return __float2half((float)rand(min, max));
+    }
+};
+
 using EXPM1 = aerobus::expm1<int_type, Expm1Degree<float_type>::val>;
 
 
@@ -71,7 +84,7 @@ __device__ INLINED float_type f(float_type x) {
 
 __global__ void run(size_t N, float_type* in, float_type* out) {
     for(size_t i = threadIdx.x + blockDim.x * blockIdx.x; i < N; i += blockDim.x * gridDim.x) {
-        out[i] = f(f(f(f(f(f(in[i]))))));
+        out[i] = f(f(f(f(f(f(f(f(f(f(f(f(in[i]))))))))))));
     }
 }
 
@@ -96,3 +109,98 @@ int main() {
     cudaFree(d_in);
     cudaFree(d_out);
 }
+
+// generated SASS : 
+
+/*
+HFMA2.MMA R5, R6, RZ, 0.0013885498046875, 0.0013885498046875 ;    
+HFMA2 R5, R6, R5, 0.008331298828125, 0.008331298828125 ;          
+HFMA2.MMA R5, R6, R5, 0.041656494140625, 0.041656494140625 ;      
+HFMA2 R5, R6, R5, 0.1666259765625, 0.1666259765625 ;              
+HFMA2.MMA R5, R6, R5, 0.5, 0.5 ;                                  
+HFMA2 R5, R6, R5, 1, 1 ;                                          
+HFMA2.MMA R5, R6, R5, RZ ;                                        
+HFMA2 R7, R5, RZ.H0_H0, 0.0013885498046875, 0.0013885498046875 ;  
+HFMA2.MMA R7, R5, R7, 0.008331298828125, 0.008331298828125 ;      
+HFMA2 R7, R5, R7, 0.041656494140625, 0.041656494140625 ;          
+HFMA2.MMA R7, R5, R7, 0.1666259765625, 0.1666259765625 ;          
+HFMA2 R7, R5, R7, 0.5, 0.5 ;                                      
+HFMA2.MMA R7, R5, R7, 1, 1 ;                                      
+HFMA2 R7, R5, R7, RZ.H0_H0 ;                                      
+HFMA2.MMA R5, R7, RZ, 0.0013885498046875, 0.0013885498046875 ;    
+HFMA2 R5, R7, R5, 0.008331298828125, 0.008331298828125 ;          
+HFMA2.MMA R5, R7, R5, 0.041656494140625, 0.041656494140625 ;      
+HFMA2 R5, R7, R5, 0.1666259765625, 0.1666259765625 ;              
+HFMA2.MMA R5, R7, R5, 0.5, 0.5 ;                                  
+HFMA2 R5, R7, R5, 1, 1 ;                                          
+HFMA2.MMA R5, R7, R5, RZ ;                                        
+HFMA2 R6, R5, RZ.H0_H0, 0.0013885498046875, 0.0013885498046875 ;  
+HFMA2.MMA R6, R5, R6, 0.008331298828125, 0.008331298828125 ;      
+HFMA2 R6, R5, R6, 0.041656494140625, 0.041656494140625 ;          
+HFMA2.MMA R6, R5, R6, 0.1666259765625, 0.1666259765625 ;          
+HFMA2 R6, R5, R6, 0.5, 0.5 ;                                      
+HFMA2.MMA R6, R5, R6, 1, 1 ;                                      
+HFMA2 R6, R5, R6, RZ.H0_H0 ;                                      
+HFMA2.MMA R5, R6, RZ, 0.0013885498046875, 0.0013885498046875 ;    
+HFMA2 R5, R6, R5, 0.008331298828125, 0.008331298828125 ;          
+HFMA2.MMA R5, R6, R5, 0.041656494140625, 0.041656494140625 ;      
+HFMA2 R5, R6, R5, 0.1666259765625, 0.1666259765625 ;              
+HFMA2.MMA R5, R6, R5, 0.5, 0.5 ;                                  
+HFMA2 R5, R6, R5, 1, 1 ;                                          
+HFMA2.MMA R5, R6, R5, RZ ;                                        
+HFMA2 R6, R5, RZ.H0_H0, 0.0013885498046875, 0.0013885498046875 ;  
+HFMA2.MMA R6, R5, R6, 0.008331298828125, 0.008331298828125 ;      
+HFMA2 R6, R5, R6, 0.041656494140625, 0.041656494140625 ;          
+HFMA2.MMA R6, R5, R6, 0.1666259765625, 0.1666259765625 ;          
+HFMA2 R6, R5, R6, 0.5, 0.5 ;                                      
+HFMA2.MMA R6, R5, R6, 1, 1 ;                                      
+HFMA2 R6, R5, R6, RZ.H0_H0 ;                                      
+HFMA2.MMA R5, R6, RZ, 0.0013885498046875, 0.0013885498046875 ;    
+HFMA2 R5, R6, R5, 0.008331298828125, 0.008331298828125 ;          
+HFMA2.MMA R5, R6, R5, 0.041656494140625, 0.041656494140625 ;      
+HFMA2 R5, R6, R5, 0.1666259765625, 0.1666259765625 ;              
+HFMA2.MMA R5, R6, R5, 0.5, 0.5 ;                                  
+HFMA2 R5, R6, R5, 1, 1 ;                                          
+HFMA2.MMA R5, R6, R5, RZ ;                                        
+HFMA2 R6, R5, RZ.H0_H0, 0.0013885498046875, 0.0013885498046875 ;  
+HFMA2.MMA R6, R5, R6, 0.008331298828125, 0.008331298828125 ;      
+HFMA2 R6, R5, R6, 0.041656494140625, 0.041656494140625 ;          
+HFMA2.MMA R6, R5, R6, 0.1666259765625, 0.1666259765625 ;          
+HFMA2 R6, R5, R6, 0.5, 0.5 ;                                      
+HFMA2.MMA R6, R5, R6, 1, 1 ;                                      
+HFMA2 R6, R5, R6, RZ.H0_H0 ;                                      
+HFMA2.MMA R5, R6, RZ, 0.0013885498046875, 0.0013885498046875 ;    
+HFMA2 R5, R6, R5, 0.008331298828125, 0.008331298828125 ;          
+HFMA2.MMA R5, R6, R5, 0.041656494140625, 0.041656494140625 ;      
+HFMA2 R5, R6, R5, 0.1666259765625, 0.1666259765625 ;              
+HFMA2.MMA R5, R6, R5, 0.5, 0.5 ;                                  
+HFMA2 R5, R6, R5, 1, 1 ;                                          
+HFMA2.MMA R5, R6, R5, RZ ;                                        
+HFMA2 R6, R5, RZ.H0_H0, 0.0013885498046875, 0.0013885498046875 ;  
+HFMA2.MMA R6, R5, R6, 0.008331298828125, 0.008331298828125 ;      
+HFMA2 R6, R5, R6, 0.041656494140625, 0.041656494140625 ;          
+HFMA2.MMA R6, R5, R6, 0.1666259765625, 0.1666259765625 ;          
+HFMA2 R6, R5, R6, 0.5, 0.5 ;                                      
+HFMA2.MMA R6, R5, R6, 1, 1 ;                                      
+HFMA2 R6, R5, R6, RZ.H0_H0 ;                                      
+HFMA2.MMA R5, R6, RZ, 0.0013885498046875, 0.0013885498046875 ;    
+HFMA2 R5, R6, R5, 0.008331298828125, 0.008331298828125 ;          
+HFMA2.MMA R5, R6, R5, 0.041656494140625, 0.041656494140625 ;      
+HFMA2 R5, R6, R5, 0.1666259765625, 0.1666259765625 ;              
+HFMA2.MMA R5, R6, R5, 0.5, 0.5 ;                                  
+HFMA2 R5, R6, R5, 1, 1 ;                                          
+HFMA2.MMA R6, R6, R5, RZ ;                                        
+HFMA2 R5, R6, RZ.H0_H0, 0.0013885498046875, 0.0013885498046875 ;  
+HFMA2.MMA R5, R6, R5, 0.008331298828125, 0.008331298828125 ;      
+HFMA2 R5, R6, R5, 0.041656494140625, 0.041656494140625 ;          
+HFMA2.MMA R5, R6, R5, 0.1666259765625, 0.1666259765625 ;          
+HFMA2 R5, R6, R5, 0.5, 0.5 ;                                      
+HFMA2.MMA R7, R6, R5, 1, 1 ;                                      
+IADD3.X R5, R8, UR11, RZ, P0, !PT ;                               
+IADD3 R3, P0, R2, R3, RZ ;                                        
+IADD3.X R0, RZ, R0, RZ, P0, !PT ;                                 
+ISETP.GE.U32.AND P0, PT, R3, UR8, PT ;                            
+HFMA2 R7, R6, R7, RZ.H0_H0 ;                                      
+ISETP.GE.U32.AND.EX P0, PT, R0, UR9, PT, P0 ;                     
+STG.E desc[UR6][R4.64], R7 ;                  
+*/
