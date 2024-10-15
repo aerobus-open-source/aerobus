@@ -314,11 +314,32 @@ constexpr double A_SQRT3 = aerobus::SQRT3_fraction::val; // 1.732050807568877293
 
 ## CUDA
 
-When compiled with `nvcc` and the flag `WITH_CUDA_FP16`, `Aerobus` provides some kind of support of 16 bits integers and floats (aka `__half`).
+When compiled with `nvcc` and the flag `WITH_CUDA_FP16`, `Aerobus` provides some support of 16 bits integers and floats (aka `__half`).
 
 Unfortunately, NVIDIA did not put enough constexpr in its `cuda_fp16.h` header, so we had to implement our own constexpr static_cast from int16_t to `__half` to make integers polynomials work with `__half`. See [this bug](https://developer.nvidia.com/bugs/4863696).
 
-More, it's (at this time), not possible to make it work for `__half2` because of [another bug](https://developer.nvidia.com/bugs/4872028).
+More, it's (at this time), not easily possible to make it work for `__half2` because of [another bug](https://developer.nvidia.com/bugs/4872028).
+
+A workaround is to modify `cuda_fp16.h` and add a constexpr modifier to line 5039. This works but only tested on Linux with CUDA 16.1.
+
+Once done, nvcc generates splendid assembly, same as for `double` or `float`:
+
+```asm
+HFMA2.MMA R5, R6, RZ, 0.0013885498046875, 0.0013885498046875 ;    
+HFMA2 R5, R6, R5, 0.008331298828125, 0.008331298828125 ;          
+HFMA2.MMA R5, R6, R5, 0.041656494140625, 0.041656494140625 ;      
+HFMA2 R5, R6, R5, 0.1666259765625, 0.1666259765625 ;              
+HFMA2.MMA R5, R6, R5, 0.5, 0.5 ;                                  
+HFMA2 R5, R6, R5, 1, 1 ;                                          
+HFMA2.MMA R5, R6, R5, RZ ;                                        
+HFMA2 R7, R5, RZ.H0_H0, 0.0013885498046875, 0.0013885498046875 ;  
+HFMA2.MMA R7, R5, R7, 0.008331298828125, 0.008331298828125 ;      
+HFMA2 R7, R5, R7, 0.041656494140625, 0.041656494140625 ;          
+HFMA2.MMA R7, R5, R7, 0.1666259765625, 0.1666259765625 ;          
+HFMA2 R7, R5, R7, 0.5, 0.5 ;                                      
+HFMA2.MMA R7, R5, R7, 1, 1 ;                                      
+HFMA2 R7, R5, R7, RZ.H0_H0 ;                                  
+```
 
 Please push to make these bug fixed by NVIDIA.
 

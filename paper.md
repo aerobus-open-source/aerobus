@@ -53,7 +53,7 @@ Some others can provide vectorized functions, such as [@wang2014intel] does. But
 
 `Aerobus` provides automatic generation of such functions, in a hardware-independent way, as tested on x86 and CUDA platforms. In addition, `Aerobus` provides a way to control the precision of the generated function by changing the degree of Taylor expansion, which can't be used in competing libraries without reimplementing the whole function or changing the array of coefficients.
 
-`Aerobus` does not provide optimal approximation polynomials the way [@ChevillardJoldesLauter2010] does. However, `Sollya` could be used beforehand to feed `aerobus` with appropriate coefficients. `Aerobus` does not provide floating point manipulations (domain normalization) to extend domain of approximation, like it is done in standard library.
+`Aerobus` does not provide optimal approximation polynomials the way [@ChevillardJoldesLauter2010] does. However, `Sollya` can be used beforehand to feed `aerobus` with appropriate coefficients. `Aerobus` does not provide floating point manipulations (domain normalization) to extend domain of approximation, like it is done in standard library implementations.
 
 ## Mathematic definitions
 
