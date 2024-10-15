@@ -760,6 +760,60 @@ TEST(utilities, pow) {
     EXPECT_EQ(a3, 27);
 }
 
+TEST(sollya, expm1_float) {
+    using P = polynomial<q32>::template val<
+        make_q32_t<33771, 1320736876>,
+        make_q32_t<192347, 939654189>,
+        make_q32_t<2498407, 1799830379>,
+        make_q32_t<7975888, 957650921>,
+        make_q32_t<34034752, 816828017>,
+        make_q32_t<344868026, 2069191783>,
+        make_q32_t<326970344, 653940747>,
+        make_q32_t<2009304618, 2009304817>,
+        make_q32_t<1, 907978194>>;
+    float infnorm = 0.0F;
+    for (float x = -0.099F; x <= 0.099F; x += 0.01F) {
+        float y = P::eval(x);
+        float xy = std::abs(y - std::expm1(x));
+        if (xy > infnorm) {
+            infnorm = xy;
+        }
+    }
+
+    EXPECT_TRUE((infnorm < 1.5E-8F)) << infnorm;
+}
+
+TEST(sollya, taylor_vs_remez) {
+    using P = aerobus::polynomial<aerobus::q32>::template val<
+        aerobus::make_q32_t<33771, 1320736876>,
+        aerobus::make_q32_t<192347, 939654189>,
+        aerobus::make_q32_t<2498407, 1799830379>,
+        aerobus::make_q32_t<7975888, 957650921>,
+        aerobus::make_q32_t<34034752, 816828017>,
+        aerobus::make_q32_t<344868026, 2069191783>,
+        aerobus::make_q32_t<326970344, 653940747>,
+        aerobus::make_q32_t<2009304618, 2009304817>,
+        aerobus::make_q32_t<1, 907978194>>;
+
+    float inf_remez = 0.0F;
+    float inf_taylor = 0.0F;
+
+    for (float x = -0.99F; x <= 0.99F; x += 0.01F) {
+        float y = P::eval(x);
+        float yy = aerobus::expm1<i32, 8>::eval(x);
+        float remez_error = std::abs(y - std::expm1(x));
+        float taylor_error = std::abs(yy - std::expm1(x));
+        if (remez_error > inf_remez) {
+            inf_remez = remez_error;
+        }
+        if (taylor_error > inf_taylor) {
+            inf_taylor = taylor_error;
+        }
+    }
+
+    EXPECT_TRUE((inf_remez < inf_taylor));
+}
+
 TEST(utilities, pow_scalar) {
     constexpr int32_t a0 = pow_scalar<int32_t, 2>(2);
     EXPECT_EQ(a0, 4);

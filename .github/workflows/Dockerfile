@@ -1,11 +1,14 @@
 FROM ubuntu:latest
 
+# install packages
 RUN apt update
 RUN apt install  -y clang g++ libomp-dev cppcheck cpplint doxygen texlive-latex-base texlive-fonts-recommended texlive-fonts-extra texlive-latex-extra
 RUN apt install -y build-essential
 RUN apt install -y cmake
 RUN apt install -y git
+RUN apt install -y libsollya
 
+# install google benchmarks
 RUN mkdir -p /usr/share/github
 WORKDIR /usr/share/github
 RUN git clone https://github.com/google/benchmark.git
