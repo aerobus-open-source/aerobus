@@ -2799,6 +2799,18 @@ namespace aerobus {
     using make_q32_t = typename q32::template simplify_t<
                 typename q32::val<i32::inject_constant_t<p>, i32::inject_constant_t<q>>>;
 
+    #ifdef WITH_CUDA_FP16
+    /// @brief rational with 16 bits
+    using q16 = FractionField<i16>;
+
+    /// @brief helper type : make a fraction from numerator and denominator
+    /// @tparam p numerator
+    /// @tparam q denominator
+    template<int16_t p, int16_t q>
+    using make_q16_t = typename q16::template simplify_t<
+                typename q16::val<i16::inject_constant_t<p>, i16::inject_constant_t<q>>>;
+
+    #endif
     /// @brief helper type : adds two fractions
     /// @tparam Ring
     /// @tparam v1 belongs to FractionField<Ring>
