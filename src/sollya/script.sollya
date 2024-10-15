@@ -1,15 +1,15 @@
 // this script generates aerobus polynomial for given FUNC, on given INTERVAL, with integers having BITS bits
 
 INTERVAL = [-1, 1]; // INTERVAL to approximate FUNC on
-FUNC = expm1(x); // any expression supported by sollya
+FUNC = expm1(x) / x; // any expression supported by sollya
 BITS = 32; // supported values : 16, 32, 64
-MANTISSA = 24;
 
 
 
 FP_EPS = 488e-6; // for half precision
 MIN_INT = -32768;
 MAX_INT = 32767; 
+FORMAT = [|HP...|];
 
 if(BITS == 16) then {
     print("running for 16 bits");
@@ -17,7 +17,7 @@ if(BITS == 16) then {
     MAX_INT = 32767;
     RATIONAL = "q16";
     FP_EPS = 488e-6;
-    MANTISSA = 11;
+    FORMAT = [|HP...|];
 };
 
 if(BITS == 32) then {
@@ -26,7 +26,7 @@ if(BITS == 32) then {
     MAX_INT = 2147483647;
     RATIONAL = "q32";
     FP_EPS = 596e-10;
-    MANTISSA = 24;
+    FORMAT = [|SG...|];
 };
 
 if(BITS == 64) then {
@@ -35,7 +35,7 @@ if(BITS == 64) then {
     MAX_INT = 9223372036854775807;
     RATIONAL = "q64";
     FP_EPS = 111e-18;
-    MANTISSA = 53;
+    FORMAT = [|D...|];
 };
 
 if(BITS != 16 && BITS != 32 && BITS != 64) then {
@@ -54,11 +54,11 @@ if (d > 128) then {
 };
 
 // fpminimax looks less stable than pure remez, to investigate
-P = remez(FUNC, d, INTERVAL);
+P = fpminimax(FUNC, d, FORMAT, INTERVAL);
 
 P;
 
-prec = MANTISSA;
+prec = BITS;
 infnorm1 = dirtyinfnorm(P-FUNC, INTERVAL);
 print("error on INTERVAL: ", infnorm1);
 prec = 165;
@@ -66,14 +66,14 @@ prec = 165;
 
 write("using P = aerobus::polynomial<aerobus::", RATIONAL, ">::template val<");
 
-// find a rational approximation of ccc with numerator and denomirator fitting in int16, int32 or int64
+// find a rational approximation of ccc with numerator and denominator fitting in int16, int32 or int64
 find_rational = proc(ccc) {
     bits = 2;
     nn = 0;
     dd = 1;
     rrr = rationalapprox(ccc, bits);
     rr := rrr;
-    for ii from 2 to 128 do {
+    for ii from 2 to BITS do {
         bits = bits + 1;
         rrr = rationalapprox(ccc, bits);
         nn = numerator(rrr);
@@ -100,7 +100,11 @@ for i from d to 0 by -1 do {
     c = find_rational(coefficient);
     nn = numerator(c);
     dd = denominator(c);
-    write("aerobus::make_", RATIONAL, "_t<", nn, ", ", dd,">");
+    if(dd == 1 && nn == 1) then {
+        write("aerobus::", RATIONAL, "::one");
+    } else {
+        write("aerobus::make_", RATIONAL, "_t<", nn, ", ", dd,">");
+    };
     if(i > 0) then {
         write(", ");
     };
@@ -108,7 +112,7 @@ for i from d to 0 by -1 do {
 
 print(">;");
 
-prec = MANTISSA;
+prec = BITS;
 infnorm2 = dirtyinfnorm(P2 - FUNC, INTERVAL);
 print("error with rationals: ", infnorm2);
 prec = 165;

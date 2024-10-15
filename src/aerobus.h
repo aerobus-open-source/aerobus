@@ -171,6 +171,7 @@ namespace aerobus {
                 return __half2(convert_int16_to_half<x>, convert_int16_to_half<x>);
             }
         };
+
     }  // namespace internal
 }  // namespace aerobus
 #endif
