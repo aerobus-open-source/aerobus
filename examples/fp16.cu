@@ -88,10 +88,44 @@ __global__ void run(size_t N, float_type* in, float_type* out) {
     }
 }
 
+#define cudaErrorCheck(ans) { gpuAssert((ans), __FILE__, __LINE__); }
+inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
+{
+   if (code != cudaSuccess) 
+   {
+      fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
+      if (abort) exit(code);
+   }
+}
+
 int main() {
+    // configure CUDA devices
+    int deviceCount;
+    int device = -1;
+    int maxProcCount = 0;
+    cudaErrorCheck(cudaGetDeviceCount(&deviceCount));
+    for(int i = 0; i < deviceCount; ++i) {
+        cudaDeviceProp prop;
+        cudaErrorCheck(cudaGetDeviceProperties(&prop, i));
+        int procCount = prop.multiProcessorCount;
+        if(procCount > maxProcCount) {
+            maxProcCount = procCount;
+            device = i;
+        }
+    }
+
+    if(device == -1) {
+        ::printf("CANNOT FIND CUDA CAPABLE DEVICE -- aborting\n");
+        ::abort();
+    }
+
+    cudaErrorCheck(cudaSetDevice(device));
+
+
+    // allocate and populate memory
     float_type *d_in, *d_out;
-    cudaMalloc<float_type>(&d_in, N * sizeof(float_type));
-    cudaMalloc<float_type>(&d_out, N * sizeof(float_type));
+    cudaErrorCheck(cudaMalloc<float_type>(&d_in, N * sizeof(float_type)));
+    cudaErrorCheck(cudaMalloc<float_type>(&d_out, N * sizeof(float_type)));
 
     float_type *in = reinterpret_cast<float_type*>(malloc(N * sizeof(float_type)));
     float_type *out = reinterpret_cast<float_type*>(malloc(N * sizeof(float_type)));
@@ -100,14 +134,15 @@ int main() {
         in[i] = GetRandT<float_type>::func(-0.01, 0.01);
     }
 
-    cudaMemcpy(d_in, in, N * sizeof(float_type), cudaMemcpyHostToDevice);
+    cudaErrorCheck(cudaMemcpy(d_in, in, N * sizeof(float_type), cudaMemcpyHostToDevice));
 
-    run<<<128, 512>>>(N, d_in, d_out);
+    // execute kernel and get memory back from device
+    run<<<8 * maxProcCount, 256>>>(N, d_in, d_out);
+    cudaErrorCheck(cudaPeekAtLastError());
+    cudaErrorCheck(cudaMemcpy(out, d_out, N * sizeof(float_type), cudaMemcpyDeviceToHost));
 
-    cudaMemcpy(out, d_out, N * sizeof(float_type), cudaMemcpyDeviceToHost);
-
-    cudaFree(d_in);
-    cudaFree(d_out);
+    cudaErrorCheck(cudaFree(d_in));
+    cudaErrorCheck(cudaFree(d_out));
 }
 
 // generated SASS : 
