@@ -81,21 +81,24 @@ $(function() {
 <div class="contents">
 <p>How to leverage CUDA __half and __half2 16 bits floating points number using aerobus::i16 Warning : due to an NVIDIA bug (lack of constexpr operators), performance is not good</p>
 <div class="fragment"><div class="line">// TO compile with nvcc -O3 -std=c++20 -arch=sm_90 fp16.cu</div>
+<div class="line">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</div>
 <div class="line">// TO GET optimal performances, modify cuda_fp16.h by adding __CUDA_FP16_CONSTEXPR__ to line 5039 (version 12.6)</div>
+<div class="line">=======</div>
+<div class="line">// Beforehand, you need to modify cuda_fp16.h by adding __CUDA_FP16_CONSTEXPR__ to line 5039 (version 12.6)</div>
+<div class="line">&gt;&gt;&gt;&gt;&gt;&gt;&gt; main</div>
 <div class="line">#include &lt;cstdio&gt;</div>
 <div class="line"> </div>
 <div class="line">#define WITH_CUDA_FP16</div>
 <div class="line">#include &quot;../src/aerobus.h&quot;</div>
 <div class="line"> </div>
 <div class="line">/*</div>
-<div class="line">change int_type to aerobus::i32 (or i64) and float_type to float (resp. double)</div>
-<div class="line">to see how good is the generated assembly compared to what nvcc generates for 16 bits </div>
+<div class="line">You may want to change int_type to aerobus::i32 (or i64) and float_type to float (resp. double)</div>
 <div class="line">*/</div>
 <div class="line">using int_type = aerobus::i16;</div>
 <div class="line">using float_type = __half2;</div>
 <div class="line"> </div>
 <div class="line"> </div>
-<div class="line">constexpr size_t N = 1 &lt;&lt; 24;</div>
+<div class="line">constexpr size_t N = 1 &lt;&lt; 26;</div>
 <div class="line"> </div>
 <div class="line">template&lt;typename T&gt;</div>
 <div class="line">struct Expm1Degree;</div>
@@ -166,14 +169,59 @@ $(function() {
 <div class="line"> </div>
 <div class="line">__global__ void run(size_t N, float_type* in, float_type* out) {</div>
 <div class="line">    for(size_t i = threadIdx.x + blockDim.x * blockIdx.x; i &lt; N; i += blockDim.x * gridDim.x) {</div>
+<div class="line">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</div>
 <div class="line">        out[i] = f(f(f(f(f(f(f(f(f(f(f(f(in[i]))))))))))));</div>
+<div class="line">=======</div>
+<div class="line">        // fp16 FMA pipeline is quite wide so we need to feed it with a LOT of computations</div>
+<div class="line">        out[i] = f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(in[i]))))))))))))))))));</div>
+<div class="line">&gt;&gt;&gt;&gt;&gt;&gt;&gt; main</div>
 <div class="line">    }</div>
 <div class="line">}</div>
 <div class="line"> </div>
+<div class="line">#define cudaErrorCheck(ans) { gpuAssert((ans), __FILE__, __LINE__); }</div>
+<div class="line">inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)</div>
+<div class="line">{</div>
+<div class="line">   if (code != cudaSuccess) </div>
+<div class="line">   {</div>
+<div class="line">      fprintf(stderr,&quot;GPUassert: %s %s %d\n&quot;, cudaGetErrorString(code), file, line);</div>
+<div class="line">      if (abort) exit(code);</div>
+<div class="line">   }</div>
+<div class="line">}</div>
+<div class="line"> </div>
 <div class="line">int main() {</div>
+<div class="line">    // configure CUDA devices</div>
+<div class="line">    int deviceCount;</div>
+<div class="line">    int device = -1;</div>
+<div class="line">    int maxProcCount = 0;</div>
+<div class="line">    cudaErrorCheck(cudaGetDeviceCount(&amp;deviceCount));</div>
+<div class="line">    for(int i = 0; i &lt; deviceCount; ++i) {</div>
+<div class="line">        cudaDeviceProp prop;</div>
+<div class="line">        cudaErrorCheck(cudaGetDeviceProperties(&amp;prop, i));</div>
+<div class="line">        int procCount = prop.multiProcessorCount;</div>
+<div class="line">        if(procCount &gt; maxProcCount) {</div>
+<div class="line">            maxProcCount = procCount;</div>
+<div class="line">            device = i;</div>
+<div class="line">        }</div>
+<div class="line">    }</div>
+<div class="line"> </div>
+<div class="line">    if(device == -1) {</div>
+<div class="line">        ::printf(&quot;CANNOT FIND CUDA CAPABLE DEVICE -- aborting\n&quot;);</div>
+<div class="line">        ::abort();</div>
+<div class="line">    }</div>
+<div class="line"> </div>
+<div class="line">    cudaErrorCheck(cudaSetDevice(device));</div>
+<div class="line">    int blockSize;   // The launch configurator returned block size </div>
+<div class="line">    int minGridSize; // The minimum grid size needed to achieve the </div>
+<div class="line">                    // maximum occupancy for a full device launch </div>
+<div class="line"> </div>
+<div class="line">    cudaErrorCheck(cudaOccupancyMaxPotentialBlockSize( &amp;minGridSize, &amp;blockSize, &amp;run, 0, 0)); </div>
+<div class="line"> </div>
+<div class="line">    ::printf(&quot;configure launch bounds to %d-%d\n&quot;, minGridSize, blockSize);</div>
+<div class="line"> </div>
+<div class="line">    // allocate and populate memory</div>
 <div class="line">    float_type *d_in, *d_out;</div>
-<div class="line">    cudaMalloc&lt;float_type&gt;(&amp;d_in, N * sizeof(float_type));</div>
-<div class="line">    cudaMalloc&lt;float_type&gt;(&amp;d_out, N * sizeof(float_type));</div>
+<div class="line">    cudaErrorCheck(cudaMalloc&lt;float_type&gt;(&amp;d_in, N * sizeof(float_type)));</div>
+<div class="line">    cudaErrorCheck(cudaMalloc&lt;float_type&gt;(&amp;d_out, N * sizeof(float_type)));</div>
 <div class="line"> </div>
 <div class="line">    float_type *in = reinterpret_cast&lt;float_type*&gt;(malloc(N * sizeof(float_type)));</div>
 <div class="line">    float_type *out = reinterpret_cast&lt;float_type*&gt;(malloc(N * sizeof(float_type)));</div>
@@ -182,15 +230,111 @@ $(function() {
 <div class="line">        in[i] = GetRandT&lt;float_type&gt;::func(-0.01, 0.01);</div>
 <div class="line">    }</div>
 <div class="line"> </div>
-<div class="line">    cudaMemcpy(d_in, in, N * sizeof(float_type), cudaMemcpyHostToDevice);</div>
+<div class="line">    cudaErrorCheck(cudaMemcpy(d_in, in, N * sizeof(float_type), cudaMemcpyHostToDevice));</div>
 <div class="line"> </div>
-<div class="line">    run&lt;&lt;&lt;128, 512&gt;&gt;&gt;(N, d_in, d_out);</div>
+<div class="line">    // execute kernel and get memory back from device</div>
+<div class="line">    run&lt;&lt;&lt;minGridSize, blockSize&gt;&gt;&gt;(N, d_in, d_out);</div>
+<div class="line">    cudaErrorCheck(cudaPeekAtLastError());</div>
+<div class="line">    cudaErrorCheck(cudaMemcpy(out, d_out, N * sizeof(float_type), cudaMemcpyDeviceToHost));</div>
 <div class="line"> </div>
-<div class="line">    cudaMemcpy(out, d_out, N * sizeof(float_type), cudaMemcpyDeviceToHost);</div>
-<div class="line"> </div>
-<div class="line">    cudaFree(d_in);</div>
-<div class="line">    cudaFree(d_out);</div>
+<div class="line">    cudaErrorCheck(cudaFree(d_in));</div>
+<div class="line">    cudaErrorCheck(cudaFree(d_out));</div>
 <div class="line">}</div>
+<div class="line"> </div>
+<div class="line">// Example of generated SASS : </div>
+<div class="line"> </div>
+<div class="line">/*</div>
+<div class="line">HFMA2.MMA R5, R6, RZ, 0.0013885498046875, 0.0013885498046875 ;    </div>
+<div class="line">HFMA2 R5, R6, R5, 0.008331298828125, 0.008331298828125 ;          </div>
+<div class="line">HFMA2.MMA R5, R6, R5, 0.041656494140625, 0.041656494140625 ;      </div>
+<div class="line">HFMA2 R5, R6, R5, 0.1666259765625, 0.1666259765625 ;              </div>
+<div class="line">HFMA2.MMA R5, R6, R5, 0.5, 0.5 ;                                  </div>
+<div class="line">HFMA2 R5, R6, R5, 1, 1 ;                                          </div>
+<div class="line">HFMA2.MMA R5, R6, R5, RZ ;                                        </div>
+<div class="line">HFMA2 R7, R5, RZ.H0_H0, 0.0013885498046875, 0.0013885498046875 ;  </div>
+<div class="line">HFMA2.MMA R7, R5, R7, 0.008331298828125, 0.008331298828125 ;      </div>
+<div class="line">HFMA2 R7, R5, R7, 0.041656494140625, 0.041656494140625 ;          </div>
+<div class="line">HFMA2.MMA R7, R5, R7, 0.1666259765625, 0.1666259765625 ;          </div>
+<div class="line">HFMA2 R7, R5, R7, 0.5, 0.5 ;                                      </div>
+<div class="line">HFMA2.MMA R7, R5, R7, 1, 1 ;                                      </div>
+<div class="line">HFMA2 R7, R5, R7, RZ.H0_H0 ;                                      </div>
+<div class="line">HFMA2.MMA R5, R7, RZ, 0.0013885498046875, 0.0013885498046875 ;    </div>
+<div class="line">HFMA2 R5, R7, R5, 0.008331298828125, 0.008331298828125 ;          </div>
+<div class="line">HFMA2.MMA R5, R7, R5, 0.041656494140625, 0.041656494140625 ;      </div>
+<div class="line">HFMA2 R5, R7, R5, 0.1666259765625, 0.1666259765625 ;              </div>
+<div class="line">HFMA2.MMA R5, R7, R5, 0.5, 0.5 ;                                  </div>
+<div class="line">HFMA2 R5, R7, R5, 1, 1 ;                                          </div>
+<div class="line">HFMA2.MMA R5, R7, R5, RZ ;                                        </div>
+<div class="line">HFMA2 R6, R5, RZ.H0_H0, 0.0013885498046875, 0.0013885498046875 ;  </div>
+<div class="line">HFMA2.MMA R6, R5, R6, 0.008331298828125, 0.008331298828125 ;      </div>
+<div class="line">HFMA2 R6, R5, R6, 0.041656494140625, 0.041656494140625 ;          </div>
+<div class="line">HFMA2.MMA R6, R5, R6, 0.1666259765625, 0.1666259765625 ;          </div>
+<div class="line">HFMA2 R6, R5, R6, 0.5, 0.5 ;                                      </div>
+<div class="line">HFMA2.MMA R6, R5, R6, 1, 1 ;                                      </div>
+<div class="line">HFMA2 R6, R5, R6, RZ.H0_H0 ;                                      </div>
+<div class="line">HFMA2.MMA R5, R6, RZ, 0.0013885498046875, 0.0013885498046875 ;    </div>
+<div class="line">HFMA2 R5, R6, R5, 0.008331298828125, 0.008331298828125 ;          </div>
+<div class="line">HFMA2.MMA R5, R6, R5, 0.041656494140625, 0.041656494140625 ;      </div>
+<div class="line">HFMA2 R5, R6, R5, 0.1666259765625, 0.1666259765625 ;              </div>
+<div class="line">HFMA2.MMA R5, R6, R5, 0.5, 0.5 ;                                  </div>
+<div class="line">HFMA2 R5, R6, R5, 1, 1 ;                                          </div>
+<div class="line">HFMA2.MMA R5, R6, R5, RZ ;                                        </div>
+<div class="line">HFMA2 R6, R5, RZ.H0_H0, 0.0013885498046875, 0.0013885498046875 ;  </div>
+<div class="line">HFMA2.MMA R6, R5, R6, 0.008331298828125, 0.008331298828125 ;      </div>
+<div class="line">HFMA2 R6, R5, R6, 0.041656494140625, 0.041656494140625 ;          </div>
+<div class="line">HFMA2.MMA R6, R5, R6, 0.1666259765625, 0.1666259765625 ;          </div>
+<div class="line">HFMA2 R6, R5, R6, 0.5, 0.5 ;                                      </div>
+<div class="line">HFMA2.MMA R6, R5, R6, 1, 1 ;                                      </div>
+<div class="line">HFMA2 R6, R5, R6, RZ.H0_H0 ;                                      </div>
+<div class="line">HFMA2.MMA R5, R6, RZ, 0.0013885498046875, 0.0013885498046875 ;    </div>
+<div class="line">HFMA2 R5, R6, R5, 0.008331298828125, 0.008331298828125 ;          </div>
+<div class="line">HFMA2.MMA R5, R6, R5, 0.041656494140625, 0.041656494140625 ;      </div>
+<div class="line">HFMA2 R5, R6, R5, 0.1666259765625, 0.1666259765625 ;              </div>
+<div class="line">HFMA2.MMA R5, R6, R5, 0.5, 0.5 ;                                  </div>
+<div class="line">HFMA2 R5, R6, R5, 1, 1 ;                                          </div>
+<div class="line">HFMA2.MMA R5, R6, R5, RZ ;                                        </div>
+<div class="line">HFMA2 R6, R5, RZ.H0_H0, 0.0013885498046875, 0.0013885498046875 ;  </div>
+<div class="line">HFMA2.MMA R6, R5, R6, 0.008331298828125, 0.008331298828125 ;      </div>
+<div class="line">HFMA2 R6, R5, R6, 0.041656494140625, 0.041656494140625 ;          </div>
+<div class="line">HFMA2.MMA R6, R5, R6, 0.1666259765625, 0.1666259765625 ;          </div>
+<div class="line">HFMA2 R6, R5, R6, 0.5, 0.5 ;                                      </div>
+<div class="line">HFMA2.MMA R6, R5, R6, 1, 1 ;                                      </div>
+<div class="line">HFMA2 R6, R5, R6, RZ.H0_H0 ;                                      </div>
+<div class="line">HFMA2.MMA R5, R6, RZ, 0.0013885498046875, 0.0013885498046875 ;    </div>
+<div class="line">HFMA2 R5, R6, R5, 0.008331298828125, 0.008331298828125 ;          </div>
+<div class="line">HFMA2.MMA R5, R6, R5, 0.041656494140625, 0.041656494140625 ;      </div>
+<div class="line">HFMA2 R5, R6, R5, 0.1666259765625, 0.1666259765625 ;              </div>
+<div class="line">HFMA2.MMA R5, R6, R5, 0.5, 0.5 ;                                  </div>
+<div class="line">HFMA2 R5, R6, R5, 1, 1 ;                                          </div>
+<div class="line">HFMA2.MMA R5, R6, R5, RZ ;                                        </div>
+<div class="line">HFMA2 R6, R5, RZ.H0_H0, 0.0013885498046875, 0.0013885498046875 ;  </div>
+<div class="line">HFMA2.MMA R6, R5, R6, 0.008331298828125, 0.008331298828125 ;      </div>
+<div class="line">HFMA2 R6, R5, R6, 0.041656494140625, 0.041656494140625 ;          </div>
+<div class="line">HFMA2.MMA R6, R5, R6, 0.1666259765625, 0.1666259765625 ;          </div>
+<div class="line">HFMA2 R6, R5, R6, 0.5, 0.5 ;                                      </div>
+<div class="line">HFMA2.MMA R6, R5, R6, 1, 1 ;                                      </div>
+<div class="line">HFMA2 R6, R5, R6, RZ.H0_H0 ;                                      </div>
+<div class="line">HFMA2.MMA R5, R6, RZ, 0.0013885498046875, 0.0013885498046875 ;    </div>
+<div class="line">HFMA2 R5, R6, R5, 0.008331298828125, 0.008331298828125 ;          </div>
+<div class="line">HFMA2.MMA R5, R6, R5, 0.041656494140625, 0.041656494140625 ;      </div>
+<div class="line">HFMA2 R5, R6, R5, 0.1666259765625, 0.1666259765625 ;              </div>
+<div class="line">HFMA2.MMA R5, R6, R5, 0.5, 0.5 ;                                  </div>
+<div class="line">HFMA2 R5, R6, R5, 1, 1 ;                                          </div>
+<div class="line">HFMA2.MMA R6, R6, R5, RZ ;                                        </div>
+<div class="line">HFMA2 R5, R6, RZ.H0_H0, 0.0013885498046875, 0.0013885498046875 ;  </div>
+<div class="line">HFMA2.MMA R5, R6, R5, 0.008331298828125, 0.008331298828125 ;      </div>
+<div class="line">HFMA2 R5, R6, R5, 0.041656494140625, 0.041656494140625 ;          </div>
+<div class="line">HFMA2.MMA R5, R6, R5, 0.1666259765625, 0.1666259765625 ;          </div>
+<div class="line">HFMA2 R5, R6, R5, 0.5, 0.5 ;                                      </div>
+<div class="line">HFMA2.MMA R7, R6, R5, 1, 1 ;                                      </div>
+<div class="line">IADD3.X R5, R8, UR11, RZ, P0, !PT ;                               </div>
+<div class="line">IADD3 R3, P0, R2, R3, RZ ;                                        </div>
+<div class="line">IADD3.X R0, RZ, R0, RZ, P0, !PT ;                                 </div>
+<div class="line">ISETP.GE.U32.AND P0, PT, R3, UR8, PT ;                            </div>
+<div class="line">HFMA2 R7, R6, R7, RZ.H0_H0 ;                                      </div>
+<div class="line">ISETP.GE.U32.AND.EX P0, PT, R0, UR9, PT, P0 ;                     </div>
+<div class="line">STG.E desc[UR6][R4.64], R7 ;                  </div>
+<div class="line">*/</div>
 </div><!-- fragment --> </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

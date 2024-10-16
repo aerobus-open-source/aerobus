@@ -320,30 +320,34 @@ namespace aerobus {
             static constexpr float shift = (1 << r) + 1;
         };
 
-        #ifdef WITH_CUDA_FP16
-        template <>
-        struct FloatLayout<__half> {
-            static constexpr uint8_t exponent = 5;
-            static constexpr uint8_t mantissa = 11;  // 10 explicitely stored
-            static constexpr uint8_t r = 6;  // ceil(mantissa/2)
-            static constexpr __half shift = internal::int16_convert_helper<__half, 65>::value();
+        template<typename T>
+        struct Split {
+            static constexpr INLINED DEVICE void func(T a, T *x, T *y)  {
+                T z = a * FloatLayout<T>::shift;
+                *x = z - (z - a);
+                *y = a - *x;
+            }
         };
 
-        template <>
-        struct FloatLayout<__half2> {
-            static constexpr uint8_t exponent = 5;
-            static constexpr uint8_t mantissa = 11;  // 10 explicitely stored
-            static constexpr uint8_t r = 6;  // ceil(mantissa/2)
-            static constexpr __half2 shift = internal::int16_convert_helper<__half2, 65>::value();
+        #ifdef WITH_CUDA_FP16
+        template<>
+        struct Split<__half> {
+            static constexpr INLINED DEVICE void func(__half a, __half *x, __half *y) {
+                __half z = a * __half_raw(0x5280);  // TODO(JeWaVe): check this value
+                *x = z - (z - a);
+                *y = a - *x;
+            }
+        };
+
+        template<>
+        struct Split<__half2> {
+            static constexpr INLINED DEVICE void func(__half2 a, __half2 *x, __half2 *y) {
+                __half2 z = a * __half2(__half_raw(0x5280), __half_raw(0x5280));  // TODO(JeWaVe): check this value
+                *x = z - (z - a);
+                *y = a - *x;
+            }
         };
         #endif
-
-        template<typename T>
-        static constexpr INLINED DEVICE void split(T a, T *x, T *y) {
-            T z = a * FloatLayout<T>::shift;
-            *x = z - (z - a);
-            *y = a - *x;
-        }
 
         template<typename T>
         static constexpr INLINED DEVICE void two_sum(T a, T b, T *x, T *y) {
@@ -359,8 +363,8 @@ namespace aerobus {
             *y = fma_helper<T>::eval(a, b, -*x);
             #else
             T ah, al, bh, bl;
-            split(a, &ah, &al);
-            split(b, &bh, &bl);
+            Split<T>::func(a, &ah, &al);
+            Split<T>::func(b, &bh, &bl);
             *y = al * bl - (((*x - ah * bh) - al * bh) - ah * bl);
             #endif
         }
@@ -2129,7 +2133,7 @@ namespace aerobus {
         struct compensated_horner {
             template<int64_t index, int ghost>
             struct EFTHorner {
-                static INLINED void func(
+                static INLINED DEVICE void func(
                         arithmeticType x, arithmeticType *pi, arithmeticType *sigma, arithmeticType *r) {
                     arithmeticType p;
                     internal::two_prod(*r, x, &p, pi + P::degree - index - 1);
