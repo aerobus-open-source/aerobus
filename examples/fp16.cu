@@ -1,19 +1,18 @@
 // TO compile with nvcc -O3 -std=c++20 -arch=sm_90 fp16.cu
-// TO GET optimal performances, modify cuda_fp16.h by adding __CUDA_FP16_CONSTEXPR__ to line 5039 (version 12.6)
+// Beforehand, you need to modify cuda_fp16.h by adding __CUDA_FP16_CONSTEXPR__ to line 5039 (version 12.6)
 #include <cstdio>
 
 #define WITH_CUDA_FP16
 #include "../src/aerobus.h"
 
 /*
-change int_type to aerobus::i32 (or i64) and float_type to float (resp. double)
-to see how good is the generated assembly compared to what nvcc generates for 16 bits 
+You may want to change int_type to aerobus::i32 (or i64) and float_type to float (resp. double)
 */
 using int_type = aerobus::i16;
 using float_type = __half2;
 
 
-constexpr size_t N = 1 << 24;
+constexpr size_t N = 1 << 26;
 
 template<typename T>
 struct Expm1Degree;
@@ -84,7 +83,8 @@ __device__ INLINED float_type f(float_type x) {
 
 __global__ void run(size_t N, float_type* in, float_type* out) {
     for(size_t i = threadIdx.x + blockDim.x * blockIdx.x; i < N; i += blockDim.x * gridDim.x) {
-        out[i] = f(f(f(f(f(f(f(f(f(f(f(f(in[i]))))))))))));
+        // fp16 FMA pipeline is quite wide so we need to feed it with a LOT of computations
+        out[i] = f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(in[i]))))))))))))))))));
     }
 }
 
@@ -120,7 +120,13 @@ int main() {
     }
 
     cudaErrorCheck(cudaSetDevice(device));
+    int blockSize;   // The launch configurator returned block size 
+    int minGridSize; // The minimum grid size needed to achieve the 
+                    // maximum occupancy for a full device launch 
 
+    cudaErrorCheck(cudaOccupancyMaxPotentialBlockSize( &minGridSize, &blockSize, &run, 0, 0)); 
+
+    ::printf("configure launch bounds to %d-%d\n", minGridSize, blockSize);
 
     // allocate and populate memory
     float_type *d_in, *d_out;
@@ -137,7 +143,7 @@ int main() {
     cudaErrorCheck(cudaMemcpy(d_in, in, N * sizeof(float_type), cudaMemcpyHostToDevice));
 
     // execute kernel and get memory back from device
-    run<<<8 * maxProcCount, 256>>>(N, d_in, d_out);
+    run<<<minGridSize, blockSize>>>(N, d_in, d_out);
     cudaErrorCheck(cudaPeekAtLastError());
     cudaErrorCheck(cudaMemcpy(out, d_out, N * sizeof(float_type), cudaMemcpyDeviceToHost));
 
@@ -145,7 +151,7 @@ int main() {
     cudaErrorCheck(cudaFree(d_out));
 }
 
-// generated SASS : 
+// Example of generated SASS : 
 
 /*
 HFMA2.MMA R5, R6, RZ, 0.0013885498046875, 0.0013885498046875 ;    
