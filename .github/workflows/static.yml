@@ -28,6 +28,8 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    container:
+      image: comua/aerobus-open-source:build-1.3
     steps:
       - name: Checkout
         uses: actions/checkout@v4
