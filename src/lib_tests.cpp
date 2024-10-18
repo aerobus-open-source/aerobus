@@ -7,6 +7,7 @@
 #include <array>
 #include <cmath>
 #include <cstdlib>
+#include <bitset>
 
 #define AEROBUS_CONWAY_IMPORTS
 #include "./aerobus.h"
@@ -1156,5 +1157,94 @@ TEST(embedding, polynomial) {
         using embedded = embed_int_poly_in_fractions_t<make_int_polynomial_t<i32, 2, 1>>;
         EXPECT_TRUE((std::is_same_v<embedded, make_frac_polynomial_t<i32, 2, 1>>))
             << "actual : " << embedded::to_string();
+    }
+}
+
+TEST(libm, exp2) {
+    EXPECT_EQ(aerobus::libm::exp2(1.0), 2.0);
+    EXPECT_EQ(aerobus::libm::exp2(1.00000000001), std::exp2(1.00000000001));
+    EXPECT_EQ(aerobus::libm::exp2(2.0), 4.0);
+    EXPECT_EQ(aerobus::libm::exp2(2.0), 4.0);
+}
+
+
+TEST(libm, sin) {
+    using constants = aerobus::internal::arithmetic_helpers<float>;
+    float values[] = {
+        constants::pi / 8,
+        3 * constants::pi / 8,
+        3 * constants::pi / 4,
+        3 * constants::pi / 2,
+        constants::pi,
+        9 * constants::pi / 8,
+        10.0,
+        -1.0,
+    };
+
+    for (float x : values) {
+        float aero = aerobus::libm::sin(x);
+        float expected = std::sin(x);
+        EXPECT_TRUE((std::fabs(expected - aero) < std::numeric_limits<float>::epsilon())) << "aerobus::sin(" << x << ")"
+            << " computed : " << std::hexfloat << aero << " but should " << expected << std::endl
+            << "difference is : " << std::fabs(aero - expected) << std::endl;
+    }
+
+    float exact_values[16] = {
+        1E28F, std::numeric_limits<float>::quiet_NaN(),
+        std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
+        1E-26F, 1E-26F,
+        -1E-26F, -1E-26F,
+        -0, -0,
+        0, 0,
+        std::numeric_limits<float>::infinity(), std::numeric_limits<double>::quiet_NaN(),
+        -std::numeric_limits<float>::infinity(), std::numeric_limits<double>::quiet_NaN()
+    };
+
+    for (int i = 0; i < 16; i += 2) {
+        float x = exact_values[i];
+        float aero = aerobus::libm::sin(x);
+        float expected = exact_values[i+1];
+        EXPECT_EQ(aero, expected);
+    }
+}
+
+
+TEST(libm, cos) {
+    using constants = aerobus::internal::arithmetic_helpers<float>;
+    float values[] = {
+        constants::pi / 8,
+        3 * constants::pi / 8,
+        3 * constants::pi / 4,
+        3 * constants::pi / 2,
+        constants::pi,
+        9 * constants::pi / 8,
+        10.0,
+        -1.0,
+    };
+
+    for (float x : values) {
+        float aero = aerobus::libm::cos(x);
+        float expected = std::cos(x);
+        EXPECT_TRUE((std::fabs(expected - aero) < std::numeric_limits<float>::epsilon())) << "aerobus::cos(" << x << ")"
+            << " computed : " << std::hexfloat << aero << " but should " << expected << std::endl
+            << "difference is : " << std::fabs(aero - expected) << std::endl;
+    }
+
+    float exact_values[16] = {
+        1E28F, std::numeric_limits<float>::quiet_NaN(),
+        std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
+        1E-26F, 1.0F,
+        -1E-26F, 1.0F,
+        -0, 1.0F,
+        0, 1.0F,
+        std::numeric_limits<float>::infinity(), std::numeric_limits<double>::quiet_NaN(),
+        -std::numeric_limits<float>::infinity(), std::numeric_limits<double>::quiet_NaN()
+    };
+
+    for (int i = 0; i < 16; i += 2) {
+        float x = exact_values[i];
+        float aero = aerobus::libm::cos(x);
+        float expected = exact_values[i+1];
+        EXPECT_EQ(aero, expected);
     }
 }

@@ -85,7 +85,8 @@
         "semaphore": "cpp",
         "span": "cpp",
         "cinttypes": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "bitset": "cpp"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

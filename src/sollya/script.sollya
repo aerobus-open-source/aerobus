@@ -1,12 +1,12 @@
 // this script generates aerobus polynomial for given FUNC, on given INTERVAL, with integers having BITS bits
 
-INTERVAL = [-1, 1]; // INTERVAL to approximate FUNC on
-FUNC = expm1(x) / x; // any expression supported by sollya
+INTERVAL = [-pi/4, pi/4]; // INTERVAL to approximate FUNC on
+FUNC = sin(x) / x; // any expression supported by sollyaa
+MONOMIALS = [|0, 2, 4, 6, 8, 10|]; // if non empty, it will discard degree in fpminimax call
 BITS = 32; // supported values : 16, 32, 64
+PREC = 24;
 
-
-
-FP_EPS = 488e-6; // for half precision
+FP_EPS = 0x1p-23; // for half precision
 MIN_INT = -32768;
 MAX_INT = 32767; 
 FORMAT = [|HP...|];
@@ -16,8 +16,9 @@ if(BITS == 16) then {
     MIN_INT = -32768;
     MAX_INT = 32767;
     RATIONAL = "q16";
-    FP_EPS = 488e-6;
+    FP_EPS = 0x1p-10;
     FORMAT = [|HP...|];
+    PREC = 11;
 };
 
 if(BITS == 32) then {
@@ -25,8 +26,9 @@ if(BITS == 32) then {
     MIN_INT = -2147483648;
     MAX_INT = 2147483647;
     RATIONAL = "q32";
-    FP_EPS = 596e-10;
+    FP_EPS = 0x1p-23;
     FORMAT = [|SG...|];
+    PREC = 24;
 };
 
 if(BITS == 64) then {
@@ -34,53 +36,70 @@ if(BITS == 64) then {
     MIN_INT = -9223372036854775808;
     MAX_INT = 9223372036854775807;
     RATIONAL = "q64";
-    FP_EPS = 111e-18;
+    FP_EPS = 0x1p-52;
     FORMAT = [|D...|];
+    PREC = 53;
 };
+
+print("format = ", FORMAT, "MAX_INT = ", MAX_INT, " MIN_INT = ", MIN_INT);
 
 if(BITS != 16 && BITS != 32 && BITS != 64) then {
     print("UNSUPPORTED ARGUMENT BITS MUST BE 16, 32, or 64");
     quit;
 };
 
-deg = guessdegree(FUNC, INTERVAL, FP_EPS);
-d = sup(deg);
+d = -1;
+if(length(MONOMIALS) == 0) then {
+    deg = guessdegree(FUNC, INTERVAL, FP_EPS);
+    d = sup(deg) + 1;
+};
 
 if (d > 128) then {
     print("no polynomial found");
     quit;
 } else {
-    print("degree of polynomial approximation for", FUNC, " : ", d);
+    if(d != -1) then {
+        print("degree of polynomial approximation for", FUNC, " : ", d);
+    };
 };
 
-// fpminimax looks less stable than pure remez, to investigate
-P = fpminimax(FUNC, d, FORMAT, INTERVAL);
+if(length(MONOMIALS) > 0) then {
+    P = fpminimax(FUNC, MONOMIALS, FORMAT, INTERVAL);
+};
+
+if(length(MONOMIALS) == 0) then {
+    P = fpminimax(FUNC, d, FORMAT, INTERVAL);
+};
 
 P;
 
-prec = BITS;
+
+prec = PREC;
 infnorm1 = dirtyinfnorm(P-FUNC, INTERVAL);
 print("error on INTERVAL: ", infnorm1);
 prec = 165;
 
 
-write("using P = aerobus::polynomial<aerobus::", RATIONAL, ">::template val<");
+write("using P = typename aerobus::polynomial<aerobus::", RATIONAL, ">::simplify_t<
+    typename aerobus::polynomial<aerobus::", RATIONAL, ">:: template val<\n");
 
 // find a rational approximation of ccc with numerator and denominator fitting in int16, int32 or int64
 find_rational = proc(ccc) {
+    //print(ccc, " : ");
     bits = 2;
-    nn = 0;
-    dd = 1;
     rrr = rationalapprox(ccc, bits);
+    nn = numerator(rrr);
+    dd = denominator(rrr);
     rr := rrr;
-    for ii from 2 to BITS do {
+    for ii from 2 to PREC do {
         bits = bits + 1;
         rrr = rationalapprox(ccc, bits);
         nn = numerator(rrr);
         dd = denominator(rrr);
-        if(nn < MAX_INT && nn >= MIN_INT && dd < MAX_INT && dd >= MIN_INT) then {
+        if(nn <= MAX_INT && nn >= MIN_INT && dd <= MAX_INT && dd >= MIN_INT) then {
             rr = rrr;
         };
+        //print("\tfor bits: ", bits, " : ", numerator(rr), " / ", denominator(rr));
     };
 
     return rr;
@@ -88,31 +107,36 @@ find_rational = proc(ccc) {
 
 // BUILD P2 (rational coeffs)
 P2 = 0;
-for i from 0 to d do { 
+for i from 0 to degree(P) do { 
     coefficient = coeff(P, i);
     c = find_rational(coefficient);
     P2 = P2 + c * x^i;
 };
 
 // PRINT FOR AEROBUS (reversed order)
-for i from d to 0 by -1 do {
+for i from degree(P) to 0 by -1 do {
     coefficient = coeff(P, i);
     c = find_rational(coefficient);
     nn = numerator(c);
     dd = denominator(c);
     if(dd == 1 && nn == 1) then {
-        write("aerobus::", RATIONAL, "::one");
-    } else {
-        write("aerobus::make_", RATIONAL, "_t<", nn, ", ", dd,">");
+        write("        aerobus::", RATIONAL, "::one");
+    }
+    else {
+        if(dd == 1 && nn == 0) then {
+            write("        aerobus::", RATIONAL, "::zero");
+        } else {
+            write("        aerobus::make_", RATIONAL, "_t<", nn, ", ", dd,">");
+        };
     };
     if(i > 0) then {
-        write(", ");
+        write(",\n");
     };
 };
 
-print(">;");
+print(">>;");
 
-prec = BITS;
+prec = PREC;
 infnorm2 = dirtyinfnorm(P2 - FUNC, INTERVAL);
 print("error with rationals: ", infnorm2);
 prec = 165;
