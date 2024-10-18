@@ -6,5 +6,8 @@ var searchData=
   ['continuedfraction_3',['ContinuedFraction',['../structaerobus_1_1_continued_fraction.html',1,'aerobus']]],
   ['continuedfraction_3c_20a0_20_3e_4',['ContinuedFraction&lt; a0 &gt;',['../structaerobus_1_1_continued_fraction_3_01a0_01_4.html',1,'aerobus']]],
   ['continuedfraction_3c_20a0_2c_20rest_2e_2e_2e_20_3e_5',['ContinuedFraction&lt; a0, rest... &gt;',['../structaerobus_1_1_continued_fraction_3_01a0_00_01rest_8_8_8_01_4.html',1,'aerobus']]],
-  ['conwaypolynomial_6',['ConwayPolynomial',['../structaerobus_1_1_conway_polynomial.html',1,'aerobus']]]
+  ['conwaypolynomial_6',['ConwayPolynomial',['../structaerobus_1_1_conway_polynomial.html',1,'aerobus']]],
+  ['cos_5fpoly_7',['cos_poly',['../structaerobus_1_1libm_1_1internal_1_1cos__poly.html',1,'aerobus::libm::internal']]],
+  ['cos_5fpoly_3c_20double_20_3e_8',['cos_poly&lt; double &gt;',['../structaerobus_1_1libm_1_1internal_1_1cos__poly_3_01double_01_4.html',1,'aerobus::libm::internal']]],
+  ['cos_5fpoly_3c_20float_20_3e_9',['cos_poly&lt; float &gt;',['../structaerobus_1_1libm_1_1internal_1_1cos__poly_3_01float_01_4.html',1,'aerobus::libm::internal']]]
 ];

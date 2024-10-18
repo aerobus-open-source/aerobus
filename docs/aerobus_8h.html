@@ -102,6 +102,8 @@ $(function() {
 <code>#include &lt;string&gt;</code><br />
 <code>#include &lt;concepts&gt;</code><br />
 <code>#include &lt;array&gt;</code><br />
+<code>#include &lt;cmath&gt;</code><br />
+<code>#include &lt;limits&gt;</code><br />
 </div><div class="textblock"><div class="dynheader">
 Include dependency graph for aerobus.h:</div>
 <div class="dyncontent">
@@ -112,6 +114,8 @@ Include dependency graph for aerobus.h:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structaerobus_1_1meta__libm.html">aerobus::meta_libm&lt; T &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structaerobus_1_1is__prime.html">aerobus::is_prime&lt; n &gt;</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">checks if n is prime  <a href="structaerobus_1_1is__prime.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -203,6 +207,18 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structaerobus_1_1_continued_fraction_3_01a0_00_01rest_8_8_8_01_4.html">aerobus::ContinuedFraction&lt; a0, rest... &gt;</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">specialization for multiple coefficients (strictly more than one)  <a href="structaerobus_1_1_continued_fraction_3_01a0_00_01rest_8_8_8_01_4.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structaerobus_1_1libm_1_1internal_1_1exp2__poly_3_01double_01_4.html">aerobus::libm::internal::exp2_poly&lt; double &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structaerobus_1_1libm_1_1internal_1_1exp2__poly_3_01float_01_4.html">aerobus::libm::internal::exp2_poly&lt; float &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structaerobus_1_1libm_1_1internal_1_1sin__poly_3_01double_01_4.html">aerobus::libm::internal::sin_poly&lt; double &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structaerobus_1_1libm_1_1internal_1_1sin__poly_3_01float_01_4.html">aerobus::libm::internal::sin_poly&lt; float &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structaerobus_1_1libm_1_1internal_1_1cos__poly_3_01double_01_4.html">aerobus::libm::internal::cos_poly&lt; double &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structaerobus_1_1libm_1_1internal_1_1cos__poly_3_01float_01_4.html">aerobus::libm::internal::cos_poly&lt; float &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structaerobus_1_1_conway_polynomial.html">aerobus::ConwayPolynomial</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -216,6 +232,10 @@ Namespaces</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:namespaceaerobus_1_1internal" id="r_namespaceaerobus_1_1internal"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceaerobus_1_1internal.html">aerobus::internal</a></td></tr>
 <tr class="memdesc:namespaceaerobus_1_1internal"><td class="mdescLeft">&#160;</td><td class="mdescRight">internal implementations, subject to breaking changes without notice <br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:namespaceaerobus_1_1libm" id="r_namespaceaerobus_1_1libm"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceaerobus_1_1libm.html">aerobus::libm</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:namespaceaerobus_1_1libm_1_1internal" id="r_namespaceaerobus_1_1libm_1_1internal"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceaerobus_1_1libm_1_1internal.html">aerobus::libm::internal</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="concepts" name="concepts"></a>
@@ -455,6 +475,10 @@ Functions</h2></td></tr>
 <tr class="memitem:a9c651cd814fc03ece0a5e58d88a46d8d" id="r_a9c651cd814fc03ece0a5e58d88a46d8d"><td class="memTemplParams" colspan="2">template&lt;std::size_t... Is&gt; </td></tr>
 <tr class="memitem:a9c651cd814fc03ece0a5e58d88a46d8d"><td class="memTemplItemLeft" align="right" valign="top">constexpr auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceaerobus_1_1internal.html#a9c651cd814fc03ece0a5e58d88a46d8d">aerobus::internal::index_sequence_reverse</a> (std::index_sequence&lt; Is... &gt; const &amp;) -&gt; decltype(std::index_sequence&lt; sizeof...(Is) - 1U - Is... &gt;{})</td></tr>
 <tr class="separator:a9c651cd814fc03ece0a5e58d88a46d8d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6f82199a8e1b2083e0bd7b52d26f41dd" id="r_a6f82199a8e1b2083e0bd7b52d26f41dd"><td class="memItemLeft" align="right" valign="top">brief computes&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceaerobus_1_1libm.html#a6f82199a8e1b2083e0bd7b52d26f41dd">aerobus::libm::x</a> (NOT TESTED YET) @tparam T @param x @return template&lt; typename T &gt; static T exp2(const T &amp;x)</td></tr>
+<tr class="separator:a6f82199a8e1b2083e0bd7b52d26f41dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5a1827bf8483bc1169603889495645cc" id="r_a5a1827bf8483bc1169603889495645cc"><td class="memItemLeft" align="right" valign="top">brief computes sine following IEEE recommendations exact values for and correct at epsilon for other values tparam T&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceaerobus_1_1libm.html#a5a1827bf8483bc1169603889495645cc">aerobus::libm::arithmetic_type</a> (float only so far) @param <a class="el" href="namespaceaerobus_1_1libm.html#a6f82199a8e1b2083e0bd7b52d26f41dd">x</a> input value @return <a class="el" href="namespaceaerobus.html#a6a87e8ee0bc53a7638a8b41eaa98b18d">sin</a>(<a class="el" href="namespaceaerobus_1_1libm.html#a6f82199a8e1b2083e0bd7b52d26f41dd">x</a>) template&lt; typename T &gt; static T <a class="el" href="namespaceaerobus.html#a6a87e8ee0bc53a7638a8b41eaa98b18d">sin</a>(const T &amp;<a class="el" href="namespaceaerobus_1_1libm.html#a6f82199a8e1b2083e0bd7b52d26f41dd">x</a>)</td></tr>
+<tr class="separator:a5a1827bf8483bc1169603889495645cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0475416c1cac96dae1a2d5e6a283b7fb" id="r_a0475416c1cac96dae1a2d5e6a283b7fb"><td class="memItemLeft" align="right" valign="top">brief Conway polynomials tparam p characteristic of the&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceaerobus.html#a0475416c1cac96dae1a2d5e6a283b7fb">aerobus::field</a> (prime number) @tparam n degree of extension template&lt; int p</td></tr>
 <tr class="separator:a0475416c1cac96dae1a2d5e6a283b7fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -479,6 +503,10 @@ Variables</h2></td></tr>
 <tr class="memitem:a6cb76a3b2f319241c85b35567737c226"><td class="memTemplItemLeft" align="right" valign="top">constexpr T::inner_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceaerobus.html#a6cb76a3b2f319241c85b35567737c226">aerobus::alternate_v</a> = internal::alternate&lt;T, k&gt;::value</td></tr>
 <tr class="memdesc:a6cb76a3b2f319241c85b35567737c226"><td class="mdescLeft">&#160;</td><td class="mdescRight">(-1)^k as value from T  <br /></td></tr>
 <tr class="separator:a6cb76a3b2f319241c85b35567737c226"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8dcbc6c04b58001c50db83c28214081c" id="r_a8dcbc6c04b58001c50db83c28214081c"><td class="memItemLeft" align="right" valign="top">brief computes sine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceaerobus_1_1libm.html#a8dcbc6c04b58001c50db83c28214081c">aerobus::libm::function</a></td></tr>
+<tr class="separator:a8dcbc6c04b58001c50db83c28214081c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8ef7d05f27a45020de5bddfa88c1d9b3" id="r_a8ef7d05f27a45020de5bddfa88c1d9b3"><td class="memItemLeft" align="right" valign="top">brief computes sine following IEEE recommendations exact values for and&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceaerobus_1_1libm.html#a8ef7d05f27a45020de5bddfa88c1d9b3">aerobus::libm::infinities</a></td></tr>
+<tr class="separator:a8ef7d05f27a45020de5bddfa88c1d9b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Macro Definition Documentation</h2>
 <a id="a8e7a3bf6003d72a62606f343c2db6245" name="a8e7a3bf6003d72a62606f343c2db6245"></a>

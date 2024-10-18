@@ -101,7 +101,7 @@ $(function() {
 <div class="line">    }</div>
 <div class="line"> </div>
 <div class="line">    <span class="keywordtype">double</span> H4(<span class="keywordtype">double</span> x) {</div>
-<div class="line">        <span class="keywordflow">return</span> 16 * aerobus::pow_scalar&lt;double, 4&gt;(x) - 48 * x * x + 12;</div>
+<div class="line">        <span class="keywordflow">return</span> 16 * aerobus::pow_scalar&lt;double, 4&gt;(x) - 48 * <a class="code hl_function" href="namespaceaerobus_1_1libm.html#a6f82199a8e1b2083e0bd7b52d26f41dd">x</a> * <a class="code hl_function" href="namespaceaerobus_1_1libm.html#a6f82199a8e1b2083e0bd7b52d26f41dd">x</a> + 12;</div>
 <div class="line">    }</div>
 <div class="line">}</div>
 <div class="line"> </div>
@@ -111,6 +111,7 @@ $(function() {
 <div class="line">    std::cout &lt;&lt; aerobus::known_polynomials::hermite_phys&lt;3&gt;::eval(10) &lt;&lt; <span class="charliteral">&#39;=&#39;</span> &lt;&lt; aerobuslib::H3(10) &lt;&lt; <span class="charliteral">&#39;\n&#39;</span></div>
 <div class="line">              &lt;&lt; aerobus::known_polynomials::hermite_phys&lt;4&gt;::eval(10) &lt;&lt; <span class="charliteral">&#39;=&#39;</span> &lt;&lt; aerobuslib::H4(10) &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
 <div class="line">}</div>
+<div class="ttc" id="anamespaceaerobus_1_1libm_html_a6f82199a8e1b2083e0bd7b52d26f41dd"><div class="ttname"><a href="namespaceaerobus_1_1libm.html#a6f82199a8e1b2083e0bd7b52d26f41dd">aerobus::libm::x</a></div><div class="ttdeci">brief computes x(NOT TESTED YET) @tparam T @param x @return template&lt; typename T &gt; static T exp2(const T &amp;x)</div><div class="ttdef"><b>Definition</b> aerobus.h:4464</div></div>
 </div><!-- fragment --> </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

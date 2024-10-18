@@ -8,5 +8,8 @@ var searchData=
   ['embed_3c_20q32_2c_20q64_20_3e_5',['Embed&lt; q32, q64 &gt;',['../structaerobus_1_1_embed_3_01q32_00_01q64_01_4.html',1,'aerobus']]],
   ['embed_3c_20quotient_3c_20ring_2c_20x_20_3e_2c_20ring_20_3e_6',['Embed&lt; Quotient&lt; Ring, X &gt;, Ring &gt;',['../structaerobus_1_1_embed_3_01_quotient_3_01_ring_00_01_x_01_4_00_01_ring_01_4.html',1,'aerobus']]],
   ['embed_3c_20ring_2c_20fractionfield_3c_20ring_20_3e_20_3e_7',['Embed&lt; Ring, FractionField&lt; Ring &gt; &gt;',['../structaerobus_1_1_embed_3_01_ring_00_01_fraction_field_3_01_ring_01_4_01_4.html',1,'aerobus']]],
-  ['embed_3c_20zpz_3c_20x_20_3e_2c_20i32_20_3e_8',['Embed&lt; zpz&lt; x &gt;, i32 &gt;',['../structaerobus_1_1_embed_3_01zpz_3_01x_01_4_00_01i32_01_4.html',1,'aerobus']]]
+  ['embed_3c_20zpz_3c_20x_20_3e_2c_20i32_20_3e_8',['Embed&lt; zpz&lt; x &gt;, i32 &gt;',['../structaerobus_1_1_embed_3_01zpz_3_01x_01_4_00_01i32_01_4.html',1,'aerobus']]],
+  ['exp2_5fpoly_9',['exp2_poly',['../structaerobus_1_1libm_1_1internal_1_1exp2__poly.html',1,'aerobus::libm::internal']]],
+  ['exp2_5fpoly_3c_20double_20_3e_10',['exp2_poly&lt; double &gt;',['../structaerobus_1_1libm_1_1internal_1_1exp2__poly_3_01double_01_4.html',1,'aerobus::libm::internal']]],
+  ['exp2_5fpoly_3c_20float_20_3e_11',['exp2_poly&lt; float &gt;',['../structaerobus_1_1libm_1_1internal_1_1exp2__poly_3_01float_01_4.html',1,'aerobus::libm::internal']]]
 ];
