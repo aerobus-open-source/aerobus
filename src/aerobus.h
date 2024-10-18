@@ -42,6 +42,8 @@
 
 //! \namespace aerobus::internal internal implementations, subject to breaking changes without notice
 
+//! \namespace aerobus::libm holds mathematical functions (such as cosine or sin), correct to epsilon
+
 // aligned allocation
 namespace aerobus {
     /**
