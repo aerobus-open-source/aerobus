@@ -4461,6 +4461,10 @@ namespace aerobus {
             #endif
         }  // namespace internal
 
+        /// @brief computes 2^x (NOT TESTED YET)
+        /// @tparam T
+        /// @param x
+        /// @return
         template<typename T>
         static T exp2(const T&x) {
             using poly = internal::exp2_poly<T>::type;
@@ -4485,6 +4489,13 @@ namespace aerobus {
         template<typename T>
         static T cos(const T& x);
 
+        /// @brief computes sine function, following IEEE-754 recommendations
+        ///
+        /// exact values for +-0 and infinities, correct at epsilon for other values
+        ///
+        /// @tparam T arithmetic_type (float only so far)
+        /// @param x input value
+        /// @return sin(x)
         template<typename T>
         static T sin(const T& x) {
             using upper_type = aerobus::internal::arithmetic_helpers<T>::upper_type;
@@ -4517,6 +4528,14 @@ namespace aerobus {
             }
         }
 
+
+        /// @brief computes cosine function, following IEEE-754 recommendations
+        ///
+        /// exact values for +-0 and infinities, correct at epsilon for other values
+        ///
+        /// @tparam T arithmetic_type (float only so far)
+        /// @param x input value
+        /// @return cos(x)
         template<typename T>
         static T cos(const T& x) {
             using poly = internal::cos_poly<T>::type;

@@ -1167,7 +1167,6 @@ TEST(libm, exp2) {
     EXPECT_EQ(aerobus::libm::exp2(2.0), 4.0);
 }
 
-
 TEST(libm, sin) {
     using constants = aerobus::internal::arithmetic_helpers<float>;
     float values[] = {
@@ -1207,7 +1206,6 @@ TEST(libm, sin) {
         EXPECT_EQ(aero, expected);
     }
 }
-
 
 TEST(libm, cos) {
     using constants = aerobus::internal::arithmetic_helpers<float>;

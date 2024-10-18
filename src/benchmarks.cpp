@@ -90,6 +90,47 @@ static void BM_std_sin_12(benchmark::State &state) {
     free(out);
 }
 
+
+static void BM_aero_cos_12(benchmark::State &state) {
+    using constants = aerobus::internal::arithmetic_helpers<float>;
+    float *in = aerobus::aligned_malloc<float>(state.range(0), 64);
+    float *out = aerobus::aligned_malloc<float>(state.range(0), 64);
+    #pragma omp parallel for
+    for (int64_t i = 0; i < state.range(0); ++i) {
+        in[i] = rand(constants::pi_2 - 0.01, constants::pi_2 + 0.01);
+    }
+    for (auto _ : state) {
+        #pragma omp parallel for
+        for (int64_t i = 0; i < state.range(0); ++i) {
+            out[i] = aerobus::libm::cos(aerobus::libm::cos(aerobus::libm::cos(
+                aerobus::libm::cos(aerobus::libm::cos(aerobus::libm::cos(
+                    aerobus::libm::cos(aerobus::libm::cos(aerobus::libm::cos(in[i])))))))));
+        }
+    }
+
+    free(in);
+    free(out);
+}
+
+static void BM_std_cos_12(benchmark::State &state) {
+    using constants = aerobus::internal::arithmetic_helpers<float>;
+    double *in = aerobus::aligned_malloc<double>(state.range(0), 64);
+    double *out = aerobus::aligned_malloc<double>(state.range(0), 64);
+    #pragma omp parallel for
+    for (int64_t i = 0; i < state.range(0); ++i) {
+        in[i] = rand(constants::pi_2 - 0.01, constants::pi_2 + 0.01);
+    }
+    for (auto _ : state) {
+        #pragma omp parallel for
+        for (int64_t i = 0; i < state.range(0); ++i) {
+            out[i] = ::cos(cos(cos(::cos(cos(cos(::cos(cos(cos(::cos(cos(cos(in[i]))))))))))));
+        }
+    }
+
+    free(in);
+    free(out);
+}
+
 static void BM_aero_hermite(benchmark::State &state) {
     double *in = aerobus::aligned_malloc<double>(state.range(0), 64);
     double *out = aerobus::aligned_malloc<double>(state.range(0), 64);
@@ -165,6 +206,8 @@ static void BM_horner_double(benchmark::State &state) {
     free(out);
 }
 
+BENCHMARK(BM_std_cos_12)->Range(1 << 10, 1 << 24);
+BENCHMARK(BM_aero_cos_12)->Range(1 << 10, 1 << 24);
 BENCHMARK(BM_std_sin_12)->Range(1 << 10, 1 << 24);
 BENCHMARK(BM_aero_sin_12)->Range(1 << 10, 1 << 24);
 BENCHMARK(BM_std_expm1_12)->Range(1 << 10, 1 << 24);
