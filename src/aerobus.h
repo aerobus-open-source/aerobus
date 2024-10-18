@@ -4503,7 +4503,8 @@ namespace aerobus {
             const upper_type two_pi = constants::two_pi;
             const upper_type pi_2 = constants::pi_2;
             upper_type X = static_cast<upper_type>(x);
-            // TODO(JeWaVe): infinities
+            // TODO(JeWaVe) : infinities as we don't want NaN propagation
+            // range reduction
             if (x == 0 || x == -0) {
                 return x;
             } else if (x < zero) {
@@ -4538,6 +4539,7 @@ namespace aerobus {
             constexpr upper_type pi_2 = constants::pi_2;
             upper_type X = static_cast<upper_type>(x);
             // domain reduction
+            // TODO(JeWaVe) : infinities as we don't want NaN propagation
             if (x == 0 || x == -0) {
                 return aerobus::internal::arithmetic_helpers<T>::one;
             } else if (x < zero) {
