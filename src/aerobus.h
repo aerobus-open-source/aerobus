@@ -4464,9 +4464,9 @@ namespace aerobus {
         }  // namespace internal
 
         /// @brief computes 2^x (NOT TESTED YET)
-        /// @tparam T
-        /// @param x
-        /// @return
+        /// @tparam T arithmetic type (float only so far)
+        /// @param x input
+        /// @return 2^x
         template<typename T>
         static T exp2(const T&x) {
             using poly = internal::exp2_poly<T>::type;
