@@ -4492,6 +4492,14 @@ namespace aerobus {
         template<typename T>
         static T cos(const T& x);
 
+        // works only in [-pi/4, pi/4]
+        // purpose is to allow vectorization
+        template<typename T>
+        static INLINED T fast_sin(const T& x) {
+            using poly = internal::sin_poly<T>::type;
+            return x * poly::eval(x*x);
+        }
+
         template<typename T>
         static T sin(const T& x) {
             using upper_type = aerobus::internal::arithmetic_helpers<T>::upper_type;
