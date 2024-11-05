@@ -1243,9 +1243,9 @@ TEST(libm, sin) {
         float aero = aerobus::libm::sin(x);
         float expected = std::sin(x);
         // uncomment to see small differences (usually 1E-24)
-        EXPECT_EQ(aero, expected) <<
-            std::hexfloat << "input : " << x << " expected : " << expected << " computed " << aero <<
-            std::endl << "    difference is : " << aero - expected << std::endl;
+        // EXPECT_EQ(aero, expected) <<
+        //     std::hexfloat << "input : " << x << " expected : " << expected << " computed " << aero <<
+        //     std::endl << "    difference is : " << aero - expected << std::endl;
         EXPECT_TRUE((std::fabs(expected - aero) < std::numeric_limits<float>::epsilon())) << "aerobus::sin(" << x << ")"
             << " computed : " << std::hexfloat << aero << " but should " << expected << std::endl
             << "difference is : " << std::fabs(aero - expected) << std::endl;

@@ -4567,7 +4567,7 @@ namespace aerobus {
                 bool return_x = false;
                 bool return_fast_sin = false;
                 bool return_fast_cos = false;
-                upper_type transform = u_constants::zero;
+                upper_type transform = u_constants::zero();
             };
 
             static constexpr upper_type d_pi = constants::pi();
@@ -4576,45 +4576,46 @@ namespace aerobus {
             static constexpr upper_type pi_2 = u_constants::pi_2();
             static constexpr upper_type pi_4 = u_constants::pi_4();
 
-            // TODO(JeWaVe) : remove recursion
             static DEVICE behavior eval(upper_type u_x, T x) {
-                ::printf("entering eval with %.12F\n", u_x);
-                const upper_type u_eps = std::numeric_limits<upper_type>::epsilon();
                 const T eps = std::numeric_limits<T>::epsilon();
-                if (x <= eps && x >= -eps) {
-                    return {
-                        .return_x = true,
-                        .transform = u_x
-                    };
-                } else if (x < -eps) {
-                    auto red = eval(-u_x, -x);
-                    red.negate = !red.negate;
-                    return red;
-                } else if (u_x < pi_4) {
-                    return {
-                        .return_fast_sin = true,
-                        .transform = u_x
-                    };
-                } else if (u_x < pi_2) {
-                    return {
-                        .return_fast_cos = true,
-                        .transform = pi_2 - u_x
-                    };
-                } else if (x < d_pi - eps) {
-                    return eval(pi - u_x, static_cast<T>(pi - u_x));
-                } else if (x < d_pi + eps) {
-                    return {
-                        .negate = true,
-                        .return_x = true,
-                        .transform = u_x - pi
-                    };
-                } else if (u_x < two_pi) {
-                    auto result = eval(two_pi - u_x, static_cast<T>(two_pi - u_x));
-                    result.negate = !result.negate;
-                    return result;
-                } else {
-                    upper_type red = aerobus::meta_libm<upper_type>::fmod(u_x, u_constants::two_pi());
-                    return eval(red, static_cast<T>(red));
+                behavior result {};
+                while (true) {
+                    if (x <= eps && x >= -eps) {
+                        result.return_x = true;
+                        result.transform = u_x;
+                        return result;
+                    } else if (x < -eps) {
+                        u_x = -u_x;
+                        x = -x;
+                        result.negate = !result.negate;
+                        continue;
+                    } else if (u_x < pi_4) {
+                        result.return_fast_sin = true;
+                        result.transform = u_x;
+                        return result;
+                    } else if (u_x < pi_2) {
+                        result.return_fast_cos = true;
+                        result.transform = pi_2 - u_x;
+                        return result;
+                    } else if (x < d_pi - eps) {
+                        u_x = pi - u_x;
+                        x = static_cast<T>(u_x);
+                        continue;
+                    } else if (x < d_pi + eps) {
+                        result.negate = true;
+                        result.return_x = true;
+                        result.transform = u_x - pi;
+                        return result;
+                    } else if (u_x < two_pi) {
+                        u_x = two_pi - u_x;
+                        x = static_cast<T>(u_x);
+                        result.negate = !result.negate;
+                        continue;
+                    } else {
+                        u_x = aerobus::meta_libm<upper_type>::fmod(u_x, u_constants::two_pi());
+                        x = static_cast<T>(u_x);
+                        continue;
+                    }
                 }
             }
         };
