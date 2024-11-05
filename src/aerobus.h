@@ -101,7 +101,7 @@ namespace aerobus {
 // all this shit is required because of NVIDIA bug https://developer.nvidia.com/bugs/4863696
 namespace aerobus {
     namespace internal {
-        static consteval DEVICE uint16_t my_internal_float2half(
+        static constexpr DEVICE uint16_t my_internal_float2half(
             const float f, uint32_t &sign, uint32_t &remainder) {
             uint32_t x;
             uint32_t u;
@@ -135,7 +135,7 @@ namespace aerobus {
             return static_cast<uint16_t>(result);
         }
 
-        static consteval DEVICE __half my_float2half_rn(const float a) {
+        static constexpr DEVICE __half my_float2half_rn(const float a) {
             __half val;
             __half_raw r;
             uint32_t sign = 0U;
@@ -188,7 +188,11 @@ namespace aerobus {
         template<typename Out, typename In>
         struct staticcast {
             template<auto x>
-            static consteval INLINED DEVICE Out func() {
+            static constexpr INLINED DEVICE Out func() {
+                return static_cast<Out>(x);
+            }
+
+            static INLINED DEVICE Out eval(const In& x) {
                 return static_cast<Out>(x);
             }
         };
@@ -197,7 +201,7 @@ namespace aerobus {
         template<>
         struct staticcast<__half, int16_t> {
             template<int16_t x>
-            static consteval INLINED DEVICE __half func() {
+            static constexpr INLINED DEVICE __half func() {
                 return int16_convert_helper<__half, x>::value();
             }
         };
@@ -205,8 +209,36 @@ namespace aerobus {
         template<>
         struct staticcast<__half2, int16_t> {
             template<int16_t x>
-            static consteval INLINED DEVICE __half2 func() {
+            static constexpr INLINED DEVICE __half2 func() {
                 return int16_convert_helper<__half2, x>::value();
+            }
+        };
+
+        template<>
+        struct staticcast<float, __half> {
+            static INLINED DEVICE float eval(const __half& x) {
+                return __half2float(x);
+            }
+        };
+
+        template<>
+        struct staticcast<double, __half> {
+            static INLINED DEVICE double eval(const __half& x) {
+                return static_cast<double>(__half2float(x));
+            }
+        };
+
+        template<>
+        struct staticcast<__half, float> {
+            static INLINED DEVICE __half eval(const float& x) {
+                return  __float2half(x);
+            }
+        };
+
+        template<>
+        struct staticcast<__half, double> {
+            static INLINED DEVICE __half eval(const double& x) {
+                return  __float2half(static_cast<float>(x));
             }
         };
         #endif
@@ -289,69 +321,81 @@ namespace aerobus {
 
 // arithmetic helpers
 namespace aerobus {
-    namespace internal {
-        struct double_double {};
+    struct double_double {};
 
-        template<typename T>
-        struct arithmetic_helpers;
+    template<typename T>
+    struct arithmetic_helpers;
 
-        template<>
-        struct arithmetic_helpers<double> {
-            using integers = int64_t;
-            using upper_type = double_double;
-            static constexpr double one = 1.0;
-            static constexpr double zero = 0.0;
-            static constexpr double pi = 0x1.921fb54442d18p1;
-            static constexpr double pi_2 = 0x1.921fb54442d18p0;
-            static constexpr double pi_4 = 0x1.921fb54442d18p-1;
-            static constexpr double two_pi = 0x1.921fb54442d18p2;
-            static constexpr double inv_two_pi = 0x1.45f306dc9c883p-3;
-            static constexpr double half = 0x1p-1;
-        };
+    template<>
+    struct arithmetic_helpers<double> {
+        using integers = int64_t;
+        using upper_type = double_double;
+        static INLINED DEVICE consteval double one() { return 1.0; }
+        static INLINED DEVICE consteval double zero() { return 0.0; }
+        static INLINED DEVICE consteval double m_zero() { return -0.0; }
+        static INLINED DEVICE consteval double pi() { return 0x1.921fb54442d18p1; }
+        static INLINED DEVICE consteval double pi_2() { return 0x1.921fb54442d18p0; }
+        static INLINED DEVICE consteval double pi_4() { return 0x1.921fb54442d18p-1; }
+        static INLINED DEVICE consteval double two_pi() { return 0x1.921fb54442d18p2; }
+        static INLINED DEVICE consteval double inv_two_pi() { return 0x1.45f306dc9c883p-3; }
+        static INLINED DEVICE consteval double half() { return 0x1p-1; }
+        static INLINED DEVICE bool is_inf(double x) {
+            return std::isinf(x);
+        }
+    };
 
-        template<>
-        struct arithmetic_helpers<float> {
-            using integers = int32_t;
-            using upper_type = double;
-            static constexpr double one = 1.0F;
-            static constexpr double zero = 0.0F;
-            static constexpr float pi = 0x1.921fb6p1f;
-            static constexpr double pi_2 = 0x1.921fb6p0f;
-            static constexpr double pi_4 = 0x1.921fb6p-1f;
-            static constexpr double two_pi = 0x1.921fb6p2f;
-            static constexpr double inv_two_pi = 0x1.45f306p-3f;
-            static constexpr double half = 0x1p-1f;
-        };
+    template<>
+    struct arithmetic_helpers<float> {
+        using integers = int32_t;
+        using upper_type = double;
+        static INLINED DEVICE consteval float one() { return 1.0F; }
+        static INLINED DEVICE consteval float zero() { return 0.0F; }
+        static INLINED DEVICE consteval float m_zero() { return -0x0p+0; }
+        static INLINED DEVICE consteval float pi() { return 0x1.921fb6p1f; }
+        static INLINED DEVICE consteval float pi_2() { return 0x1.921fb6p0f; }
+        static INLINED DEVICE consteval float pi_4() { return 0x1.921fb6p-1f; }
+        static INLINED DEVICE consteval float two_pi() { return 0x1.921fb6p2f; }
+        static INLINED DEVICE consteval float inv_two_pi() { return 0x1.45f306p-3f; }
+        static INLINED DEVICE consteval float half() { return 0x1p-1f; }
+        static INLINED DEVICE bool is_inf(float x) {
+            return std::isinf(x);
+        }
+    };
 
-        #ifdef WITH_CUDA_FP16
-        template<>
-        struct arithmetic_helpers<__half> {
-            using integers = int16_t;
-            using upper_type = float;
-            const __half one = CUDART_ONE_FP16;
-            const __half zero = CUDART_ZERO_FP16;
-            const __half pi = __half_raw(0x4248);
-            const __half pi_2 =   __half_raw(0b011111001001000);
-            const __half pi_4 =   __half_raw(0b011101001001000);
-            const __half two_pi = __half_raw(0b100011001001000);
-            const __half inv_two_pi = __half_raw(0b011000100011000);
-            const __half half = __half_raw(0b011100000000000);
-        };
+    #ifdef WITH_CUDA_FP16
+    template<>
+    struct arithmetic_helpers<__half> {
+        using integers = int16_t;
+        using upper_type = float;
+        static INLINED DEVICE consteval __half one() { return        __half_raw(0b0011110000000000); }
+        static INLINED DEVICE consteval __half zero() { return       __half_raw(0b0000000000000000); }
+        static INLINED DEVICE consteval __half pi() { return __half_raw(0b0100001001001000); }
+        static INLINED DEVICE consteval __half m_zero() { return     __half_raw(0b1000000000000000); }
+        static INLINED DEVICE consteval __half pi_2() { return       __half_raw(0b011111001001000); }
+        static INLINED DEVICE consteval __half pi_4() { return       __half_raw(0b011101001001000); }
+        static INLINED DEVICE consteval __half two_pi() { return     __half_raw(0b1000110010010000); }
+        static INLINED DEVICE consteval __half inv_two_pi() { return __half_raw(0b011000100011000); }
+        static INLINED DEVICE consteval __half half() { return       __half_raw(0b0011100000000000); }
+        static INLINED DEVICE bool is_inf(__half x) {
+            return __hisinf(x) != 0;
+        }
+    };
 
-        template<>
-        struct arithmetic_helpers<__half2> {
-            using integers = int16_t;
-            using upper_type = float;  // TODO(JeWaVe) : check for float2
-            const __half2 one = __half2(CUDART_ONE_FP16, CUDART_ONE_FP16);
-            const __half2 zero = __half2(CUDART_ZERO_FP16, CUDART_ZERO_FP16);
-            const __half2 pi = __half2(__half_raw(0x4248), __half_raw(0x4248));
-            const __half2 pi_2 = __half2(__half_raw(0b011111001001000), __half_raw(0b011111001001000));
-            const __half2 pi_4 = __half2(__half_raw(0b011101001001000), __half_raw(0b011101001001000));
-            const __half2 two_pi = __half2(__half_raw(0b100011001001000), __half_raw(0b100011001001000));
-            const __half2 half = __half2(__half_raw(0b011100000000000), __half_raw(0b011100000000000));
-        };
-        #endif
-    }  // namespace internal
+    // this is for libm and needs further investigation as libm vectorization is not easy
+    // template<>
+    // struct arithmetic_helpers<__half2> {
+    //     using integers = int16_t;
+    //     using upper_type = float;  // TODO(JeWaVe) : check for float2
+    //     static constexpr __half2 one = __half2(__half_raw(0b0011110000000000), __half_raw(0b0011110000000000));
+    //     static constexpr __half2 zero = __half2(__half_raw(0b0000000000000), __half_raw(0b0000000000000));
+    //     static constexpr __half2 m_zero = __half2(__half_raw(0b1000000000000), __half_raw(0b1000000000000));
+    //     static constexpr __half2 pi = __half2(__half_raw(0x4248), __half_raw(0x4248));
+    //     static constexpr __half2 pi_2 = __half2(__half_raw(0b011111001001000), __half_raw(0b011111001001000));
+    //     static constexpr __half2 pi_4 = __half2(__half_raw(0b011101001001000), __half_raw(0b011101001001000));
+    //     static constexpr __half2 two_pi = __half2(__half_raw(0b100011001001000), __half_raw(0b100011001001000));
+    //     static constexpr __half2 half = __half2(__half_raw(0b011100000000000), __half_raw(0b011100000000000));
+    // };
+    #endif
 
     template<typename T>
     struct meta_libm {
@@ -1020,7 +1064,7 @@ namespace aerobus {
 
             /// @brief string representation of value
             static std::string to_string() {
-                return std::to_string(x);
+                return std::to_string(x);  // NOLINT
             }
         };
 
@@ -4301,61 +4345,61 @@ namespace aerobus {
 namespace aerobus {
     namespace libm {
         namespace internal {
-            template<typename T>
-            struct exp2_poly;
+            // template<typename T>
+            // struct exp2_poly;
 
-            template<>
-            struct exp2_poly<double> {
-                using type = aerobus::polynomial<aerobus::q64>::template val<
-                    aerobus::make_q64_t<388, 10641171255427>,
-                    aerobus::make_q64_t<2296, 5579977897299>,
-                    aerobus::make_q64_t<4963, 697799188641>,
-                    aerobus::make_q64_t<15551, 152884735543>,
-                    aerobus::make_q64_t<21273, 16096444733>,
-                    aerobus::make_q64_t<683500, 44811710339>,
-                    aerobus::make_q64_t<44397656049575, 288230376151711744>,
-                    aerobus::make_q64_t<192156823709857, 144115188075855872>,
-                    aerobus::make_q64_t<693059242663871, 72057594037927936>,
-                    aerobus::make_q64_t<1999746264802375, 36028797018963968>,
-                    aerobus::make_q64_t<4327536028902111, 18014398509481984>,
-                    aerobus::make_q64_t<6243314768165359, 9007199254740992>,
-                    aerobus::q64::one>;
-            };
+            // template<>
+            // struct exp2_poly<double> {
+            //     using type = aerobus::polynomial<aerobus::q64>::template val<
+            //         aerobus::make_q64_t<388, 10641171255427>,
+            //         aerobus::make_q64_t<2296, 5579977897299>,
+            //         aerobus::make_q64_t<4963, 697799188641>,
+            //         aerobus::make_q64_t<15551, 152884735543>,
+            //         aerobus::make_q64_t<21273, 16096444733>,
+            //         aerobus::make_q64_t<683500, 44811710339>,
+            //         aerobus::make_q64_t<44397656049575, 288230376151711744>,
+            //         aerobus::make_q64_t<192156823709857, 144115188075855872>,
+            //         aerobus::make_q64_t<693059242663871, 72057594037927936>,
+            //         aerobus::make_q64_t<1999746264802375, 36028797018963968>,
+            //         aerobus::make_q64_t<4327536028902111, 18014398509481984>,
+            //         aerobus::make_q64_t<6243314768165359, 9007199254740992>,
+            //         aerobus::q64::one>;
+            // };
 
-            template<>
-            struct exp2_poly<float> {
-                using type = aerobus::polynomial<aerobus::q32>::template val<
-                    aerobus::make_q32_t<8, 375115>,
-                    aerobus::make_q32_t<30, 208117>,
-                    aerobus::make_q32_t<109, 81261>,
-                    aerobus::make_q32_t<5161841, 536870912>,
-                    aerobus::make_q32_t<3724869, 67108864>,
-                    aerobus::make_q32_t<16121323, 67108864>,
-                    aerobus::make_q32_t<1453635, 2097152>,
-                    aerobus::q32::one>;
-            };
+            // template<>
+            // struct exp2_poly<float> {
+            //     using type = aerobus::polynomial<aerobus::q32>::template val<
+            //         aerobus::make_q32_t<8, 375115>,
+            //         aerobus::make_q32_t<30, 208117>,
+            //         aerobus::make_q32_t<109, 81261>,
+            //         aerobus::make_q32_t<5161841, 536870912>,
+            //         aerobus::make_q32_t<3724869, 67108864>,
+            //         aerobus::make_q32_t<16121323, 67108864>,
+            //         aerobus::make_q32_t<1453635, 2097152>,
+            //         aerobus::q32::one>;
+            // };
 
-            #ifdef WITH_CUDA_FP16
-            template<>
-            struct exp2_poly<__half> {
-                using type = aerobus::polynomial<aerobus::q16>::template val<
-                    aerobus::make_q16_t<3, 212>,
-                    aerobus::make_q16_t<13, 256>,
-                    aerobus::make_q16_t<31, 128>,
-                    aerobus::make_q16_t<1419, 2048>,
-                    aerobus::q16::one>;
-            };
+            // #ifdef WITH_CUDA_FP16
+            // template<>
+            // struct exp2_poly<__half> {
+            //     using type = aerobus::polynomial<aerobus::q16>::template val<
+            //         aerobus::make_q16_t<3, 212>,
+            //         aerobus::make_q16_t<13, 256>,
+            //         aerobus::make_q16_t<31, 128>,
+            //         aerobus::make_q16_t<1419, 2048>,
+            //         aerobus::q16::one>;
+            // };
 
-            template<>
-            struct exp2_poly<__half2> {
-                using type = aerobus::polynomial<aerobus::q16>::template val<
-                    aerobus::make_q16_t<3, 212>,
-                    aerobus::make_q16_t<13, 256>,
-                    aerobus::make_q16_t<31, 128>,
-                    aerobus::make_q16_t<1419, 2048>,
-                    aerobus::q16::one>;
-            };
-            #endif
+            // template<>
+            // struct exp2_poly<__half2> {
+            //     using type = aerobus::polynomial<aerobus::q16>::template val<
+            //         aerobus::make_q16_t<3, 212>,
+            //         aerobus::make_q16_t<13, 256>,
+            //         aerobus::make_q16_t<31, 128>,
+            //         aerobus::make_q16_t<1419, 2048>,
+            //         aerobus::q16::one>;
+            // };
+            // #endif
 
             template<typename P>
             struct sin_poly;
@@ -4418,157 +4462,227 @@ namespace aerobus {
 
             template <>
             struct cos_poly<double> {
-                // approximates (cos(x) - 1 + x^2)/x^4
+                // approximates (cos(x) - 1)/x^2
                 // must be evaluated in x*x as we removed half the coefficients to have a dense polynomial
                 using type = typename aerobus::polynomial<aerobus::q64>::simplify_t<
                     typename aerobus::polynomial<aerobus::q64>:: template val<
-                        aerobus::make_q64_t<14, 407833194230757>,
-                        aerobus::make_q64_t<-283, 24728864074278>,
-                        aerobus::make_q64_t<136, 65144855767>,
-                        aerobus::make_q64_t<-4089, 14838163607>,
-                        aerobus::make_q64_t<452396, 18240606721>,
-                        aerobus::make_q64_t<-6405119470037555, 4611686018427387904>,
-                        aerobus::make_q64_t<6004799503160661, 144115188075855872>>>;
+                        aerobus::make_q64_t<19, 422768485870472>,
+                        aerobus::make_q64_t<-79, 6890654285274>,
+                        aerobus::make_q64_t<2261, 1083025291545>,
+                        aerobus::make_q64_t<-14921, 54145325246>,
+                        aerobus::make_q64_t<1177848, 47490831361>,
+                        aerobus::make_q64_t<-1601279867509443, 1152921504606846976>,
+                        aerobus::make_q64_t<6004799503160661, 144115188075855872>,
+                        aerobus::make_q64_t<-1, 2>>>;
             };
 
             template <>
             struct cos_poly<float> {
-                // approximates (cos(x) - 1 + x^2)/x^4
+                // approximates (cos(x) - 1)/x^4
                 // must be evaluated in x*x as we removed half the coefficients to have a dense polynomial
                 using type = typename aerobus::polynomial<aerobus::q32>::simplify_t<
                     typename aerobus::polynomial<aerobus::q32>:: template val<
-                        aerobus::make_q32_t<-1, 3112816>,
-                        aerobus::make_q32_t<1, 40237>,
+                        aerobus::make_q32_t<1, 12936953>,
+                        aerobus::make_q32_t<-1, 2521425>,
+                        aerobus::make_q32_t<22, 884589>,
                         aerobus::make_q32_t<-119, 85679>,
-                        aerobus::make_q32_t<11184811, 268435456>>>;
+                        aerobus::make_q32_t<11184811, 268435456>,
+                        aerobus::make_q32_t<-1, 2>>>;
             };
 
 #ifdef WITH_CUDA_FP16
             template<>
             struct cos_poly<__half> {
-                // approximates (cos(x) - 1 + x^2)/x^4
+                // approximates (cos(x) - 1)/x^2
                 // must be evaluated in x*x as we removed half the coefficients to have a dense polynomial
                 using type = typename aerobus::polynomial<aerobus::q16>::simplify_t<
-                    typename aerobus::polynomial<aerobus::q16>::template val<
-                        aerobus::make_q16_t<-1, 16321>,
-                        aerobus::make_q16_t<-1, 756>,
-                        aerobus::make_q16_t<1, 24>>>;
+                    typename aerobus::polynomial<aerobus::q16>:: template val<
+                        aerobus::make_q16_t<-1, 1589>,
+                        aerobus::make_q16_t<1, 992>,
+                        aerobus::make_q16_t<-1, 1821>,
+                        aerobus::make_q16_t<-1, 795>,
+                        aerobus::make_q16_t<1, 24>,
+                        aerobus::make_q16_t<-1, 2>>>;
             };
 
             template<>
             struct cos_poly<__half2> {
-                // approximates (cos(x) - 1 + x^2)/x^4
+                // approximates (cos(x) - 1)/x^2
                 // must be evaluated in x*x as we removed half the coefficients to have a dense polynomial
                 using type = typename aerobus::polynomial<aerobus::q16>::simplify_t<
-                    typename aerobus::polynomial<aerobus::q16>::template val<
-                        aerobus::make_q16_t<-1, 16321>,
-                        aerobus::make_q16_t<-1, 756>,
-                        aerobus::make_q16_t<1, 24>>>;
+                    typename aerobus::polynomial<aerobus::q16>:: template val<
+                        aerobus::make_q16_t<-1, 1589>,
+                        aerobus::make_q16_t<1, 992>,
+                        aerobus::make_q16_t<-1, 1821>,
+                        aerobus::make_q16_t<-1, 795>,
+                        aerobus::make_q16_t<1, 24>,
+                        aerobus::make_q16_t<-1, 2>>>;
             };
             #endif
         }  // namespace internal
 
-        template<typename T>
-        static T exp2(const T&x) {
-            using poly = internal::exp2_poly<T>::type;
-            if (x >= (aerobus::internal::arithmetic_helpers<T>::zero) &&
-                x < (aerobus::internal::arithmetic_helpers<T>::one)) {
-                    return poly::eval(x);
-            } else {
-                // TODO(JeWaVe): handle denormals
-                auto i = static_cast<typename aerobus::internal::arithmetic_helpers<T>::integers>(
-                    aerobus::meta_libm<T>::floor(x));
-                T eps = x - i;
-                T mantissa = poly::eval(eps);
-                uint64_t* p = reinterpret_cast<uint64_t*>(&mantissa);
-                uint64_t exponent = (*p >> 52) & 0x7FF;
-                exponent += i;
-                *p &= ~(0x7FFULL << 52);
-                *p |= (exponent & 0x7FF) << 52;
-                return mantissa;
-            }
-        }
+        // template<typename T>
+        // static T exp2(const T&x) {
+        //     using poly = internal::exp2_poly<T>::type;
+        //     if (x >= (aerobus::arithmetic_helpers<T>::zero) &&
+        //         x < (aerobus::arithmetic_helpers<T>::one)) {
+        //             return poly::eval(x);
+        //     } else {
+        //         // TODO(JeWaVe): handle denormals
+        //         auto i = static_cast<typename aerobus::arithmetic_helpers<T>::integers>(
+        //             aerobus::meta_libm<T>::floor(x));
+        //         T eps = x - i;
+        //         T mantissa = poly::eval(eps);
+        //         uint64_t* p = reinterpret_cast<uint64_t*>(&mantissa);
+        //         uint64_t exponent = (*p >> 52) & 0x7FF;
+        //         exponent += i;
+        //         *p &= ~(0x7FFULL << 52);
+        //         *p |= (exponent & 0x7FF) << 52;
+        //         return mantissa;
+        //     }
+        // }
 
         template<typename T>
-        static T cos(const T& x);
+        static DEVICE T cos(const T& x);
+
+        template<typename T>
+        static DEVICE T fast_cos(const T& x);
 
         // works only in [-pi/4, pi/4]
         // purpose is to allow vectorization
         template<typename T>
-        static INLINED T fast_sin(const T& x) {
+        static DEVICE INLINED T fast_sin(const T& x) {
             using poly = internal::sin_poly<T>::type;
             return x * poly::eval(x*x);
         }
 
         template<typename T>
-        static T sin(const T& x) {
-            using upper_type = aerobus::internal::arithmetic_helpers<T>::upper_type;
-            using constants = aerobus::internal::arithmetic_helpers<upper_type>;
-            using poly = internal::sin_poly<T>::type;
-            constexpr upper_type zero = constants::zero;
-            const upper_type pi_4 = constants::pi_4;
-            const upper_type pi = constants::pi;
-            const upper_type two_pi = constants::two_pi;
-            const upper_type pi_2 = constants::pi_2;
-            upper_type X = static_cast<upper_type>(x);
-            // TODO(JeWaVe) : infinities as we don't want NaN propagation
-            // range reduction
-            if (x == 0 || x == -0) {
-                return x;
-            } else if (x < zero) {
-                return -sin(static_cast<T>(-X));
-            } else if (x <= std::numeric_limits<T>::epsilon() || std::isnan(x)) {
-                return x;
-            } else if (X > pi_4 && X <= pi_2) {
-                return aerobus::libm::cos(static_cast<T>(pi_2 - X));
-            } else if (X >= pi_2 && X <= pi) {
-                return sin(static_cast<T>(pi - X));
-            } else if (X > pi && X <= two_pi) {
-                return -sin(static_cast<T>(X - pi));
-            } else if (X > two_pi) {
-                T i = static_cast<T>(aerobus::meta_libm<upper_type>::fmod(X, two_pi));
-                return sin(i);
-            } else {
-                return x * poly::eval(x*x);
+        struct sin_reduction {
+            using upper_type = aerobus::arithmetic_helpers<T>::upper_type;
+            using u_constants = aerobus::arithmetic_helpers<upper_type>;
+            using constants = aerobus::arithmetic_helpers<T>;
+
+            struct behavior {
+                bool negate = false;
+                bool return_x = false;
+                bool return_fast_sin = false;
+                bool return_fast_cos = false;
+                upper_type transform = u_constants::zero;
+            };
+
+            static constexpr upper_type d_pi = constants::pi();
+            static constexpr upper_type pi = u_constants::pi();
+            static constexpr upper_type two_pi = u_constants::two_pi();
+            static constexpr upper_type pi_2 = u_constants::pi_2();
+            static constexpr upper_type pi_4 = u_constants::pi_4();
+
+            // TODO(JeWaVe) : remove recursion
+            static DEVICE behavior eval(upper_type u_x, T x) {
+                ::printf("entering eval with %.12F\n", u_x);
+                const upper_type u_eps = std::numeric_limits<upper_type>::epsilon();
+                const T eps = std::numeric_limits<T>::epsilon();
+                if (x <= eps && x >= -eps) {
+                    return {
+                        .return_x = true,
+                        .transform = u_x
+                    };
+                } else if (x < -eps) {
+                    auto red = eval(-u_x, -x);
+                    red.negate = !red.negate;
+                    return red;
+                } else if (u_x < pi_4) {
+                    return {
+                        .return_fast_sin = true,
+                        .transform = u_x
+                    };
+                } else if (u_x < pi_2) {
+                    return {
+                        .return_fast_cos = true,
+                        .transform = pi_2 - u_x
+                    };
+                } else if (x < d_pi - eps) {
+                    return eval(pi - u_x, static_cast<T>(pi - u_x));
+                } else if (x < d_pi + eps) {
+                    return {
+                        .negate = true,
+                        .return_x = true,
+                        .transform = u_x - pi
+                    };
+                } else if (u_x < two_pi) {
+                    auto result = eval(two_pi - u_x, static_cast<T>(two_pi - u_x));
+                    result.negate = !result.negate;
+                    return result;
+                } else {
+                    upper_type red = aerobus::meta_libm<upper_type>::fmod(u_x, u_constants::two_pi());
+                    return eval(red, static_cast<T>(red));
+                }
             }
-        }
+        };
 
         template<typename T>
-        static T cos(const T& x) {
-            using poly = internal::cos_poly<T>::type;
-            using upper_type = aerobus::internal::arithmetic_helpers<T>::upper_type;
-            using constants = aerobus::internal::arithmetic_helpers<upper_type>;
-            constexpr upper_type zero = constants::zero;
-            constexpr upper_type half = constants::half;
-            constexpr upper_type one = constants::one;
-            constexpr upper_type pi_4 = constants::pi_4;
-            constexpr upper_type pi = constants::pi;
-            constexpr upper_type two_pi = constants::two_pi;
-            constexpr upper_type pi_2 = constants::pi_2;
-            upper_type X = static_cast<upper_type>(x);
-            // domain reduction
-            // TODO(JeWaVe) : infinities as we don't want NaN propagation
-            if (x == 0 || x == -0) {
-                return aerobus::internal::arithmetic_helpers<T>::one;
-            } else if (x < zero) {
-                return cos(static_cast<T>(-X));
-            } else if (std::isnan(x)) {
+        static DEVICE T sin(const T& x) {
+            if (x != x) {  // NaN
                 return x;
-            } else if (x <= std::numeric_limits<T>::epsilon()) {
-                return constants::one;
-            } else if (X > pi_4 && X <= pi_2) {
-                return aerobus::libm::sin(static_cast<T>(pi_2 - X));
-            } else if (X >= pi_2 && X < pi) {
-                return -cos(static_cast<T>(X - pi));
-            } else if (X >= pi && X < two_pi) {
-                return -cos(static_cast<T>(pi - X));
-            } else if (X >= two_pi) {
-                T i = static_cast<T>(aerobus::meta_libm<upper_type>::fmod(X, two_pi));
-                return cos(i);
+            } else if (aerobus::arithmetic_helpers<T>::is_inf(x)) {
+                return NAN;
+            }
+            // TODO(JeWaVe) : final rounding -- see https://k0d.cc/storage/books/Algorithms/Elementary%20Functions.pdf
+            using upper_type = aerobus::arithmetic_helpers<T>::upper_type;
+            upper_type X = aerobus::internal::staticcast<upper_type, T>::eval(x);
+            auto behavior = sin_reduction<T>::eval(X, x);
+            if (behavior.return_x) {
+                T result = static_cast<T>(behavior.transform);
+                return behavior.negate ? -result : result;
+            } else if (behavior.return_fast_cos) {
+                T result = aerobus::libm::fast_cos(static_cast<T>(behavior.transform));
+                return behavior.negate ? -result : result;
+            } else if (behavior.return_fast_sin) {
+                T result = aerobus::libm::fast_sin(static_cast<T>(behavior.transform));
+                return behavior.negate ? -result : result;
             } else {
-                T x2 = x*x;
-                T x4 = x2*x2;
-                return x4 * poly::eval(x2) + one - x2*half;
+                return NAN;
+            }
+        }  // NOLINT
+
+        template<typename T>
+        static DEVICE T fast_cos(const T& x) {
+            using poly = internal::cos_poly<T>::type;
+            using constants = aerobus::arithmetic_helpers<T>;
+            T one = constants::one();
+            T x2 = x*x;
+            return aerobus::internal::fma_helper<T>::eval(x2, poly::eval(x2), one);
+        }
+
+        // TODO(JeWaVe) : range reduction in upper_type
+        template<typename T>
+        static DEVICE T cos(const T& x) {
+            using upper_type = aerobus::arithmetic_helpers<T>::upper_type;
+            using u_constants = aerobus::arithmetic_helpers<upper_type>;
+            upper_type pi_4 = u_constants::pi_4();
+            upper_type pi = u_constants::pi();
+            upper_type two_pi = u_constants::two_pi();
+            upper_type pi_2 = u_constants::pi_2();
+            upper_type X = aerobus::internal::staticcast<upper_type, T>::eval(x);
+            // domain reduction
+            if (x != x) {  // NaN
+                return x;
+            } else if (aerobus::arithmetic_helpers<T>::is_inf(x)) {
+                return NAN;
+            } else if (x <= std::numeric_limits<T>::epsilon() && x >= -std::numeric_limits<T>::epsilon()) {
+                return aerobus::arithmetic_helpers<T>::one();
+            } else if (x < -std::numeric_limits<T>::epsilon()) {
+                return aerobus::libm::cos(static_cast<T>(-X));
+            } else if (X <= pi_4) {
+                return aerobus::libm::fast_cos(x);
+            } else if (X <= pi_2) {
+                return aerobus::libm::sin(static_cast<T>(pi_2 - X));
+            } else if (X <= pi) {
+                return -aerobus::libm::cos(static_cast<T>(X - pi));
+            } else if (X <= two_pi) {
+                return -aerobus::libm::cos(static_cast<T>(pi - X));
+            } else {
+                T i = static_cast<T>(aerobus::meta_libm<upper_type>::fmod(X, two_pi));
+                return aerobus::libm::cos(i);
             }
         }
     }  // namespace libm

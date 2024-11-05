@@ -4,6 +4,7 @@
 
 #define WITH_CUDA_FP16
 #include "../src/aerobus.h"
+#include "./utilities.h"
 
 /*
 You may want to change int_type to aerobus::i32 (or i64) and float_type to float (resp. double)
@@ -37,43 +38,6 @@ struct Expm1Degree<__half> {
     static constexpr size_t val = 6;
 };
 
-double rand(double min, double max) {
-  double range = (max - min);
-  double div = RAND_MAX / range;
-  return min + (rand() / div);  // NOLINT
-}
-
-template<typename T>
-struct GetRandT;
-
-template<>
-struct GetRandT<double> {
-    static double func(double min, double max) {
-        return rand(min, max);
-    }
-};
-
-template<>
-struct GetRandT<float> {
-    static float func(double min, double max) {
-        return (float) rand(min, max);
-    }
-};
-
-template<>
-struct GetRandT<__half2> {
-    static __half2 func(double min, double max) {
-        return __half2(__float2half((float)rand(min, max)), __float2half((float)rand(min, max)));
-    }
-};
-
-template<>
-struct GetRandT<__half> {
-    static __half func(double min, double max) {
-        return __float2half((float)rand(min, max));
-    }
-};
-
 using EXPM1 = aerobus::expm1<int_type, Expm1Degree<float_type>::val>;
 
 
@@ -86,16 +50,6 @@ __global__ void run(size_t N, float_type* in, float_type* out) {
         // fp16 FMA pipeline is quite wide so we need to feed it with a LOT of computations
         out[i] = f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(in[i]))))))))))))))))));
     }
-}
-
-#define cudaErrorCheck(ans) { gpuAssert((ans), __FILE__, __LINE__); }
-inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
-{
-   if (code != cudaSuccess) 
-   {
-      fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
-      if (abort) exit(code);
-   }
 }
 
 int main() {
