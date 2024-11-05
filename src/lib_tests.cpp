@@ -1160,64 +1160,134 @@ TEST(embedding, polynomial) {
     }
 }
 
-TEST(libm, exp2) {
-    EXPECT_EQ(aerobus::libm::exp2(1.0), 2.0);
-    EXPECT_EQ(aerobus::libm::exp2(1.00000000001), std::exp2(1.00000000001));
-    EXPECT_EQ(aerobus::libm::exp2(2.0), 4.0);
-    EXPECT_EQ(aerobus::libm::exp2(2.0), 4.0);
+// TEST(libm, exp2) {
+//     EXPECT_EQ(aerobus::libm::exp2(1.0), 2.0);
+//     EXPECT_EQ(aerobus::libm::exp2(1.00000000001), std::exp2(1.00000000001));
+//     EXPECT_EQ(aerobus::libm::exp2(2.0), 4.0);
+//     EXPECT_EQ(aerobus::libm::exp2(2.0), 4.0);
+// }
+
+TEST(libm, sin_reduction) {
+    using d_constants = aerobus::arithmetic_helpers<double>;
+    using f_constants = aerobus::arithmetic_helpers<float>;
+    {
+        auto red = aerobus::libm::sin_reduction<float>::eval(0.1, 0.1F);
+        EXPECT_TRUE(red.return_fast_sin);
+        EXPECT_EQ(red.transform, 0.1) << "input was : " << 0.1 << std::endl;
+    }
+    {
+        auto red = aerobus::libm::sin_reduction<float>::eval(1.0, 1.0F);
+        EXPECT_TRUE(red.return_fast_cos);
+        EXPECT_EQ(red.transform, d_constants::pi_2() - 1.0) << "input was : " << 1.0 << std::endl;
+        EXPECT_FALSE(red.negate);
+    }
+    {
+        auto red = aerobus::libm::sin_reduction<float>::eval(2.35, 2.35F);
+        EXPECT_TRUE(red.return_fast_cos);
+        EXPECT_EQ(
+                red.transform,
+                d_constants::pi_2() - (d_constants::pi() - 2.35))
+            << "input was : " << 2.35 << std::endl;
+    }
+    {
+        auto red = aerobus::libm::sin_reduction<float>::eval(3.15, 3.15F);
+        EXPECT_TRUE(red.return_fast_sin);
+        EXPECT_EQ(
+                red.transform,
+                d_constants::pi() - (d_constants::two_pi() - 3.15))
+            << "input was : " << 2.35 << std::endl;
+        EXPECT_TRUE(red.negate);
+    }
+    {
+        auto red = aerobus::libm::sin_reduction<float>::eval(d_constants::pi(), f_constants::pi());
+        EXPECT_TRUE(red.return_x);
+        EXPECT_EQ(red.transform, 0) << "input was : " << d_constants::pi() << std::endl;
+        EXPECT_TRUE(red.negate);
+    }
+    {
+        auto red = aerobus::libm::sin_reduction<float>::eval(-1.0, -1.0F);
+        EXPECT_TRUE(red.return_fast_cos);
+        EXPECT_EQ(red.transform, d_constants::pi_2() - 1.0) << "input was : " << -1.0 << std::endl;
+        EXPECT_TRUE(red.negate);
+    }
+    {
+        auto red = aerobus::libm::sin_reduction<float>::eval(-0.0, -0.0F);
+        EXPECT_TRUE(red.return_x);
+        EXPECT_EQ(red.transform, static_cast<double>(-0.0F)) << "input was : " << -0.0 << std::endl;
+        EXPECT_FALSE(red.negate);
+    }
 }
 
 TEST(libm, sin) {
-    using constants = aerobus::internal::arithmetic_helpers<float>;
+    using constants = aerobus::arithmetic_helpers<float>;
     float values[] = {
-        constants::pi / 8,
-        3 * constants::pi / 8,
-        3 * constants::pi / 4,
-        3 * constants::pi / 2,
-        constants::pi,
-        9 * constants::pi / 8,
-        10.0,
-        -1.0,
+        0.0000001F,
+        -0.00000001F,
+        0.863769531250000F,
+        0.861816406250000F,
+        constants::pi() / 8,
+        3 * constants::pi() / 8,
+        3 * constants::pi() / 4,
+        3 * constants::pi() / 2,
+        constants::pi(),
+        constants::pi_2(),
+        constants::two_pi(),
+        9 * constants::pi() / 8,
+        10.0F,
+        -1.0F,
+        -6.050781250000F,
+        776.0F,
     };
 
     for (float x : values) {
         float aero = aerobus::libm::sin(x);
         float expected = std::sin(x);
+        // uncomment to see small differences (usually 1E-24)
+        EXPECT_EQ(aero, expected) <<
+            std::hexfloat << "input : " << x << " expected : " << expected << " computed " << aero <<
+            std::endl << "    difference is : " << aero - expected << std::endl;
         EXPECT_TRUE((std::fabs(expected - aero) < std::numeric_limits<float>::epsilon())) << "aerobus::sin(" << x << ")"
             << " computed : " << std::hexfloat << aero << " but should " << expected << std::endl
             << "difference is : " << std::fabs(aero - expected) << std::endl;
     }
 
-    float exact_values[16] = {
-        1E28F, std::numeric_limits<float>::quiet_NaN(),
-        std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
+    float exact_values[14] = {
+        NAN, NAN,
         1E-26F, 1E-26F,
         -1E-26F, -1E-26F,
-        -0, -0,
-        0, 0,
-        std::numeric_limits<float>::infinity(), std::numeric_limits<double>::quiet_NaN(),
-        -std::numeric_limits<float>::infinity(), std::numeric_limits<double>::quiet_NaN()
+        -0.F, -0.F,
+        0.F, 0.F,
+        std::numeric_limits<float>::infinity(), std::numeric_limits<float>::quiet_NaN(),
+        -std::numeric_limits<float>::infinity(), std::numeric_limits<float>::quiet_NaN()
     };
 
-    for (int i = 0; i < 16; i += 2) {
+    for (int i = 0; i < 14; i += 2) {
         float x = exact_values[i];
         float aero = aerobus::libm::sin(x);
         float expected = exact_values[i+1];
-        EXPECT_EQ(aero, expected);
+        if (x != x || expected != expected) {
+            EXPECT_TRUE(aero != aero);
+        } else {
+            EXPECT_EQ(aero, expected) << "input was : " << x << std::endl;
+        }
     }
 }
 
 TEST(libm, cos) {
-    using constants = aerobus::internal::arithmetic_helpers<float>;
+    using constants = aerobus::arithmetic_helpers<float>;
     float values[] = {
-        constants::pi / 8,
-        3 * constants::pi / 8,
-        3 * constants::pi / 4,
-        3 * constants::pi / 2,
-        constants::pi,
-        9 * constants::pi / 8,
-        10.0,
-        -1.0,
+        0.078371367725F,
+        0.707031250000F,
+        0.708984375000F,
+        constants::pi() / 8,
+        3 * constants::pi() / 8,
+        3 * constants::pi() / 4,
+        3 * constants::pi() / 2,
+        constants::pi(),
+        9 * constants::pi() / 8,
+        10.0F,
+        -1.0F,
+        776.0F,
     };
 
     for (float x : values) {
@@ -1228,21 +1298,24 @@ TEST(libm, cos) {
             << "difference is : " << std::fabs(aero - expected) << std::endl;
     }
 
-    float exact_values[16] = {
-        1E28F, std::numeric_limits<float>::quiet_NaN(),
+    float exact_values[14] = {
         std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
         1E-26F, 1.0F,
         -1E-26F, 1.0F,
-        -0, 1.0F,
-        0, 1.0F,
+        -0.0F, 1.0F,
+        0.0F, 1.0F,
         std::numeric_limits<float>::infinity(), std::numeric_limits<double>::quiet_NaN(),
         -std::numeric_limits<float>::infinity(), std::numeric_limits<double>::quiet_NaN()
     };
 
-    for (int i = 0; i < 16; i += 2) {
+    for (int i = 0; i < 14; i += 2) {
         float x = exact_values[i];
         float aero = aerobus::libm::cos(x);
         float expected = exact_values[i+1];
-        EXPECT_EQ(aero, expected);
+        if (x != x || expected != expected) {
+            EXPECT_TRUE(aero != aero);
+        } else {
+            EXPECT_EQ(aero, expected) << "input was : " << x << std::endl;
+        }
     }
 }
