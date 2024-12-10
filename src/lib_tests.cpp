@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <bitset>
+#include <ctime>
 
 #define AEROBUS_CONWAY_IMPORTS
 #include "./aerobus.h"
@@ -1218,6 +1219,18 @@ TEST(libm, sin_reduction) {
     }
 }
 
+
+
+template<typename FT>
+std::enable_if_t<std::is_floating_point_v<FT>, FT>
+ulp(FT x) {
+    if (x > 0) {
+        return std::nexttoward(x, std::numeric_limits<FT>::infinity()) - x;
+    } else {
+        return x - std::nexttoward(x, -std::numeric_limits<FT>::infinity());
+    }
+}
+
 TEST(libm, sin) {
     using constants = aerobus::arithmetic_helpers<float>;
     float values[] = {
@@ -1237,38 +1250,42 @@ TEST(libm, sin) {
         -1.0F,
         -6.050781250000F,
         776.0F,
+        0x1.4f1a6ep+1,
     };
 
     for (float x : values) {
         float aero = aerobus::libm::sin(x);
-        float expected = std::sin(x);
-        // uncomment to see small differences (usually 1E-24)
+        float expected = static_cast<float>(std::sin(static_cast<double>(x)));
+        EXPECT_TRUE(aero <= expected + ulp(expected) && aero >= expected - ulp(expected)) <<
+            std::hexfloat << "input : " << x << " expected : " << expected << " computed " << aero <<
+            std::endl << "    difference is : " << aero - expected << std::endl;
+        // uncomment to see small differences
         // EXPECT_EQ(aero, expected) <<
         //     std::hexfloat << "input : " << x << " expected : " << expected << " computed " << aero <<
         //     std::endl << "    difference is : " << aero - expected << std::endl;
-        EXPECT_TRUE((std::fabs(expected - aero) < std::numeric_limits<float>::epsilon())) << "aerobus::sin(" << x << ")"
-            << " computed : " << std::hexfloat << aero << " but should " << expected << std::endl
-            << "difference is : " << std::fabs(aero - expected) << std::endl;
     }
 
-    float exact_values[14] = {
+    float exact_values[16] = {
         NAN, NAN,
         1E-26F, 1E-26F,
         -1E-26F, -1E-26F,
         -0.F, -0.F,
         0.F, 0.F,
+        0x1.4f1a6ep+1, 0x1.fffff4p-2,  // given by sollya and clang libm where the agree
         std::numeric_limits<float>::infinity(), std::numeric_limits<float>::quiet_NaN(),
         -std::numeric_limits<float>::infinity(), std::numeric_limits<float>::quiet_NaN()
     };
 
-    for (int i = 0; i < 14; i += 2) {
+    for (int i = 0; i < 16; i += 2) {
         float x = exact_values[i];
         float aero = aerobus::libm::sin(x);
         float expected = exact_values[i+1];
         if (x != x || expected != expected) {
             EXPECT_TRUE(aero != aero);
         } else {
-            EXPECT_EQ(aero, expected) << "input was : " << x << std::endl;
+            EXPECT_EQ(aero, expected) << "input was : " << x
+                << std::hexfloat << " (" << x << ") and yielded : "
+                << aero << " instead of " << expected << std::endl;
         }
     }
 }

@@ -22,6 +22,7 @@ struct GetRandT<float> {
     }
 };
 
+#ifdef WITH_CUDA_FP16
 template<>
 struct GetRandT<__half2> {
     static __half2 func(double min, double max) {
@@ -43,3 +44,14 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort =
         if (abort) exit(code);
     }
 }
+#endif
+
+#ifdef __HIPCC__
+#define hipErrorCheck(ans) { gpuAssert((ans), __FILE__, __LINE__); }
+inline void gpuAssert(hipError_t code, const char *file, int line, bool abort = true) {
+    if (code != hipSuccess) {
+        fprintf(stderr, "GPUassert: %s %s %d\n", hipGetErrorString(code), file, line);
+        if (abort) exit(code);
+    }
+}
+#endif

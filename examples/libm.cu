@@ -19,7 +19,7 @@ __global__ void runhalf(__half* out, __half *in, int N) {
     }
 }
 
-static constexpr size_t N = 1 << 22;
+static constexpr size_t N = 1 << 20;
 
 int main() {  // configure CUDA devicescudaEvent_t start, stop;
     cudaEvent_t start, stop;
@@ -73,8 +73,9 @@ int main() {  // configure CUDA devicescudaEvent_t start, stop;
     cudaErrorCheck(cudaMemcpy(d_in, in, N * sizeof(__half), cudaMemcpyHostToDevice));
   
     // execute kernel and get memory back from device
+
     cudaEventRecord(start);
-    runhalf<<<minGridSizef, blockSizef>>>(d_out, d_in, N);
+    runfloat<<<minGridSizef, blockSizef>>>(d_reference_d, d_reference_u, d_in, N);
     cudaErrorCheck(cudaPeekAtLastError());
     cudaEventRecord(stop);
     cudaEventSynchronize(stop);
@@ -83,12 +84,13 @@ int main() {  // configure CUDA devicescudaEvent_t start, stop;
 
 
     cudaEventRecord(start);
-    runfloat<<<minGridSizef, blockSizef>>>(d_reference_d, d_reference_u, d_in, N);
+    runhalf<<<minGridSizef, blockSizef>>>(d_out, d_in, N);
     cudaErrorCheck(cudaPeekAtLastError());
     cudaEventRecord(stop);
     cudaEventSynchronize(stop);
     cudaEventElapsedTime(&milliseconds, start, stop);
     ::printf("aero time : %f\n", milliseconds);
+
     cudaErrorCheck(cudaMemcpy(out, d_out, N * sizeof(__half), cudaMemcpyDeviceToHost));
     cudaErrorCheck(cudaMemcpy(reference_u, d_reference_u, N * sizeof(__half), cudaMemcpyDeviceToHost));
     cudaErrorCheck(cudaMemcpy(reference_d, d_reference_d, N * sizeof(__half), cudaMemcpyDeviceToHost));
