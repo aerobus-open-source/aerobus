@@ -14,6 +14,7 @@
 #include <array>
 #include <cmath>
 #include <limits>
+#include <cfenv>
 #ifdef WITH_CUDA_FP16
 #include <bit>
 #include <cuda_fp16.h>
@@ -30,7 +31,7 @@
 #define INLINED __attribute__((always_inline)) inline
 #endif
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) || defined(__HIPCC__)
 #define DEVICE __host__ __device__
 #else
 #define DEVICE
@@ -4422,14 +4423,34 @@ namespace aerobus {
 
             template<>
             struct sin_poly<float> {
-                // approximates sin(x)/x over [-pi/4, pi/4] with precision 1.941356e-10
+                // approximates sin(x)/x over [-pi/4, pi/4] with precision 2.2889598e-11
                 // must be evaluated in x*x as we removed half the coefficients to have a dense polynomial
                 using type = typename aerobus::polynomial<aerobus::q32>::simplify_t<
                     typename aerobus::polynomial<aerobus::q32>:: template val<
-                        aerobus::make_q32_t<1, 357073>,
-                        aerobus::make_q32_t<-67, 337533>,
-                        aerobus::make_q32_t<4473945, 536870912>,
+                        aerobus::make_q32_t<14858575, 1073741824>,
+                        aerobus::q32::zero,
+                        aerobus::make_q32_t<-14207751, 268435456>,
+                        aerobus::q32::zero,
+                        aerobus::make_q32_t<11935291, 134217728>,
+                        aerobus::q32::zero,
+                        aerobus::make_q32_t<-11575033, 134217728>,
+                        aerobus::q32::zero,
+                        aerobus::make_q32_t<1790113, 33554432>,
+                        aerobus::q32::zero,
+                        aerobus::make_q32_t<-5893293, 268435456>,
+                        aerobus::q32::zero,
+                        aerobus::make_q32_t<3264339, 536870912>,
+                        aerobus::q32::zero,
+                        aerobus::make_q32_t<-40, 35687>,
+                        aerobus::q32::zero,
+                        aerobus::make_q32_t<50, 368859>,
+                        aerobus::q32::zero,
+                        aerobus::make_q32_t<-63, 303103>,
+                        aerobus::q32::zero,
+                        aerobus::make_q32_t<4474113, 536870912>,
+                        aerobus::q32::zero,
                         aerobus::make_q32_t<-11184811, 67108864>,
+                        aerobus::q32::zero,
                         aerobus::q32::one>>;
             };
 
@@ -4552,8 +4573,17 @@ namespace aerobus {
         // purpose is to allow vectorization
         template<typename T>
         static DEVICE INLINED T fast_sin(const T& x) {
+            #if !defined(__CUDACC__) && !defined(__HIPCC__)
+            // how to do that in CUDA/HIP??
+            // auto rounding = std::fegetround();
+            // std::fesetround(FE_TOWARDZERO);
+            #endif
             using poly = internal::sin_poly<T>::type;
-            return x * poly::eval(x*x);
+            auto result = x * poly::eval(x);
+            #if !defined(__CUDACC__) && !defined(__HIPCC__)
+            // std::fesetround(rounding);
+            #endif
+            return result;
         }
 
         template<typename T>
@@ -4570,7 +4600,6 @@ namespace aerobus {
                 upper_type transform = u_constants::zero();
             };
 
-            static constexpr upper_type d_pi = constants::pi();
             static constexpr upper_type pi = u_constants::pi();
             static constexpr upper_type two_pi = u_constants::two_pi();
             static constexpr upper_type pi_2 = u_constants::pi_2();
@@ -4580,6 +4609,7 @@ namespace aerobus {
                 const T eps = std::numeric_limits<T>::epsilon();
                 behavior result {};
                 while (true) {
+                    // std::cout << std::hexfloat << "entering reduction with " << u_x << " - " << x << std::endl;
                     if (x <= eps && x >= -eps) {
                         result.return_x = true;
                         result.transform = u_x;
@@ -4592,16 +4622,18 @@ namespace aerobus {
                     } else if (u_x < pi_4) {
                         result.return_fast_sin = true;
                         result.transform = u_x;
+                        // std::cout << "returning from reduction with " << u_x << " and return_fast_sin" << std::endl;
                         return result;
                     } else if (u_x < pi_2) {
                         result.return_fast_cos = true;
                         result.transform = pi_2 - u_x;
+                        // std::cout << "returning from reduction with " << u_x << " and return_fast_cos" << std::endl;
                         return result;
-                    } else if (x < d_pi - eps) {
+                    } else if (x < constants::pi() - eps) {
                         u_x = pi - u_x;
                         x = static_cast<T>(u_x);
                         continue;
-                    } else if (x < d_pi + eps) {
+                    } else if (x < constants::pi() + eps) {
                         result.negate = true;
                         result.return_x = true;
                         result.transform = u_x - pi;

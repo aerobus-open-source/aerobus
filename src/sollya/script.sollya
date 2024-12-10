@@ -2,7 +2,7 @@
 
 INTERVAL = [-pi/4, pi/4]; // INTERVAL to approximate FUNC on
 FUNC = sin(x) / x; // any expression supported by sollyaa
-MONOMIALS = [|0, 2, 4, 6, 8, 10|]; // if non empty, it will discard degree in fpminimax call
+MONOMIALS = [|0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24|]; // if non empty, it will discard degree in fpminimax call
 BITS = 32; // supported values : 16, 32, 64
 PREC = 24;
 
@@ -80,7 +80,7 @@ print("error on INTERVAL: ", infnorm1);
 prec = 165;
 
 
-write("using P = typename aerobus::polynomial<aerobus::", RATIONAL, ">::simplify_t<
+write("using type = typename aerobus::polynomial<aerobus::", RATIONAL, ">::simplify_t<
     typename aerobus::polynomial<aerobus::", RATIONAL, ">:: template val<\n");
 
 // find a rational approximation of ccc with numerator and denominator fitting in int16, int32 or int64
