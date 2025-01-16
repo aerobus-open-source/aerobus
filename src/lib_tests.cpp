@@ -1270,7 +1270,7 @@ TEST(libm, sin) {
         -1E-26F, -1E-26F,
         -0.F, -0.F,
         0.F, 0.F,
-        //0x1.4f1a6ep+1, 0x1.fffff4p-2,  // given by sollya and clang libm where the agree
+        // 0x1.4f1a6ep+1, 0x1.fffff4p-2,  // given by sollya and clang libm where the agree
         std::numeric_limits<float>::infinity(), std::numeric_limits<float>::quiet_NaN(),
         -std::numeric_limits<float>::infinity(), std::numeric_limits<float>::quiet_NaN()
     };
