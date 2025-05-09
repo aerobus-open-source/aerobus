@@ -9,3 +9,5 @@ Chebyshev
 metaprogramming
 Horner evaluation
 Horner
+preimplemented
+Bernouilli
