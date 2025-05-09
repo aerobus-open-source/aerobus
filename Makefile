@@ -4,6 +4,7 @@ clean:
 	rm -f *.exe
 	rm -rf documentation
 	rm -rf build
+	rm -f paper/*.aux paper/*.bbl paper/*.blg paper/*.log paper/*.pdf paper/*.out
 
 doc:
 	doxygen Doxyfile
@@ -22,4 +23,9 @@ tests:
 	cd build && ctest
 
 all: clean build run
+
+paper: clean
+	cd paper && pdflatex main.tex
+	cd paper && bibtex main
+	cd paper && pdflatex main.tex
 

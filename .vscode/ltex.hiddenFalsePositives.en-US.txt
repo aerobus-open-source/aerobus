@@ -3,3 +3,4 @@
 {"rule":"NON_STANDARD_WORD","sentence":"^\\Qadd_t : a type (specialization of val), representing addition between two values\nsub_t : a type (specialization of val), representing subtraction between two values\nmul_t : a type (specialization of val), representing multiplication between two values\ndiv_t : a type (specialization of val), representing division between two values\nadd_t : a type (specialization of val), representing addition between two values\\E$"}
 {"rule":"SENT_START_CONJUNCTIVE_LINKING_ADVERB_COMMA","sentence":"^\\QIn addition of Cmake and compiler, install OpenMP.\\E$"}
 {"rule":"SENT_START_CONJUNCTIVE_LINKING_ADVERB_COMMA","sentence":"^\\QIn addition of \\E(?:Dummy|Ina|Jimmy-)[0-9]+\\Q and compiler, install OpenMP.\\E$"}
+{"rule":"HE_VERB_AGR","sentence":"^\\QPolynomials also expose Compensated Horner scheme like in \\E(?:Dummy|Ina|Jimmy-)[0-9]+\\Q, to gain extra precision when evaluating ill conditioned polynomials close to their roots.\\E$"}

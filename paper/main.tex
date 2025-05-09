@@ -1,0 +1,254 @@
+\documentclass[twocolumn, switch]{article}
+\usepackage{arxiv}
+\usepackage{hyperref}
+\usepackage[numbers,square]{natbib}
+
+\hypersetup{colorlinks=true, linkcolor=purple, urlcolor=blue, citecolor=cyan, anchorcolor=black}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{xcolor}
+\usepackage{lineno}
+\usepackage{tikz}
+\usepackage{enumitem}
+\setlist[itemize]{label=--,leftmargin=*,itemsep=0pt,topsep=0pt,parsep=0pt}
+
+
+\usepackage{listings}
+\lstset{
+  language=C++,
+  basicstyle=\ttfamily,
+  keywordstyle=\color{blue},
+  commentstyle=\color{green!50!black},
+  stringstyle=\color{red},
+  breaklines=true
+}
+
+\bibliographystyle{unsrtnat}
+
+\usepackage{newfloat}
+\DeclareFloatingEnvironment[name={Supplementary Figure}]{suppfigure}
+\usepackage{sidecap}
+\sidecaptionvpos{figure}{c}
+
+\usepackage{titlesec}
+\titlespacing\section{0pt}{12pt plus 3pt minus 3pt}{1pt plus 1pt minus 1pt}
+\titlespacing\subsection{0pt}{10pt plus 3pt minus 3pt}{1pt plus 1pt minus 1pt}
+\titlespacing\subsubsection{0pt}{8pt plus 3pt minus 3pt}{1pt plus 1pt minus 1pt}
+
+\definecolor{lime}{HTML}{A6CE39}
+\DeclareRobustCommand{\orcidicon}{
+	\begin{tikzpicture}
+	\draw[lime, fill=lime] (0,0)
+	circle [radius=0.16]
+	node[white] {{\fontfamily{qag}\selectfont \tiny ID}};
+	\draw[white, fill=white] (-0.0625,0.095)
+	circle [radius=0.007];
+	\end{tikzpicture}
+	\hspace{-2mm}
+}
+
+\title{\textit{Aerobus}~: A \CC~20 Type Representation Of Common Discrete Commutative Algebra Structures}
+
+\usepackage{authblk}
+\renewcommand*{\Authfont}{\bfseries}
+
+\author[1]{Régis Portalez\thanks{\texttt{contact@comua.fr}} \href{https://orcid.org/0000-0002-6291-3345}{\orcidicon}}
+\affil[1]{COMUA}
+
+\begin{document}
+
+\twocolumn[\begin{@twocolumnfalse}
+
+\maketitle
+
+\begin{abstract}
+\CC~comes with powerful compile-time computations capability, also known as metaprogramming with templates.
+Templates are a language-in-the-language which is Turing-complete, meaning we can run every computation at compile time instead of runtime, as long as input data is known at compile time.
+Using these capabilities, vastly extended with the latest versions of the standard, we implemented a library for discrete commutative (and associative) algebra.
+Various such structures, such as $\mathbb{Z}$, $\mathbb{Z} / n\mathbb{Z}$, $\mathbb{Q}$, polynomials (univariate), finite fields, field of fractions or quotient rings come already implemented.
+However, \textit{Aerobus} was designed to be easily extended. As example, we provide a wide family of known polynomials (Bernstein, Chebyshev, \ldots), or Taylor series of multiple transcendent functions.
+\textit{Aerobus} was designed to be used in high-performance software, teaching purposes or embedded software. It compiles with major compilers~: \textit{gcc}, \textit{clang} and \textit{msvc}.
+\end{abstract}
+
+\keywords{\CC, Types, Discrete Commutative Algebra}
+
+\vspace{0.5cm}
+
+\end{@twocolumnfalse}]
+
+\section{State of the art}
+Some important software, such as \textit{geographiclib}~\cite{karney2013algorithms} or \textit{LLVM} evaluate polynomials with a simple loop, expected to be unrolled by the compiler. It works really well (on arithmetic types such as \textit{double}) but does not provide a way to manipulate polynomials (addition, multiplication, division, modulus) where \textit{Aerobus} does it at no runtime cost. In addition, floating point arithmetic is not exact (and can't be). This has important effects on polynomials. For example, $a$ + $b$ is not always $(a+b)$ when $a$ and $b$ are many orders of magnitude apart. Therefore $P.Q$ can have very wrong coefficients if multiplication is done using floating point coefficients, which can have catastrophic consequences on evaluation or root finding algorithms. By contrast, in \textit{Aerobus}, all arithmetic is done with integers, arithmetic of which is exact in \textit{IEEE}.
+
+Very notable libraries such as \href{https://live.boost.org/doc/libs/1_86_0/libs/math/doc/html/math_toolkit/polynomials.html}{boost} provide polynomial arithmetic, but arithmetic is done at runtime with (heap or stack) memory allocations while \textit{Aerobus} does it at compile time with no allocation at all.
+
+Common analytic functions are usually exposed by the standard library (\lstinline{<cmath>}) with high (guaranteed) precision. However, in high-performance computing, when not compiled with \textit{-Ofast}, evaluating functions such as \textit{std::exp} has several flaws~:
+\begin{itemize}
+\item It leads to a \textit{syscall} which is very expensive;
+\item It doesn't le\-ve\-ra\-ge vector units (AVX, AVX2, AVX512 or equivalent in non-intel hardware);
+\item Results are hardware dependent.
+\end{itemize}
+
+Hardware vendors provide high-performance libraries such as~\cite{wang2014intel}, but implementation is often hidden in assembly or binary files and not extensible.
+
+Some others can provide vectorized functions, such as~\cite{wang2014intel} does. But libraries like VML are highly tight to one architecture by their use of intrinsic or inline assembly. In addition, they only provide a restricted list of math functions and do not expose capabilities to generate high-performance versions of other functions such as \lstinline{atanh}. It is the same for the standard library compiled with \textit{-Ofast}~: it links to a vectorized version of some functions (such as \lstinline{exp}) but with no control of precision and no extensibility. In addition, \textit{fast-math} versions are compiler and architecture dependent, which can be a problem for results reproducibility.
+
+\textit{Aerobus} provides automatic generation of such functions, in a hardware-independent way, as tested on x86 and \textit{CUDA}/\textit{HIP} platforms. In addition, \textit{Aerobus} provides a way to control the precision of the generated function by changing the degree of Taylor expansion, which can't be used in competing libraries without reimplementing the whole function or changing the array of coefficients.
+
+\textit{Aerobus} does not provide optimal approximation polynomials the way~\cite{ChevillardJoldesLauter2010} does. However, \textit{Sollya} could be used beforehand to feed \textit{aerobus} with appropriate coefficients. \textit{Aerobus} does not provide floating point manipulations (domain normalization) to extend domain of approximation, like it is done in standard library.
+
+\section{Mathematical definitions}
+
+For the sake of completeness, we give basic definitions of the mathematical concepts which the library deals with. However, readers desiring complete and rigorous definitions of the concepts explained below should refer to a mathematical book on algebra, such as~\cite{lang2012algebra} or~\cite{bourbaki2013algebra}.
+
+A \textit{ring} $\mathbb{A}$ is a nonempty set with two internal laws, addition and multiplication. There is a neutral element for both, zero and one.
+Addition is commutative and associative and every element $x$ has an inverse $-x$. Multiplication is commutative, associative and distributive over addition, meaning that $a(b+c) = ab+ac$ for every $a, b, c$ element. We call it \textit{discrete} if it is countable.
+
+In a \textit{field}, in addition to previous properties, each element (except zero), has an inverse for multiplication.
+
+An \textit{integral domain} is a ring with one additional property. For every element $a, b, c$ such as $ab = ac$, then either $a = 0$ or $b = c$. Such a ring is not always a field, such as $\mathbb{Z}$ shows it.
+
+A \textit{euclidean domain} is an integral domain that can be endowed with a euclidean division.
+
+For such a euclidean domain, we can build two important structures~:
+
+\subsection{Polynomials $\mathbb{A}[X]$}
+
+Polynomials over $\mathbb{A}$ is the free module generated by a base noted $(X^k)_{k\in\mathbb{N}}$. Practically speaking, it's the set of~:
+
+\[a_0 + a_1X + \cdots + a_nX^n\]
+
+where $a_n \neq 0$ if $n \neq 0$.
+
+$(a_i)$, the coefficients, are elements of $\mathbb{A}$. The theory states that if $\mathbb{A}$ is a field, then $\mathbb{A}[X]$ is Euclidean. That means notions like division of the greatest common divisor (\textit{gcd}) have a meaning, yielding an arithmetic of polynomials.
+
+\subsection{Field of fractions}
+If $\mathbb{A}$ is Euclidean, we can build its field of fractions~: the smallest field containing $\mathbb{A}$.
+We construct it as congruence classes of $\mathbb{A}\times \mathbb{A}$ for the relation $(p,q) \sim (pp, qq)\  \mathrm{iff}\ p*qq = q*pp$. Basic algebra shows that this is a field (every element has an inverse). The canonical example is $\mathbb{Q}$, the set of rational numbers.
+
+Given polynomials over a field form a Euclidean ring, we can do the same construction and get rational fractions $P(x) / Q(X)$ where $P$ and $Q$ are polynomials.
+
+\subsection{Quotient rings}
+
+In a Euclidean domain $\mathbb{A}$, such as $\mathbb{Z}$ or $\mathbb{A}[X]$, we can define the quotient ring of $\mathbb{A}$ by a principal ideal $I$. Given that $I$ is principal, it is generated by an element $X$ and the quotient ring is the ring of rests modulo $X$. When $X$ is \textit{prime} (meaning it has no smallest factors in $\mathbb{A}$), the quotient ring $\mathbb{A}/I$ is a field.
+
+Applied on $\mathbb{Z}$, that operation gives us modular arithmetic and all finite fields of cardinal $q$ where $q$ is a prime number (up to isomorphism). These fields are usually named $\mathbb{Z}/p\mathbb{Z}$. Applied on $\mathbb{Z}/p\mathbb{Z}[X]$, it gives finite Galois fields, meaning all finite fields of cardinal $p^n$ where $p$ is prime (see~\cite{evariste1846memoire}).
+
+\section{Software}
+
+All types of \textit{Aerobus} have the same structure.
+
+An enclosing type describes an algebraic structure. It has a nested type \textit{val} which is always a template model describing elements of the set.
+
+This is because we want to operate on types more than on values. This allows generic implementation, for example of \textit{gcd} (see below) without specifying what are the values.
+
+\subsection{Concepts}
+
+The library exposes three main \textit{concepts}~:
+
+\begin{lstlisting}
+template <typename R>
+concept IsRing;
+template <typename R>
+concept IsEuclideanDomain;
+template<typename R>
+concept IsField;
+\end{lstlisting}
+
+which express the algebraic objects described above. Then, as long as a type satisfies the \lstinline{IsEuclideanDomain} concept, we can calculate the greatest common divisor of two values of this type using Euclid's algorithm~\cite{heath1956thirteen}. As stated above, this algorithm operates on types instead of values and does not depend on the Ring, making it possible for users to implement another kind of discrete Euclidean domain without worrying about that kind of algorithm.
+
+The same is done for the field of fractions~: implementation does not rely on the nature of the underlying Euclidean domain but rather on its structure. It's automatically done by templates, as long as Ring satisfies the appropriate concept.
+
+Doing that way, $\mathbb{Q}$ has the same implementation as rational fractions of polynomials. Users could also get the field of fractions of any ring of their convenience, as long as they implement the required concepts.
+
+\subsection{Native types}
+
+\textit{Aerobus} exposes several pre-implemented types, as they are common and necessary to do actual computations:
+
+\begin{itemize}
+\item \textit{i32} and \textit{i64} ($\mathbb{Z}$ seen as 32 bits or 64 bits integers)
+\item \textit{zpz} the quotient ring $\mathbb{Z}/p\mathbb{Z}$
+\item \lstinline{polynomial<T>} where T is a ring
+\item \lstinline{FractionField<T>} where T is a Euclidean domain
+\end{itemize}
+
+Polynomial exposes an evaluation function, which automatically generates Horner development and unrolls the loop by generating it at compile time. See~\cite{horner1815new} or~\cite{knuth2014art} for further developments of this method.
+
+Given a polynomial~:
+
+\[P = \sum_{i=0}^{i = n}a_{i}X^i = a_0 + a_1X + \cdots + a_{n}X^n\]
+
+we can evaluate it by rewriting it this way~:
+
+\[P(x) = a_0 + X (a_1 + X (a_2 + X(\cdots + X(a_{n-1} + a_{n}X))))\]
+
+which is automatically done by \textit{Aerobus} using the \lstinline{polynomial::val::eval} function.
+
+This evaluation function is \lstinline{constexpr} and therefore will be completely computed at compile time when called on a constant.
+
+Polynomials also expose Compensated Horner scheme like in~\cite{graillat2006compensated}, to gain extra precision when evaluating ill conditioned polynomials close to their roots.
+
+The library also provides built-in integers and functions, such as Bernouilli numbers, factorials or other utilities.
+
+Some well known Taylor series, such as \lstinline{exp} or \lstinline{acosh} come preimplemented.
+
+The library comes with a type designed to help the users implement other Taylor series.
+If users provide a type \lstinline{mycoeff} satisfying the appropriate template (depending on the Ring of coefficients and degree), the corresponding Taylor expansion can be built automatically as a polynomial over this Ring and then, evaluated at some value in a native arithmetic type (such as \textit{double}).
+
+\subsection{Misc}
+
+\subsubsection{Continued Fractions}
+
+\textit{Aerobus} provides \href{https://en.wikipedia.org/wiki/Continued_fraction}{continued fractions}, seen as an example of what is possible when you have a proper type representation of the field of fractions.
+One can get a rational approximation of numbers using their known representation, given by the On-Line Encyclopedia of Integer Sequences~\cite{OEIS}.
+Some useful math constants, such as $\pi$ or $e$ are provided preimplemented, from which user can have the corresponding rational number by using (for example) \lstinline{PI_fraction::type} and a computation with \lstinline{PI_fraction::val}.
+
+\subsubsection{Known polynomials}
+
+There exists many orthogonal polynomial bases used in various domains, from number theory to quantum physics.
+\textit{Aerobus} provide predefined implementation for some of them (Laguerre, Hermite, Bernstein, Bessel,~\ldots). These polynomials have integers coefficients by default, but can be defined (specialized) with coefficients in any ring.
+
+\subsubsection{Quotient rings and Galois fields}
+
+If some type meets the \lstinline{IsRing} concept requirement, \textit{Aerobus} can generate its quotient ring by a principal ideal generated by some element $X$.
+
+We can then define finite fields such as $\mathbb{Z}/p\mathbb{Z}$ by writing~:
+
+\begin{lstlisting}
+using i32_2 = i32::inject_constant_t<2>;
+using Z2Z = Quotient<i32, i32_2>;
+\end{lstlisting}
+
+In $\mathbb{Z}/p\mathbb{Z}[X]$, there are special irreducible polynomials named Conway polynomials~\cite{holt2005handbook}, used to build larger finite fields. \textit{Aerobus} exposes Conway polynomials for $p$ smaller than 1000 and degrees smaller than 20.
+
+To speed up compilation for users who don't use them, they are hidden behind the flag \lstinline{AEROBUS_CONWAY_IMPORTS}
+
+If this is defined, it's possible to define $\mathrm{GF}(p, n) = \mathbb{F}_{p^n}$.
+
+For instance, we can compute $\mathbb{F}_4 = \mathrm{GF}(2, 2)$ by writing~:
+
+\begin{lstlisting}
+using F2 = zpz<2>;
+using CP22 = ConwayPolynomial<2, 2>::type;
+using PF2 = polynomial<F2>;
+using F4 = Quotient<PF2, CP22>;
+\end{lstlisting}
+
+Multiplication and addition tables are checked to be those of $\mathbb{F}_4$.
+
+Surprisingly, compilation time is not significantly higher when we include them. However, we chose to make it optional.
+
+\section*{Acknowledgements}
+\footnotesize
+Many thanks to my math teachers, Alain Soyeur and Michel Gonnord. I also acknowledge indirect contributions from Florent Duguet, who showed me the way. I wish also to thank Miss Chloé Gence, who gave me the name of the library.
+\normalsize
+
+\section*{Repository and Documentation}
+\footnotesize
+This article is available online at the following URL~: \href{https://github.com/aerobus-open-source/aerobus}{github repository}.
+The library documentation is available online at the following URL~: \href{https://aerobus-open-source.github.io/aerobus/docs/}{documentation}.
+\normalsize
+
+\bibliography{main}
+
+\end{document}
