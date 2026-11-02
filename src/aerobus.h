@@ -3116,15 +3116,21 @@ namespace aerobus {
         struct combination_helper {};
 
         template<typename T, size_t k, size_t n>
-        struct combination_helper<T, k, n, std::enable_if_t<(n >= 0 && k <= (n / 2) && k > 0)>> {
+        struct combination_helper<T, k, n, std::enable_if_t<(k <= (n / 2) && k > 0)>> {
             using type = typename FractionField<T>::template mul_t<
                 typename combination_helper<T, k - 1, n - 1>::type,
                 makefraction_t<T, typename T::template val<n>, typename T::template val<k>>>;
         };
 
         template<typename T, size_t k, size_t n>
-        struct combination_helper<T, k, n, std::enable_if_t<(n >= 0 && k > (n / 2) && k > 0)>> {
+        struct combination_helper<T, k, n, std::enable_if_t<(k > (n / 2) && k > 0 && k <= n)>> {
             using type = typename combination_helper<T, n - k, n>::type;
+        };
+
+        // no way to choose more than n elements among n
+        template<typename T, size_t k, size_t n>
+        struct combination_helper<T, k, n, std::enable_if_t<(k > n)>> {
+            using type = typename FractionField<T>::zero;
         };
 
         template<typename T, size_t n>
@@ -3366,6 +3372,11 @@ namespace aerobus {
 
         template<typename T, int n>
         struct stirling_2_helper<T, 0, n, std::enable_if_t<(n > 0)>> {
+            using type = typename T::zero;
+        };
+
+        template<typename T, int n, int k>
+        struct stirling_2_helper<T, n, k, std::enable_if_t<(n > 0) && (k > n)>> {
             using type = typename T::zero;
         };
 
