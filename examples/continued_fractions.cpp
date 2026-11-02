@@ -13,5 +13,5 @@ static const double phi = (std::sqrt(5.0) + 1.0)/2.0;
 int main() {
     std::cout << std::setprecision(15) << "Aerobus  PHI : " << PHI << std::endl;
     std::cout << std::setprecision(15) << "Computed PHI : " << phi << std::endl;
-    return 0;
+    return std::abs(PHI - phi) < 1e-15 ? 0 : 1;
 }
