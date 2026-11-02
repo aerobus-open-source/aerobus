@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
+#include <array>
 #include <cmath>
 #include <type_traits>
+#include <utility>
 
 #include "aerobus.h"
 
@@ -81,6 +83,43 @@ TEST(utilities, is_prime) {
     EXPECT_FALSE(is_prime_v<4>);
     EXPECT_FALSE(is_prime_v<7884>);
     EXPECT_FALSE(is_prime_v<7928>);
+}
+
+TEST(utilities, is_prime_odd_composites) {
+    // products of two odd primes and squares of primes
+    EXPECT_FALSE(is_prime_v<9>);
+    EXPECT_FALSE(is_prime_v<15>);
+    EXPECT_FALSE(is_prime_v<25>);
+    EXPECT_FALSE(is_prime_v<35>);
+    EXPECT_FALSE(is_prime_v<49>);
+    EXPECT_FALSE(is_prime_v<55>);
+    EXPECT_FALSE(is_prime_v<77>);
+    EXPECT_FALSE(is_prime_v<121>);
+    EXPECT_FALSE(is_prime_v<143>);
+    EXPECT_FALSE(is_prime_v<187>);
+    EXPECT_FALSE(is_prime_v<62773913>);  // 7919 * 7927
+    EXPECT_TRUE(is_prime_v<997>);
+    EXPECT_TRUE(is_prime_v<65537>);
+    EXPECT_TRUE(is_prime_v<2147483647>);
+}
+
+template<size_t... Is>
+constexpr std::array<bool, sizeof...(Is)> is_prime_table(std::index_sequence<Is...>) {
+    return {is_prime_v<Is>...};
+}
+
+TEST(utilities, is_prime_matches_trial_division_below_1000) {
+    constexpr auto table = is_prime_table(std::make_index_sequence<1000>{});
+    for (size_t n = 0; n < table.size(); ++n) {
+        bool expected = n >= 2;
+        for (size_t d = 2; d * d <= n; ++d) {
+            if (n % d == 0) {
+                expected = false;
+                break;
+            }
+        }
+        EXPECT_EQ(table[n], expected) << "n = " << n;
+    }
 }
 
 TEST(utilities, alternate) {
