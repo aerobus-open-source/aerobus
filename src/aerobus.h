@@ -4443,7 +4443,10 @@ namespace aerobus {
     /// @tparam p characteristic of the field (prime number)
     /// @tparam n degree of extension
     template<int p, int n>
-    struct ConwayPolynomial {};
+    struct ConwayPolynomial {
+        static_assert(p != p, "no Conway polynomial for this (p, n): the table covers primes p < 1000, "
+                              "n up to 20 for p = 2 and 3, fewer for larger p");
+    };
 
 #ifndef DO_NOT_DOCUMENT
     #define ZPZV ZPZ::template val
