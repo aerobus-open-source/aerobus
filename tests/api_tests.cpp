@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <cstdlib>
+#include <string>
 #include <type_traits>
 
 #include "aerobus.h"
@@ -41,4 +42,12 @@ const void* stirling_2_v_address_elsewhere();
 TEST(api, value_templates_have_one_definition) {
     EXPECT_EQ(static_cast<const void*>(&bell_v<i64, 4>), bell_v_address_elsewhere());
     EXPECT_EQ(static_cast<const void*>(&stirling_2_v<i64, 5, 3>), stirling_2_v_address_elsewhere());
+}
+
+TEST(api, version_macros) {
+    EXPECT_EQ(AEROBUS_VERSION_MAJOR, 2);
+    // CMake reads its project version from the header
+    const std::string header_version = std::to_string(AEROBUS_VERSION_MAJOR) + "." +
+        std::to_string(AEROBUS_VERSION_MINOR) + "." + std::to_string(AEROBUS_VERSION_PATCH);
+    EXPECT_EQ(header_version, AEROBUS_CMAKE_PROJECT_VERSION);
 }
