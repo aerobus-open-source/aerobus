@@ -973,7 +973,7 @@ namespace aerobus {
         template <size_t index, typename L1, typename L2>
         struct split_h {
          private:
-            static_assert(index <= L2::length, "index ouf of bounds");
+            static_assert(index <= L2::length, "index out of bounds");
             using a = typename L2::pop_front::type;
             using b = typename L2::pop_front::tail;
             using c = typename L1::template push_back<a>;
@@ -991,7 +991,7 @@ namespace aerobus {
 
         template <size_t index, typename L, typename T>
         struct insert_h {
-            static_assert(index <= L::length, "index ouf of bounds");
+            static_assert(index <= L::length, "index out of bounds");
             using s = typename L::template split<index>;
             using left = typename s::head;
             using right = typename s::tail;
@@ -1402,7 +1402,7 @@ namespace aerobus {
         template<typename v1, typename v2>
         using add_t = residue<internal::mod_representative(static_cast<int64_t>(v1::v) + v2::v, p)>;
 
-        /// @brief substraction operator
+        /// @brief subtraction operator
         /// @tparam v1 a value in zpz::val
         /// @tparam v2 a value in zpz::val
         template<typename v1, typename v2>
@@ -1447,7 +1447,7 @@ namespace aerobus {
         template<typename v1, typename v2>
         using gt_t = std::bool_constant<(v1::v > v2::v)>;
 
-        /// @brief strictly greater operator (booleanvalue)
+        /// @brief strictly greater operator (boolean value)
         /// @tparam v1 a value in zpz::val
         /// @tparam v2 a value in zpz::val
         template<typename v1, typename v2>
@@ -1459,7 +1459,7 @@ namespace aerobus {
         template<typename v1, typename v2>
         using lt_t = std::bool_constant<(v1::v < v2::v)>;
 
-        /// @brief strictly smaller operator (booleanvalue)
+        /// @brief strictly smaller operator (boolean value)
         /// @tparam v1 a value in zpz::val
         /// @tparam v2 a value in zpz::val
         template<typename v1, typename v2>
@@ -1471,7 +1471,7 @@ namespace aerobus {
         template<typename v1, typename v2>
         using eq_t = std::bool_constant<(v1::v == v2::v)>;
 
-        /// @brief equality operator (booleanvalue)
+        /// @brief equality operator (boolean value)
         /// @tparam v1 a value in zpz::val
         /// @tparam v2 a value in zpz::val
         template<typename v1, typename v2>
@@ -1500,7 +1500,7 @@ namespace aerobus {
     /// @tparam x an integer
     template<int32_t x>
     struct Embed<zpz<x>, i32> {
-        /// @brief  the i32 reprensentation of val
+        /// @brief  the i32 representation of val
         /// @tparam val a value in zpz<x>
         template <typename val>
         using type = i32::val<val::v>;
@@ -1677,14 +1677,14 @@ namespace aerobus {
 
             /// @brief Evaluate polynomial on x using compensated horner scheme
             ///
-            /// This is twice as accurate as simple eval (horner) but cannot be constexpr
+            /// As accurate as Horner evaluation in twice the working precision; not constexpr.
             ///
-            /// Please note this makes no sense on integer types as arithmetic on integers is exact in IEEE
+            /// Requirements: a floating point arithmeticType (on integers Horner is already exact), finite
+            /// intermediate results (on overflow the Horner result is returned), and a correctly rounded
+            /// std::fma, which is slow on processors without a fused multiply-add instruction.
+            /// Products whose rounding error underflows are not compensated.
             ///
-            /// WARNING : this does not work with gcc with -O3 optimization level
-            /// because gcc does illegal stuff with floating point arithmetic
-            ///
-            /// \image examples/plots/comp_horner_vs_horner.png
+            /// \image html examples/plots/compensated_horner.png
             /// @tparam arithmeticType float for example
             /// @param x
             template<typename arithmeticType>
@@ -1863,7 +1863,7 @@ namespace aerobus {
             using type = val<add_at_t<P1, P2, I>...>;
         };
 
-        // substraction at
+        // subtraction at
         template<typename P1, typename P2, size_t index>
         struct sub_at {
             using type =
@@ -2098,7 +2098,7 @@ namespace aerobus {
         template<typename v1, typename v2>
         using add_t = typename add<v1, v2>::type;
 
-        /// @brief substraction of two polynomials
+        /// @brief subtraction of two polynomials
         /// @tparam v1
         /// @tparam v2
         template<typename v1, typename v2>
@@ -2199,11 +2199,11 @@ namespace aerobus {
     namespace internal {
         template<typename Ring, typename E = void>
         requires IsEuclideanDomain<Ring>
-        struct _FractionField {};
+        struct fraction_field_impl {};
 
         template<typename Ring>
         requires IsEuclideanDomain<Ring>
-        struct _FractionField<Ring, std::enable_if_t<Ring::is_euclidean_domain>> {
+        struct fraction_field_impl<Ring, std::enable_if_t<Ring::is_euclidean_domain>> {
             static_assert(is_integral_domain_v<Ring>,
                 "FractionField needs an integral domain (a ring without zero divisors)");
 
@@ -2260,7 +2260,7 @@ namespace aerobus {
 
                 /// @brief underlying ring type
                 using ring_type = Ring;
-                using enclosing_type = _FractionField<Ring>;
+                using enclosing_type = fraction_field_impl<Ring>;
 
                 /// @brief true if val2 is one,
                 /// meaning val can be seen as an element of underlying ring (boolean value)
@@ -2349,7 +2349,7 @@ namespace aerobus {
             // x = 0
             template<typename v>
             struct simplify<v, std::enable_if_t<v::x::is_zero_t::value>> {
-                using type = typename _FractionField<Ring>::zero;
+                using type = typename fraction_field_impl<Ring>::zero;
             };
 
             // x != 0
@@ -2365,7 +2365,7 @@ namespace aerobus {
                 using unit = typename Ring::template div_t<newy, normal_y>;
 
              public:
-                using type = typename _FractionField<Ring>::template val<
+                using type = typename fraction_field_impl<Ring>::template val<
                     typename Ring::template div_t<newx, unit>, normal_y>;
             };
 
@@ -2388,7 +2388,7 @@ namespace aerobus {
                 using diviser = typename Ring::template mul_t<typename v1::y, typename v2::y>;
 
              public:
-                using type = typename _FractionField<Ring>::template simplify_t<val<dividend, diviser>>;
+                using type = typename fraction_field_impl<Ring>::template simplify_t<val<dividend, diviser>>;
             };
 
             // the simplified denominator is positive, so the sign is the numerator's
@@ -2406,7 +2406,7 @@ namespace aerobus {
                 using diviser = typename Ring::template mul_t<typename v1::y, typename v2::y>;
 
              public:
-                using type = typename _FractionField<Ring>::template simplify_t<val<dividend, diviser>>;
+                using type = typename fraction_field_impl<Ring>::template simplify_t<val<dividend, diviser>>;
             };
 
             template<typename v1, typename v2>
@@ -2416,7 +2416,7 @@ namespace aerobus {
                 using b = typename Ring::template mul_t<typename v1::y, typename v2::y>;
 
              public:
-                using type = typename _FractionField<Ring>::template simplify_t<val<a, b>>;
+                using type = typename fraction_field_impl<Ring>::template simplify_t<val<a, b>>;
             };
 
             template<typename v1, typename v2>
@@ -2428,7 +2428,7 @@ namespace aerobus {
                 using b = typename Ring::template mul_t<typename v1::y, typename v2::x>;
 
              public:
-                using type = typename _FractionField<Ring>::template simplify_t<val<a, b>>;
+                using type = typename fraction_field_impl<Ring>::template simplify_t<val<a, b>>;
             };
 
             template<typename v1, typename v2>
@@ -2475,7 +2475,7 @@ namespace aerobus {
             template<typename v1, typename v2>
             using gcd_t = std::conditional_t<v1::is_zero_v && v2::is_zero_v, zero, one>;
 
-            /// @brief substraction operator
+            /// @brief subtraction operator
             /// @tparam v1 a value
             /// @tparam v2 a value
             template<typename v1, typename v2>
@@ -2555,7 +2555,7 @@ namespace aerobus {
         template<typename Ring>
         requires IsEuclideanDomain<Ring>
         struct FractionFieldImpl<Ring, std::enable_if_t<!Ring::is_field>> {
-            using type = _FractionField<Ring>;
+            using type = fraction_field_impl<Ring>;
         };
     }  // namespace internal
 
@@ -2569,7 +2569,7 @@ namespace aerobus {
     /// @tparam Ring an integers ring, such as i32
     template<typename Ring>
     struct Embed<Ring, FractionField<Ring>> {
-        /// @brief FractionField<Ring> reprensentation of v
+        /// @brief FractionField<Ring> representation of v
         /// @tparam v a Ring value
         template<typename v>
         using type = typename FractionField<Ring>::template val<v, typename Ring::one>;
@@ -2641,10 +2641,9 @@ namespace aerobus {
 
     /// @brief embed a polynomial with integers coefficients into rational coefficients polynomials
     ///
-    /// Lives in polynomial<FractionField<Ring>>
+    /// Lives in polynomial<FractionField<v::ring_type>>
     ///
-    /// @tparam Ring Integers
-    /// @tparam a value in polynomial<Ring>
+    /// @tparam v a value in polynomial<Ring>
     template<typename v>
     using embed_int_poly_in_fractions_t =
             typename Embed<
@@ -2678,13 +2677,13 @@ namespace aerobus {
     /// @brief helper type : adds two fractions
     /// @tparam Ring
     /// @tparam v1 belongs to FractionField<Ring>
-    /// @tparam v2 belongs to FranctionField<Ring>
+    /// @tparam v2 belongs to FractionField<Ring>
     template<typename Ring, typename v1, typename v2>
     using addfractions_t = typename FractionField<Ring>::template add_t<v1, v2>;
     /// @brief helper type : multiplies two fractions
     /// @tparam Ring
     /// @tparam v1 belongs to FractionField<Ring>
-    /// @tparam v2 belongs to FranctionField<Ring>
+    /// @tparam v2 belongs to FractionField<Ring>
     template<typename Ring, typename v1, typename v2>
     using mulfractions_t = typename FractionField<Ring>::template mul_t<v1, v2>;
 
@@ -2717,7 +2716,7 @@ namespace aerobus {
         };
 
      public:
-        /// @brief the polynomial<Large> reprensentation of v
+        /// @brief the polynomial<Large> representation of v
         /// @tparam v a value in polynomial<Small>
         template<typename v>
         using type = typename at_low<v, typename internal::make_index_sequence_reverse<v::degree + 1>>::type;
@@ -2991,28 +2990,28 @@ namespace aerobus {
         };
     }  // namespace internal
 
-    /// @brief Stirling number of first king (signed) -- as types
+    /// @brief Stirling number of the first kind (signed) -- as types
     /// @tparam T (ring type, such as aerobus::i64)
     /// @tparam n (integer)
     /// @tparam k (integer)
     template<typename T, size_t n, size_t k>
     using stirling_1_signed_t = typename internal::stirling_1_helper<T, n, k>::type;
 
-    /// @brief Stirling number of first king (unsigned) -- as types
+    /// @brief Stirling number of the first kind (unsigned) -- as types
     /// @tparam T (ring type, such as aerobus::i64)
     /// @tparam n (integer)
     /// @tparam k (integer)
     template<typename T, size_t n, size_t k>
     using stirling_1_unsigned_t = abs_t<typename internal::stirling_1_helper<T, n, k>::type>;
 
-    /// @brief Stirling number of first king (unsigned) -- as value
+    /// @brief Stirling number of the first kind (unsigned) -- as value
     /// @tparam T (ring type, such as aerobus::i64)
     /// @tparam n (integer)
     /// @tparam k (integer)
     template<typename T, size_t n, size_t k>
     inline constexpr typename T::inner_type stirling_1_unsigned_v = stirling_1_unsigned_t<T, n, k>::v;
 
-    /// @brief Stirling number of first king (signed) -- as value
+    /// @brief Stirling number of the first kind (signed) -- as value
     /// @tparam T (ring type, such as aerobus::i64)
     /// @tparam n (integer)
     /// @tparam k (integer)
@@ -3054,14 +3053,14 @@ namespace aerobus {
         };
     }  // namespace internal
 
-    /// @brief Stirling number of second king -- as types
+    /// @brief Stirling number of the second kind -- as types
     /// @tparam T (ring type, such as aerobus::i64)
     /// @tparam n (integer)
     /// @tparam k (integer)
     template<typename T, size_t n, size_t k>
     using stirling_2_t = typename internal::stirling_2_helper<T, n, k>::type;
 
-    /// @brief Stirling number of second king -- as value
+    /// @brief Stirling number of the second kind -- as value
     /// @tparam T (ring type, such as aerobus::i64)
     /// @tparam n (integer)
     /// @tparam k (integer)
@@ -3140,9 +3139,11 @@ namespace aerobus {
         };
     }
 
-    /// @brief
+    /// @brief Taylor polynomial of degree deg: sum of coeff_at<T, i>::type x^i for i = 0..deg
+    ///
+    /// coeff_at must be a template in (Integers, size_t index) exposing `type`, a value of FractionField<T>
     /// @tparam T Used Ring type (aerobus::i64 for example)
-    /// @tparam coeff_at - implementation giving the 'value' (seen as type in FractionField<T>
+    /// @tparam coeff_at - implementation giving the 'value' (seen as type in FractionField<T>)
     /// @tparam deg
     template<typename T, template<typename, size_t index> typename coeff_at, size_t deg>
     using taylor = typename internal::make_taylor_impl<
@@ -3553,7 +3554,7 @@ namespace aerobus {
     using E_fraction = ContinuedFraction<2, 1, 2, 1, 1, 4, 1, 1, 6, 1, 1, 8, 1, 1, 10, 1, 1, 12, 1, 1, 14, 1, 1>;
     /// @brief approximation of \f$\sqrt{2}\f$
     using SQRT2_fraction = ContinuedFraction<1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2>;
-    /// @brief approximation of \f$\sqrt{3}
+    /// @brief approximation of \f$\sqrt{3}\f$
     using SQRT3_fraction = ContinuedFraction<1, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2>; // NOLINT
 }  // namespace aerobus
 
@@ -3605,7 +3606,7 @@ namespace aerobus {
             using PQ = polynomial<Q>;
 
          private:
-            // Lk = (1 / k) * ((2 * k - 1 - x) * lkm1 - (k - 2)Lkm2)
+            // L_k = ((2k - 1 - x) L_{k-1} - (k - 1) L_{k-2}) / k
             using lnm2 = typename laguerre_helper<deg - 2, I>::type;
             using lnm1 = typename laguerre_helper<deg - 1, I>::type;
             // -x + 2k-1
@@ -4049,7 +4050,7 @@ namespace aerobus {
         template<size_t deg, typename I = aerobus::i64>
         using bessel = typename internal::BesselHelper<deg, I>::type;
 
-        /// @brief Touchar polynomials
+        /// @brief Touchard polynomials
         ///
         /// Lives in aerobus::polynomial<I>
         /// @see [See in Wikipedia](https://en.wikipedia.org/wiki/Touchard_polynomials)

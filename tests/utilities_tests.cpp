@@ -8,7 +8,7 @@
 
 using namespace aerobus;  // NOLINT
 
-TEST(utilies, type_at) {
+TEST(utilities, type_at) {
     EXPECT_TRUE((std::is_same_v<internal::type_at_t<0, float, int, int64_t>, float>));
     EXPECT_TRUE((std::is_same_v<internal::type_at_t<1, float, int, int64_t>, int>));
     EXPECT_TRUE((std::is_same_v<internal::type_at_t<2, float, int, int64_t>, int64_t>));
