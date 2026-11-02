@@ -41,10 +41,10 @@ int main() {
     {
         // (0.75 - x)^5 * (1 - x)^11
         using P = mul_t<
-            pow_t<pq64, pq64::val<
+            pow_t<pq64::val<
                 typename q64::template inject_constant_t<-1>,
                 q64::val<i64::val<3>, i64::val<4>>>, 5>,
-            pow_t<pq64, pq64::val<typename q64::template inject_constant_t<-1>, typename q64::one>, 11>
+            pow_t<pq64::val<typename q64::template inject_constant_t<-1>, typename q64::one>, 11>
         >;
         using FLOAT = double;
         run<P, FLOAT, false>(0.68, 1.15, "plots/large_sample_horner.dat", &exact_large);

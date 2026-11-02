@@ -21,3 +21,15 @@ TEST(api, sixteen_bit_integers_without_cuda) {
     EXPECT_EQ(P::eval(2.0f), 3.0f);
     EXPECT_TRUE((std::is_same_v<q16, FractionField<i16>>));
 }
+
+// aliases that take values infer the ring from them; indices are size_t
+TEST(api, consistent_template_parameters) {
+    EXPECT_EQ((pow_t<i32::val<2>, 10>::v), 1024);
+    EXPECT_EQ((pow_v<i64::val<3>, 3>), 27);
+    EXPECT_EQ((gcd_t<i32::val<12>, i32::val<18>>::v), 6);
+    using L = type_list<float, double>::insert<1, int>;
+    EXPECT_TRUE((std::is_same_v<L::at<1>, int>));
+    constexpr size_t k = 3;
+    EXPECT_EQ((alternate_t<i32, k>::v), -1);
+    EXPECT_EQ((stirling_2_v<i64, k + 2, k>), 25);
+}

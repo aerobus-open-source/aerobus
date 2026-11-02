@@ -132,13 +132,13 @@ TEST(utilities, alternate) {
 }
 
 TEST(utilities, pow) {
-    constexpr int32_t a0 = pow_t<i32, typename i32::inject_constant_t<2>, 3>::v;
+    constexpr int32_t a0 = pow_t<typename i32::inject_constant_t<2>, 3>::v;
     EXPECT_EQ(a0, 8);
-    constexpr int32_t a1 = pow_t<i32, typename i32::inject_constant_t<2>, 4>::v;
+    constexpr int32_t a1 = pow_t<typename i32::inject_constant_t<2>, 4>::v;
     EXPECT_EQ(a1, 16);
-    constexpr int32_t a2 = pow_t<i32, i32::zero, 0>::v;
+    constexpr int32_t a2 = pow_t<i32::zero, 0>::v;
     EXPECT_EQ(a2, 1);
-    constexpr int64_t a3 = pow_v<i64, typename i64::inject_constant_t<3>, 3>;
+    constexpr int64_t a3 = pow_v<typename i64::inject_constant_t<3>, 3>;
     EXPECT_EQ(a3, 27);
 }
 
