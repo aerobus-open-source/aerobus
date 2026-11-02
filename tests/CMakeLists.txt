@@ -12,6 +12,7 @@ add_executable(lib_tests
   memory_tests.cpp
   polynomial_tests.cpp
   quotient_tests.cpp
+  ring_axioms_tests.cpp
   taylor_tests.cpp
   type_list_tests.cpp
   utilities_tests.cpp
