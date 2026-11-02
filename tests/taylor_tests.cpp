@@ -85,3 +85,23 @@ TEST(sollya, taylor_vs_remez) {
 
     EXPECT_TRUE((inf_remez < inf_taylor));
 }
+
+// every series, degree 11, at x = 0.1: the truncation error is below 1e-12
+TEST(taylor, all_series_match_the_standard_library) {
+    constexpr double x = 0.1;
+    constexpr double tolerance = 1e-11;
+    EXPECT_NEAR((aerobus::exp<i64, 11>::eval(x)), std::exp(x), tolerance);
+    EXPECT_NEAR((aerobus::expm1<i64, 11>::eval(x)), std::expm1(x), tolerance);
+    EXPECT_NEAR((aerobus::lnp1<i64, 11>::eval(x)), std::log1p(x), tolerance);
+    EXPECT_NEAR((aerobus::geometric_sum<i64, 11>::eval(x)), 1.0 / (1.0 - x), tolerance);
+    EXPECT_NEAR((aerobus::sin<i64, 11>::eval(x)), std::sin(x), tolerance);
+    EXPECT_NEAR((aerobus::cos<i64, 11>::eval(x)), std::cos(x), tolerance);
+    EXPECT_NEAR((aerobus::tan<i64, 11>::eval(x)), std::tan(x), tolerance);
+    EXPECT_NEAR((aerobus::sinh<i64, 11>::eval(x)), std::sinh(x), tolerance);
+    EXPECT_NEAR((aerobus::cosh<i64, 11>::eval(x)), std::cosh(x), tolerance);
+    EXPECT_NEAR((aerobus::tanh<i64, 11>::eval(x)), std::tanh(x), tolerance);
+    EXPECT_NEAR((aerobus::atan<i64, 11>::eval(x)), std::atan(x), tolerance);
+    EXPECT_NEAR((aerobus::asin<i64, 11>::eval(x)), std::asin(x), tolerance);
+    EXPECT_NEAR((aerobus::asinh<i64, 11>::eval(x)), std::asinh(x), tolerance);
+    EXPECT_NEAR((aerobus::atanh<i64, 11>::eval(x)), std::atanh(x), tolerance);
+}
