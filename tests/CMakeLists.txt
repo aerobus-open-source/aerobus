@@ -46,3 +46,10 @@ add_test(NAME package.find_package
     "-DCXX_COMPILER=${CMAKE_CXX_COMPILER}"
     "-DCONFIG=$<CONFIG>"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/package/check_package.cmake")
+
+# the header compiles without warnings when its templates are instantiated
+if(NOT MSVC)
+  add_executable(hygiene hygiene/instantiate.cpp)
+  target_link_libraries(hygiene PRIVATE aerobus)
+  target_compile_options(hygiene PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()

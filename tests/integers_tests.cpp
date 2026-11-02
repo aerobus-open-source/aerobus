@@ -1,4 +1,6 @@
 #include <gtest/gtest.h>
+#include <cstdint>
+#include <type_traits>
 
 #include "aerobus.h"
 
@@ -21,4 +23,8 @@ TEST(integers, gcd) {
 
     using C = i32::gcd_t<i32::val<5>, i32::val<3>>;
     EXPECT_EQ(C::v, 1);
+}
+
+TEST(integers, value_inner_type) {
+    EXPECT_TRUE((std::is_same_v<typename i64::val<1>::inner_type, int64_t>));
 }
