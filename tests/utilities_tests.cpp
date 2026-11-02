@@ -221,3 +221,11 @@ TEST(utilities, counts_with_k_greater_than_n_are_zero) {
     EXPECT_EQ((stirling_2_v<i64, 3, 7>), 0);
     EXPECT_EQ((stirling_1_signed_v<i64, 2, 5>), 0);
 }
+
+TEST(continuous_fractions, get_in_any_type) {
+    using half_plus_one = ContinuedFraction<1, 2>;  // 1 + 1/2
+    EXPECT_EQ((half_plus_one::get<float>()), 1.5f);
+    EXPECT_EQ((half_plus_one::get<double>()), 1.5);
+    EXPECT_EQ((ContinuedFraction<3>::get<float>()), 3.0f);
+    EXPECT_EQ(SQRT2_fraction::get<float>(), static_cast<float>(SQRT2_fraction::val));
+}

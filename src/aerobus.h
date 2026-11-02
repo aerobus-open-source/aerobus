@@ -3899,6 +3899,13 @@ namespace aerobus {
         using type = typename q64::template inject_constant_t<a0>;
         /// @brief represented value as double
         static constexpr double val = static_cast<double>(a0);
+
+        /// @brief represented value as valueType (rounded once, from the exact fraction)
+        /// @tparam valueType an arithmetic type, such as float
+        template<typename valueType>
+        static constexpr valueType get() {
+            return type::template get<valueType>();
+        }
     };
 
     /// @brief specialization for multiple coefficients (strictly more than one)
@@ -3916,6 +3923,13 @@ namespace aerobus {
 
         /// @brief reprensented value as double
         static constexpr double val = type::template get<double>();
+
+        /// @brief represented value as valueType (rounded once, from the exact fraction)
+        /// @tparam valueType an arithmetic type, such as float
+        template<typename valueType>
+        static constexpr valueType get() {
+            return type::template get<valueType>();
+        }
     };
 
     /**
