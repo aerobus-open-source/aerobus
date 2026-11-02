@@ -177,3 +177,14 @@ TEST(known_polynomials, abel) {
     EXPECT_TRUE((std::is_same_v<A32::template coeff_at_t<2>, i64::val<-12>>));
     EXPECT_TRUE((std::is_same_v<A32::template coeff_at_t<3>, i64::val<1>>));
 }
+
+TEST(known_polynomials, live_in_their_documented_ring) {
+    using T3 = known_polynomials::touchard<3>;
+    using T2 = known_polynomials::touchard<2>;
+    EXPECT_TRUE((std::is_same_v<typename T3::enclosing_type, pi64>));
+    // x^3 + 3x^2 + x + x^2 + x
+    EXPECT_TRUE((std::is_same_v<aerobus::add_t<T3, T2>, make_int_polynomial_t<i64, 1, 4, 2, 0>>));
+    EXPECT_TRUE((std::is_same_v<typename known_polynomials::hermite_phys<0, i32>::enclosing_type, polynomial<i32>>));
+    EXPECT_TRUE((std::is_same_v<typename known_polynomials::hermite_phys<3, i32>::enclosing_type, polynomial<i32>>));
+    EXPECT_TRUE((std::is_same_v<known_polynomials::hermite_phys<3, i32>, make_int_polynomial_t<i32, 8, 0, -12, 0>>));
+}

@@ -1924,12 +1924,18 @@ namespace aerobus {
 
         template<typename coeffN>
         struct canonical_form<coeffN> {
+            static_assert(std::is_same_v<typename coeffN::enclosing_type, Ring>,
+                "coefficients of polynomial<Ring> must be values of Ring");
             using type = val_impl<coeffN>;
         };
 
         // drops leading zero coefficients
         template<typename coeffN, typename coeffN1, typename... coeffs>
         struct canonical_form<coeffN, coeffN1, coeffs...> {
+            static_assert(std::is_same_v<typename coeffN::enclosing_type, Ring> &&
+                std::is_same_v<typename coeffN1::enclosing_type, Ring> &&
+                (std::is_same_v<typename coeffs::enclosing_type, Ring> && ...),
+                "coefficients of polynomial<Ring> must be values of Ring");
             using type = typename std::conditional_t<
                 coeffN::is_zero_t::value,
                 canonical_form<coeffN1, coeffs...>,
@@ -4104,7 +4110,7 @@ namespace aerobus {
             using type = typename polynomial<I>::template sub_t<
                 // 2X Hn-1
                 typename polynomial<I>::template mul_t<
-                    typename pi64::val<typename I::template inject_constant_t<2>,
+                    typename polynomial<I>::template val<typename I::template inject_constant_t<2>,
                     typename I::zero>, hnm1>,
 
                 typename polynomial<I>::template mul_t<
@@ -4126,7 +4132,7 @@ namespace aerobus {
 
         template<typename I>
         struct hermite_helper<0, known_polynomials::hermite_kind::physicist, I> {
-            using type = typename pi64::one;
+            using type = typename polynomial<I>::one;
         };
 
         template<typename I>
@@ -4201,12 +4207,13 @@ namespace aerobus {
     }  // namespace internal
 
     namespace internal {
-        template<size_t n>
-        struct touchard_coeff {
-            template<typename T, size_t i>
-            struct inner {
-                using type = stirling_2_t<T, n, i>;
-            };
+        // T_n(x) = sum_i S(n, i) x^i, with Stirling numbers of the second kind (values of I)
+        template<typename I, size_t n, typename Is = make_index_sequence_reverse<n + 1>>
+        struct touchard_helper;
+
+        template<typename I, size_t n, size_t... Is>
+        struct touchard_helper<I, n, std::index_sequence<Is...>> {
+            using type = typename polynomial<I>::template val<stirling_2_t<I, n, Is>...>;
         };
     }  // namespace internal
 
@@ -4371,7 +4378,7 @@ namespace aerobus {
         /// @tparam I ring for coefficients, defaults to aerobus::i64
         /// @tparam deg degree of polynomial
         template<size_t deg, typename I = aerobus::i64>
-        using touchard = taylor<I, internal::touchard_coeff<deg>::template inner, deg>;
+        using touchard = typename internal::touchard_helper<I, deg>::type;
     }  // namespace known_polynomials
 }  // namespace aerobus
 
