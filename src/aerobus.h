@@ -1108,8 +1108,6 @@ namespace aerobus {
 }  // namespace aerobus
 
 // i16
-#ifdef WITH_CUDA_FP16
-// i16
 namespace aerobus {
     /// @brief 16 bits signed integers, seen as a algebraic ring with related operations
     struct i16 {
@@ -1127,7 +1125,12 @@ namespace aerobus {
             /// @tparam valueType double for example
             template<typename valueType>
             static constexpr AEROBUS_INLINE AEROBUS_DEVICE valueType get() {
+                #ifdef WITH_CUDA_FP16
+                // static_cast to __half is not constexpr in cuda_fp16.h
                 return internal::template int16_convert_helper<valueType, x>::value();
+                #else
+                return static_cast<valueType>(x);
+                #endif
             }
 
             /// @brief is value zero
@@ -1291,7 +1294,6 @@ namespace aerobus {
         struct is_integers_ring<i16> : std::true_type {};
     }  // namespace internal
 }  // namespace aerobus
-#endif
 
 // i32
 namespace aerobus {
@@ -3058,7 +3060,6 @@ namespace aerobus {
     using make_q32_t = typename q32::template simplify_t<
                 typename q32::val<i32::inject_constant_t<p>, i32::inject_constant_t<q>>>;
 
-    #ifdef WITH_CUDA_FP16
     /// @brief rational with 16 bits
     using q16 = FractionField<i16>;
 
@@ -3069,7 +3070,6 @@ namespace aerobus {
     using make_q16_t = typename q16::template simplify_t<
                 typename q16::val<i16::inject_constant_t<p>, i16::inject_constant_t<q>>>;
 
-    #endif
     /// @brief helper type : adds two fractions
     /// @tparam Ring
     /// @tparam v1 belongs to FractionField<Ring>
