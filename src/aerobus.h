@@ -30,6 +30,12 @@
 /** @file */
 
 
+/// @def AEROBUS_ALIGNED(x)
+/// @brief aligns a declaration on x bytes
+/// @def AEROBUS_INLINE
+/// @brief forces inlining
+/// @def AEROBUS_DEVICE
+/// @brief `__host__ __device__` when compiled by nvcc or hipcc, empty otherwise
 #ifdef _MSC_VER
 #define AEROBUS_ALIGNED(x) __declspec(align(x))
 #define AEROBUS_INLINE __forceinline
@@ -86,6 +92,14 @@ namespace aerobus {
 // concepts
 namespace aerobus {
     /// Concept to express R is a Ring
+    ///
+    /// The ring contract: R is a type (the structure) with `zero`, `one` and the operations `add_t`, `sub_t`,
+    /// `mul_t` taking two values and returning a value. Values are types too, with `enclosing_type` (R),
+    /// `is_zero_t` and `to_string()`. Built-in rings keep one type per value, so `std::is_same` is equality;
+    /// user rings may not, and should provide `eq_t`. IsEuclideanDomain adds `div_t`, `mod_t` (with
+    /// `a = div_t<a, b> * b + mod_t<a, b>`), `gcd_t`, `eq_t`, `pos_t` and `is_euclidean_domain`; IsField adds
+    /// `is_field`. A ring without zero divisors may declare `is_integral_domain` (assumed true when absent),
+    /// which FractionField requires.
     template <typename R>
     concept IsRing = requires {
         typename R::one;
@@ -321,61 +335,103 @@ namespace aerobus {
 
 // arithmetic helpers
 namespace aerobus {
+    /// @brief placeholder for a double-double type, the upper type of double in arithmetic_helpers
     struct double_double {};
 
+    /// @brief constants and properties of a floating point type (float, double, __half with WITH_CUDA_FP16)
+    /// @tparam T floating point type
     template<typename T>
     struct arithmetic_helpers;
 
+    /// @brief constants of this floating point type
     template<>
     struct arithmetic_helpers<double> {
+        /// @brief signed integers of the same width
         using integers = int64_t;
+        /// @brief type with twice the precision
         using upper_type = double_double;
+        /// @brief 1
         static AEROBUS_INLINE AEROBUS_DEVICE consteval double one() { return 1.0; }
+        /// @brief 0
         static AEROBUS_INLINE AEROBUS_DEVICE consteval double zero() { return 0.0; }
+        /// @brief -0
         static AEROBUS_INLINE AEROBUS_DEVICE consteval double m_zero() { return -0.0; }
+        /// @brief pi, rounded to nearest
         static AEROBUS_INLINE AEROBUS_DEVICE consteval double pi() { return 0x1.921fb54442d18p1; }
+        /// @brief pi / 2, rounded to nearest
         static AEROBUS_INLINE AEROBUS_DEVICE consteval double pi_2() { return 0x1.921fb54442d18p0; }
+        /// @brief pi / 4, rounded to nearest
         static AEROBUS_INLINE AEROBUS_DEVICE consteval double pi_4() { return 0x1.921fb54442d18p-1; }
+        /// @brief 2 pi, rounded to nearest
         static AEROBUS_INLINE AEROBUS_DEVICE consteval double two_pi() { return 0x1.921fb54442d18p2; }
+        /// @brief 1 / (2 pi), rounded to nearest
         static AEROBUS_INLINE AEROBUS_DEVICE consteval double inv_two_pi() { return 0x1.45f306dc9c883p-3; }
+        /// @brief 1 / 2
         static AEROBUS_INLINE AEROBUS_DEVICE consteval double half() { return 0x1p-1; }
+        /// @brief true if x is infinite
         static AEROBUS_INLINE AEROBUS_DEVICE bool is_inf(double x) {
             return std::isinf(x);
         }
     };
 
+    /// @brief constants of this floating point type
     template<>
     struct arithmetic_helpers<float> {
+        /// @brief signed integers of the same width
         using integers = int32_t;
+        /// @brief type with twice the precision
         using upper_type = double;
+        /// @brief 1
         static AEROBUS_INLINE AEROBUS_DEVICE consteval float one() { return 1.0F; }
+        /// @brief 0
         static AEROBUS_INLINE AEROBUS_DEVICE consteval float zero() { return 0.0F; }
+        /// @brief -0
         static AEROBUS_INLINE AEROBUS_DEVICE consteval float m_zero() { return -0x0p+0; }
+        /// @brief pi, rounded to nearest
         static AEROBUS_INLINE AEROBUS_DEVICE consteval float pi() { return 0x1.921fb6p1f; }
+        /// @brief pi / 2, rounded to nearest
         static AEROBUS_INLINE AEROBUS_DEVICE consteval float pi_2() { return 0x1.921fb6p0f; }
+        /// @brief pi / 4, rounded to nearest
         static AEROBUS_INLINE AEROBUS_DEVICE consteval float pi_4() { return 0x1.921fb6p-1f; }
+        /// @brief 2 pi, rounded to nearest
         static AEROBUS_INLINE AEROBUS_DEVICE consteval float two_pi() { return 0x1.921fb6p2f; }
+        /// @brief 1 / (2 pi), rounded to nearest
         static AEROBUS_INLINE AEROBUS_DEVICE consteval float inv_two_pi() { return 0x1.45f306p-3f; }
+        /// @brief 1 / 2
         static AEROBUS_INLINE AEROBUS_DEVICE consteval float half() { return 0x1p-1f; }
+        /// @brief true if x is infinite
         static AEROBUS_INLINE AEROBUS_DEVICE bool is_inf(float x) {
             return std::isinf(x);
         }
     };
 
     #ifdef WITH_CUDA_FP16
+    /// @brief constants of this floating point type
     template<>
     struct arithmetic_helpers<__half> {
+        /// @brief signed integers of the same width
         using integers = int16_t;
+        /// @brief type with twice the precision
         using upper_type = float;
+        /// @brief 1
         static AEROBUS_INLINE AEROBUS_DEVICE consteval __half one() { return        __half_raw(0b0011110000000000); }
+        /// @brief 0
         static AEROBUS_INLINE AEROBUS_DEVICE consteval __half zero() { return       __half_raw(0b0000000000000000); }
+        /// @brief pi, rounded to nearest
         static AEROBUS_INLINE AEROBUS_DEVICE consteval __half pi() { return __half_raw(0b0100001001001000); }
+        /// @brief -0
         static AEROBUS_INLINE AEROBUS_DEVICE consteval __half m_zero() { return     __half_raw(0b1000000000000000); }
+        /// @brief pi / 2, rounded to nearest
         static AEROBUS_INLINE AEROBUS_DEVICE consteval __half pi_2() { return       __half_raw(0b011111001001000); }
+        /// @brief pi / 4, rounded to nearest
         static AEROBUS_INLINE AEROBUS_DEVICE consteval __half pi_4() { return       __half_raw(0b011101001001000); }
+        /// @brief 2 pi, rounded to nearest
         static AEROBUS_INLINE AEROBUS_DEVICE consteval __half two_pi() { return     __half_raw(0x4648); }
+        /// @brief 1 / (2 pi), rounded to nearest
         static AEROBUS_INLINE AEROBUS_DEVICE consteval __half inv_two_pi() { return __half_raw(0b011000100011000); }
+        /// @brief 1 / 2
         static AEROBUS_INLINE AEROBUS_DEVICE consteval __half half() { return       __half_raw(0b0011100000000000); }
+        /// @brief true if x is infinite
         static AEROBUS_INLINE AEROBUS_DEVICE bool is_inf(__half x) {
             return __hisinf(x) != 0;
         }
@@ -383,11 +439,15 @@ namespace aerobus {
 
     #endif
 
+    /// @brief floor and fmod, also for __half and __half2 on host and device (WITH_CUDA_FP16)
+    /// @tparam T floating point type
     template<typename T>
     struct meta_libm {
+        /// @brief largest integer not greater than f
         static AEROBUS_INLINE AEROBUS_DEVICE T floor(const T& f) {
             return std::floor(f);
         }
+        /// @brief remainder of x / d
         static AEROBUS_INLINE AEROBUS_DEVICE T fmod(const T& x, const T& d) {
             return std::fmod(x, d);
         }
@@ -1062,7 +1122,9 @@ namespace aerobus {
             using inner = internal::split_h<index, type_list<>, type_list<Ts...>>;
 
          public:
+            /// @brief the first index types
             using head = typename inner::head;
+            /// @brief the remaining types
             using tail = typename inner::tail;
         };
 
@@ -1081,14 +1143,18 @@ namespace aerobus {
     /// @brief specialization for empty type list
     template <>
     struct type_list<> {
+        /// @brief length of list: 0
         static constexpr size_t length = 0;
 
+        /// @brief the list holding only T
         template <typename T>
         using push_front = type_list<T>;
 
+        /// @brief the list holding only T
         template <typename T>
         using push_back = type_list<T>;
 
+        /// @brief U itself
         template <typename U>
         using concat = U;
 
@@ -1516,21 +1582,28 @@ namespace aerobus {
         template<typename Ring, typename v1, typename v2,
                  bool v1_is_zero = v1::is_zero_t::value, bool v2_is_zero = v2::is_zero_t::value>
         struct add {
+            /// @brief v1 + v2
             using type = typename Ring::template add_t<v1, v2>;
         };
 
+        /// @brief zero operand case
         template<typename Ring, typename v1, typename v2>
         struct add<Ring, v1, v2, true, false> {
+            /// @brief v1 + v2
             using type = v2;
         };
 
+        /// @brief zero operand case
         template<typename Ring, typename v1, typename v2>
         struct add<Ring, v1, v2, false, true> {
+            /// @brief v1 + v2
             using type = v1;
         };
 
+        /// @brief zero operand case
         template<typename Ring, typename v1, typename v2>
         struct add<Ring, v1, v2, true, true> {
+            /// @brief v1 + v2
             using type = typename Ring::zero;
         };
     }  // namespace arithmetic
@@ -1546,7 +1619,9 @@ namespace aerobus {
     template<typename Ring>
     requires IsEuclideanDomain<Ring>
     struct polynomial {
+        /// @brief polynomial rings are never fields
         static constexpr bool is_field = false;
+        /// @brief provides the euclidean operations when Ring does (division is exact over fields)
         static constexpr bool is_euclidean_domain = Ring::is_euclidean_domain;
         /// @brief no zero divisors iff the coefficient ring has none
         static constexpr bool is_integral_domain = internal::is_integral_domain_v<Ring>;
@@ -1692,6 +1767,7 @@ namespace aerobus {
                 return compensated_horner<arithmeticType, val_impl>::func(x);
             }
 
+            /// @brief value of the polynomial at x, a value of Ring, computed in Ring
             template<typename x>
             using value_at_t = horner_reduction_t<val_impl>
                 ::template inner<0, degree + 1>
@@ -1708,10 +1784,14 @@ namespace aerobus {
             using enclosing_type = polynomial<Ring>;
             /// @brief degree
             static constexpr size_t degree = 0;
+            /// @brief the coefficient
             using aN = coeffN;
+            /// @brief itself
             using strip = val_impl<coeffN>;
+            /// @brief true_type if zero
             using is_zero_t = std::bool_constant<aN::is_zero_t::value>;
 
+            /// @brief true if zero
             static constexpr bool is_zero_v = is_zero_t::value;
 
             template<size_t index, typename E = void>
@@ -1730,20 +1810,24 @@ namespace aerobus {
             template<size_t index>
             using coeff_at_t = typename coeff_at<index>::type;
 
+            /// @brief string representation of the coefficient ("0" for zero)
             static std::string to_string() {
                 return coeffN::is_zero_t::value ? std::string("0") : string_helper<coeffN>::func();
             }
 
+            /// @brief the constant, as arithmeticType
             template<typename arithmeticType>
             static constexpr AEROBUS_DEVICE AEROBUS_INLINE arithmeticType eval(const arithmeticType& /* x */) {
                 return coeffN::template get<arithmeticType>();
             }
 
+            /// @brief the constant, as arithmeticType
             template<typename arithmeticType>
             static AEROBUS_DEVICE AEROBUS_INLINE arithmeticType compensated_eval(const arithmeticType& /* x */) {
                 return coeffN::template get<arithmeticType>();
             }
 
+            /// @brief the constant
             template<typename x>
             using value_at_t = coeffN;
         };
@@ -2603,7 +2687,7 @@ namespace aerobus {
         (std::is_same_v<typename X::enclosing_type, typename Y::enclosing_type>)
     using mul_t = typename X::enclosing_type::template mul_t<X, Y>;
 
-    /// @brief generic division (named divide_t, not div_t, which is the C type ::div_t from <cstdlib>)
+    /// @brief generic division (named divide_t, not div_t, which is the C type ::div_t from `<cstdlib>`)
     /// @tparam X a value in a euclidean domain
     /// @tparam Y a value in same euclidean domain
     template<typename X, typename Y>
@@ -3126,6 +3210,10 @@ namespace aerobus {
     template<typename p, size_t n>
     inline constexpr auto pow_v = pow_t<p, n>::v;
 
+    /// @brief x^p for a native arithmetic value x, by squaring
+    /// @tparam T arithmetic type
+    /// @tparam p power
+    /// @param x base
     template<typename T, size_t p>
     constexpr AEROBUS_DEVICE AEROBUS_INLINE T pow_scalar(const T& x) { return internal::pow_scalar<T>::template func<p>(x); }
 
@@ -3932,7 +4020,7 @@ namespace aerobus {
     namespace known_polynomials {
 
         /// @brief Abel polynomials
-        /// live in polynomial<I>
+        /// live in `polynomial<I>`
         ///
         /// @see [See in Wikipedia](https://en.wikipedia.org/wiki/Abel_polynomials)
         ///
@@ -3954,7 +4042,7 @@ namespace aerobus {
 
         /** @brief Chebyshev polynomials of second kind
          * 
-         * Lives in polynomial<I>
+         * Lives in `polynomial<I>`
          * 
          * @see [See in Wikipedia](https://en.wikipedia.org/wiki/Chebyshev_polynomials)
          *
@@ -3966,7 +4054,7 @@ namespace aerobus {
 
         /** @brief Laguerre polynomials
          * 
-         * Lives in polynomial<FractionField<I>>
+         * Lives in `polynomial<FractionField<I>>`
          * 
          * @see [See in Wikipedia](https://en.wikipedia.org/wiki/Laguerre_polynomials)
          *
@@ -3996,7 +4084,7 @@ namespace aerobus {
 
         /** @brief Bernstein polynomials
          * 
-         * Lives in polynomial<I>
+         * Lives in `polynomial<I>`
          * 
          * @see [See in Wikipedia](https://en.wikipedia.org/wiki/Bernstein_polynomial)
          *
@@ -4009,7 +4097,7 @@ namespace aerobus {
 
         /** @brief Legendre polynomials
          * 
-         * Lives in polynomial<FractionField<I>>
+         * Lives in `polynomial<FractionField<I>>`
          * 
          * @see [See in Wikipedia](https://en.wikipedia.org/wiki/Legendre_polynomials)
          *
@@ -4021,7 +4109,7 @@ namespace aerobus {
 
         /** @brief Bernoulli polynomials
          * 
-         * Lives in polynomial<FractionField<I>>
+         * Lives in `polynomial<FractionField<I>>`
          * 
          * @see [See in Wikipedia](https://en.wikipedia.org/wiki/Bernoulli_polynomials)
          *
@@ -4033,7 +4121,7 @@ namespace aerobus {
 
         /// @brief All One polynomials
         ///
-        /// Lives in polynomial<I> with all coefficients at 1
+        /// Lives in `polynomial<I>` with all coefficients at 1
         ///
         /// @tparam I Ring for coefficients defaults to aerobus::i64
         /// @tparam deg degree of polynomial
@@ -4042,7 +4130,7 @@ namespace aerobus {
 
         /// @brief Bessel polynomials
         ///
-        /// Lives in aerobus::polynomial<I>
+        /// Lives in `aerobus::polynomial<I>`
         /// @see [See in Wikipedia](https://en.wikipedia.org/wiki/Bessel_polynomials)
         ///
         /// @tparam I ring for coefficients, defaults to aerobus::i64
@@ -4052,7 +4140,7 @@ namespace aerobus {
 
         /// @brief Touchard polynomials
         ///
-        /// Lives in aerobus::polynomial<I>
+        /// Lives in `aerobus::polynomial<I>`
         /// @see [See in Wikipedia](https://en.wikipedia.org/wiki/Touchard_polynomials)
         ///
         /// @tparam I ring for coefficients, defaults to aerobus::i64
