@@ -78,7 +78,9 @@ namespace aerobus {
         typename R::template mul_t<typename R::one, typename R::one>;
     };
 
-    /// Concept to express R is an euclidean domain
+    /// Concept to express R is an euclidean domain:
+    /// it provides div_t, mod_t, gcd_t, eq_t and pos_t, declares is_euclidean_domain = true,
+    /// and one is positive
     template <typename R>
     concept IsEuclideanDomain = IsRing<R> && requires {
         typename R::template div_t<typename R::one, typename R::one>;
@@ -87,15 +89,14 @@ namespace aerobus {
         typename R::template eq_t<typename R::one, typename R::one>;
         typename R::template pos_t<typename R::one>;
 
-        R::template pos_v<typename R::one> == true;
-        // typename R::template gt_t<typename R::one, typename R::zero>;
-        R::is_euclidean_domain == true;
+        requires R::template pos_v<typename R::one>;
+        requires R::is_euclidean_domain;
     };
 
-    /// Concept to express R is a field
+    /// Concept to express R is a field: an euclidean domain which declares is_field = true
     template<typename R>
     concept IsField = IsEuclideanDomain<R> && requires {
-        R::is_field == true;
+        requires R::is_field;
     };
 }  // namespace aerobus
 
