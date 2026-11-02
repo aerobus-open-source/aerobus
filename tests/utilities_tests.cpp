@@ -229,3 +229,17 @@ TEST(continuous_fractions, get_in_any_type) {
     EXPECT_EQ((ContinuedFraction<3>::get<float>()), 3.0f);
     EXPECT_EQ(SQRT2_fraction::get<float>(), static_cast<float>(SQRT2_fraction::val));
 }
+
+const void* bell_v_address_elsewhere() {
+    return &bell_v<i64, 4>;
+}
+
+const void* stirling_2_v_address_elsewhere() {
+    return &stirling_2_v<i64, 5, 3>;
+}
+
+TEST(utilities, pow_scalar_odd_and_negative) {
+    EXPECT_EQ((pow_scalar<int, 3>(-2)), -8);
+    EXPECT_EQ((pow_scalar<double, 10>(2.0)), 1024.0);
+    EXPECT_EQ((pow_scalar<double, 1>(5.0)), 5.0);
+}
