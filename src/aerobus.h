@@ -1145,6 +1145,9 @@ namespace aerobus {
             /// @brief is value zero
             using is_zero_t = std::bool_constant<x == 0>;
 
+            /// @brief is value zero (boolean value)
+            static constexpr bool is_zero_v = x == 0;
+
             /// @brief string representation of value
             static std::string to_string() {
                 return std::to_string(x);  // NOLINT
@@ -1258,12 +1261,24 @@ namespace aerobus {
         template<typename v1, typename v2>
         using gt_t = typename gt<v1, v2>::type;
 
+        /// @brief strictly greater operator (boolean value)
+        /// @tparam v1 a value in i16
+        /// @tparam v2 a value in i16
+        template<typename v1, typename v2>
+        static constexpr bool gt_v = gt_t<v1, v2>::value;
+
         /// @brief strict less operator (v1 < v2)
         /// yields v1 < v2
         /// @tparam v1 a value in i16
         /// @tparam v2 a value in i16
         template<typename v1, typename v2>
         using lt_t = typename lt<v1, v2>::type;
+
+        /// @brief strict less operator (boolean value)
+        /// @tparam v1 a value in i16
+        /// @tparam v2 a value in i16
+        template<typename v1, typename v2>
+        static constexpr bool lt_v = lt_t<v1, v2>::value;
 
         /// @brief equality operator (type)
         /// yields v1 == v2 as std::integral_constant<bool>
@@ -1327,6 +1342,9 @@ namespace aerobus {
 
             /// @brief is value zero
             using is_zero_t = std::bool_constant<x == 0>;
+
+            /// @brief is value zero (boolean value)
+            static constexpr bool is_zero_v = x == 0;
 
             /// @brief string representation of value
             static std::string to_string() {
@@ -1441,12 +1459,24 @@ namespace aerobus {
         template<typename v1, typename v2>
         using gt_t = typename gt<v1, v2>::type;
 
+        /// @brief strictly greater operator (boolean value)
+        /// @tparam v1 a value in i32
+        /// @tparam v2 a value in i32
+        template<typename v1, typename v2>
+        static constexpr bool gt_v = gt_t<v1, v2>::value;
+
         /// @brief strict less operator (v1 < v2)
         /// yields v1 < v2
         /// @tparam v1 a value in i32
         /// @tparam v2 a value in i32
         template<typename v1, typename v2>
         using lt_t = typename lt<v1, v2>::type;
+
+        /// @brief strict less operator (boolean value)
+        /// @tparam v1 a value in i32
+        /// @tparam v2 a value in i32
+        template<typename v1, typename v2>
+        static constexpr bool lt_v = lt_t<v1, v2>::value;
 
         /// @brief equality operator (type)
         /// yields v1 == v2 as std::integral_constant<bool>
@@ -1508,6 +1538,9 @@ namespace aerobus {
 
             /// @brief is value zero
             using is_zero_t = std::bool_constant<x == 0>;
+
+            /// @brief is value zero (boolean value)
+            static constexpr bool is_zero_v = x == 0;
 
             /// @brief string representation
             static std::string to_string() {
@@ -1787,6 +1820,11 @@ namespace aerobus {
         /// @tparam x an integer
         template<auto x>
         using inject_constant_t = residue<internal::mod_representative(static_cast<int64_t>(x), p)>;
+
+        /// @brief projects an integer value (such as i32::val<9>) onto zpz
+        /// @tparam v a value with an integer member v
+        template<typename v>
+        using inject_ring_t = inject_constant_t<v::v>;
 
         /// @brief zero value
         using zero = val<0>;
@@ -2541,6 +2579,18 @@ namespace aerobus {
         /// @tparam v2
         template<typename v1, typename v2>
         using gt_t = typename lt_helper<v2, v1>::type;
+
+        /// @brief equality operator (boolean value)
+        template<typename v1, typename v2>
+        static constexpr bool eq_v = eq_t<v1, v2>::value;
+
+        /// @brief strict greater operator (boolean value)
+        template<typename v1, typename v2>
+        static constexpr bool gt_v = gt_t<v1, v2>::value;
+
+        /// @brief strict less operator (boolean value)
+        template<typename v1, typename v2>
+        static constexpr bool lt_v = lt_t<v1, v2>::value;
 
         /// @brief division operator
         /// @tparam v1
