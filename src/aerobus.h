@@ -1,6 +1,6 @@
 // -*- lsst-c++ -*-
-#ifndef __INC_AEROBUS__ // NOLINT
-#define __INC_AEROBUS__
+#ifndef SRC_AEROBUS_H_
+#define SRC_AEROBUS_H_
 
 #include <cstdint>
 #include <cstddef>
@@ -29,17 +29,17 @@
 
 
 #ifdef _MSC_VER
-#define ALIGNED(x) __declspec(align(x))
-#define INLINED __forceinline
+#define AEROBUS_ALIGNED(x) __declspec(align(x))
+#define AEROBUS_INLINE __forceinline
 #else
-#define ALIGNED(x) __attribute__((aligned(x)))
-#define INLINED __attribute__((always_inline)) inline
+#define AEROBUS_ALIGNED(x) __attribute__((aligned(x)))
+#define AEROBUS_INLINE __attribute__((always_inline)) inline
 #endif
 
 #if defined(__CUDACC__) || defined(__HIPCC__)
-#define DEVICE __host__ __device__
+#define AEROBUS_DEVICE __host__ __device__
 #else
-#define DEVICE
+#define AEROBUS_DEVICE
 #endif
 
 //! \namespace aerobus main namespace for all publicly exposed types or functions
@@ -137,7 +137,7 @@ namespace aerobus {
 // all this shit is required because of NVIDIA bug https://developer.nvidia.com/bugs/4863696
 namespace aerobus {
     namespace internal {
-        static constexpr DEVICE uint16_t my_internal_float2half(
+        static constexpr AEROBUS_DEVICE uint16_t my_internal_float2half(
             const float f, uint32_t &sign, uint32_t &remainder) {
             uint32_t x;
             uint32_t u;
@@ -171,7 +171,7 @@ namespace aerobus {
             return static_cast<uint16_t>(result);
         }
 
-        static constexpr DEVICE __half my_float2half_rn(const float a) {
+        static constexpr AEROBUS_DEVICE __half my_float2half_rn(const float a) {
             __half val;
             __half_raw r;
             uint32_t sign = 0U;
@@ -224,11 +224,11 @@ namespace aerobus {
         template<typename Out, typename In>
         struct staticcast {
             template<auto x>
-            static constexpr INLINED DEVICE Out func() {
+            static constexpr AEROBUS_INLINE AEROBUS_DEVICE Out func() {
                 return static_cast<Out>(x);
             }
 
-            static INLINED DEVICE Out eval(const In& x) {
+            static AEROBUS_INLINE AEROBUS_DEVICE Out eval(const In& x) {
                 return static_cast<Out>(x);
             }
         };
@@ -237,7 +237,7 @@ namespace aerobus {
         template<>
         struct staticcast<__half, int16_t> {
             template<int16_t x>
-            static constexpr INLINED DEVICE __half func() {
+            static constexpr AEROBUS_INLINE AEROBUS_DEVICE __half func() {
                 return int16_convert_helper<__half, x>::value();
             }
         };
@@ -245,35 +245,35 @@ namespace aerobus {
         template<>
         struct staticcast<__half2, int16_t> {
             template<int16_t x>
-            static constexpr INLINED DEVICE __half2 func() {
+            static constexpr AEROBUS_INLINE AEROBUS_DEVICE __half2 func() {
                 return int16_convert_helper<__half2, x>::value();
             }
         };
 
         template<>
         struct staticcast<float, __half> {
-            static INLINED DEVICE float eval(const __half& x) {
+            static AEROBUS_INLINE AEROBUS_DEVICE float eval(const __half& x) {
                 return __half2float(x);
             }
         };
 
         template<>
         struct staticcast<double, __half> {
-            static INLINED DEVICE double eval(const __half& x) {
+            static AEROBUS_INLINE AEROBUS_DEVICE double eval(const __half& x) {
                 return static_cast<double>(__half2float(x));
             }
         };
 
         template<>
         struct staticcast<__half, float> {
-            static INLINED DEVICE __half eval(const float& x) {
+            static AEROBUS_INLINE AEROBUS_DEVICE __half eval(const float& x) {
                 return  __float2half(x);
             }
         };
 
         template<>
         struct staticcast<__half, double> {
-            static INLINED DEVICE __half eval(const double& x) {
+            static AEROBUS_INLINE AEROBUS_DEVICE __half eval(const double& x) {
                 return  __float2half(static_cast<float>(x));
             }
         };
@@ -287,7 +287,7 @@ namespace aerobus {
     namespace internal {
         template<typename T>
         struct fma_helper {
-            static constexpr INLINED DEVICE T eval(const T x, const T y, const T z) {
+            static constexpr AEROBUS_INLINE AEROBUS_DEVICE T eval(const T x, const T y, const T z) {
                 return static_cast<T>(x * y + z);
             }
         };
@@ -296,7 +296,7 @@ namespace aerobus {
         template<>
         struct fma_helper<__half> {
             // not constexpr: the fp16 operators of cuda_fp16.h are not
-            static INLINED DEVICE __half eval(const __half x, const __half y, const __half z) {
+            static AEROBUS_INLINE AEROBUS_DEVICE __half eval(const __half x, const __half y, const __half z) {
                 #ifdef __CUDA_ARCH__
                 return __hfma(x, y, z);
                 #else
@@ -307,7 +307,7 @@ namespace aerobus {
         template<>
         struct fma_helper<__half2> {
             // not constexpr: the fp16 operators of cuda_fp16.h are not
-            static INLINED DEVICE __half2 eval(const __half2 x, const __half2 y, const __half2 z) {
+            static AEROBUS_INLINE AEROBUS_DEVICE __half2 eval(const __half2 x, const __half2 y, const __half2 z) {
                 #ifdef __CUDA_ARCH__
                 return __hfma2(x, y, z);
                 #else
@@ -330,16 +330,16 @@ namespace aerobus {
     struct arithmetic_helpers<double> {
         using integers = int64_t;
         using upper_type = double_double;
-        static INLINED DEVICE consteval double one() { return 1.0; }
-        static INLINED DEVICE consteval double zero() { return 0.0; }
-        static INLINED DEVICE consteval double m_zero() { return -0.0; }
-        static INLINED DEVICE consteval double pi() { return 0x1.921fb54442d18p1; }
-        static INLINED DEVICE consteval double pi_2() { return 0x1.921fb54442d18p0; }
-        static INLINED DEVICE consteval double pi_4() { return 0x1.921fb54442d18p-1; }
-        static INLINED DEVICE consteval double two_pi() { return 0x1.921fb54442d18p2; }
-        static INLINED DEVICE consteval double inv_two_pi() { return 0x1.45f306dc9c883p-3; }
-        static INLINED DEVICE consteval double half() { return 0x1p-1; }
-        static INLINED DEVICE bool is_inf(double x) {
+        static AEROBUS_INLINE AEROBUS_DEVICE consteval double one() { return 1.0; }
+        static AEROBUS_INLINE AEROBUS_DEVICE consteval double zero() { return 0.0; }
+        static AEROBUS_INLINE AEROBUS_DEVICE consteval double m_zero() { return -0.0; }
+        static AEROBUS_INLINE AEROBUS_DEVICE consteval double pi() { return 0x1.921fb54442d18p1; }
+        static AEROBUS_INLINE AEROBUS_DEVICE consteval double pi_2() { return 0x1.921fb54442d18p0; }
+        static AEROBUS_INLINE AEROBUS_DEVICE consteval double pi_4() { return 0x1.921fb54442d18p-1; }
+        static AEROBUS_INLINE AEROBUS_DEVICE consteval double two_pi() { return 0x1.921fb54442d18p2; }
+        static AEROBUS_INLINE AEROBUS_DEVICE consteval double inv_two_pi() { return 0x1.45f306dc9c883p-3; }
+        static AEROBUS_INLINE AEROBUS_DEVICE consteval double half() { return 0x1p-1; }
+        static AEROBUS_INLINE AEROBUS_DEVICE bool is_inf(double x) {
             return std::isinf(x);
         }
     };
@@ -348,16 +348,16 @@ namespace aerobus {
     struct arithmetic_helpers<float> {
         using integers = int32_t;
         using upper_type = double;
-        static INLINED DEVICE consteval float one() { return 1.0F; }
-        static INLINED DEVICE consteval float zero() { return 0.0F; }
-        static INLINED DEVICE consteval float m_zero() { return -0x0p+0; }
-        static INLINED DEVICE consteval float pi() { return 0x1.921fb6p1f; }
-        static INLINED DEVICE consteval float pi_2() { return 0x1.921fb6p0f; }
-        static INLINED DEVICE consteval float pi_4() { return 0x1.921fb6p-1f; }
-        static INLINED DEVICE consteval float two_pi() { return 0x1.921fb6p2f; }
-        static INLINED DEVICE consteval float inv_two_pi() { return 0x1.45f306p-3f; }
-        static INLINED DEVICE consteval float half() { return 0x1p-1f; }
-        static INLINED DEVICE bool is_inf(float x) {
+        static AEROBUS_INLINE AEROBUS_DEVICE consteval float one() { return 1.0F; }
+        static AEROBUS_INLINE AEROBUS_DEVICE consteval float zero() { return 0.0F; }
+        static AEROBUS_INLINE AEROBUS_DEVICE consteval float m_zero() { return -0x0p+0; }
+        static AEROBUS_INLINE AEROBUS_DEVICE consteval float pi() { return 0x1.921fb6p1f; }
+        static AEROBUS_INLINE AEROBUS_DEVICE consteval float pi_2() { return 0x1.921fb6p0f; }
+        static AEROBUS_INLINE AEROBUS_DEVICE consteval float pi_4() { return 0x1.921fb6p-1f; }
+        static AEROBUS_INLINE AEROBUS_DEVICE consteval float two_pi() { return 0x1.921fb6p2f; }
+        static AEROBUS_INLINE AEROBUS_DEVICE consteval float inv_two_pi() { return 0x1.45f306p-3f; }
+        static AEROBUS_INLINE AEROBUS_DEVICE consteval float half() { return 0x1p-1f; }
+        static AEROBUS_INLINE AEROBUS_DEVICE bool is_inf(float x) {
             return std::isinf(x);
         }
     };
@@ -367,16 +367,16 @@ namespace aerobus {
     struct arithmetic_helpers<__half> {
         using integers = int16_t;
         using upper_type = float;
-        static INLINED DEVICE consteval __half one() { return        __half_raw(0b0011110000000000); }
-        static INLINED DEVICE consteval __half zero() { return       __half_raw(0b0000000000000000); }
-        static INLINED DEVICE consteval __half pi() { return __half_raw(0b0100001001001000); }
-        static INLINED DEVICE consteval __half m_zero() { return     __half_raw(0b1000000000000000); }
-        static INLINED DEVICE consteval __half pi_2() { return       __half_raw(0b011111001001000); }
-        static INLINED DEVICE consteval __half pi_4() { return       __half_raw(0b011101001001000); }
-        static INLINED DEVICE consteval __half two_pi() { return     __half_raw(0x4648); }
-        static INLINED DEVICE consteval __half inv_two_pi() { return __half_raw(0b011000100011000); }
-        static INLINED DEVICE consteval __half half() { return       __half_raw(0b0011100000000000); }
-        static INLINED DEVICE bool is_inf(__half x) {
+        static AEROBUS_INLINE AEROBUS_DEVICE consteval __half one() { return        __half_raw(0b0011110000000000); }
+        static AEROBUS_INLINE AEROBUS_DEVICE consteval __half zero() { return       __half_raw(0b0000000000000000); }
+        static AEROBUS_INLINE AEROBUS_DEVICE consteval __half pi() { return __half_raw(0b0100001001001000); }
+        static AEROBUS_INLINE AEROBUS_DEVICE consteval __half m_zero() { return     __half_raw(0b1000000000000000); }
+        static AEROBUS_INLINE AEROBUS_DEVICE consteval __half pi_2() { return       __half_raw(0b011111001001000); }
+        static AEROBUS_INLINE AEROBUS_DEVICE consteval __half pi_4() { return       __half_raw(0b011101001001000); }
+        static AEROBUS_INLINE AEROBUS_DEVICE consteval __half two_pi() { return     __half_raw(0x4648); }
+        static AEROBUS_INLINE AEROBUS_DEVICE consteval __half inv_two_pi() { return __half_raw(0b011000100011000); }
+        static AEROBUS_INLINE AEROBUS_DEVICE consteval __half half() { return       __half_raw(0b0011100000000000); }
+        static AEROBUS_INLINE AEROBUS_DEVICE bool is_inf(__half x) {
             return __hisinf(x) != 0;
         }
     };
@@ -399,10 +399,10 @@ namespace aerobus {
 
     template<typename T>
     struct meta_libm {
-        static INLINED DEVICE T floor(const T& f) {
+        static AEROBUS_INLINE AEROBUS_DEVICE T floor(const T& f) {
             return std::floor(f);
         }
-        static INLINED DEVICE T fmod(const T& x, const T& d) {
+        static AEROBUS_INLINE AEROBUS_DEVICE T fmod(const T& x, const T& d) {
             return std::fmod(x, d);
         }
     };
@@ -411,7 +411,7 @@ namespace aerobus {
     // hfloor and h2floor are device functions: the host goes through float
     template<>
     struct meta_libm<__half> {
-        static INLINED DEVICE __half floor(const __half& f) {
+        static AEROBUS_INLINE AEROBUS_DEVICE __half floor(const __half& f) {
             #ifdef __CUDA_ARCH__
             return hfloor(f);
             #else
@@ -419,7 +419,7 @@ namespace aerobus {
             #endif
         }
 
-        static INLINED DEVICE __half fmod(const __half& x, const __half& d) {
+        static AEROBUS_INLINE AEROBUS_DEVICE __half fmod(const __half& x, const __half& d) {
             __half i = meta_libm<__half>::floor(x / d);
             return x - d * i;
         }
@@ -427,7 +427,7 @@ namespace aerobus {
 
     template<>
     struct meta_libm<__half2> {
-        static INLINED DEVICE __half2 floor(const __half2& f) {
+        static AEROBUS_INLINE AEROBUS_DEVICE __half2 floor(const __half2& f) {
             #ifdef __CUDA_ARCH__
             return h2floor(f);
             #else
@@ -435,7 +435,7 @@ namespace aerobus {
             #endif
         }
 
-        static INLINED DEVICE __half2 fmod(const __half2& x, const __half2& d) {
+        static AEROBUS_INLINE AEROBUS_DEVICE __half2 fmod(const __half2& x, const __half2& d) {
             __half2 i = meta_libm<__half2>::floor(x / d);
             return x - d * i;
         }
@@ -449,7 +449,7 @@ namespace aerobus {
         /// @brief a * b + c rounded once, at run time (used by two_prod)
         template<typename T>
         struct exact_fma {
-            static INLINED DEVICE T eval(const T a, const T b, const T c) {
+            static AEROBUS_INLINE AEROBUS_DEVICE T eval(const T a, const T b, const T c) {
                 #ifdef __CUDA_ARCH__
                 return ::fma(a, b, c);
                 #else
@@ -462,7 +462,7 @@ namespace aerobus {
         // the product of two halves is exact in float; for c = -round(a * b) so is the sum
         template<>
         struct exact_fma<__half> {
-            static INLINED DEVICE __half eval(const __half a, const __half b, const __half c) {
+            static AEROBUS_INLINE AEROBUS_DEVICE __half eval(const __half a, const __half b, const __half c) {
                 #ifdef __CUDA_ARCH__
                 return __hfma(a, b, c);
                 #else
@@ -473,7 +473,7 @@ namespace aerobus {
 
         template<>
         struct exact_fma<__half2> {
-            static INLINED DEVICE __half2 eval(const __half2 a, const __half2 b, const __half2 c) {
+            static AEROBUS_INLINE AEROBUS_DEVICE __half2 eval(const __half2 a, const __half2 b, const __half2 c) {
                 #ifdef __CUDA_ARCH__
                 return __hfma2(a, b, c);
                 #else
@@ -487,7 +487,7 @@ namespace aerobus {
 
         /// @brief error-free transformation of a sum: x + y == a + b exactly, x = fl(a + b)
         template<typename T>
-        static constexpr INLINED DEVICE void two_sum(T a, T b, T *x, T *y) {
+        static constexpr AEROBUS_INLINE AEROBUS_DEVICE void two_sum(T a, T b, T *x, T *y) {
             *x = a + b;
             T z = *x - a;
             *y = (a - (*x - z)) + (b - z);
@@ -497,7 +497,7 @@ namespace aerobus {
         ///
         /// the rounding error a * b - x is computed by a correctly rounded fused multiply-add
         template<typename T>
-        static INLINED DEVICE void two_prod(T a, T b, T *x, T *y) {
+        static AEROBUS_INLINE AEROBUS_DEVICE void two_prod(T a, T b, T *x, T *y) {
             *x = a * b;
             *y = exact_fma<T>::eval(a, b, -*x);
         }
@@ -505,7 +505,7 @@ namespace aerobus {
         /// @brief Horner evaluation of the polynomial with coefficients p1[i] + p2[i], highest degree first
         /// @tparam N degree: p1 and p2 hold N + 1 coefficients
         template<typename T, size_t N>
-        static INLINED DEVICE T horner(T *p1, T *p2, T x) {
+        static AEROBUS_INLINE AEROBUS_DEVICE T horner(T *p1, T *p2, T x) {
             T r = p1[0] + p2[0];
             for (int64_t i = N - 1; i >= 0; --i) {
                 r = r * x + p1[N - i] + p2[N - i];
@@ -810,7 +810,7 @@ namespace aerobus {
             /// @tparam valueType an arithmetic type, such as int
             template<typename valueType>
             requires requires { V::template get<valueType>(); }
-            static constexpr INLINED DEVICE valueType get() {
+            static constexpr AEROBUS_INLINE AEROBUS_DEVICE valueType get() {
                 return V::template get<valueType>();
             }
         };
@@ -1126,7 +1126,7 @@ namespace aerobus {
             /// @brief cast x into valueType
             /// @tparam valueType double for example
             template<typename valueType>
-            static constexpr INLINED DEVICE valueType get() {
+            static constexpr AEROBUS_INLINE AEROBUS_DEVICE valueType get() {
                 return internal::template int16_convert_helper<valueType, x>::value();
             }
 
@@ -1310,7 +1310,7 @@ namespace aerobus {
             /// @brief cast x into valueType
             /// @tparam valueType double for example
             template<typename valueType>
-            static constexpr DEVICE valueType get() {
+            static constexpr AEROBUS_DEVICE valueType get() {
                 return static_cast<valueType>(x);
             }
 
@@ -1491,7 +1491,7 @@ namespace aerobus {
             /// @brief cast value in valueType
             /// @tparam valueType (double for example)
             template<typename valueType>
-            static constexpr INLINED DEVICE valueType get() {
+            static constexpr AEROBUS_INLINE AEROBUS_DEVICE valueType get() {
                 return static_cast<valueType>(x);
             }
 
@@ -1750,7 +1750,7 @@ namespace aerobus {
             /// @brief get value as valueType
             /// @tparam valueType an arithmetic type, such as float
             template<typename valueType>
-            static constexpr INLINED DEVICE valueType get() {
+            static constexpr AEROBUS_INLINE AEROBUS_DEVICE valueType get() {
                 return static_cast<valueType>(x);
             }
 
@@ -2063,7 +2063,7 @@ namespace aerobus {
             /// @param x value
             /// @return P(x)
             template<typename arithmeticType>
-            static constexpr DEVICE INLINED arithmeticType eval(const arithmeticType& x) {
+            static constexpr AEROBUS_DEVICE AEROBUS_INLINE arithmeticType eval(const arithmeticType& x) {
                 // start from the leading coefficient: degree fused multiply-adds
                 return horner_evaluation<arithmeticType, val_impl>
                         ::template inner<1, degree + 1>
@@ -2083,7 +2083,7 @@ namespace aerobus {
             /// @tparam arithmeticType float for example
             /// @param x
             template<typename arithmeticType>
-            static DEVICE INLINED arithmeticType compensated_eval(const arithmeticType& x) {
+            static AEROBUS_DEVICE AEROBUS_INLINE arithmeticType compensated_eval(const arithmeticType& x) {
                 return compensated_horner<arithmeticType, val_impl>::func(x);
             }
 
@@ -2130,12 +2130,12 @@ namespace aerobus {
             }
 
             template<typename arithmeticType>
-            static constexpr DEVICE INLINED arithmeticType eval(const arithmeticType& /* x */) {
+            static constexpr AEROBUS_DEVICE AEROBUS_INLINE arithmeticType eval(const arithmeticType& /* x */) {
                 return coeffN::template get<arithmeticType>();
             }
 
             template<typename arithmeticType>
-            static DEVICE INLINED arithmeticType compensated_eval(const arithmeticType& /* x */) {
+            static AEROBUS_DEVICE AEROBUS_INLINE arithmeticType compensated_eval(const arithmeticType& /* x */) {
                 return coeffN::template get<arithmeticType>();
             }
 
@@ -2383,7 +2383,7 @@ namespace aerobus {
         struct horner_evaluation {
             template<size_t index, size_t stop>
             struct inner {
-                static constexpr DEVICE INLINED arithmeticType func(
+                static constexpr AEROBUS_DEVICE AEROBUS_INLINE arithmeticType func(
                     const arithmeticType& accum, const arithmeticType& x) {
                     return horner_evaluation<arithmeticType, P>::template inner<index + 1, stop>::func(
                         internal::fma_helper<arithmeticType>::eval(
@@ -2395,7 +2395,7 @@ namespace aerobus {
 
             template<size_t stop>
             struct inner<stop, stop> {
-                static constexpr DEVICE INLINED arithmeticType func(
+                static constexpr AEROBUS_DEVICE AEROBUS_INLINE arithmeticType func(
                     const arithmeticType& accum, const arithmeticType& /* x */) {
                     return accum;
                 }
@@ -2406,7 +2406,7 @@ namespace aerobus {
         struct compensated_horner {
             template<int64_t index, int ghost>
             struct EFTHorner {
-                static INLINED DEVICE void func(
+                static AEROBUS_INLINE AEROBUS_DEVICE void func(
                         arithmeticType x, arithmeticType *pi, arithmeticType *sigma, arithmeticType *r) {
                     arithmeticType p;
                     internal::two_prod(*r, x, &p, pi + P::degree - index - 1);
@@ -2420,12 +2420,12 @@ namespace aerobus {
 
             template<int ghost>
             struct EFTHorner<-1, ghost> {
-                static INLINED DEVICE void func(
+                static AEROBUS_INLINE AEROBUS_DEVICE void func(
                         arithmeticType, arithmeticType *, arithmeticType *, arithmeticType *) {
                 }
             };
 
-            static INLINED DEVICE arithmeticType func(arithmeticType x) {
+            static AEROBUS_INLINE AEROBUS_DEVICE arithmeticType func(arithmeticType x) {
                 arithmeticType pi[P::degree], sigma[P::degree];
                 arithmeticType r = P::template coeff_at_t<P::degree>::template get<arithmeticType>();
                 EFTHorner<P::degree - 1, 0>::func(x, pi, sigma, &r);
@@ -2659,7 +2659,7 @@ namespace aerobus {
 
                 template<typename valueType, int ghost = 0>
                 struct get_helper {
-                    static constexpr INLINED DEVICE valueType get() {
+                    static constexpr AEROBUS_INLINE AEROBUS_DEVICE valueType get() {
                         return internal::staticcast<valueType, typename ring_type::inner_type>::template func<x::v>() /
                             internal::staticcast<valueType, typename ring_type::inner_type>::template func<y::v>();
                     }
@@ -2668,7 +2668,7 @@ namespace aerobus {
                 #ifdef WITH_CUDA_FP16
                 template<int ghost>
                 struct get_helper<__half, ghost> {
-                    static constexpr INLINED DEVICE __half get() {
+                    static constexpr AEROBUS_INLINE AEROBUS_DEVICE __half get() {
                         return internal::my_float2half_rn(
                             internal::staticcast<float, typename ring_type::inner_type>::template func<x::v>() /
                             internal::staticcast<float, typename ring_type::inner_type>::template func<y::v>());
@@ -2677,7 +2677,7 @@ namespace aerobus {
 
                 template<int ghost>
                 struct get_helper<__half2, ghost> {
-                    static constexpr INLINED DEVICE __half2 get() {
+                    static constexpr AEROBUS_INLINE AEROBUS_DEVICE __half2 get() {
                         constexpr __half tmp = internal::my_float2half_rn(
                             internal::staticcast<float, typename ring_type::inner_type>::template func<x::v>() /
                             internal::staticcast<float, typename ring_type::inner_type>::template func<y::v>());
@@ -2690,7 +2690,7 @@ namespace aerobus {
                 /// @tparam valueType likely double or float
                 /// @return
                 template<typename valueType>
-                static constexpr INLINED DEVICE valueType get() {
+                static constexpr AEROBUS_INLINE AEROBUS_DEVICE valueType get() {
                     return get_helper<valueType, 0>::get();
                 }
 
@@ -2705,7 +2705,7 @@ namespace aerobus {
                 /// @param v
                 /// @return
                 template<typename arithmeticType>
-                static constexpr DEVICE INLINED arithmeticType eval(const arithmeticType& v) {
+                static constexpr AEROBUS_DEVICE AEROBUS_INLINE arithmeticType eval(const arithmeticType& v) {
                     return x::eval(v) / y::eval(v);
                 }
             };
@@ -3467,7 +3467,7 @@ namespace aerobus {
         template<typename T>
         struct pow_scalar {
             template<size_t p>
-            static constexpr DEVICE INLINED T func(const T& x) { return p == 0 ? static_cast<T>(1) :
+            static constexpr AEROBUS_DEVICE AEROBUS_INLINE T func(const T& x) { return p == 0 ? static_cast<T>(1) :
                 p % 2 == 0 ? func<p/2>(x) * func<p/2>(x) :
                 x * func<p/2>(x) * func<p/2>(x);
             }
@@ -3515,7 +3515,7 @@ namespace aerobus {
     static constexpr typename T::inner_type pow_v = internal::pow<T, p, n>::type::v;
 
     template<typename T, size_t p>
-    static constexpr DEVICE INLINED T pow_scalar(const T& x) { return internal::pow_scalar<T>::template func<p>(x); }
+    static constexpr AEROBUS_DEVICE AEROBUS_INLINE T pow_scalar(const T& x) { return internal::pow_scalar<T>::template func<p>(x); }
 
     namespace internal {
         template<typename, template<typename, size_t> typename, class>
@@ -6389,6 +6389,8 @@ namespace aerobus {
     template<> struct ConwayPolynomial<997, 7> { using ZPZ = aerobus::zpz<997>; using type = POLYV<ZPZV<1>, ZPZV<0>, ZPZV<0>, ZPZV<0>, ZPZV<0>, ZPZV<0>, ZPZV<1>, ZPZV<990>>; };  // NOLINT
     template<> struct ConwayPolynomial<997, 8> { using ZPZ = aerobus::zpz<997>; using type = POLYV<ZPZV<1>, ZPZV<0>, ZPZV<0>, ZPZV<0>, ZPZV<0>, ZPZV<934>, ZPZV<473>, ZPZV<241>, ZPZV<7>>; };  // NOLINT
     template<> struct ConwayPolynomial<997, 9> { using ZPZ = aerobus::zpz<997>; using type = POLYV<ZPZV<1>, ZPZV<0>, ZPZV<0>, ZPZV<0>, ZPZV<0>, ZPZV<0>, ZPZV<39>, ZPZV<732>, ZPZV<616>, ZPZV<990>>; };  // NOLINT
+    #undef ZPZV
+    #undef POLYV
 #endif  // DO_NOT_DOCUMENT
 
     /// @brief the finite field with p^n elements: F_p[x] modulo the Conway polynomial CP(p, n)
@@ -6399,4 +6401,4 @@ namespace aerobus {
 }  // namespace aerobus
 #endif  // AEROBUS_CONWAY_IMPORTS
 
-#endif // __INC_AEROBUS__ // NOLINT
+#endif  // SRC_AEROBUS_H_

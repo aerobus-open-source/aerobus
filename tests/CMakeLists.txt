@@ -8,6 +8,7 @@ add_executable(lib_tests
   fraction_field_tests.cpp
   integers_tests.cpp
   known_polynomials_tests.cpp
+  macros_tests.cpp
   memory_tests.cpp
   polynomial_tests.cpp
   quotient_tests.cpp

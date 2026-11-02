@@ -41,7 +41,7 @@ struct Expm1Degree<__half> {
 using EXPM1 = aerobus::expm1<int_type, Expm1Degree<float_type>::val>;
 
 
-__device__ INLINED float_type f(float_type x) {
+__device__ AEROBUS_INLINE float_type f(float_type x) {
     return EXPM1::eval(x);
 }
 
@@ -69,7 +69,7 @@ int main() {
     }
 
     if(device == -1) {
-        ::printf("CANNOT FIND CUDA CAPABLE DEVICE -- aborting\n");
+        ::printf("CANNOT FIND CUDA CAPABLE AEROBUS_DEVICE -- aborting\n");
         ::abort();
     }
 
