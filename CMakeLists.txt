@@ -73,20 +73,7 @@ if(AEROBUS_BUILD_TESTS)
   FetchContent_MakeAvailable(googletest)
 
   enable_testing()
-  include(GoogleTest)
-
-  add_executable(lib_tests src/lib_tests.cpp)
-  target_link_libraries(lib_tests PRIVATE aerobus aerobus_dev_flags GTest::gtest_main)
-  gtest_discover_tests(lib_tests)
-
-  # install this build tree, then build a consumer through find_package(Aerobus)
-  add_test(NAME package.find_package
-    COMMAND "${CMAKE_COMMAND}"
-      "-DAEROBUS_BINARY_DIR=${PROJECT_BINARY_DIR}"
-      "-DWORK_DIR=${PROJECT_BINARY_DIR}/package_test"
-      "-DCXX_COMPILER=${CMAKE_CXX_COMPILER}"
-      "-DCONFIG=$<CONFIG>"
-      -P "${PROJECT_SOURCE_DIR}/tests/package/check_package.cmake")
+  add_subdirectory(tests)
 endif()
 
 if(AEROBUS_BUILD_BENCHMARKS)

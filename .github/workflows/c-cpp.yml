@@ -16,10 +16,10 @@ jobs:
     - uses: actions/checkout@v4
     - name: cppcheck
       if: success()
-      run: cppcheck --std=c++20 --language=c++ src/aerobus.h && cppcheck --std=c++20 --language=c++ src/lib_tests.cpp
+      run: cppcheck --std=c++20 --language=c++ src/aerobus.h && cppcheck --std=c++20 --language=c++ tests/*.cpp
     - name: cpplint
       if: success()
-      run: cpplint src/lib.h && cpplint src/lib_tests.cpp
+      run: cpplint src/lib.h && cpplint tests/*.cpp
     - name: test
       if: success()
       run: make clean tests
