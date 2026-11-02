@@ -21,6 +21,33 @@ TEST(polynomials, simplify) {
     EXPECT_TRUE((std::is_same_v<expected3, simplified3>));
 }
 
+TEST(polynomials, construction_strips_leading_zeros) {
+    using P = polynomial<i32>::val<i32::zero, i32::zero, i32::one, i32::val<2>>;
+    EXPECT_EQ(P::degree, 1);
+    EXPECT_TRUE((std::is_same_v<P, polynomial<i32>::val<i32::one, i32::val<2>>>));
+    EXPECT_TRUE((std::is_same_v<polynomial<i32>::val<i32::zero, i32::zero>, polynomial<i32>::zero>));
+    // a zero leading coefficient that is not the type Ring::zero
+    using Q = polynomial<q32>::val<q32::val<i32::zero, i32::val<2>>, q32::one>;
+    EXPECT_EQ(Q::degree, 0);
+    EXPECT_TRUE((std::is_same_v<Q, polynomial<q32>::one>));
+}
+
+TEST(polynomials, eq_compares_values) {
+    using PQ = polynomial<q32>;
+    // x / 2 + 1, once with an unreduced coefficient
+    using A = PQ::val<q32::val<i32::val<2>, i32::val<4>>, q32::one>;
+    using B = PQ::val<make_q32_t<1, 2>, q32::one>;
+    EXPECT_TRUE((PQ::eq_t<A, B>::value));
+    EXPECT_FALSE((PQ::eq_t<A, PQ::X>::value));
+}
+
+TEST(polynomials, products_are_simplified_over_rings_with_zero_divisors) {
+    // in Z/4Z[x]: (2x + 1)^2 = 4x^2 + 4x + 1 = 1
+    using Z4 = zpz<4>;
+    using P = polynomial<Z4>::val<Z4::val<2>, Z4::one>;
+    EXPECT_TRUE((std::is_same_v<polynomial<Z4>::mul_t<P, P>, polynomial<Z4>::one>));
+}
+
 TEST(polynomials, coeff_at) {
     // 1 + 2x + 3x^2
     using poly = polynomial<i32>::val<i32::val<3>, i32::val<2>, i32::val<1>>;

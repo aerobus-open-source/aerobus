@@ -1757,42 +1757,31 @@ namespace aerobus {
 
 namespace aerobus {
     namespace arithmetic {
-        /// @brief Generic addition in a ring. Written to have specialization for zero
-        /// @tparam Ring 
+        /// @brief Generic addition in a ring, which skips Ring::add_t when an operand is zero
+        /// @tparam Ring
         /// @tparam v1 a value in Ring
         /// @tparam v2 a value in Ring
-        /// @tparam E used for SFINAE
-        template<typename Ring, typename v1, typename v2, typename E = void>
-        struct add {};
-
-        template<typename Ring, typename v1, typename v2> 
-        struct add<Ring, v1, v2, std::enable_if_t<
-            !std::is_same_v<typename Ring::zero, v1> && !std::is_same_v<typename Ring::zero, v2>
-        >> {
+        template<typename Ring, typename v1, typename v2,
+                 bool v1_is_zero = v1::is_zero_t::value, bool v2_is_zero = v2::is_zero_t::value>
+        struct add {
             using type = typename Ring::template add_t<v1, v2>;
         };
 
-        template<typename Ring, typename v1, typename v2> 
-        struct add<Ring, v1, v2, std::enable_if_t<
-            std::is_same_v<typename Ring::zero, v1> && !std::is_same_v<typename Ring::zero, v2>
-        >> {
+        template<typename Ring, typename v1, typename v2>
+        struct add<Ring, v1, v2, true, false> {
             using type = v2;
         };
 
-        template<typename Ring, typename v1, typename v2> 
-        struct add<Ring, v1, v2, std::enable_if_t<
-            !std::is_same_v<typename Ring::zero, v1> && std::is_same_v<typename Ring::zero, v2>
-        >> {
+        template<typename Ring, typename v1, typename v2>
+        struct add<Ring, v1, v2, false, true> {
             using type = v1;
         };
 
-        template<typename Ring, typename v1, typename v2> 
-        struct add<Ring, v1, v2, std::enable_if_t<
-            std::is_same_v<typename Ring::zero, v1> && std::is_same_v<typename Ring::zero, v2>
-        >> {
+        template<typename Ring, typename v1, typename v2>
+        struct add<Ring, v1, v2, true, true> {
             using type = typename Ring::zero;
         };
-    } // namespace arithmetic
+    }  // namespace arithmetic
 } // namespace aerobus
 
 // polynomial
@@ -1831,11 +1820,47 @@ namespace aerobus {
             };
         };
 
-        /// @brief values (seen as types) in polynomial ring
+        template<typename coeffN, typename... coeffs>
+        struct val_impl;
+
+     private:
+        template<typename... coeffs>
+        struct canonical_form {
+            static_assert(sizeof...(coeffs) > 0, "a polynomial needs at least one coefficient");
+        };
+
+        template<typename coeffN>
+        struct canonical_form<coeffN> {
+            using type = val_impl<coeffN>;
+        };
+
+        // drops leading zero coefficients
+        template<typename coeffN, typename coeffN1, typename... coeffs>
+        struct canonical_form<coeffN, coeffN1, coeffs...> {
+            using type = typename std::conditional_t<
+                coeffN::is_zero_t::value,
+                canonical_form<coeffN1, coeffs...>,
+                std::type_identity<val_impl<coeffN, coeffN1, coeffs...>>>::type;
+        };
+
+     public:
+        /// @brief values (seen as types) in polynomial ring: coeffN X^N + ... + coeff0
+        ///
+        /// leading zero coefficients are removed, so each polynomial has a single type:
+        /// val<zero, one, two> is val<one, two>
+        /// @tparam ...coeffs coefficients, highest degree first
+        template<typename... coeffs>
+        using val = typename canonical_form<coeffs...>::type;
+
+        /// @brief a polynomial in canonical form, highest degree coefficient first
+        ///
+        /// coeffN is nonzero unless the polynomial is constant; name values through val, which ensures it
         /// @tparam coeffN high degree coefficient
         /// @tparam ...coeffs lower degree coefficients
         template<typename coeffN, typename... coeffs>
-        struct val {
+        struct val_impl {
+            static_assert(!coeffN::is_zero_t::value,
+                "the leading coefficient of a non-constant polynomial must be nonzero: use val<...>");
             /// @brief ring coefficients live in
             using ring_type = Ring;
             /// @brief enclosing ring type
@@ -1893,7 +1918,7 @@ namespace aerobus {
                 #else
                 arithmeticType start = static_cast<arithmeticType>(0);
                 #endif
-                return horner_evaluation<arithmeticType, val>
+                return horner_evaluation<arithmeticType, val_impl>
                         ::template inner<0, degree + 1>
                         ::func(start, x);
             }
@@ -1912,11 +1937,11 @@ namespace aerobus {
             /// @param x
             template<typename arithmeticType>
             static DEVICE INLINED arithmeticType compensated_eval(const arithmeticType& x) {
-                return compensated_horner<arithmeticType, val>::func(x);
+                return compensated_horner<arithmeticType, val_impl>::func(x);
             }
 
             template<typename x>
-            using value_at_t = horner_reduction_t<val>
+            using value_at_t = horner_reduction_t<val_impl>
                 ::template inner<0, degree + 1>
                 ::template type<typename Ring::zero, x>;
         };
@@ -1924,7 +1949,7 @@ namespace aerobus {
         /// @brief specialization for constants
         /// @tparam coeffN
         template<typename coeffN>
-        struct val<coeffN> {
+        struct val_impl<coeffN> {
             /// @brief ring coefficients live in
             using ring_type = Ring;
             /// @brief enclosing ring type
@@ -1932,7 +1957,7 @@ namespace aerobus {
             /// @brief degree
             static constexpr size_t degree = 0;
             using aN = coeffN;
-            using strip = val<coeffN>;
+            using strip = val_impl<coeffN>;
             using is_zero_t = std::bool_constant<aN::is_zero_t::value>;
 
             static constexpr bool is_zero_v = is_zero_t::value;
@@ -1979,20 +2004,15 @@ namespace aerobus {
         using X = val<typename Ring::one, typename Ring::zero>;
 
      private:
-        template<typename P, typename E = void>
-        struct simplify;
-
         template <typename P1, typename P2, typename I>
         struct add_low;
 
         template<typename P1, typename P2>
         struct add {
-            using type = typename simplify<typename add_low<
-            P1,
-            P2,
-            internal::make_index_sequence_reverse<
-            std::max(P1::degree, P2::degree) + 1
-            >>::type>::type;
+            using type = typename add_low<
+                P1,
+                P2,
+                internal::make_index_sequence_reverse<std::max(P1::degree, P2::degree) + 1>>::type;
         };
 
         template <typename P1, typename P2, typename I>
@@ -2025,7 +2045,7 @@ namespace aerobus {
         template<typename v>
         struct derive_helper<v, std::enable_if_t<v::degree != 0>> {
             using type = typename add<
-                typename derive_helper<typename simplify<typename v::strip>::type>::type,
+                typename derive_helper<typename v::strip>::type,
                 typename monomial<
                     typename Ring::template mul_t<
                         typename v::aN,
@@ -2036,46 +2056,14 @@ namespace aerobus {
             >::type;
         };
 
-        template<typename v1, typename v2, typename E = void>
-        struct eq_helper {};
+        template<typename v1, typename v2, typename I = std::make_index_sequence<v1::degree + 1>>
+        struct eq_helper;
 
-        template<typename v1, typename v2>
-        struct eq_helper<v1, v2, std::enable_if_t<v1::degree != v2::degree>> {
-            using type = std::false_type;
-        };
-
-
-        template<typename v1, typename v2>
-        struct eq_helper<v1, v2, std::enable_if_t<
-            v1::degree == v2::degree &&
-            (v1::degree != 0 || v2::degree != 0) &&
-            std::is_same<
-            typename Ring::template eq_t<typename v1::aN, typename v2::aN>,
-            std::false_type
-            >::value
-        >
-        > {
-            using type = std::false_type;
-        };
-
-        template<typename v1, typename v2>
-        struct eq_helper<v1, v2, std::enable_if_t<
-            v1::degree == v2::degree &&
-            (v1::degree != 0 || v2::degree != 0) &&
-            std::is_same<
-            typename Ring::template eq_t<typename v1::aN, typename v2::aN>,
-            std::true_type
-            >::value
-        >> {
-            using type = typename eq_helper<typename v1::strip, typename v2::strip>::type;
-        };
-
-        template<typename v1, typename v2>
-        struct eq_helper<v1, v2, std::enable_if_t<
-            v1::degree == v2::degree &&
-            (v1::degree == 0)
-        >> {
-            using type = typename Ring::template eq_t<typename v1::aN, typename v2::aN>;
+        template<typename v1, typename v2, size_t... I>
+        struct eq_helper<v1, v2, std::index_sequence<I...>> {
+            using type = std::bool_constant<(v1::degree == v2::degree) && (Ring::template eq_t<
+                typename v1::template coeff_at_t<I>,
+                typename v2::template coeff_at_t<I>>::value && ...)>;
         };
 
         template<typename v1, typename v2, typename E = void>
@@ -2114,34 +2102,6 @@ namespace aerobus {
             using type = std::false_type;
         };
 
-        // when high power is zero : strip
-        template<typename P>
-        struct simplify<P, std::enable_if_t<
-            std::is_same<
-            typename Ring::zero,
-            typename P::aN
-            >::value && (P::degree > 0)
-        >> {
-            using type = typename simplify<typename P::strip>::type;
-        };
-
-        // otherwise : do nothing
-        template<typename P>
-        struct simplify<P, std::enable_if_t<
-            !std::is_same<
-            typename Ring::zero,
-            typename P::aN
-            >::value && (P::degree > 0)
-        >> {
-            using type = P;
-        };
-
-        // do not simplify constants
-        template<typename P>
-        struct simplify<P, std::enable_if_t<P::degree == 0>> {
-            using type = P;
-        };
-
         // addition at
         template<typename P1, typename P2, size_t index>
         struct add_at {
@@ -2178,12 +2138,10 @@ namespace aerobus {
 
         template<typename P1, typename P2>
         struct sub {
-            using type = typename simplify<typename sub_low<
-            P1,
-            P2,
-            internal::make_index_sequence_reverse<
-            std::max(P1::degree, P2::degree) + 1
-            >>::type>::type;
+            using type = typename sub_low<
+                P1,
+                P2,
+                internal::make_index_sequence_reverse<std::max(P1::degree, P2::degree) + 1>>::type;
         };
 
         // multiplication at
@@ -2232,8 +2190,7 @@ namespace aerobus {
 
         template<typename A, typename B, typename Q, typename R>
         struct div_helper<A, B, Q, R, std::enable_if_t<
-            (R::degree < B::degree) ||
-            (R::degree == 0 && std::is_same<typename R::aN, typename Ring::zero>::value)>> {
+            (R::degree < B::degree) || R::is_zero_t::value>> {
             using q_type = Q;
             using mod_type = R;
             using gcd_type = B;
@@ -2241,8 +2198,7 @@ namespace aerobus {
 
         template<typename A, typename B, typename Q, typename R>
         struct div_helper<A, B, Q, R, std::enable_if_t<
-            (R::degree >= B::degree) &&
-            !(R::degree == 0 && std::is_same<typename R::aN, typename Ring::zero>::value)>> {
+            (R::degree >= B::degree) && !R::is_zero_t::value>> {
          private: // NOLINT
             using rN = typename R::aN;
             using bN = typename B::aN;
@@ -2370,7 +2326,7 @@ namespace aerobus {
         template<typename coeff>
         struct string_helper<coeff> {
             static std::string func() {
-                if (!std::is_same<coeff, typename Ring::zero>::value) {
+                if (!coeff::is_zero_t::value) {
                     return coeff::to_string();
                 } else {
                     return "";
@@ -2379,10 +2335,10 @@ namespace aerobus {
         };
 
      public:
-        /// @brief simplifies a polynomial (recursively deletes highest degree if zero, do nothing otherwise)
-        /// @tparam P
+        /// @brief identity: values are already simplified, since val removes leading zero coefficients
+        /// @tparam P a value in polynomial<Ring>
         template<typename P>
-        using simplify_t = typename simplify<P>::type;
+        using simplify_t = P;
 
         /// @brief adds two polynomials
         /// @tparam v1
