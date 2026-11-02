@@ -33,3 +33,12 @@ TEST(api, consistent_template_parameters) {
     EXPECT_EQ((alternate_t<i32, k>::v), -1);
     EXPECT_EQ((stirling_2_v<i64, k + 2, k>), 25);
 }
+
+// defined in utilities_tests.cpp: the same variables, seen from another translation unit
+const void* bell_v_address_elsewhere();
+const void* stirling_2_v_address_elsewhere();
+
+TEST(api, value_templates_have_one_definition) {
+    EXPECT_EQ(static_cast<const void*>(&bell_v<i64, 4>), bell_v_address_elsewhere());
+    EXPECT_EQ(static_cast<const void*>(&stirling_2_v<i64, 5, 3>), stirling_2_v_address_elsewhere());
+}
