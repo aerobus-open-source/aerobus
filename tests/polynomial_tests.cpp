@@ -362,3 +362,8 @@ TEST(polynomials, order_over_rationals) {
     EXPECT_TRUE((pq64::gt_t<half, pq64::zero>::value));
     EXPECT_FALSE((pq64::gt_t<pq64::zero, half>::value));
 }
+
+TEST(polynomials, zero_to_string) {
+    EXPECT_EQ(polynomial<i32>::zero::to_string(), "0");
+    EXPECT_EQ(pq64::zero::to_string(), "0");
+}

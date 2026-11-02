@@ -1450,7 +1450,7 @@ namespace aerobus {
         template<int64_t x>
         struct val {
             /// @brief type of represented values
-            using inner_type = int32_t;
+            using inner_type = int64_t;
             /// @brief enclosing ring type
             using enclosing_type = i64;
             /// @brief actual value
@@ -1998,12 +1998,12 @@ namespace aerobus {
             struct coeff_at {};
 
             template<size_t index>
-            struct coeff_at<index, std::enable_if_t<(index >= 0 && index <= sizeof...(coeffs))>> {
+            struct coeff_at<index, std::enable_if_t<(index <= sizeof...(coeffs))>> {
                 using type = internal::type_at_t<sizeof...(coeffs) - index, coeffN, coeffs...>;
             };
 
             template<size_t index>
-            struct coeff_at<index, std::enable_if_t<(index < 0 || index > sizeof...(coeffs))>> {
+            struct coeff_at<index, std::enable_if_t<(index > sizeof...(coeffs))>> {
                 using type = typename Ring::zero;
             };
 
@@ -2079,7 +2079,7 @@ namespace aerobus {
             };
 
             template<size_t index>
-            struct coeff_at<index, std::enable_if_t<(index < 0 || index > 0)>> {
+            struct coeff_at<index, std::enable_if_t<(index > 0)>> {
                 using type = typename Ring::zero;
             };
 
@@ -2087,16 +2087,16 @@ namespace aerobus {
             using coeff_at_t = typename coeff_at<index>::type;
 
             static std::string to_string() {
-                return string_helper<coeffN>::func();
+                return coeffN::is_zero_t::value ? std::string("0") : string_helper<coeffN>::func();
             }
 
             template<typename arithmeticType>
-            static constexpr DEVICE INLINED arithmeticType eval(const arithmeticType& x) {
+            static constexpr DEVICE INLINED arithmeticType eval(const arithmeticType& /* x */) {
                 return coeffN::template get<arithmeticType>();
             }
 
             template<typename arithmeticType>
-            static DEVICE INLINED arithmeticType compensated_eval(const arithmeticType& x) {
+            static DEVICE INLINED arithmeticType compensated_eval(const arithmeticType& /* x */) {
                 return coeffN::template get<arithmeticType>();
             }
 
@@ -2267,12 +2267,12 @@ namespace aerobus {
         struct mul_at {};
 
         template<typename v1, typename v2, size_t k>
-        struct mul_at<v1, v2, k, std::enable_if_t<(k < 0) || (k > v1::degree + v2::degree)>> {
+        struct mul_at<v1, v2, k, std::enable_if_t<(k > v1::degree + v2::degree)>> {
             using type = typename Ring::zero;
         };
 
         template<typename v1, typename v2, size_t k>
-        struct mul_at<v1, v2, k, std::enable_if_t<(k >= 0) && (k <= v1::degree + v2::degree)>> {
+        struct mul_at<v1, v2, k, std::enable_if_t<(k <= v1::degree + v2::degree)>> {
             using type = typename mul_at_loop_helper<v1, v2, k, 0, k>::type;
         };
 
@@ -2357,7 +2357,7 @@ namespace aerobus {
             template<size_t stop>
             struct inner<stop, stop> {
                 static constexpr DEVICE INLINED arithmeticType func(
-                    const arithmeticType& accum, const arithmeticType& x) {
+                    const arithmeticType& accum, const arithmeticType& /* x */) {
                     return accum;
                 }
             };
@@ -2382,7 +2382,7 @@ namespace aerobus {
             template<int ghost>
             struct EFTHorner<-1, ghost> {
                 static INLINED DEVICE void func(
-                        arithmeticType x, arithmeticType *pi, arithmeticType *sigma, arithmeticType *r) {
+                        arithmeticType, arithmeticType *, arithmeticType *, arithmeticType *) {
                 }
             };
 
@@ -2734,7 +2734,6 @@ namespace aerobus {
                 using b = typename Ring::template mul_t<typename v1::y, typename v2::x>;
                 using dividend = typename Ring::template add_t<a, b>;
                 using diviser = typename Ring::template mul_t<typename v1::y, typename v2::y>;
-                using g = typename Ring::template gcd_t<dividend, diviser>;
 
              public:
                 using type = typename _FractionField<Ring>::template simplify_t<val<dividend, diviser>>;
@@ -2753,7 +2752,6 @@ namespace aerobus {
                 using b = typename Ring::template mul_t<typename v1::y, typename v2::x>;
                 using dividend = typename Ring::template sub_t<a, b>;
                 using diviser = typename Ring::template mul_t<typename v1::y, typename v2::y>;
-                using g = typename Ring::template gcd_t<dividend, diviser>;
 
              public:
                 using type = typename _FractionField<Ring>::template simplify_t<val<dividend, diviser>>;
