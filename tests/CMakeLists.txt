@@ -74,3 +74,10 @@ if(CMAKE_CUDA_COMPILER)
   target_compile_options(cuda_fp16_host_tests PRIVATE --expt-relaxed-constexpr)
   add_test(NAME cuda.fp16_host COMMAND cuda_fp16_host_tests)
 endif()
+
+# the Conway table of aerobus.h is the output of tools/generate_conway.py
+find_package(Python3 COMPONENTS Interpreter)
+if(Python3_Interpreter_FOUND)
+  add_test(NAME conway.table_is_generated
+    COMMAND "${Python3_EXECUTABLE}" -I "${PROJECT_SOURCE_DIR}/tools/generate_conway.py" --check)
+endif()
