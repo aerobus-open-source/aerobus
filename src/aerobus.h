@@ -3569,12 +3569,9 @@ namespace aerobus {
                 factorial_t<T, i - 1>,
                 typename T::template mul_t<
                     typename T::template val<i>,
-                    T::template mul_t<
+                    typename T::template mul_t<
                         pow_t<T, typename T::template inject_constant_t<4>, i / 2>,
-                        pow<T, factorial_t<T, i / 2>, 2
-                    >
-                >
-                >>;
+                        pow_t<T, factorial_t<T, i / 2>, 2>>>>;
         };
 
         template<typename T, size_t i>
@@ -3668,9 +3665,9 @@ namespace aerobus {
             using altp = typename FractionField<T>::template inject_t<alternate_t<T, (i - 1) / 2>>;
             using dividend = typename FractionField<T>::template mul_t<
                 altp,
-                FractionField<T>::template mul_t<
+                typename FractionField<T>::template mul_t<
                 _4p,
-                FractionField<T>::template mul_t<
+                typename FractionField<T>::template mul_t<
                 _4pm1,
                 bernoulli_t<T, (i + 1)>
                 >
@@ -3705,10 +3702,10 @@ namespace aerobus {
                     _4p,
                     typename FractionField<T>::template mul_t<
                         _4pm1,
-                        bernoulli_t<T, (i + 1)>>>::type;
+                        bernoulli_t<T, (i + 1)>>>;
         public:
             using type = typename FractionField<T>::template div_t<dividend,
-                FractionField<T>::template inject_t<factorial_t<T, i + 1>>>;
+                typename FractionField<T>::template inject_t<factorial_t<T, i + 1>>>;
         };
 
         template<typename T, size_t i>
