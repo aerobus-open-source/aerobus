@@ -112,3 +112,19 @@ TEST(compensated_horner, more_accurate_than_horner_near_a_multiple_root) {
     EXPECT_LT(worst_compensated, 1e-6) << "Horner relative error: " << worst_horner;
     EXPECT_GT(worst_horner, 100 * worst_compensated);
 }
+
+TEST(polynomials, eval_at_infinity) {
+    constexpr double inf = std::numeric_limits<double>::infinity();
+    // x + 1
+    using P = make_int_polynomial_t<i64, 1, 1>;
+    EXPECT_EQ(P::eval(inf), inf);
+    EXPECT_EQ(P::eval(-inf), -inf);
+    EXPECT_EQ(P::eval(std::numeric_limits<float>::infinity()), std::numeric_limits<float>::infinity());
+    // -x^2
+    using Q = make_int_polynomial_t<i64, -1, 0, 0>;
+    EXPECT_EQ(Q::eval(inf), -inf);
+    EXPECT_EQ(Q::eval(-inf), -inf);
+    // the compensated scheme returns the Horner result when it overflows
+    EXPECT_EQ(P::compensated_eval(inf), inf);
+    EXPECT_EQ(Q::compensated_eval(-inf), -inf);
+}

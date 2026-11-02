@@ -2001,19 +2001,10 @@ namespace aerobus {
             /// @return P(x)
             template<typename arithmeticType>
             static constexpr DEVICE INLINED arithmeticType eval(const arithmeticType& x) {
-                #ifdef WITH_CUDA_FP16
-                arithmeticType start;
-                if constexpr (std::is_same_v<arithmeticType, __half2>) {
-                    start = __half2(0, 0);
-                } else {
-                    start = static_cast<arithmeticType>(0);
-                }
-                #else
-                arithmeticType start = static_cast<arithmeticType>(0);
-                #endif
+                // start from the leading coefficient: degree fused multiply-adds
                 return horner_evaluation<arithmeticType, val_impl>
-                        ::template inner<0, degree + 1>
-                        ::func(start, x);
+                        ::template inner<1, degree + 1>
+                        ::func(aN::template get<arithmeticType>(), x);
             }
 
             /// @brief Evaluate polynomial on x using compensated horner scheme
@@ -2369,6 +2360,16 @@ namespace aerobus {
                 arithmeticType pi[P::degree], sigma[P::degree];
                 arithmeticType r = P::template coeff_at_t<P::degree>::template get<arithmeticType>();
                 EFTHorner<P::degree - 1, 0>::func(x, pi, sigma, &r);
+                if constexpr (std::is_floating_point_v<arithmeticType>) {
+                    // on overflow the error terms are not finite: keep the Horner result
+                    #ifdef __CUDA_ARCH__
+                    if (!::isfinite(r)) {
+                    #else
+                    if (!std::isfinite(r)) {
+                    #endif
+                        return r;
+                    }
+                }
                 arithmeticType c = internal::horner<arithmeticType, P::degree - 1>(pi, sigma, x);
                 return r + c;
             }
