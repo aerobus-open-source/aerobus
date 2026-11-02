@@ -28,8 +28,8 @@ static void BM_aero_expm1_12(benchmark::State &state) {
         }
     }
 
-    free(in);
-    free(out);
+    aerobus::aligned_free(in);
+    aerobus::aligned_free(out);
 }
 
 static void BM_std_expm1_12(benchmark::State &state) {
@@ -47,8 +47,8 @@ static void BM_std_expm1_12(benchmark::State &state) {
         }
     }
 
-    free(in);
-    free(out);
+    aerobus::aligned_free(in);
+    aerobus::aligned_free(out);
 }
 
 static void BM_aero_hermite(benchmark::State &state) {
@@ -65,8 +65,8 @@ static void BM_aero_hermite(benchmark::State &state) {
         }
     }
 
-    free(in);
-    free(out);
+    aerobus::aligned_free(in);
+    aerobus::aligned_free(out);
 }
 
 static void BM_std_hermite(benchmark::State &state) {
@@ -83,8 +83,8 @@ static void BM_std_hermite(benchmark::State &state) {
         }
     }
 
-    free(in);
-    free(out);
+    aerobus::aligned_free(in);
+    aerobus::aligned_free(out);
 }
 
 static void BM_compensated_horner_float(benchmark::State &state) {
@@ -103,8 +103,8 @@ static void BM_compensated_horner_float(benchmark::State &state) {
         }
     }
 
-    free(in);
-    free(out);
+    aerobus::aligned_free(in);
+    aerobus::aligned_free(out);
 }
 static void BM_horner_double(benchmark::State &state) {
     using P = aerobus::make_int_polynomial_t<aerobus::i64, 1, -11, 55, -165, 330, -462, 462, -330, 165, -55, 11, -1>;
@@ -122,8 +122,8 @@ static void BM_horner_double(benchmark::State &state) {
         }
     }
 
-    free(in);
-    free(out);
+    aerobus::aligned_free(in);
+    aerobus::aligned_free(out);
 }
 
 BENCHMARK(BM_std_expm1_12)->Range(1 << 10, 1 << 24);
