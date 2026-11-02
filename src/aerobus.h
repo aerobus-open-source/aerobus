@@ -2769,23 +2769,16 @@ namespace aerobus {
                 using type = typename _FractionField<Ring>::template simplify_t<val<a, b>>;
             };
 
-            template<typename v1, typename v2, typename E = void>
-            struct div {};
-
             template<typename v1, typename v2>
-            struct div<v1, v2, std::enable_if_t<!std::is_same<v2, typename _FractionField<Ring>::zero>::value>>  {
+            struct div {
+                static_assert(!v2::is_zero_v, "division by zero in FractionField");
+
              private:
                 using a = typename Ring::template mul_t<typename v1::x, typename v2::y>;
                 using b = typename Ring::template mul_t<typename v1::y, typename v2::x>;
 
              public:
                 using type = typename _FractionField<Ring>::template simplify_t<val<a, b>>;
-            };
-
-            template<typename v1, typename v2>
-            struct div<v1, v2, std::enable_if_t<
-                std::is_same<zero, v1>::value && std::is_same<v2, zero>::value>>  {
-                using type = one;
             };
 
             template<typename v1, typename v2>
