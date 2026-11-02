@@ -577,84 +577,26 @@ namespace aerobus {
         using type_at_t = typename type_at<i, Ts...>::type;
 
 
-        template<size_t n, size_t i, typename E = void>
-        struct _is_prime {};
-
-        template<size_t i>
-        struct _is_prime<0, i> {
-            static constexpr bool value = false;
-        };
-
-        template<size_t i>
-        struct _is_prime<1, i> {
-            static constexpr bool value = false;
-        };
-
-        template<size_t i>
-        struct _is_prime<2, i> {
-            static constexpr bool value = true;
-        };
-
-        template<size_t i>
-        struct _is_prime<3, i> {
-            static constexpr bool value = true;
-        };
-
-        template<size_t i>
-        struct _is_prime<5, i> {
-            static constexpr bool value = true;
-        };
-
-        template<size_t i>
-        struct _is_prime<7, i> {
-            static constexpr bool value = true;
-        };
-
-        template<size_t n, size_t i>
-        struct _is_prime<n, i, std::enable_if_t<(n != 2 && n % 2 == 0)>> {
-            static constexpr bool value = false;
-        };
-
-        template<size_t n, size_t i>
-        struct _is_prime<n, i, std::enable_if_t<(n != 2 && n != 3 && n % 2 != 0 && n % 3 == 0)>> {
-            static constexpr bool value = false;
-        };
-
-        template<size_t n, size_t i>
-        struct _is_prime<n, i, std::enable_if_t<(n >= 9 && i * i > n)>> {
-            static constexpr bool value = true;
-        };
-
-        template<size_t n, size_t i>
-        struct _is_prime<n, i, std::enable_if_t<(
-            n % i == 0 &&
-            n >= 9 &&
-            n % 3 != 0 &&
-            n % 2 != 0 &&
-            i * i > n)>> {
-            static constexpr bool value = true;
-        };
-
-        template<size_t n, size_t i>
-        struct _is_prime<n, i, std::enable_if_t<(
-            n % (i+2) == 0 &&
-            n >= 9 &&
-            n % 3 != 0 &&
-            n % 2 != 0 &&
-            i * i <= n)>> {
-            static constexpr bool value = true;
-        };
-
-        template<size_t n, size_t i>
-        struct _is_prime<n, i, std::enable_if_t<(
-                n % (i+2) != 0 &&
-                n % i != 0 &&
-                n >= 9 &&
-                n % 3 != 0 &&
-                n % 2 != 0 &&
-                (i * i <= n))>> {
-            static constexpr bool value = _is_prime<n, i+6>::value;
-        };
+        /// @brief trial division by 2, 3 and the numbers 6k +- 1
+        /// @param n number to test
+        /// @return true iff n is prime
+        constexpr bool is_prime_impl(size_t n) {
+            if (n < 2) {
+                return false;
+            }
+            if (n < 4) {
+                return true;
+            }
+            if (n % 2 == 0 || n % 3 == 0) {
+                return false;
+            }
+            for (size_t i = 5; i <= n / i; i += 6) {
+                if (n % i == 0 || n % (i + 2) == 0) {
+                    return false;
+                }
+            }
+            return true;
+        }
     }  // namespace internal
 
     /// @brief checks if n is prime
@@ -662,14 +604,14 @@ namespace aerobus {
     template<size_t n>
     struct is_prime {
         /// @brief true iff n is prime
-        static constexpr bool value = internal::_is_prime<n, 5>::value;
+        static constexpr bool value = internal::is_prime_impl(n);
     };
 
     /// @brief checks if n is prime
     /// true if and only if is n is prime
     /// @tparam n
     template<size_t n>
-    static constexpr bool is_prime_v = is_prime<n>::value;
+    inline constexpr bool is_prime_v = is_prime<n>::value;
 
     // gcd
     namespace internal {

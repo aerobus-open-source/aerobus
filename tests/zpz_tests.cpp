@@ -21,3 +21,10 @@ TEST(zpz, basic_assertions) {
     EXPECT_EQ((Z5Z::template gcd_t<typename Z5Z::val<2>, typename Z5Z::val<3>>::v), 1);
     EXPECT_EQ((Z5Z::template gcd_t<typename Z5Z::val<2>, typename Z5Z::val<4>>::v), 2);
 }
+
+TEST(zpz, is_field_for_odd_composite_moduli) {
+    EXPECT_FALSE(zpz<25>::is_field);
+    EXPECT_FALSE(zpz<35>::is_field);
+    EXPECT_FALSE(zpz<121>::is_field);
+    EXPECT_TRUE(zpz<997>::is_field);
+}
