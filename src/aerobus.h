@@ -248,52 +248,14 @@ namespace aerobus {
     }  // namespace internal
 }  // namespace aerobus
 
-// fma_helper, required because nvidia fails to reconstruct fma for fp16 types
+// fma_helper: x * y + z for Horner evaluation, which the compiler may contract into a fused multiply-add
+// (specialized for fp16 types because nvidia fails to reconstruct fma for them)
 namespace aerobus {
     namespace internal {
         template<typename T>
-        struct fma_helper;
-
-        template<>
-        struct fma_helper<double> {
-            static constexpr INLINED DEVICE double eval(const double x, const double y, const double z) {
-                return x * y + z;
-            }
-        };
-
-        template<>
-        struct fma_helper<long double> {
-            static constexpr INLINED DEVICE long double eval(
-                const long double x, const long double y, const long double z) {
-                    return x * y + z;
-            }
-        };
-
-        template<>
-        struct fma_helper<float> {
-            static constexpr INLINED DEVICE float eval(const float x, const float y, const float z) {
-                return x * y + z;
-            }
-        };
-
-        template<>
-        struct fma_helper<int32_t> {
-            static constexpr INLINED DEVICE int16_t eval(const int16_t x, const int16_t y, const int16_t z) {
-                return x * y + z;
-            }
-        };
-
-        template<>
-        struct fma_helper<int16_t> {
-            static constexpr INLINED DEVICE int32_t eval(const int32_t x, const int32_t y, const int32_t z) {
-                return x * y + z;
-            }
-        };
-
-        template<>
-        struct fma_helper<int64_t> {
-            static constexpr INLINED DEVICE int64_t eval(const int64_t x, const int64_t y, const int64_t z) {
-                return x * y + z;
+        struct fma_helper {
+            static constexpr INLINED DEVICE T eval(const T x, const T y, const T z) {
+                return static_cast<T>(x * y + z);
             }
         };
 
