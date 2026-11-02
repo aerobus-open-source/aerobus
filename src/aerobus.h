@@ -9,6 +9,7 @@
 #include <utility>
 #include <algorithm>
 #include <functional>
+#include <numeric>
 #include <string>
 #include <concepts> // NOLINT
 #include <array>
@@ -1540,49 +1541,73 @@ namespace aerobus {
 
 // z/pz
 namespace aerobus {
+    namespace internal {
+        /// @brief representative of x modulo p, in [0, p)
+        /// @param x an integer
+        /// @param p a modulus, at least 2
+        constexpr int32_t mod_representative(int64_t x, int32_t p) {
+            const int64_t r = x % p;
+            return static_cast<int32_t>(r < 0 ? r + p : r);
+        }
+    }  // namespace internal
+
     /// @brief congruence classes of integers modulo p (32 bits)
     ///
     /// if p is prime, zpz<p> is a field
     ///
-    /// @tparam p a integer
+    /// Every class is represented by its representative in [0, p):
+    /// `val<-1>`, `val<p - 1>` and `val<2 * p - 1>` are the same type.
+    ///
+    /// @tparam p modulus, at least 2
     template<int32_t p>
     struct zpz {
+        static_assert(p > 1, "zpz<p> requires a modulus p > 1");
+
         /// @brief underlying type for values
         using inner_type = int32_t;
 
-        /// @brief values in zpz<p>
-        /// @tparam x an integer
+        /// @brief a residue class, given by its representative x in [0, p)
+        ///
+        /// Name values through val<x>, which reduces x first.
+        /// @tparam x representative, in [0, p)
         template<int32_t x>
-        struct val {
+        struct residue {
+            static_assert(0 <= x && x < p, "residue<x> needs x in [0, p): use val<x>, which reduces x");
+
             /// @brief enclosing ring type
             using enclosing_type = zpz<p>;
-            /// @brief actual value
-            static constexpr int32_t v = x % p;
+            /// @brief representative, in [0, p)
+            static constexpr int32_t v = x;
 
             /// @brief get value as valueType
             /// @tparam valueType an arithmetic type, such as float
             template<typename valueType>
             static constexpr INLINED DEVICE valueType get() {
-                return static_cast<valueType>(x % p);
+                return static_cast<valueType>(x);
             }
 
             /// @brief true_type if zero
-            using is_zero_t = std::bool_constant<v == 0>;
+            using is_zero_t = std::bool_constant<x == 0>;
 
             /// @brief true if zero
-            static constexpr bool is_zero_v = v == 0;
+            static constexpr bool is_zero_v = x == 0;
 
             /// @brief string representation
-            /// @return a string representation
+            /// @return the representative, in [0, p)
             static std::string to_string() {
-                return std::to_string(x % p);
+                return std::to_string(x);
             }
         };
+
+        /// @brief values in zpz<p>: the class of x modulo p
+        /// @tparam x an integer
+        template<int32_t x>
+        using val = residue<internal::mod_representative(x, p)>;
 
         /// @brief injects a constant integer into zpz
         /// @tparam x an integer
         template<auto x>
-        using inject_constant_t = val<static_cast<int32_t>(x)>;
+        using inject_constant_t = residue<internal::mod_representative(static_cast<int64_t>(x), p)>;
 
         /// @brief zero value
         using zero = val<0>;
@@ -1596,88 +1621,41 @@ namespace aerobus {
         /// @brief always true
         static constexpr bool is_euclidean_domain = true;
 
-     private:
-        template<typename v1, typename v2>
-        struct add {
-            using type = val<(v1::v + v2::v) % p>;
-        };
-
-        template<typename v1, typename v2>
-        struct sub {
-            using type = val<(v1::v - v2::v) % p>;
-        };
-
-        template<typename v1, typename v2>
-        struct mul {
-            using type = val<(v1::v* v2::v) % p>;
-        };
-
-        template<typename v1, typename v2>
-        struct div {
-            using type = val<(v1::v% p) / (v2::v % p)>;
-        };
-
-        template<typename v1, typename v2>
-        struct remainder {
-            using type = val<(v1::v% v2::v) % p>;
-        };
-
-        template<typename v1, typename v2>
-        struct gt {
-            using type = std::conditional_t<(v1::v% p > v2::v% p), std::true_type, std::false_type>;
-        };
-
-        template<typename v1, typename v2>
-        struct lt {
-            using type = std::conditional_t<(v1::v% p < v2::v% p), std::true_type, std::false_type>;
-        };
-
-        template<typename v1, typename v2>
-        struct eq {
-            using type = std::conditional_t<(v1::v% p == v2::v % p), std::true_type, std::false_type>;
-        };
-
-        template<typename v1>
-        struct pos {
-            using type = std::bool_constant<(v1::v > 0)>;
-        };
-
-     public:
         /// @brief addition operator
         /// @tparam v1 a value in zpz::val
         /// @tparam v2 a value in zpz::val
         template<typename v1, typename v2>
-        using add_t = typename add<v1, v2>::type;
+        using add_t = residue<internal::mod_representative(static_cast<int64_t>(v1::v) + v2::v, p)>;
 
         /// @brief substraction operator
         /// @tparam v1 a value in zpz::val
         /// @tparam v2 a value in zpz::val
         template<typename v1, typename v2>
-        using sub_t = typename sub<v1, v2>::type;
+        using sub_t = residue<internal::mod_representative(static_cast<int64_t>(v1::v) - v2::v, p)>;
 
         /// @brief multiplication operator
         /// @tparam v1 a value in zpz::val
         /// @tparam v2 a value in zpz::val
         template<typename v1, typename v2>
-        using mul_t = typename mul<v1, v2>::type;
+        using mul_t = residue<internal::mod_representative(static_cast<int64_t>(v1::v) * v2::v, p)>;
 
         /// @brief division operator
         /// @tparam v1 a value in zpz::val
         /// @tparam v2 a value in zpz::val
         template<typename v1, typename v2>
-        using div_t = typename div<v1, v2>::type;
+        using div_t = residue<internal::mod_representative(v1::v / v2::v, p)>;
 
         /// @brief modulo operator
         /// @tparam v1 a value in zpz::val
         /// @tparam v2 a value in zpz::val
         template<typename v1, typename v2>
-        using mod_t = typename remainder<v1, v2>::type;
+        using mod_t = residue<internal::mod_representative(v1::v % v2::v, p)>;
 
-        /// @brief strictly greater operator (type)
+        /// @brief strictly greater operator (type), comparing representatives in [0, p)
         /// @tparam v1 a value in zpz::val
         /// @tparam v2 a value in zpz::val
         template<typename v1, typename v2>
-        using gt_t = typename gt<v1, v2>::type;
+        using gt_t = std::bool_constant<(v1::v > v2::v)>;
 
         /// @brief strictly greater operator (booleanvalue)
         /// @tparam v1 a value in zpz::val
@@ -1685,11 +1663,11 @@ namespace aerobus {
         template<typename v1, typename v2>
         static constexpr bool gt_v = gt_t<v1, v2>::value;
 
-        /// @brief strictly smaller operator (type)
+        /// @brief strictly smaller operator (type), comparing representatives in [0, p)
         /// @tparam v1 a value in zpz::val
         /// @tparam v2 a value in zpz::val
         template<typename v1, typename v2>
-        using lt_t = typename lt<v1, v2>::type;
+        using lt_t = std::bool_constant<(v1::v < v2::v)>;
 
         /// @brief strictly smaller operator (booleanvalue)
         /// @tparam v1 a value in zpz::val
@@ -1701,7 +1679,7 @@ namespace aerobus {
         /// @tparam v1 a value in zpz::val
         /// @tparam v2 a value in zpz::val
         template<typename v1, typename v2>
-        using eq_t = typename eq<v1, v2>::type;
+        using eq_t = std::bool_constant<(v1::v == v2::v)>;
 
         /// @brief equality operator (booleanvalue)
         /// @tparam v1 a value in zpz::val
@@ -1709,16 +1687,18 @@ namespace aerobus {
         template<typename v1, typename v2>
         static constexpr bool eq_v = eq_t<v1, v2>::value;
 
-        /// @brief greatest common divisor
+        /// @brief greatest common divisor, as a value in zpz
+        ///
+        /// the gcd of the representatives, which generates the same ideal as v1 and v2
         /// @tparam v1 a value in zpz::val
         /// @tparam v2 a value in zpz::val
         template<typename v1, typename v2>
-        using gcd_t = gcd_t<i32, v1, v2>;
+        using gcd_t = residue<std::gcd(v1::v, v2::v)>;
 
-        /// @brief positivity operator (type)
+        /// @brief positivity operator (type): true for every nonzero class
         /// @tparam v1 a value in zpz::val
         template<typename v1>
-        using pos_t = typename pos<v1>::type;
+        using pos_t = std::bool_constant<(v1::v > 0)>;
 
         /// @brief positivity operator (boolean value)
         /// @tparam v1 a value in zpz::val

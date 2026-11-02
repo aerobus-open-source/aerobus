@@ -43,6 +43,39 @@ TEST(quotient_ring, F4) {
     EXPECT_TRUE((F4::eq_v<phi, F4::template mul_t<phi2, phi2>>));
 }
 
+TEST(quotient_ring, F9) {
+    using F3 = zpz<3>;
+    using PF3 = polynomial<F3>;
+    using F9 = Quotient<PF3, ConwayPolynomial<3, 2>::type>;  // x^2 + 2x + 2
+    using phi = F9::inject_ring_t<PF3::X>;
+    using phi2 = F9::mul_t<phi, phi>;
+    using phi4 = F9::mul_t<phi2, phi2>;
+    using phi8 = F9::mul_t<phi4, phi4>;
+    // phi^2 = -2 phi - 2 = phi + 1
+    EXPECT_TRUE((F9::eq_v<phi2, F9::inject_ring_t<PF3::val<F3::one, F3::one>>>));
+    // a Conway polynomial is primitive: phi has order 8
+    EXPECT_TRUE((F9::eq_v<phi4, F9::inject_constant_t<-1>>));
+    EXPECT_TRUE((F9::eq_v<phi8, F9::one>));
+}
+
+TEST(quotient_ring, F25) {
+    using F5 = zpz<5>;
+    using PF5 = polynomial<F5>;
+    using F25 = Quotient<PF5, ConwayPolynomial<5, 2>::type>;  // x^2 + 4x + 2
+    using phi = F25::inject_ring_t<PF5::X>;
+    using phi2 = F25::mul_t<phi, phi>;
+    using phi4 = F25::mul_t<phi2, phi2>;
+    using phi8 = F25::mul_t<phi4, phi4>;
+    using phi12 = F25::mul_t<phi8, phi4>;
+    using phi24 = F25::mul_t<phi12, phi12>;
+    // phi^2 = -4 phi - 2 = phi + 3
+    EXPECT_TRUE((F25::eq_v<phi2, F25::inject_ring_t<PF5::val<F5::one, F5::val<3>>>>));
+    // phi has order 24
+    EXPECT_FALSE((F25::eq_v<phi8, F25::one>));
+    EXPECT_TRUE((F25::eq_v<phi12, F25::inject_constant_t<-1>>));
+    EXPECT_TRUE((F25::eq_v<phi24, F25::one>));
+}
+
 TEST(quotient_ring, instanciate_large) {
     using F17 = zpz<17>;
     using PF17 = polynomial<F17>;
