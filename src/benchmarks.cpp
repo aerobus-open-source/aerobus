@@ -8,7 +8,7 @@ double rand(double min, double max) {
   return min + (rand() / div);  // NOLINT
 }
 
-INLINED double aero_expm1_12(const double x) {
+AEROBUS_INLINE double aero_expm1_12(const double x) {
     using EXPM1 = aerobus::expm1<aerobus::i64, 13>;
     return EXPM1::eval(EXPM1::eval(EXPM1::eval(EXPM1::eval(EXPM1::eval(EXPM1::eval(
                 EXPM1::eval(EXPM1::eval(EXPM1::eval(EXPM1::eval(EXPM1::eval(EXPM1::eval(x))))))))))));

@@ -7,7 +7,7 @@ using namespace aerobus;  // NOLINT
 constexpr size_t NB_POINTS = 400;
 
 template<typename P, typename T, bool compensated>
-DEVICE INLINED T eval(const T& x) {
+AEROBUS_DEVICE AEROBUS_INLINE T eval(const T& x) {
     if constexpr (compensated) {
         return P::template compensated_eval<T>(x);
     } else {
@@ -16,12 +16,12 @@ DEVICE INLINED T eval(const T& x) {
 }
 
 template<typename T>
-DEVICE T exact_large(const T& x) {
+AEROBUS_DEVICE T exact_large(const T& x) {
     return pow_scalar<T, 5>(0.75 - x) * pow_scalar<T, 11>(1 - x);
 }
 
 template<typename T>
-DEVICE T exact_small(const T& x) {
+AEROBUS_DEVICE T exact_small(const T& x) {
     return pow_scalar<T, 3>(x - 1);
 }
 
