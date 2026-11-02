@@ -35,6 +35,8 @@ aerobus_compile_fail_test(zpz_non_invertible_divisor "divisor is not invertible 
 aerobus_compile_fail_test(polynomial_division_not_exact "polynomial division is not exact")
 aerobus_compile_fail_test(polynomial_division_by_zero "polynomial division by zero")
 aerobus_compile_fail_test(polynomial_foreign_coefficient "coefficients of polynomial<Ring> must be values of Ring")
+aerobus_compile_fail_test(fraction_zero_by_zero "division by zero in FractionField")
+aerobus_compile_fail_test(fraction_one_by_zero "division by zero in FractionField")
 
 # install this build tree, then build a consumer through find_package(Aerobus)
 add_test(NAME package.find_package
