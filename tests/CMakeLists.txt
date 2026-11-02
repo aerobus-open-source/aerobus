@@ -82,3 +82,9 @@ if(Python3_Interpreter_FOUND)
   add_test(NAME conway.table_is_generated
     COMMAND "${Python3_EXECUTABLE}" -I "${PROJECT_SOURCE_DIR}/tools/generate_conway.py" --check)
 endif()
+
+# every C++ block of README.md compiles
+if(Python3_Interpreter_FOUND AND NOT MSVC)
+  add_test(NAME readme.cpp_blocks_compile
+    COMMAND "${Python3_EXECUTABLE}" -I "${PROJECT_SOURCE_DIR}/tools/check_readme.py" "${CMAKE_CXX_COMPILER}")
+endif()
