@@ -37,7 +37,7 @@ TEST(type_list, more_complex_assertions) {
     }
     {
         using t = type_list<float, double>;
-        using t2 = t::insert<int, 1>;
+        using t2 = t::insert<1, int>;
         EXPECT_EQ(t2::length, 3);
         EXPECT_TRUE((std::is_same_v<t2::at<0>, float>));
         EXPECT_TRUE((std::is_same_v<t2::at<1>, int>));
@@ -45,7 +45,7 @@ TEST(type_list, more_complex_assertions) {
     }
     {
         using t = type_list<>;
-        using t2 = t::insert<float, 0>;
+        using t2 = t::insert<0, float>;
         EXPECT_EQ(t2::length, 1);
         EXPECT_TRUE((std::is_same_v<t2::at<0>, float>));
     }

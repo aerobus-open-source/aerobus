@@ -528,7 +528,7 @@ namespace aerobus {
         template<template<typename...> typename TT, typename T>
         inline constexpr bool is_instantiation_of_v = is_instantiation_of<TT, T>::value;
 
-        template <int64_t i, typename T, typename... Ts>
+        template <size_t i, typename T, typename... Ts>
         struct type_at {
             static_assert(i < sizeof...(Ts) + 1, "index out of range");
             using type = typename type_at<i - 1, Ts...>::type;
@@ -666,10 +666,11 @@ namespace aerobus {
         };
     }  // namespace internal
 
-    /// @brief computes the greatest common divisor or A and B
-    /// @tparam T Ring type (must be euclidean domain)
-    template<typename T, typename A, typename B>
-    using gcd_t = typename internal::gcd<T>::template type<A, B>;
+    /// @brief greatest common divisor of A and B, values of the same euclidean domain
+    /// @tparam A a value, such as i32::val<12>
+    /// @tparam B a value of the same ring
+    template<typename A, typename B>
+    using gcd_t = typename internal::gcd<typename A::enclosing_type>::template type<A, B>;
 
     /// @brief adds multiple values (v1 + v2 + ... + vn)
     /// vals must have same "enclosing_type" and "enclosing_type" must have an add_t binary operator
@@ -1076,9 +1077,9 @@ namespace aerobus {
         };
 
         /// @brief inserts type at index
-        /// @tparam index
+        /// @tparam index position of T in the new list
         /// @tparam T
-        template <typename T, size_t index>
+        template <size_t index, typename T>
         using insert = typename internal::insert_h<index, type_list<Ts...>, T>::type;
 
         /// @brief removes type at index
@@ -1101,9 +1102,17 @@ namespace aerobus {
         template <typename U>
         using concat = U;
 
-        // TODO(jewave): assert index == 0
-        template <typename T, size_t index>
-        using insert = type_list<T>;
+     private:
+        template <size_t index, typename T>
+        struct insert_h {
+            static_assert(index == 0, "index out of bounds: the list is empty");
+            using type = type_list<T>;
+        };
+
+     public:
+        /// @brief inserts T at index (which must be 0)
+        template <size_t index, typename T>
+        using insert = typename insert_h<index, T>::type;
     };
 }  // namespace aerobus
 
@@ -1274,7 +1283,7 @@ namespace aerobus {
         /// @tparam v1 a value in i16
         /// @tparam v2 a value in i16
         template<typename v1, typename v2>
-        using gcd_t = gcd_t<i16, v1, v2>;
+        using gcd_t = typename internal::gcd<i16>::template type<v1, v2>;
 
         /// @brief positivity operator
         /// yields v > 0 as std::true_type or std::false_type
@@ -1457,7 +1466,7 @@ namespace aerobus {
         /// @tparam v1 a value in i32
         /// @tparam v2 a value in i32
         template<typename v1, typename v2>
-        using gcd_t = gcd_t<i32, v1, v2>;
+        using gcd_t = typename internal::gcd<i32>::template type<v1, v2>;
 
         /// @brief positivity operator
         /// yields v > 0 as std::true_type or std::false_type
@@ -1654,7 +1663,7 @@ namespace aerobus {
         /// @tparam v1 : an element of aerobus::i64::val
         /// @tparam v2 : an element of aerobus::i64::val
         template<typename v1, typename v2>
-        using gcd_t = gcd_t<i64, v1, v2>;
+        using gcd_t = typename internal::gcd<i64>::template type<v1, v2>;
 
         /// @brief is v posititive
         /// yields v > 0 as std::true_type or std::false_type
@@ -2572,7 +2581,7 @@ namespace aerobus {
         template<typename v1, typename v2>
         using gcd_t = std::conditional_t<
             Ring::is_euclidean_domain,
-            typename make_unit<gcd_t<polynomial<Ring>, v1, v2>>::type,
+            typename make_unit<typename internal::gcd<polynomial<Ring>>::template type<v1, v2>>::type,
             void>;
 
         /// @brief makes the constant (native type) polynomial a_0
@@ -3330,16 +3339,16 @@ namespace aerobus {
     static constexpr typename T::inner_type bell_v = bell_t<T, n>::v;
 
     namespace internal {
-        template<typename T, int k, typename E = void>
+        template<typename T, size_t k, typename E = void>
         struct alternate {};
 
-        template<typename T, int k>
+        template<typename T, size_t k>
         struct alternate<T, k, std::enable_if_t<k % 2 == 0>> {
             using type = typename T::one;
             static constexpr typename T::inner_type value = type::template get<typename T::inner_type>();
         };
 
-        template<typename T, int k>
+        template<typename T, size_t k>
         struct alternate<T, k, std::enable_if_t<k % 2 != 0>> {
             using type = typename T::template sub_t<typename T::zero, typename T::one>;
             static constexpr typename T::inner_type value = type::template get<typename T::inner_type>();
@@ -3348,7 +3357,7 @@ namespace aerobus {
 
     /// @brief (-1)^k as type in T
     /// @tparam T Ring type, aerobus::i64 for example
-    template<typename T, int k>
+    template<typename T, size_t k>
     using alternate_t = typename internal::alternate<T, k>::type;
 
     /// @brief (-1)^k as value from T
@@ -3357,7 +3366,7 @@ namespace aerobus {
     inline constexpr typename T::inner_type alternate_v = internal::alternate<T, k>::value;
 
     namespace internal {
-        template<typename T, int n, int k, typename E = void>
+        template<typename T, size_t n, size_t k, typename E = void>
         struct stirling_1_helper {};
 
         template<typename T>
@@ -3365,17 +3374,17 @@ namespace aerobus {
             using type = typename T::one;
         };
 
-        template<typename T, int n>
+        template<typename T, size_t n>
         struct stirling_1_helper<T, n, 0, std::enable_if_t<(n > 0)>> {
             using type = typename T::zero;
         };
 
-        template<typename T, int n>
+        template<typename T, size_t n>
         struct stirling_1_helper<T, 0, n, std::enable_if_t<(n > 0)>> {
             using type = typename T::zero;
         };
 
-        template<typename T, int n, int k>
+        template<typename T, size_t n, size_t k>
         struct stirling_1_helper<T, n, k, std::enable_if_t<(k > 0) && (n > 0)>> {
             using type = typename T::template sub_t<
                             typename stirling_1_helper<T, n-1, k-1>::type,
@@ -3390,55 +3399,55 @@ namespace aerobus {
     /// @tparam T (ring type, such as aerobus::i64)
     /// @tparam n (integer)
     /// @tparam k (integer)
-    template<typename T, int n, int k>
+    template<typename T, size_t n, size_t k>
     using stirling_1_signed_t = typename internal::stirling_1_helper<T, n, k>::type;
 
     /// @brief Stirling number of first king (unsigned) -- as types
     /// @tparam T (ring type, such as aerobus::i64)
     /// @tparam n (integer)
     /// @tparam k (integer)
-    template<typename T, int n, int k>
+    template<typename T, size_t n, size_t k>
     using stirling_1_unsigned_t = abs_t<typename internal::stirling_1_helper<T, n, k>::type>;
 
     /// @brief Stirling number of first king (unsigned) -- as value
     /// @tparam T (ring type, such as aerobus::i64)
     /// @tparam n (integer)
     /// @tparam k (integer)
-    template<typename T, int n, int k>
+    template<typename T, size_t n, size_t k>
     static constexpr typename T::inner_type stirling_1_unsigned_v = stirling_1_unsigned_t<T, n, k>::v;
 
     /// @brief Stirling number of first king (signed) -- as value
     /// @tparam T (ring type, such as aerobus::i64)
     /// @tparam n (integer)
     /// @tparam k (integer)
-    template<typename T, int n, int k>
+    template<typename T, size_t n, size_t k>
     static constexpr typename T::inner_type stirling_1_signed_v = stirling_1_signed_t<T, n, k>::v;
 
     namespace internal {
-        template<typename T, int n, int k, typename E = void>
+        template<typename T, size_t n, size_t k, typename E = void>
         struct stirling_2_helper {};
 
-        template<typename T, int n>
-        struct stirling_2_helper<T, n, n, std::enable_if_t<(n >= 0)>> {
+        template<typename T, size_t n>
+        struct stirling_2_helper<T, n, n> {
             using type = typename T::one;
         };
 
-        template<typename T, int n>
+        template<typename T, size_t n>
         struct stirling_2_helper<T, n, 0, std::enable_if_t<(n > 0)>> {
             using type = typename T::zero;
         };
 
-        template<typename T, int n>
+        template<typename T, size_t n>
         struct stirling_2_helper<T, 0, n, std::enable_if_t<(n > 0)>> {
             using type = typename T::zero;
         };
 
-        template<typename T, int n, int k>
+        template<typename T, size_t n, size_t k>
         struct stirling_2_helper<T, n, k, std::enable_if_t<(n > 0) && (k > n)>> {
             using type = typename T::zero;
         };
 
-        template<typename T, int n, int k>
+        template<typename T, size_t n, size_t k>
         struct stirling_2_helper<T, n, k, std::enable_if_t<(k > 0) && (n > 0) && (k < n)>> {
             using type = typename T::template add_t<
                             typename stirling_2_helper<T, n-1, k-1>::type,
@@ -3453,14 +3462,14 @@ namespace aerobus {
     /// @tparam T (ring type, such as aerobus::i64)
     /// @tparam n (integer)
     /// @tparam k (integer)
-    template<typename T, int n, int k>
+    template<typename T, size_t n, size_t k>
     using stirling_2_t = typename internal::stirling_2_helper<T, n, k>::type;
 
     /// @brief Stirling number of second king -- as value
     /// @tparam T (ring type, such as aerobus::i64)
     /// @tparam n (integer)
     /// @tparam k (integer)
-    template<typename T, int n, int k>
+    template<typename T, size_t n, size_t k>
     static constexpr typename T::inner_type stirling_2_v = stirling_2_t<T, n, k>::v;
 
     namespace internal {
@@ -3502,17 +3511,17 @@ namespace aerobus {
 
     /// @brief p^n (as 'val' type in T)
     /// @tparam T (some ring type, such as aerobus::i64)
-    /// @tparam p must be an instantiation of T::val
+    /// @tparam p a value, such as i64::val<2>
     /// @tparam n power
-    template<typename T, typename p, size_t n>
-    using pow_t = typename internal::pow<T, p, n>::type;
+    template<typename p, size_t n>
+    using pow_t = typename internal::pow<typename p::enclosing_type, p, n>::type;
 
     /// @brief p^n (as 'val' type in T) as value in T::inner_type
     /// @tparam T (some ring type, such as aerobus::i64)
-    /// @tparam p must be an instantiation of T::val
+    /// @tparam p a value, such as i64::val<2>
     /// @tparam n power
-    template<typename T, typename p, size_t n>
-    static constexpr typename T::inner_type pow_v = internal::pow<T, p, n>::type::v;
+    template<typename p, size_t n>
+    inline constexpr auto pow_v = pow_t<p, n>::v;
 
     template<typename T, size_t p>
     static constexpr AEROBUS_DEVICE AEROBUS_INLINE T pow_scalar(const T& x) { return internal::pow_scalar<T>::template func<p>(x); }
@@ -3645,8 +3654,8 @@ namespace aerobus {
                 typename T::template mul_t<
                     typename T::template val<i>,
                     typename T::template mul_t<
-                        pow_t<T, typename T::template inject_constant_t<4>, i / 2>,
-                        pow_t<T, factorial_t<T, i / 2>, 2>>>>;
+                        pow_t<typename T::template inject_constant_t<4>, i / 2>,
+                        pow_t<factorial_t<T, i / 2>, 2>>>>;
         };
 
         template<typename T, size_t i>
@@ -3682,9 +3691,9 @@ namespace aerobus {
                 typename T::template mul_t<
                     typename T::template mul_t<
                         typename T::template val<i>,
-                        pow_t<T, factorial_t<T, i / 2>, 2>
+                        pow_t<factorial_t<T, i / 2>, 2>
                     >,
-                    pow_t<T, typename T::template inject_constant_t<4>, i / 2>
+                    pow_t<typename T::template inject_constant_t<4>, i / 2>
                 >
             >;
         };
@@ -3733,7 +3742,7 @@ namespace aerobus {
         private:
             // 4^((i+1)/2)
             using _4p = typename FractionField<T>::template inject_t<
-                pow_t<T, typename T::template inject_constant_t<4>, (i + 1) / 2>>;
+                pow_t<typename T::template inject_constant_t<4>, (i + 1) / 2>>;
             // 4^((i+1)/2) - 1
             using _4pm1 = typename FractionField<T>::template sub_t<_4p, typename FractionField<T>::one>;
             // (-1)^((i-1)/2)
@@ -3770,7 +3779,7 @@ namespace aerobus {
         struct tanh_coeff_helper<T, i, std::enable_if_t<(i % 2) != 0>> {
         private:
             using _4p = typename FractionField<T>::template inject_t<
-                pow_t<T, typename T::template inject_constant_t<4>, (i + 1) / 2>>;
+                pow_t<typename T::template inject_constant_t<4>, (i + 1) / 2>>;
             using _4pm1 = typename FractionField<T>::template sub_t<_4p, typename FractionField<T>::one>;
             using dividend =
                 typename FractionField<T>::template mul_t<
