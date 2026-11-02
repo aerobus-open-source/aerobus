@@ -1549,6 +1549,28 @@ namespace aerobus {
             const int64_t r = x % p;
             return static_cast<int32_t>(r < 0 ? r + p : r);
         }
+
+        /// @brief inverse of a modulo m (extended Euclid)
+        /// @param a an integer in [0, m)
+        /// @param m a modulus, at least 2
+        /// @return the inverse in [1, m), or 0 when gcd(a, m) != 1
+        constexpr int64_t mod_inverse(int64_t a, int64_t m) {
+            int64_t r0 = m, r1 = a;
+            int64_t t0 = 0, t1 = 1;
+            while (r1 != 0) {
+                const int64_t q = r0 / r1;
+                const int64_t r2 = r0 - q * r1;
+                r0 = r1;
+                r1 = r2;
+                const int64_t t2 = t0 - q * t1;
+                t0 = t1;
+                t1 = t2;
+            }
+            if (r0 != 1) {
+                return 0;
+            }
+            return t0 < 0 ? t0 + m : t0;
+        }
     }  // namespace internal
 
     /// @brief congruence classes of integers modulo p (32 bits)
@@ -1639,17 +1661,32 @@ namespace aerobus {
         template<typename v1, typename v2>
         using mul_t = residue<internal::mod_representative(static_cast<int64_t>(v1::v) * v2::v, p)>;
 
-        /// @brief division operator
-        /// @tparam v1 a value in zpz::val
-        /// @tparam v2 a value in zpz::val
+     private:
         template<typename v1, typename v2>
-        using div_t = residue<internal::mod_representative(v1::v / v2::v, p)>;
+        struct division {
+            static_assert(v2::v != 0, "division by zero in zpz<p>");
+            static constexpr int64_t inverse = internal::mod_inverse(v2::v, p);
+            static_assert(v2::v == 0 || inverse != 0, "divisor is not invertible modulo p (it shares a factor with p)");
+            using quotient = residue<internal::mod_representative(static_cast<int64_t>(v1::v) * inverse, p)>;
+            using remainder = residue<0>;
+        };
 
-        /// @brief modulo operator
+     public:
+        /// @brief division operator: v1 times the inverse of v2
+        ///
+        /// v2 must be invertible modulo p (any nonzero v2 when p is prime)
         /// @tparam v1 a value in zpz::val
         /// @tparam v2 a value in zpz::val
         template<typename v1, typename v2>
-        using mod_t = residue<internal::mod_representative(v1::v % v2::v, p)>;
+        using div_t = typename division<v1, v2>::quotient;
+
+        /// @brief modulo operator: always zero, since div_t is exact
+        ///
+        /// v2 must be invertible modulo p, as for div_t
+        /// @tparam v1 a value in zpz::val
+        /// @tparam v2 a value in zpz::val
+        template<typename v1, typename v2>
+        using mod_t = typename division<v1, v2>::remainder;
 
         /// @brief strictly greater operator (type), comparing representatives in [0, p)
         /// @tparam v1 a value in zpz::val

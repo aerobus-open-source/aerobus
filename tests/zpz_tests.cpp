@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <type_traits>
+#include <utility>
 
 #include "aerobus.h"
 
@@ -73,6 +74,48 @@ TEST(zpz, polynomials_over_odd_prime_field) {
     using diff = PF3::sub_t<PF3::X, two_x>;
     EXPECT_TRUE((std::is_same_v<diff, two_x>));
     EXPECT_TRUE((PF3::eq_t<diff, two_x>::value));
+}
+
+template<int32_t p, int32_t a, int32_t b>
+constexpr bool division_round_trips() {
+    using Z = zpz<p>;
+    using A = typename Z::template val<a>;
+    using B = typename Z::template val<b>;
+    return std::is_same_v<typename Z::template mul_t<typename Z::template div_t<A, B>, B>, A>;
+}
+
+// (a / b) * b == a for every a and every b != 0
+template<int32_t p, size_t... I>
+constexpr bool all_divisions_round_trip(std::index_sequence<I...>) {
+    return (division_round_trips<p, static_cast<int32_t>(I / (p - 1)), static_cast<int32_t>(1 + I % (p - 1))>()
+            && ...);
+}
+
+TEST(zpz, division_multiplies_by_the_inverse) {
+    using Z7 = zpz<7>;
+    // 2 * 4 = 8 = 1
+    EXPECT_TRUE((std::is_same_v<Z7::div_t<Z7::one, Z7::val<2>>, Z7::val<4>>));
+    EXPECT_TRUE((all_divisions_round_trip<7>(std::make_index_sequence<7 * 6>{})));
+    EXPECT_TRUE((all_divisions_round_trip<13>(std::make_index_sequence<13 * 12>{})));
+    // division is exact: the remainder is zero
+    EXPECT_TRUE((std::is_same_v<Z7::mod_t<Z7::val<5>, Z7::val<3>>, Z7::zero>));
+}
+
+TEST(zpz, division_by_units_of_a_composite_modulus) {
+    using Z8 = zpz<8>;
+    // 3 * 3 = 9 = 1 and 7 * 7 = 49 = 1
+    EXPECT_TRUE((std::is_same_v<Z8::div_t<Z8::one, Z8::val<3>>, Z8::val<3>>));
+    EXPECT_TRUE((std::is_same_v<Z8::div_t<Z8::val<5>, Z8::val<7>>, Z8::val<3>>));
+}
+
+TEST(zpz, polynomial_division_over_prime_field) {
+    // in F3[x]: x + 1 = 2 * (2x + 1) + 2
+    using F3 = zpz<3>;
+    using PF3 = polynomial<F3>;
+    using A = PF3::val<F3::one, F3::one>;
+    using B = PF3::val<F3::val<2>, F3::one>;
+    EXPECT_TRUE((std::is_same_v<PF3::div_t<A, B>, PF3::inject_constant_t<2>>));
+    EXPECT_TRUE((std::is_same_v<PF3::mod_t<A, B>, PF3::inject_constant_t<2>>));
 }
 
 TEST(zpz, is_field_for_odd_composite_moduli) {
