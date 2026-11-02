@@ -48,6 +48,23 @@ TEST(polynomials, products_are_simplified_over_rings_with_zero_divisors) {
     EXPECT_TRUE((std::is_same_v<polynomial<Z4>::mul_t<P, P>, polynomial<Z4>::one>));
 }
 
+TEST(polynomials, order) {
+    using two = pi64::val<i64::val<2>>;
+    using one = pi64::one;
+    EXPECT_TRUE((pi64::gt_t<two, one>::value));
+    EXPECT_FALSE((pi64::gt_t<one, two>::value));
+    EXPECT_TRUE((pi64::lt_t<one, two>::value));
+    // higher degree is greater
+    EXPECT_TRUE((pi64::gt_t<pi64::X, two>::value));
+    // same degree and leading coefficient: the next coefficients decide
+    using x_plus_1 = make_int_polynomial_t<i64, 1, 1>;
+    using x_plus_2 = make_int_polynomial_t<i64, 1, 2>;
+    EXPECT_TRUE((pi64::lt_t<x_plus_1, x_plus_2>::value));
+    EXPECT_TRUE((pi64::gt_t<x_plus_2, x_plus_1>::value));
+    EXPECT_FALSE((pi64::gt_t<x_plus_1, x_plus_1>::value));
+    EXPECT_FALSE((pi64::lt_t<x_plus_1, x_plus_1>::value));
+}
+
 TEST(polynomials, coeff_at) {
     // 1 + 2x + 3x^2
     using poly = polynomial<i32>::val<i32::val<3>, i32::val<2>, i32::val<1>>;
@@ -335,4 +352,13 @@ TEST(polynomials, to_string) {
     auto rep = A::to_string();
     const char* expected = "(x + 1) / (2 x + 1)";
     EXPECT_STREQ(rep.c_str(), expected);
+}
+
+TEST(polynomials, order_over_rationals) {
+    // constants compare by value, which polynomial gcds over q32 rely on
+    using half = pq64::val<make_q64_t<1, 2>>;
+    using third = pq64::val<make_q64_t<1, 3>>;
+    EXPECT_TRUE((pq64::gt_t<half, third>::value));
+    EXPECT_TRUE((pq64::gt_t<half, pq64::zero>::value));
+    EXPECT_FALSE((pq64::gt_t<pq64::zero, half>::value));
 }
