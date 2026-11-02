@@ -1,4 +1,6 @@
 #include <gtest/gtest.h>
+#include <concepts>
+#include <string>
 #include <type_traits>
 
 #include "aerobus.h"
@@ -54,4 +56,42 @@ TEST(concepts, is_euclidean_domain_checks_the_flags) {
     EXPECT_TRUE((IsEuclideanDomain<flagged_ring<true, true>>));
     EXPECT_FALSE((IsEuclideanDomain<flagged_ring<false, true>>));
     EXPECT_FALSE((IsEuclideanDomain<flagged_ring<true, false>>));
+}
+
+namespace {
+// every member a built-in ring provides (test-only: user rings need only the concepts)
+template<typename R>
+concept FullRingInterface = IsEuclideanDomain<R> && requires {
+    typename R::template add_t<typename R::one, typename R::one>;
+    typename R::template gt_t<typename R::one, typename R::zero>;
+    typename R::template lt_t<typename R::one, typename R::zero>;
+    typename R::template inject_constant_t<2>;
+    typename R::one::enclosing_type;
+    typename R::one::is_zero_t;
+    requires std::is_same_v<typename R::one::enclosing_type, R>;
+    { R::template eq_v<typename R::one, typename R::one> } -> std::convertible_to<bool>;
+    { R::template gt_v<typename R::one, typename R::zero> } -> std::convertible_to<bool>;
+    { R::template lt_v<typename R::one, typename R::zero> } -> std::convertible_to<bool>;
+    { R::is_field } -> std::convertible_to<bool>;
+    { R::is_integral_domain } -> std::convertible_to<bool>;
+    { R::one::is_zero_v } -> std::convertible_to<bool>;
+    { R::one::to_string() } -> std::convertible_to<std::string>;
+};
+}  // namespace
+
+TEST(concepts, built_in_rings_share_one_interface) {
+    EXPECT_TRUE(FullRingInterface<i16>);
+    EXPECT_TRUE(FullRingInterface<i32>);
+    EXPECT_TRUE(FullRingInterface<i64>);
+    EXPECT_TRUE(FullRingInterface<zpz<7>>);
+    EXPECT_TRUE(FullRingInterface<q32>);
+    EXPECT_TRUE(FullRingInterface<q64>);
+    EXPECT_TRUE(FullRingInterface<pi64>);
+    EXPECT_TRUE(FullRingInterface<pq64>);
+    EXPECT_TRUE((FullRingInterface<Quotient<i64, i64::val<17>>>));
+    EXPECT_TRUE(FullRingInterface<FractionField<pq64>>);
+}
+
+TEST(concepts, zpz_injects_integers) {
+    EXPECT_TRUE((std::is_same_v<zpz<7>::inject_ring_t<i32::val<9>>, zpz<7>::val<2>>));
 }
