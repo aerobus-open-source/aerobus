@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cstdio>
 #include <filesystem>
+#include <string>
 #include "../src/aerobus.h"
 
 using namespace aerobus;  // NOLINT

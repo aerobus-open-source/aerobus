@@ -2,30 +2,83 @@ name: C/C++ CI
 
 on:
   push:
-    branches: [ "*" ]
+    branches: ["**"]
   pull_request:
-    branches: [ "*" ]
+    branches: ["**"]
 
 jobs:
-  build:
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cppcheck
+          pip install cpplint
+      - name: cpplint
+        run: cpplint src/aerobus.h src/benchmarks.cpp tests/*.cpp examples/*.cpp
+      - name: cppcheck
+        run: cppcheck --std=c++20 --language=c++ --error-exitcode=1 src/aerobus.h tests/*.cpp
+      - name: generated Conway table
+        run: python3 -I tools/generate_conway.py --check
 
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: gcc
+            os: ubuntu-24.04
+            cxx: g++-14
+          - name: clang
+            os: ubuntu-24.04
+            cxx: clang++-18
+          - name: macos-arm64
+            os: macos-latest
+            cxx: clang++
+          - name: msvc
+            os: windows-latest
+            cxx: cl
+    name: test (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: configure
+        run: cmake -S . -B build -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} -DCMAKE_BUILD_TYPE=Release
+      - name: build
+        run: cmake --build build --config Release --parallel 4
+      - name: test
+        run: ctest --test-dir build -C Release --output-on-failure --parallel 4
+
+  sanitizers:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: configure
+        run: >
+          cmake -S . -B build -DCMAKE_CXX_COMPILER=g++-14 -DCMAKE_BUILD_TYPE=Debug
+          -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-sanitize-recover=all"
+          -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
+      - name: build
+        run: cmake --build build --parallel 4
+      - name: test
+        run: ctest --test-dir build --output-on-failure --parallel 4
+
+  documentation:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: install doxygen
+        run: sudo apt-get update && sudo apt-get install -y doxygen graphviz
+      - name: doxygen (warnings are errors)
+        run: make doc
+
+  paper:
     runs-on: ubuntu-latest
     container:
       image: comua/aerobus-open-source:build-1.3
     steps:
-    - uses: actions/checkout@v4
-    - name: cppcheck
-      if: success()
-      run: cppcheck --std=c++20 --language=c++ src/aerobus.h && cppcheck --std=c++20 --language=c++ tests/*.cpp
-    - name: cpplint
-      if: success()
-      run: cpplint src/lib.h && cpplint tests/*.cpp
-    - name: test
-      if: success()
-      run: make clean tests
-    - name: documentation
-      if: success()
-      run: make doc
-    - name: paper
-      if: success()
-      run: make clean paper
+      - uses: actions/checkout@v4
+      - name: paper
+        run: make clean paper

@@ -24,7 +24,7 @@
 #include <cmath>
 #ifdef WITH_CUDA_FP16
 #include <bit>
-#include <cuda_fp16.h>
+#include <cuda_fp16.h>  // NOLINT(build/include_order): CUDA header
 #endif
 
 /** @file */
@@ -1607,7 +1607,7 @@ namespace aerobus {
             using type = typename Ring::zero;
         };
     }  // namespace arithmetic
-} // namespace aerobus
+}  // namespace aerobus
 
 // polynomial
 namespace aerobus {
@@ -2113,10 +2113,11 @@ namespace aerobus {
                 if constexpr (std::is_floating_point_v<arithmeticType>) {
                     // on overflow the error terms are not finite: keep the Horner result
                     #ifdef __CUDA_ARCH__
-                    if (!::isfinite(r)) {
+                    const bool finite = ::isfinite(r);
                     #else
-                    if (!std::isfinite(r)) {
+                    const bool finite = std::isfinite(r);
                     #endif
+                    if (!finite) {
                         return r;
                     }
                 }
@@ -3215,7 +3216,9 @@ namespace aerobus {
     /// @tparam p power
     /// @param x base
     template<typename T, size_t p>
-    constexpr AEROBUS_DEVICE AEROBUS_INLINE T pow_scalar(const T& x) { return internal::pow_scalar<T>::template func<p>(x); }
+    constexpr AEROBUS_DEVICE AEROBUS_INLINE T pow_scalar(const T& x) {
+        return internal::pow_scalar<T>::template func<p>(x);
+    }
 
     namespace internal {
         template<typename, template<typename, size_t> typename, class>
@@ -4160,7 +4163,8 @@ namespace aerobus {
     /// @tparam n degree of extension
     template<int p, int n>
     struct ConwayPolynomial {
-        static_assert(internal::dependent_false<p, n>, "no Conway polynomial for this (p, n): the table covers primes p < 1000, "
+        static_assert(internal::dependent_false<p, n>,
+            "no Conway polynomial for this (p, n): the table covers primes p < 1000, "
                               "n up to 20 for p = 2 and 3, fewer for larger p");
     };
 
