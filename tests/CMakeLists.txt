@@ -1,6 +1,7 @@
 include(GoogleTest)
 
 add_executable(lib_tests
+  api_tests.cpp
   concepts_tests.cpp
   embedding_tests.cpp
   evaluation_tests.cpp

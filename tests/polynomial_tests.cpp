@@ -260,7 +260,7 @@ TEST(polynomials, div) {
         // x - 1
         using B = polynomial<i32>::val<i32::val<1>, i32::val<-1>>;
         // x + 1
-        using Q = aerobus::div_t<A, B>;
+        using Q = aerobus::divide_t<A, B>;
         using R = polynomial<i32>::mod_t<A, B>;
         EXPECT_TRUE(R::is_zero_v);
         EXPECT_EQ(Q::degree, 1);
