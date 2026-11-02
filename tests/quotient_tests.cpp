@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <type_traits>
 
 #define AEROBUS_CONWAY_IMPORTS
 #include "aerobus.h"
@@ -83,4 +84,72 @@ TEST(quotient_ring, instanciate_large) {
     #pragma GCC diagnostic ignored "-Wunused-local-typedefs"
     using x = F_17_8::inject_ring_t<PF17::X>;
     #pragma GCC diagnostic warning "-Wunused-local-typedefs"
+}
+
+TEST(quotient_ring, integers_negative_representatives) {
+    using Z17 = Quotient<i64, i64::val<17>>;
+    // the class of -1 is the class of 16
+    EXPECT_TRUE((Z17::eq_v<Z17::inject_constant_t<-1>, Z17::inject_constant_t<16>>));
+    EXPECT_TRUE((std::is_same_v<Z17::inject_constant_t<-1>, Z17::inject_constant_t<16>>));
+    EXPECT_TRUE((Z17::eq_v<Z17::add_t<Z17::inject_constant_t<-1>, Z17::one>, Z17::zero>));
+    EXPECT_EQ((Z17::inject_constant_t<-1>::type::v), 16);
+}
+
+TEST(quotient_ring, integer_quotient_is_a_ring) {
+    using Z17 = Quotient<i64, i64::val<17>>;
+    using two = Z17::inject_constant_t<2>;
+    using nine = Z17::inject_constant_t<9>;
+    // 2 * 9 = 18 = 1
+    EXPECT_TRUE((std::is_same_v<Z17::div_t<Z17::one, two>, nine>));
+    EXPECT_TRUE((std::is_same_v<Z17::sub_t<Z17::zero, Z17::one>, Z17::inject_constant_t<16>>));
+    EXPECT_TRUE((std::is_same_v<Z17::mod_t<nine, two>, Z17::zero>));
+    EXPECT_TRUE((std::is_same_v<Z17::gcd_t<two, nine>, Z17::one>));
+    EXPECT_TRUE((Z17::gt_v<nine, two>));
+    EXPECT_TRUE((Z17::lt_v<two, nine>));
+    EXPECT_TRUE(Z17::is_field);
+    EXPECT_FALSE((Quotient<i64, i64::val<16>>::is_field));
+    EXPECT_TRUE((IsEuclideanDomain<Z17>));
+    EXPECT_TRUE((IsField<Z17>));
+    // values know their ring
+    EXPECT_TRUE((std::is_same_v<aerobus::add_t<two, nine>, Z17::inject_constant_t<11>>));
+    EXPECT_EQ(two::to_string(), "2");
+    EXPECT_TRUE(Z17::zero::is_zero_v);
+    EXPECT_EQ((nine::get<int>()), 9);
+}
+
+TEST(quotient_ring, field_division_F4) {
+    using F2 = zpz<2>;
+    using PF2 = polynomial<F2>;
+    using F4 = Quotient<PF2, ConwayPolynomial<2, 2>::type, true>;
+    using phi = F4::inject_ring_t<PF2::X>;
+    using phi2 = F4::mul_t<phi, phi>;
+    EXPECT_TRUE(F4::is_field);
+    EXPECT_TRUE((IsField<F4>));
+    // phi^3 = 1, so 1 / phi = phi^2 and phi^2 / phi = phi
+    EXPECT_TRUE((std::is_same_v<F4::div_t<F4::one, phi>, phi2>));
+    EXPECT_TRUE((std::is_same_v<F4::div_t<phi2, phi>, phi>));
+    EXPECT_TRUE((std::is_same_v<F4::mod_t<phi2, phi>, F4::zero>));
+}
+
+TEST(quotient_ring, polynomials_over_F4) {
+    using F2 = zpz<2>;
+    using PF2 = polynomial<F2>;
+    using F4 = Quotient<PF2, ConwayPolynomial<2, 2>::type, true>;
+    using phi = F4::inject_ring_t<PF2::X>;
+    using phi2 = F4::mul_t<phi, phi>;
+    using PF4 = polynomial<F4>;
+    // (y + phi)(y + phi^2) = y^2 + (phi + phi^2) y + phi^3 = y^2 + y + 1
+    using a = PF4::val<F4::one, phi>;
+    using b = PF4::val<F4::one, phi2>;
+    using product = PF4::val<F4::one, F4::one, F4::one>;
+    EXPECT_TRUE((std::is_same_v<PF4::mul_t<a, b>, product>));
+    EXPECT_TRUE((std::is_same_v<PF4::div_t<product, a>, b>));
+}
+
+TEST(quotient_ring, galois_field) {
+    using F9 = GaloisField<3, 2>;
+    EXPECT_TRUE(F9::is_field);
+    using phi = F9::inject_ring_t<polynomial<zpz<3>>::X>;
+    // phi * (1 / phi) = 1
+    EXPECT_TRUE((std::is_same_v<F9::mul_t<phi, F9::div_t<F9::one, phi>>, F9::one>));
 }

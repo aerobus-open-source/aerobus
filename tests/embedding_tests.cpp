@@ -46,3 +46,9 @@ TEST(embedding, polynomial) {
             << "actual : " << embedded::to_string();
     }
 }
+
+TEST(embedding, quotient_embeds_its_canonical_representative) {
+    using Z17 = Quotient<i64, i64::val<17>>;
+    using sum = Z17::add_t<Z17::inject_constant_t<16>, Z17::inject_constant_t<16>>;
+    EXPECT_TRUE((std::is_same_v<Embed<Z17, i64>::type<sum>, i64::val<15>>));
+}
