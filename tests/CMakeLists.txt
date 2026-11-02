@@ -37,6 +37,7 @@ aerobus_compile_fail_test(polynomial_division_by_zero "polynomial division by ze
 aerobus_compile_fail_test(polynomial_foreign_coefficient "coefficients of polynomial<Ring> must be values of Ring")
 aerobus_compile_fail_test(fraction_zero_by_zero "division by zero in FractionField")
 aerobus_compile_fail_test(fraction_one_by_zero "division by zero in FractionField")
+aerobus_compile_fail_test(fraction_field_of_zero_divisors "FractionField needs an integral domain")
 
 # install this build tree, then build a consumer through find_package(Aerobus)
 add_test(NAME package.find_package

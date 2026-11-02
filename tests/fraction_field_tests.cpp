@@ -256,3 +256,12 @@ TEST(q32, gcd) {
     EXPECT_TRUE((std::is_same_v<q32::gcd_t<half, make_q32_t<1, 3>>, q32::one>));
     EXPECT_TRUE((std::is_same_v<q32::gcd_t<q32::zero, q32::zero>, q32::zero>));
 }
+
+TEST(fraction_field, integral_domains) {
+    EXPECT_TRUE((internal::is_integral_domain_v<i32>));
+    EXPECT_TRUE((internal::is_integral_domain_v<zpz<7>>));
+    EXPECT_FALSE((internal::is_integral_domain_v<zpz<8>>));
+    EXPECT_TRUE((internal::is_integral_domain_v<polynomial<zpz<7>>>));
+    EXPECT_FALSE((internal::is_integral_domain_v<polynomial<zpz<8>>>));
+    EXPECT_TRUE((IsField<FractionField<polynomial<zpz<7>>>>));
+}

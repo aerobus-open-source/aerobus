@@ -116,6 +116,21 @@ namespace aerobus {
     concept IsField = IsEuclideanDomain<R> && requires {
         requires R::is_field;
     };
+
+    namespace internal {
+        template<typename R>
+        constexpr bool integral_domain_flag() {
+            if constexpr (requires { R::is_integral_domain; }) {
+                return R::is_integral_domain;
+            } else {
+                return true;
+            }
+        }
+
+        /// @brief R has no zero divisors: R::is_integral_domain, true for rings which do not declare it
+        template<typename R>
+        inline constexpr bool is_integral_domain_v = integral_domain_flag<R>();
+    }  // namespace internal
 }  // namespace aerobus
 
 #ifdef WITH_CUDA_FP16
@@ -817,6 +832,9 @@ namespace aerobus {
         /// @brief quotient rings provide the euclidean operations (div_t by units, mod_t, gcd_t)
         static constexpr bool is_euclidean_domain = true;
 
+        /// @brief in a principal ideal domain, R/(X) has no zero divisors iff it is a field
+        static constexpr bool is_integral_domain = is_field;
+
         /// @brief addition operator
         /// @tparam v1 a value in quotient ring
         /// @tparam v2 a value in quotient ring
@@ -1129,6 +1147,8 @@ namespace aerobus {
         static constexpr bool is_field = false;
         /// @brief integers are an euclidean domain
         static constexpr bool is_euclidean_domain = true;
+        /// @brief integers have no zero divisors
+        static constexpr bool is_integral_domain = true;
         /// @brief inject a native constant
         /// @tparam x
         template<auto x>
@@ -1311,6 +1331,8 @@ namespace aerobus {
         static constexpr bool is_field = false;
         /// @brief integers are an euclidean domain
         static constexpr bool is_euclidean_domain = true;
+        /// @brief integers have no zero divisors
+        static constexpr bool is_integral_domain = true;
         /// @brief inject a native constant
         /// @tparam x
         template<auto x>
@@ -1502,6 +1524,8 @@ namespace aerobus {
         static constexpr bool is_field = false;
         /// @brief integers are an euclidean domain
         static constexpr bool is_euclidean_domain = true;
+        /// @brief integers have no zero divisors
+        static constexpr bool is_integral_domain = true;
 
      private:
         template<typename v1, typename v2>
@@ -1762,6 +1786,9 @@ namespace aerobus {
         /// @brief true iff p is prime
         static constexpr bool is_field = is_prime<p>::value;
 
+        /// @brief no zero divisors iff p is prime
+        static constexpr bool is_integral_domain = is_field;
+
         /// @brief always true
         static constexpr bool is_euclidean_domain = true;
 
@@ -1917,6 +1944,8 @@ namespace aerobus {
     struct polynomial {
         static constexpr bool is_field = false;
         static constexpr bool is_euclidean_domain = Ring::is_euclidean_domain;
+        /// @brief no zero divisors iff the coefficient ring has none
+        static constexpr bool is_integral_domain = internal::is_integral_domain_v<Ring>;
 
         /// @brief Used to evaluate polynomials over a value in Ring
         /// @tparam P a value in polynomial<Ring>
@@ -2566,9 +2595,13 @@ namespace aerobus {
         template<typename Ring>
         requires IsEuclideanDomain<Ring>
         struct _FractionField<Ring, std::enable_if_t<Ring::is_euclidean_domain>> {
+            static_assert(is_integral_domain_v<Ring>,
+                "FractionField needs an integral domain (a ring without zero divisors)");
+
             /// @brief true because field of fraction is a field
             static constexpr bool is_field = true;
             static constexpr bool is_euclidean_domain = true;
+            static constexpr bool is_integral_domain = true;
 
          private:
             template<typename val1, typename val2, typename E = void>
