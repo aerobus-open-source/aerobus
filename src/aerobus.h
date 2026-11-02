@@ -403,86 +403,46 @@ namespace aerobus {
 // compensated horner utilities
 namespace aerobus {
     namespace internal {
-        template <typename T>
-        struct FloatLayout;
-
-        #ifdef _MSC_VER
-        template <>
-        struct FloatLayout<long double> {
-            static constexpr uint8_t exponent = 11;
-            static constexpr uint8_t mantissa = 52;
-            static constexpr uint8_t r = 27;  // ceil(mantissa/2)
-            static constexpr long double shift = (1LL << r) + 1;
-        };
-        #else
-        template <>
-        struct FloatLayout<long double> {
-            static constexpr uint8_t exponent = 15;
-            static constexpr uint8_t mantissa = 64;
-            static constexpr uint8_t r = 32;  // ceil(mantissa/2)
-            static constexpr long double shift = (1LL << r) + 1;
-        };
-        #endif
-
-        template <>
-        struct FloatLayout<double> {
-            static constexpr uint8_t exponent = 11;
-            static constexpr uint8_t mantissa = 52;
-            static constexpr uint8_t r = 27;  // ceil(mantissa/2)
-            static constexpr double shift = (1LL << r) + 1;
-        };
-
-        template <>
-        struct FloatLayout<float> {
-            static constexpr uint8_t exponent = 8;
-            static constexpr uint8_t mantissa = 23;
-            static constexpr uint8_t r = 11;  // ceil(mantissa/2)
-            static constexpr float shift = (1 << r) + 1;
-        };
-
-        #ifdef WITH_CUDA_FP16
-        template<>
-        struct FloatLayout<__half> {
-            static constexpr uint8_t exponent = 5;
-            static constexpr uint8_t mantissa = 10;
-        };
-
-        template<>
-        struct FloatLayout<__half2> {
-            static constexpr uint8_t exponent = 5;
-            static constexpr uint8_t mantissa = 10;
-        };
-        #endif
-
+        /// @brief a * b + c rounded once, at run time (used by two_prod)
         template<typename T>
-        struct Split {
-            static constexpr INLINED DEVICE void func(T a, T *x, T *y)  {
-                T z = a * FloatLayout<T>::shift;
-                *x = z - (z - a);
-                *y = a - *x;
+        struct exact_fma {
+            static INLINED DEVICE T eval(const T a, const T b, const T c) {
+                #ifdef __CUDA_ARCH__
+                return ::fma(a, b, c);
+                #else
+                return std::fma(a, b, c);
+                #endif
             }
         };
 
         #ifdef WITH_CUDA_FP16
+        // the product of two halves is exact in float; for c = -round(a * b) so is the sum
         template<>
-        struct Split<__half> {
-            static constexpr INLINED DEVICE void func(__half a, __half *x, __half *y) {
-                __half z = a * __half_raw(0x5280);  // TODO(JeWaVe): check this value
-                *x = z - (z - a);
-                *y = a - *x;
+        struct exact_fma<__half> {
+            static INLINED DEVICE __half eval(const __half a, const __half b, const __half c) {
+                #ifdef __CUDA_ARCH__
+                return __hfma(a, b, c);
+                #else
+                return __float2half(__half2float(a) * __half2float(b) + __half2float(c));
+                #endif
             }
         };
 
         template<>
-        struct Split<__half2> {
-            static constexpr INLINED DEVICE void func(__half2 a, __half2 *x, __half2 *y) {
-                __half2 z = a * __half2(__half_raw(0x5280), __half_raw(0x5280));  // TODO(JeWaVe): check this value
-                *x = z - (z - a);
-                *y = a - *x;
+        struct exact_fma<__half2> {
+            static INLINED DEVICE __half2 eval(const __half2 a, const __half2 b, const __half2 c) {
+                #ifdef __CUDA_ARCH__
+                return __hfma2(a, b, c);
+                #else
+                return __half2(
+                    exact_fma<__half>::eval(__low2half(a), __low2half(b), __low2half(c)),
+                    exact_fma<__half>::eval(__high2half(a), __high2half(b), __high2half(c)));
+                #endif
             }
         };
         #endif
 
+        /// @brief error-free transformation of a sum: x + y == a + b exactly, x = fl(a + b)
         template<typename T>
         static constexpr INLINED DEVICE void two_sum(T a, T b, T *x, T *y) {
             *x = a + b;
@@ -490,19 +450,17 @@ namespace aerobus {
             *y = (a - (*x - z)) + (b - z);
         }
 
+        /// @brief error-free transformation of a product: x + y == a * b exactly, x = fl(a * b)
+        ///
+        /// the rounding error a * b - x is computed by a correctly rounded fused multiply-add
         template<typename T>
-        static constexpr INLINED DEVICE void two_prod(T a, T b, T *x, T *y) {
+        static INLINED DEVICE void two_prod(T a, T b, T *x, T *y) {
             *x = a * b;
-            #ifdef __clang__
-            *y = fma_helper<T>::eval(a, b, -*x);
-            #else
-            T ah, al, bh, bl;
-            Split<T>::func(a, &ah, &al);
-            Split<T>::func(b, &bh, &bl);
-            *y = al * bl - (((*x - ah * bh) - al * bh) - ah * bl);
-            #endif
+            *y = exact_fma<T>::eval(a, b, -*x);
         }
 
+        /// @brief Horner evaluation of the polynomial with coefficients p1[i] + p2[i], highest degree first
+        /// @tparam N degree: p1 and p2 hold N + 1 coefficients
         template<typename T, size_t N>
         static INLINED DEVICE T horner(T *p1, T *p2, T x) {
             T r = p1[0] + p2[0];
