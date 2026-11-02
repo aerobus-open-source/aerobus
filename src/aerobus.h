@@ -4,6 +4,10 @@
 
 #include <cstdint>
 #include <cstddef>
+#include <cstdlib>
+#ifdef _MSC_VER
+#include <malloc.h>
+#endif
 #include <cstring>
 #include <type_traits>
 #include <utility>
@@ -51,17 +55,31 @@
 // aligned allocation
 namespace aerobus {
     /**
-     * 'portable' aligned allocation of count elements of type T
+     * 'portable' aligned allocation of count elements of type T, released by aligned_free
      * @tparam T the type of elements to store
      * @param count the number of elements
-     * @param alignment boundary
+     * @param alignment boundary, a power of two
+     * @return the allocated memory, or nullptr on failure
     */
     template<typename T>
     T* aligned_malloc(size_t count, size_t alignment) {
+        // std::aligned_alloc needs a size that is a multiple of the alignment
+        const size_t size = ((count * sizeof(T) + alignment - 1) / alignment) * alignment;
         #ifdef _MSC_VER
-        return static_cast<T*>(_aligned_malloc(count * sizeof(T), alignment));
+        return static_cast<T*>(_aligned_malloc(size, alignment));
         #else
-        return static_cast<T*>(aligned_alloc(alignment, count * sizeof(T)));
+        return static_cast<T*>(std::aligned_alloc(alignment, size));
+        #endif
+    }
+
+    /// @brief releases memory obtained from aligned_malloc
+    /// @param ptr pointer returned by aligned_malloc, or nullptr
+    template<typename T>
+    void aligned_free(T* ptr) {
+        #ifdef _MSC_VER
+        _aligned_free(ptr);
+        #else
+        std::free(ptr);
         #endif
     }
 }  // namespace aerobus
