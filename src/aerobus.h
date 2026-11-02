@@ -2591,21 +2591,21 @@ namespace aerobus {
                 using _gcd = typename Ring::template gcd_t<typename v::x, typename v::y>;
                 using newx = typename Ring::template div_t<typename v::x, _gcd>;
                 using newy = typename Ring::template div_t<typename v::y, _gcd>;
+                // normal form of the denominator, gcd(newy, newy): |newy| for integers,
+                // newy made monic for polynomials over a field; the numerator is divided by the same unit
+                using normal_y = typename Ring::template gcd_t<newy, newy>;
+                using unit = typename Ring::template div_t<newy, normal_y>;
 
-                using posx = std::conditional_t<
-                                    !Ring::template pos_v<newy>,
-                                    typename Ring::template sub_t<typename Ring::zero, newx>,
-                                    newx>;
-                using posy = std::conditional_t<
-                                    !Ring::template pos_v<newy>,
-                                    typename Ring::template sub_t<typename Ring::zero, newy>,
-                                    newy>;
              public:
-                using type = typename _FractionField<Ring>::template val<posx, posy>;
+                using type = typename _FractionField<Ring>::template val<
+                    typename Ring::template div_t<newx, unit>, normal_y>;
             };
 
          public:
-            /// @brief simplifies fraction (devides both numerator and denominator by their gcd)
+            /// @brief simplifies fraction: divides numerator and denominator by their gcd,
+            /// then by the unit that puts the denominator in normal form (positive integer, monic polynomial)
+            ///
+            /// two values are equal iff their simplified forms are the same type
             /// @tparam v (a type of val)
             template<typename v>
             using simplify_t = typename simplify<v>::type;
@@ -2624,13 +2624,10 @@ namespace aerobus {
                 using type = typename _FractionField<Ring>::template simplify_t<val<dividend, diviser>>;
             };
 
+            // the simplified denominator is positive, so the sign is the numerator's
             template<typename v>
             struct pos {
-                using type = std::conditional_t<
-                    (Ring::template pos_v<typename v::x> && Ring::template pos_v<typename v::y>) ||
-                    (!Ring::template pos_v<typename v::x> && !Ring::template pos_v<typename v::y>),
-                    std::true_type,
-                    std::false_type>;
+                using type = std::bool_constant<Ring::template pos_v<typename simplify_t<v>::x>>;
             };
 
             template<typename v1, typename v2>
@@ -2684,51 +2681,17 @@ namespace aerobus {
                     std::false_type>;
             };
 
-            template<typename v1, typename v2, typename E = void>
-            struct gt;
-
+            // a/b > c/d iff a*d > c*b, with b and d positive as they are after simplify
             template<typename v1, typename v2>
-            struct gt<v1, v2, std::enable_if_t<
-                (eq<v1, v2>::type::value)
-                >> {
-                using type = std::false_type;
-            };
+            struct gt {
+             private:
+                using s1 = simplify_t<v1>;
+                using s2 = simplify_t<v2>;
 
-            template<typename v1, typename v2>
-            struct gt<v1, v2, std::enable_if_t<
-                (!eq<v1, v2>::type::value) &&
-                (!pos<v1>::type::value) && (!pos<v2>::type::value)
-                >> {
-                using type = typename gt<
-                    typename sub<zero, v1>::type, typename sub<zero, v2>::type
-                >::type;
-            };
-
-            template<typename v1, typename v2>
-            struct gt<v1, v2, std::enable_if_t<
-                (!eq<v1, v2>::type::value) &&
-                (pos<v1>::type::value) && (!pos<v2>::type::value)
-                >> {
-                using type = std::true_type;
-            };
-
-            template<typename v1, typename v2>
-            struct gt<v1, v2, std::enable_if_t<
-                (!eq<v1, v2>::type::value) &&
-                (!pos<v1>::type::value) && (pos<v2>::type::value)
-                >> {
-                using type = std::false_type;
-            };
-
-            template<typename v1, typename v2>
-            struct gt<v1, v2, std::enable_if_t<
-                (!eq<v1, v2>::type::value) &&
-                (pos<v1>::type::value) && (pos<v2>::type::value)
-                >> {
+             public:
                 using type = typename Ring::template gt_t<
-                    typename Ring::template mul_t<v1::x, v2::y>,
-                    typename Ring::template mul_t<v2::y, v2::x>
-                >;
+                    typename Ring::template mul_t<typename s1::x, typename s2::y>,
+                    typename Ring::template mul_t<typename s2::x, typename s1::y>>;
             };
 
          public:
@@ -2745,12 +2708,13 @@ namespace aerobus {
             template<typename v1, typename v2>
             using mod_t = zero;
 
-            /// @brief greatest common divisor
-            /// @tparam v1
-            /// @tparam v2
-            /// Since FractionFIeld is by construction a field, we choose to return v1 as v1/v2
+            /// @brief greatest common divisor: one, or zero when v1 and v2 are both zero
+            ///
+            /// in a field, every nonzero value divides every value
+            /// @tparam v1 a value
+            /// @tparam v2 a value
             template<typename v1, typename v2>
-            using gcd_t = v1;
+            using gcd_t = std::conditional_t<v1::is_zero_v && v2::is_zero_v, zero, one>;
 
             /// @brief substraction operator
             /// @tparam v1 a value
@@ -2793,6 +2757,18 @@ namespace aerobus {
             /// @tparam v2 a value
             template<typename v1, typename v2>
             static constexpr bool gt_v = gt<v1, v2>::type::value;
+
+            /// @brief comparison (strictly smaller - type)
+            /// @tparam v1 a value
+            /// @tparam v2 a value
+            template<typename v1, typename v2>
+            using lt_t = typename gt<v2, v1>::type;
+
+            /// @brief comparison (strictly smaller -- value)
+            /// @tparam v1 a value
+            /// @tparam v2 a value
+            template<typename v1, typename v2>
+            static constexpr bool lt_v = lt_t<v1, v2>::value;
 
             /// @brief is v1 positive (type)
             /// @tparam v1 a value
