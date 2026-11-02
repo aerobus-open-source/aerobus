@@ -18,6 +18,7 @@ add_executable(lib_tests
   zpz_tests.cpp
 )
 target_link_libraries(lib_tests PRIVATE aerobus aerobus_dev_flags GTest::gtest_main)
+target_compile_definitions(lib_tests PRIVATE AEROBUS_CMAKE_PROJECT_VERSION="${PROJECT_VERSION}")
 gtest_discover_tests(lib_tests)
 
 # compile_fail/<name>.cpp must not compile, and the compiler output must match <regex>

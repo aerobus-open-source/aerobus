@@ -1,8 +1,18 @@
 cmake_minimum_required(VERSION 3.14...3.31)
 
+# the version lives in src/aerobus.h
+file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/src/aerobus.h" aerobus_version_lines REGEX "^#define AEROBUS_VERSION_(MAJOR|MINOR|PATCH) ")
+foreach(part MAJOR MINOR PATCH)
+  string(REGEX MATCH "AEROBUS_VERSION_${part} ([0-9]+)" _ "${aerobus_version_lines}")
+  set(aerobus_version_${part} "${CMAKE_MATCH_1}")
+  if(aerobus_version_${part} STREQUAL "")
+    message(FATAL_ERROR "AEROBUS_VERSION_${part} not found in src/aerobus.h")
+  endif()
+endforeach()
+
 project(
     Aerobus
-    VERSION 1.2
+    VERSION ${aerobus_version_MAJOR}.${aerobus_version_MINOR}.${aerobus_version_PATCH}
     DESCRIPTION "Header-only C++20 library for compile-time algebra on polynomials, discrete rings and fields"
     LANGUAGES CXX
 )
