@@ -1996,8 +1996,8 @@ namespace aerobus {
         /// @brief no zero divisors iff the coefficient ring has none
         static constexpr bool is_integral_domain = internal::is_integral_domain_v<Ring>;
 
-        /// @brief Used to evaluate polynomials over a value in Ring
-        /// @tparam P a value in polynomial<Ring>
+     private:
+        // Horner evaluation of P at a value of Ring, used by val::value_at_t
         template<typename P>
         struct horner_reduction_t {
             template<size_t index, size_t stop>
@@ -2019,6 +2019,7 @@ namespace aerobus {
             };
         };
 
+     public:
         template<typename coeffN, typename... coeffs>
         struct val_impl;
 
