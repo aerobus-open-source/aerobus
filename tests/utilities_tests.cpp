@@ -213,3 +213,11 @@ TEST(continuous_fractions, basic_assertions) {
     constexpr double A_SQRT3 = SQRT3_fraction::val;
     EXPECT_FALSE((::fabs(A_SQRT3 - 1.7320508075688772935) > 0));
 }
+
+TEST(utilities, counts_with_k_greater_than_n_are_zero) {
+    EXPECT_EQ((combination_v<i32, 5, 4>), 0);
+    EXPECT_EQ((combination_v<i64, 1, 0>), 0);
+    EXPECT_EQ((stirling_2_v<i64, 1, 2>), 0);
+    EXPECT_EQ((stirling_2_v<i64, 3, 7>), 0);
+    EXPECT_EQ((stirling_1_signed_v<i64, 2, 5>), 0);
+}
