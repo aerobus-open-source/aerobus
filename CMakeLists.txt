@@ -21,10 +21,30 @@ if(AEROBUS_IS_TOP_LEVEL AND NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYP
 endif()
 
 # the library: a single header
+include(GNUInstallDirs)
 add_library(aerobus INTERFACE)
 add_library(aerobus::aerobus ALIAS aerobus)
-target_include_directories(aerobus INTERFACE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>)
+target_include_directories(aerobus INTERFACE
+  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 target_compile_features(aerobus INTERFACE cxx_std_20)
+
+# installation and find_package(Aerobus) support
+include(CMakePackageConfigHelpers)
+set(AEROBUS_CMAKE_INSTALL_DIR "${CMAKE_INSTALL_DATADIR}/cmake/Aerobus")
+install(FILES src/aerobus.h DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+install(TARGETS aerobus EXPORT AerobusTargets)
+install(EXPORT AerobusTargets NAMESPACE aerobus:: DESTINATION "${AEROBUS_CMAKE_INSTALL_DIR}")
+configure_package_config_file(cmake/AerobusConfig.cmake.in
+  "${PROJECT_BINARY_DIR}/AerobusConfig.cmake"
+  INSTALL_DESTINATION "${AEROBUS_CMAKE_INSTALL_DIR}")
+write_basic_package_version_file("${PROJECT_BINARY_DIR}/AerobusConfigVersion.cmake"
+  COMPATIBILITY SameMajorVersion
+  ARCH_INDEPENDENT)
+install(FILES
+  "${PROJECT_BINARY_DIR}/AerobusConfig.cmake"
+  "${PROJECT_BINARY_DIR}/AerobusConfigVersion.cmake"
+  DESTINATION "${AEROBUS_CMAKE_INSTALL_DIR}")
 
 # warnings and limits shared by every target built in this repository
 add_library(aerobus_dev_flags INTERFACE)
@@ -58,6 +78,15 @@ if(AEROBUS_BUILD_TESTS)
   add_executable(lib_tests src/lib_tests.cpp)
   target_link_libraries(lib_tests PRIVATE aerobus aerobus_dev_flags GTest::gtest_main)
   gtest_discover_tests(lib_tests)
+
+  # install this build tree, then build a consumer through find_package(Aerobus)
+  add_test(NAME package.find_package
+    COMMAND "${CMAKE_COMMAND}"
+      "-DAEROBUS_BINARY_DIR=${PROJECT_BINARY_DIR}"
+      "-DWORK_DIR=${PROJECT_BINARY_DIR}/package_test"
+      "-DCXX_COMPILER=${CMAKE_CXX_COMPILER}"
+      "-DCONFIG=$<CONFIG>"
+      -P "${PROJECT_SOURCE_DIR}/tests/package/check_package.cmake")
 endif()
 
 if(AEROBUS_BUILD_BENCHMARKS)
