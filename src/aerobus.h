@@ -2066,40 +2066,32 @@ namespace aerobus {
                 typename v2::template coeff_at_t<I>>::value && ...)>;
         };
 
-        template<typename v1, typename v2, typename E = void>
-        struct lt_helper {};
+        // v1 and v2 have the same degree: compare coefficients from index down to 0
+        template<typename v1, typename v2, size_t index>
+        struct lt_same_degree {
+         private:
+            using a = typename v1::template coeff_at_t<index>;
+            using b = typename v2::template coeff_at_t<index>;
 
-        template<typename v1, typename v2>
-        struct lt_helper<v1, v2, std::enable_if_t<(v1::degree < v2::degree)>> {
-            using type = std::true_type;
+         public:
+            using type = std::bool_constant<Ring::template lt_t<a, b>::value ||
+                (Ring::template eq_t<a, b>::value && lt_same_degree<v1, v2, index - 1>::type::value)>;
         };
 
         template<typename v1, typename v2>
-        struct lt_helper<v1, v2, std::enable_if_t<(v1::degree == v2::degree)>> {
-            using type = typename Ring::template lt_t<typename v1::aN, typename v2::aN>;
+        struct lt_same_degree<v1, v2, 0> {
+            using type = typename Ring::template lt_t<
+                typename v1::template coeff_at_t<0>,
+                typename v2::template coeff_at_t<0>>;
         };
 
+        // lexicographic order: degree first, then coefficients from the highest degree down
         template<typename v1, typename v2>
-        struct lt_helper<v1, v2, std::enable_if_t<(v1::degree > v2::degree)>> {
-            using type = std::false_type;
-        };
-
-        template<typename v1, typename v2, typename E = void>
-        struct gt_helper {};
-
-        template<typename v1, typename v2>
-        struct gt_helper<v1, v2, std::enable_if_t<(v1::degree > v2::degree)>> {
-            using type = std::true_type;
-        };
-
-        template<typename v1, typename v2>
-        struct gt_helper<v1, v2, std::enable_if_t<(v1::degree == v2::degree)>> {
-            using type = std::false_type;
-        };
-
-        template<typename v1, typename v2>
-        struct gt_helper<v1, v2, std::enable_if_t<(v1::degree < v2::degree)>> {
-            using type = std::false_type;
+        struct lt_helper {
+            using type = typename std::conditional_t<
+                v1::degree != v2::degree,
+                std::type_identity<std::bool_constant<(v1::degree < v2::degree)>>,
+                lt_same_degree<v1, v2, v1::degree>>::type;
         };
 
         // addition at
@@ -2364,17 +2356,17 @@ namespace aerobus {
         template<typename v1, typename v2>
         using eq_t = typename eq_helper<v1, v2>::type;
 
-        /// @brief strict less operator
+        /// @brief strict less operator: lexicographic order on (degree, coefficients from the highest degree)
         /// @tparam v1
         /// @tparam v2
         template<typename v1, typename v2>
         using lt_t = typename lt_helper<v1, v2>::type;
 
-        /// @brief strict greater operator
+        /// @brief strict greater operator: lt_t<v2, v1>
         /// @tparam v1
         /// @tparam v2
         template<typename v1, typename v2>
-        using gt_t = typename gt_helper<v1, v2>::type;
+        using gt_t = typename lt_helper<v2, v1>::type;
 
         /// @brief division operator
         /// @tparam v1
