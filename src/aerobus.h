@@ -1116,27 +1116,41 @@ namespace aerobus {
     };
 }  // namespace aerobus
 
-// i16
+// integers: i16, i32, i64
 namespace aerobus {
-    /// @brief 16 bits signed integers, seen as a algebraic ring with related operations
-    struct i16 {
-        using inner_type = int16_t;
-        /// @brief values in i16, again represented as types
+    /// @brief signed integers of type Int, seen as an algebraic ring (euclidean domain)
+    ///
+    /// Arithmetic happens at compile time: an overflow is a compile error.
+    /// @tparam Int a signed integral type, such as int32_t
+    template<typename Int>
+    struct integers {
+        static_assert(std::is_integral_v<Int> && std::is_signed_v<Int>, "integers<Int> needs a signed integral type");
+
+        /// @brief type of represented values
+        using inner_type = Int;
+
+        /// @brief values in the ring, represented as types
         /// @tparam x an actual integer
-        template<int16_t x>
+        template<Int x>
         struct val {
-            /// @brief Enclosing ring type
-            using enclosing_type = i16;
+            /// @brief type of represented values
+            using inner_type = Int;
+            /// @brief enclosing ring type
+            using enclosing_type = integers<Int>;
             /// @brief actual value stored in val type
-            static constexpr int16_t v = x;
+            static constexpr Int v = x;
 
             /// @brief cast x into valueType
             /// @tparam valueType double for example
             template<typename valueType>
             static constexpr AEROBUS_INLINE AEROBUS_DEVICE valueType get() {
                 #ifdef WITH_CUDA_FP16
-                // static_cast to __half is not constexpr in cuda_fp16.h
-                return internal::template int16_convert_helper<valueType, x>::value();
+                if constexpr (std::is_same_v<Int, int16_t>) {
+                    // static_cast to __half is not constexpr in cuda_fp16.h
+                    return internal::template int16_convert_helper<valueType, x>::value();
+                } else {
+                    return static_cast<valueType>(x);
+                }
                 #else
                 return static_cast<valueType>(x);
                 #endif
@@ -1150,204 +1164,6 @@ namespace aerobus {
 
             /// @brief string representation of value
             static std::string to_string() {
-                return std::to_string(x);  // NOLINT
-            }
-        };
-
-        /// @brief constant zero
-        using zero = val<0>;
-        /// @brief constant one
-        using one = val<1>;
-        /// @brief integers are not a field
-        static constexpr bool is_field = false;
-        /// @brief integers are an euclidean domain
-        static constexpr bool is_euclidean_domain = true;
-        /// @brief integers have no zero divisors
-        static constexpr bool is_integral_domain = true;
-        /// @brief inject a native constant
-        /// @tparam x
-        template<auto x>
-        using inject_constant_t = val<static_cast<int16_t>(x)>;
-
-        template<typename v>
-        using inject_ring_t = v;
-
-     private:
-        template<typename v1, typename v2>
-        struct add {
-            using type = val<v1::v + v2::v>;
-        };
-
-        template<typename v1, typename v2>
-        struct sub {
-            using type = val<v1::v - v2::v>;
-        };
-
-        template<typename v1, typename v2>
-        struct mul {
-            using type = val<v1::v* v2::v>;
-        };
-
-        template<typename v1, typename v2>
-        struct div {
-            using type = val<v1::v / v2::v>;
-        };
-
-        template<typename v1, typename v2>
-        struct remainder {
-            using type = val<v1::v % v2::v>;
-        };
-
-        template<typename v1, typename v2>
-        struct gt {
-            using type = std::conditional_t<(v1::v > v2::v), std::true_type, std::false_type>;
-        };
-
-        template<typename v1, typename v2>
-        struct lt {
-            using type = std::conditional_t<(v1::v < v2::v), std::true_type, std::false_type>;
-        };
-
-        template<typename v1, typename v2>
-        struct eq {
-            using type = std::conditional_t<(v1::v == v2::v), std::true_type, std::false_type>;
-        };
-
-        template<typename v1>
-        struct pos {
-            using type = std::bool_constant<(v1::v > 0)>;
-        };
-
-     public:
-        /// @brief addition operator
-        /// yields v1 + v2
-        /// @tparam v1 a value in i16
-        /// @tparam v2 a value in i16
-        template<typename v1, typename v2>
-        using add_t = typename add<v1, v2>::type;
-
-        /// @brief substraction operator
-        /// yields v1 - v2
-        /// @tparam v1 a value in i16
-        /// @tparam v2 a value in i16
-        template<typename v1, typename v2>
-        using sub_t = typename sub<v1, v2>::type;
-
-        /// @brief multiplication operator
-        /// yields v1 * v2
-        /// @tparam v1 a value in i16
-        /// @tparam v2 a value in i16
-        template<typename v1, typename v2>
-        using mul_t = typename mul<v1, v2>::type;
-
-        /// @brief division operator
-        /// yields v1 / v2
-        /// @tparam v1 a value in i16
-        /// @tparam v2 a value in i16
-        template<typename v1, typename v2>
-        using div_t = typename div<v1, v2>::type;
-
-        /// @brief modulus operator
-        /// yields v1 % v2
-        /// @tparam v1 a value in i16
-        /// @tparam v2 a value in i16
-        template<typename v1, typename v2>
-        using mod_t = typename remainder<v1, v2>::type;
-
-        /// @brief strictly greater operator (v1 > v2)
-        /// yields v1 > v2
-        /// @tparam v1 a value in i16
-        /// @tparam v2 a value in i16
-        template<typename v1, typename v2>
-        using gt_t = typename gt<v1, v2>::type;
-
-        /// @brief strictly greater operator (boolean value)
-        /// @tparam v1 a value in i16
-        /// @tparam v2 a value in i16
-        template<typename v1, typename v2>
-        static constexpr bool gt_v = gt_t<v1, v2>::value;
-
-        /// @brief strict less operator (v1 < v2)
-        /// yields v1 < v2
-        /// @tparam v1 a value in i16
-        /// @tparam v2 a value in i16
-        template<typename v1, typename v2>
-        using lt_t = typename lt<v1, v2>::type;
-
-        /// @brief strict less operator (boolean value)
-        /// @tparam v1 a value in i16
-        /// @tparam v2 a value in i16
-        template<typename v1, typename v2>
-        static constexpr bool lt_v = lt_t<v1, v2>::value;
-
-        /// @brief equality operator (type)
-        /// yields v1 == v2 as std::integral_constant<bool>
-        /// @tparam v1 a value in i16
-        /// @tparam v2 a value in i16
-        template<typename v1, typename v2>
-        using eq_t = typename eq<v1, v2>::type;
-
-        /// @brief equality operator (boolean value)
-        /// @tparam v1
-        /// @tparam v2
-        template<typename v1, typename v2>
-        static constexpr bool eq_v = eq_t<v1, v2>::value;
-
-        /// @brief greatest common divisor
-        /// yields GCD(v1, v2)
-        /// @tparam v1 a value in i16
-        /// @tparam v2 a value in i16
-        template<typename v1, typename v2>
-        using gcd_t = typename internal::gcd<i16>::template type<v1, v2>;
-
-        /// @brief positivity operator
-        /// yields v > 0 as std::true_type or std::false_type
-        /// @tparam v a value in i16
-        template<typename v>
-        using pos_t = typename pos<v>::type;
-
-        /// @brief positivity (boolean value)
-        /// yields v > 0 as boolean value
-        /// @tparam v a value in i16
-        template<typename v>
-        static constexpr bool pos_v = pos_t<v>::value;
-    };
-
-    namespace internal {
-        template<>
-        struct is_integers_ring<i16> : std::true_type {};
-    }  // namespace internal
-}  // namespace aerobus
-
-// i32
-namespace aerobus {
-    /// @brief 32 bits signed integers, seen as a algebraic ring with related operations
-    struct i32 {
-        using inner_type = int32_t;
-        /// @brief values in i32, again represented as types
-        /// @tparam x an actual integer
-        template<int32_t x>
-        struct val {
-            /// @brief Enclosing ring type
-            using enclosing_type = i32;
-            /// @brief actual value stored in val type
-            static constexpr int32_t v = x;
-
-            /// @brief cast x into valueType
-            /// @tparam valueType double for example
-            template<typename valueType>
-            static constexpr AEROBUS_DEVICE valueType get() {
-                return static_cast<valueType>(x);
-            }
-
-            /// @brief is value zero
-            using is_zero_t = std::bool_constant<x == 0>;
-
-            /// @brief is value zero (boolean value)
-            static constexpr bool is_zero_v = x == 0;
-
-            /// @brief string representation of value
-            static std::string to_string() {
                 return std::to_string(x);
             }
         };
@@ -1362,361 +1178,110 @@ namespace aerobus {
         static constexpr bool is_euclidean_domain = true;
         /// @brief integers have no zero divisors
         static constexpr bool is_integral_domain = true;
+
         /// @brief inject a native constant
         /// @tparam x
         template<auto x>
-        using inject_constant_t = val<static_cast<int32_t>(x)>;
+        using inject_constant_t = val<static_cast<Int>(x)>;
 
+        /// @brief injects a value: identity, used for consistency with quotient rings
+        /// @tparam v a value in this ring
         template<typename v>
         using inject_ring_t = v;
 
-     private:
+        /// @brief addition operator, yields v1 + v2
+        /// @tparam v1 a value
+        /// @tparam v2 a value
         template<typename v1, typename v2>
-        struct add {
-            using type = val<v1::v + v2::v>;
-        };
+        using add_t = val<v1::v + v2::v>;
 
+        /// @brief subtraction operator, yields v1 - v2
+        /// @tparam v1 a value
+        /// @tparam v2 a value
         template<typename v1, typename v2>
-        struct sub {
-            using type = val<v1::v - v2::v>;
-        };
+        using sub_t = val<v1::v - v2::v>;
 
+        /// @brief multiplication operator, yields v1 * v2
+        /// @tparam v1 a value
+        /// @tparam v2 a value
         template<typename v1, typename v2>
-        struct mul {
-            using type = val<v1::v* v2::v>;
-        };
+        using mul_t = val<v1::v * v2::v>;
 
+        /// @brief division operator, yields v1 / v2 (truncated, as in C++)
+        /// @tparam v1 a value
+        /// @tparam v2 a value
         template<typename v1, typename v2>
-        struct div {
-            using type = val<v1::v / v2::v>;
-        };
+        using div_t = val<v1::v / v2::v>;
 
+        /// @brief modulus operator, yields v1 % v2 (sign of v1, as in C++)
+        /// @tparam v1 a value
+        /// @tparam v2 a value
         template<typename v1, typename v2>
-        struct remainder {
-            using type = val<v1::v % v2::v>;
-        };
+        using mod_t = val<v1::v % v2::v>;
 
+        /// @brief strictly greater operator (type), yields v1 > v2
+        /// @tparam v1 a value
+        /// @tparam v2 a value
         template<typename v1, typename v2>
-        struct gt {
-            using type = std::conditional_t<(v1::v > v2::v), std::true_type, std::false_type>;
-        };
-
-        template<typename v1, typename v2>
-        struct lt {
-            using type = std::conditional_t<(v1::v < v2::v), std::true_type, std::false_type>;
-        };
-
-        template<typename v1, typename v2>
-        struct eq {
-            using type = std::conditional_t<(v1::v == v2::v), std::true_type, std::false_type>;
-        };
-
-        template<typename v1>
-        struct pos {
-            using type = std::bool_constant<(v1::v > 0)>;
-        };
-
-     public:
-        /// @brief addition operator
-        /// yields v1 + v2
-        /// @tparam v1 a value in i32
-        /// @tparam v2 a value in i32
-        template<typename v1, typename v2>
-        using add_t = typename add<v1, v2>::type;
-
-        /// @brief substraction operator
-        /// yields v1 - v2
-        /// @tparam v1 a value in i32
-        /// @tparam v2 a value in i32
-        template<typename v1, typename v2>
-        using sub_t = typename sub<v1, v2>::type;
-
-        /// @brief multiplication operator
-        /// yields v1 * v2
-        /// @tparam v1 a value in i32
-        /// @tparam v2 a value in i32
-        template<typename v1, typename v2>
-        using mul_t = typename mul<v1, v2>::type;
-
-        /// @brief division operator
-        /// yields v1 / v2
-        /// @tparam v1 a value in i32
-        /// @tparam v2 a value in i32
-        template<typename v1, typename v2>
-        using div_t = typename div<v1, v2>::type;
-
-        /// @brief modulus operator
-        /// yields v1 % v2
-        /// @tparam v1 a value in i32
-        /// @tparam v2 a value in i32
-        template<typename v1, typename v2>
-        using mod_t = typename remainder<v1, v2>::type;
-
-        /// @brief strictly greater operator (v1 > v2)
-        /// yields v1 > v2
-        /// @tparam v1 a value in i32
-        /// @tparam v2 a value in i32
-        template<typename v1, typename v2>
-        using gt_t = typename gt<v1, v2>::type;
+        using gt_t = std::bool_constant<(v1::v > v2::v)>;
 
         /// @brief strictly greater operator (boolean value)
-        /// @tparam v1 a value in i32
-        /// @tparam v2 a value in i32
+        /// @tparam v1 a value
+        /// @tparam v2 a value
         template<typename v1, typename v2>
         static constexpr bool gt_v = gt_t<v1, v2>::value;
 
-        /// @brief strict less operator (v1 < v2)
-        /// yields v1 < v2
-        /// @tparam v1 a value in i32
-        /// @tparam v2 a value in i32
+        /// @brief strict less operator (type), yields v1 < v2
+        /// @tparam v1 a value
+        /// @tparam v2 a value
         template<typename v1, typename v2>
-        using lt_t = typename lt<v1, v2>::type;
+        using lt_t = std::bool_constant<(v1::v < v2::v)>;
 
         /// @brief strict less operator (boolean value)
-        /// @tparam v1 a value in i32
-        /// @tparam v2 a value in i32
+        /// @tparam v1 a value
+        /// @tparam v2 a value
         template<typename v1, typename v2>
         static constexpr bool lt_v = lt_t<v1, v2>::value;
 
         /// @brief equality operator (type)
-        /// yields v1 == v2 as std::integral_constant<bool>
-        /// @tparam v1 a value in i32
-        /// @tparam v2 a value in i32
+        /// @tparam v1 a value
+        /// @tparam v2 a value
         template<typename v1, typename v2>
-        using eq_t = typename eq<v1, v2>::type;
+        using eq_t = std::bool_constant<(v1::v == v2::v)>;
 
         /// @brief equality operator (boolean value)
-        /// @tparam v1
-        /// @tparam v2
+        /// @tparam v1 a value
+        /// @tparam v2 a value
         template<typename v1, typename v2>
         static constexpr bool eq_v = eq_t<v1, v2>::value;
 
-        /// @brief greatest common divisor
-        /// yields GCD(v1, v2)
-        /// @tparam v1 a value in i32
-        /// @tparam v2 a value in i32
+        /// @brief greatest common divisor, non-negative
+        /// @tparam v1 a value
+        /// @tparam v2 a value
         template<typename v1, typename v2>
-        using gcd_t = typename internal::gcd<i32>::template type<v1, v2>;
+        using gcd_t = typename internal::gcd<integers<Int>>::template type<v1, v2>;
 
-        /// @brief positivity operator
-        /// yields v > 0 as std::true_type or std::false_type
-        /// @tparam v a value in i32
+        /// @brief positivity operator (type), yields v > 0
+        /// @tparam v a value
         template<typename v>
-        using pos_t = typename pos<v>::type;
+        using pos_t = std::bool_constant<(v::v > 0)>;
 
-        /// @brief positivity (boolean value)
-        /// yields v > 0 as boolean value
-        /// @tparam v a value in i32
+        /// @brief positivity operator (boolean value)
+        /// @tparam v a value
         template<typename v>
         static constexpr bool pos_v = pos_t<v>::value;
     };
-}  // namespace aerobus
 
-// i64
-namespace aerobus {
-    /// @brief 64 bits signed integers, seen as a algebraic ring with related operations
-    struct i64 {
-        /// @brief type of represented values
-        using inner_type = int64_t;
-        /// @brief values in i64
-        /// @tparam x an actual integer
-        template<int64_t x>
-        struct val {
-            /// @brief type of represented values
-            using inner_type = int64_t;
-            /// @brief enclosing ring type
-            using enclosing_type = i64;
-            /// @brief actual value
-            static constexpr int64_t v = x;
-
-            /// @brief cast value in valueType
-            /// @tparam valueType (double for example)
-            template<typename valueType>
-            static constexpr AEROBUS_INLINE AEROBUS_DEVICE valueType get() {
-                return static_cast<valueType>(x);
-            }
-
-            /// @brief is value zero
-            using is_zero_t = std::bool_constant<x == 0>;
-
-            /// @brief is value zero (boolean value)
-            static constexpr bool is_zero_v = x == 0;
-
-            /// @brief string representation
-            static std::string to_string() {
-                return std::to_string(x);
-            }
-        };
-
-        /// @brief injects constant as an i64 value
-        /// @tparam x
-        template<auto x>
-        using inject_constant_t = val<static_cast<int64_t>(x)>;
-
-        /// @brief injects a value
-        /// used for internal consistency and quotient rings implementations
-        /// for example i64::inject_ring_t<i64::val<1>> -> i64::val<1>
-        /// @tparam v a value in i64
-        template<typename v>
-        using inject_ring_t = v;
-
-        /// @brief constant zero
-        using zero = val<0>;
-        /// @brief constant one
-        using one = val<1>;
-        /// @brief integers are not a field
-        static constexpr bool is_field = false;
-        /// @brief integers are an euclidean domain
-        static constexpr bool is_euclidean_domain = true;
-        /// @brief integers have no zero divisors
-        static constexpr bool is_integral_domain = true;
-
-     private:
-        template<typename v1, typename v2>
-        struct add {
-            using type = val<v1::v + v2::v>;
-        };
-
-        template<typename v1, typename v2>
-        struct sub {
-            using type = val<v1::v - v2::v>;
-        };
-
-        template<typename v1, typename v2>
-        struct mul {
-            using type = val<v1::v* v2::v>;
-        };
-
-        template<typename v1, typename v2>
-        struct div {
-            using type = val<v1::v / v2::v>;
-        };
-
-        template<typename v1, typename v2>
-        struct remainder {
-            using type = val<v1::v% v2::v>;
-        };
-
-        template<typename v1, typename v2>
-        struct gt {
-            using type = std::conditional_t<(v1::v > v2::v), std::true_type, std::false_type>;
-        };
-
-        template<typename v1, typename v2>
-        struct lt {
-            using type = std::conditional_t<(v1::v < v2::v), std::true_type, std::false_type>;
-        };
-
-        template<typename v1, typename v2>
-        struct eq {
-            using type = std::conditional_t<(v1::v == v2::v), std::true_type, std::false_type>;
-        };
-
-        template<typename v>
-        struct pos {
-            using type = std::bool_constant<(v::v > 0)>;
-        };
-
-     public:
-        /// @brief addition operator
-        /// @tparam v1 : an element of aerobus::i64::val
-        /// @tparam v2 : an element of aerobus::i64::val
-        template<typename v1, typename v2>
-        using add_t = typename add<v1, v2>::type;
-
-        /// @brief substraction operator
-        /// @tparam v1 : an element of aerobus::i64::val
-        /// @tparam v2 : an element of aerobus::i64::val
-        template<typename v1, typename v2>
-        using sub_t = typename sub<v1, v2>::type;
-
-        /// @brief multiplication operator
-        /// @tparam v1 : an element of aerobus::i64::val
-        /// @tparam v2 : an element of aerobus::i64::val
-        template<typename v1, typename v2>
-        using mul_t = typename mul<v1, v2>::type;
-
-        /// @brief division operator
-        /// integer division
-        /// @tparam v1 : an element of aerobus::i64::val
-        /// @tparam v2 : an element of aerobus::i64::val
-        template<typename v1, typename v2>
-        using div_t = typename div<v1, v2>::type;
-
-        /// @brief modulus operator
-        /// @tparam v1 : an element of aerobus::i64::val
-        /// @tparam v2 : an element of aerobus::i64::val
-        template<typename v1, typename v2>
-        using mod_t = typename remainder<v1, v2>::type;
-
-        /// @brief strictly greater operator
-        /// yields v1 > v2 as std::true_type or std::false_type
-        /// @tparam v1 : an element of aerobus::i64::val
-        /// @tparam v2 : an element of aerobus::i64::val
-        template<typename v1, typename v2>
-        using gt_t = typename gt<v1, v2>::type;
-
-        /// @brief strictly greater operator
-        /// yields v1 > v2 as boolean value
-        /// @tparam v1 : an element of aerobus::i64::val
-        /// @tparam v2 : an element of aerobus::i64::val
-        template<typename v1, typename v2>
-        static constexpr bool gt_v = gt_t<v1, v2>::value;
-
-        /// @brief strict less operator
-        /// yields v1 < v2 as std::true_type or std::false_type
-        /// @tparam v1 : an element of aerobus::i64::val
-        /// @tparam v2 : an element of aerobus::i64::val
-        template<typename v1, typename v2>
-        using lt_t = typename lt<v1, v2>::type;
-
-        /// @brief strictly smaller operator
-        /// yields v1 < v2 as boolean value
-        /// @tparam v1 : an element of aerobus::i64::val
-        /// @tparam v2 : an element of aerobus::i64::val
-        template<typename v1, typename v2>
-        static constexpr bool lt_v = lt_t<v1, v2>::value;
-
-        /// @brief equality operator
-        /// yields v1 == v2 as std::true_type or std::false_type
-        /// @tparam v1 : an element of aerobus::i64::val
-        /// @tparam v2 : an element of aerobus::i64::val
-        template<typename v1, typename v2>
-        using eq_t = typename eq<v1, v2>::type;
-
-        /// @brief equality operator
-        /// yields v1 == v2 as boolean value
-        /// @tparam v1 : an element of aerobus::i64::val
-        /// @tparam v2 : an element of aerobus::i64::val
-        template<typename v1, typename v2>
-        static constexpr bool eq_v = eq_t<v1, v2>::value;
-
-        /// @brief greatest common divisor
-        /// yields GCD(v1, v2) as instanciation of i64::val
-        /// @tparam v1 : an element of aerobus::i64::val
-        /// @tparam v2 : an element of aerobus::i64::val
-        template<typename v1, typename v2>
-        using gcd_t = typename internal::gcd<i64>::template type<v1, v2>;
-
-        /// @brief is v posititive
-        /// yields v > 0 as std::true_type or std::false_type
-        /// @tparam v1 : an element of aerobus::i64::val
-        template<typename v>
-        using pos_t = typename pos<v>::type;
-
-        /// @brief positivity
-        /// yields v > 0 as boolean value
-        /// @tparam v : an element of aerobus::i64::val
-        template<typename v>
-        static constexpr bool pos_v = pos_t<v>::value;
-    };
+    /// @brief 16 bits signed integers
+    using i16 = integers<int16_t>;
+    /// @brief 32 bits signed integers
+    using i32 = integers<int32_t>;
+    /// @brief 64 bits signed integers
+    using i64 = integers<int64_t>;
 
     namespace internal {
-        template<>
-        struct is_integers_ring<i32> : std::true_type {};
-
-        template<>
-        struct is_integers_ring<i64> : std::true_type {};
+        template<typename Int>
+        struct is_integers_ring<integers<Int>> : std::true_type {};
     }  // namespace internal
 
     /// @brief embeds i32 into i64
