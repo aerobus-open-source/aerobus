@@ -24,6 +24,7 @@ else()
 endif()
 
 option(AEROBUS_BUILD_TESTS "Build the unit tests" ${AEROBUS_IS_TOP_LEVEL})
+option(AEROBUS_BUILD_EXAMPLES "Build the examples and run them as tests" ${AEROBUS_IS_TOP_LEVEL})
 option(AEROBUS_BUILD_BENCHMARKS "Build the benchmarks (needs Google Benchmark; uses OpenMP when available)" OFF)
 
 if(AEROBUS_IS_TOP_LEVEL AND NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -84,6 +85,11 @@ if(AEROBUS_BUILD_TESTS)
 
   enable_testing()
   add_subdirectory(tests)
+endif()
+
+if(AEROBUS_BUILD_EXAMPLES)
+  enable_testing()
+  add_subdirectory(examples)
 endif()
 
 if(AEROBUS_BUILD_BENCHMARKS)
