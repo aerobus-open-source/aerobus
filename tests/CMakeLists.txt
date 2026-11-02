@@ -31,6 +31,8 @@ endfunction()
 
 aerobus_compile_fail_test(zpz_division_by_zero "division by zero in zpz")
 aerobus_compile_fail_test(zpz_non_invertible_divisor "divisor is not invertible modulo p")
+aerobus_compile_fail_test(polynomial_division_not_exact "polynomial division is not exact")
+aerobus_compile_fail_test(polynomial_division_by_zero "polynomial division by zero")
 
 # install this build tree, then build a consumer through find_package(Aerobus)
 add_test(NAME package.find_package

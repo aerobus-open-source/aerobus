@@ -2278,7 +2278,12 @@ namespace aerobus {
          private: // NOLINT
             using rN = typename R::aN;
             using bN = typename B::aN;
-            using pT = typename monomial<typename Ring::template div_t<rN, bN>, R::degree - B::degree>::type;
+            using cN = typename Ring::template div_t<rN, bN>;
+            // over a ring which is not a field, each step needs bN to divide rN
+            static_assert(Ring::template eq_t<typename Ring::template mul_t<cN, bN>, rN>::value,
+                "polynomial division is not exact: the leading coefficient of the divisor does not divide "
+                "the leading coefficient of the remainder in the coefficient ring");
+            using pT = typename monomial<cN, R::degree - B::degree>::type;
             using rr = typename sub<R, typename mul<pT, B>::type>::type;
             using qq = typename add<Q, pT>::type;
 
@@ -2291,6 +2296,7 @@ namespace aerobus {
         template<typename A, typename B>
         struct div {
             static_assert(Ring::is_euclidean_domain, "cannot divide in that type of Ring");
+            static_assert(!B::is_zero_t::value, "polynomial division by zero");
             using q_type = typename div_helper<A, B, zero, A>::q_type;
             using m_type = typename div_helper<A, B, zero, A>::mod_type;
         };
@@ -2472,7 +2478,7 @@ namespace aerobus {
         /// @tparam v1
         /// @tparam v2
         template<typename v1, typename v2>
-        using mod_t = typename div_helper<v1, v2, zero, v1>::mod_type;
+        using mod_t = typename div<v1, v2>::m_type;
 
         /// @brief monomial : coeff X^deg
         /// @tparam coeff
