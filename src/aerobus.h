@@ -280,7 +280,8 @@ namespace aerobus {
         #ifdef WITH_CUDA_FP16
         template<>
         struct fma_helper<__half> {
-            static constexpr INLINED DEVICE __half eval(const __half x, const __half y, const __half z) {
+            // not constexpr: the fp16 operators of cuda_fp16.h are not
+            static INLINED DEVICE __half eval(const __half x, const __half y, const __half z) {
                 #ifdef __CUDA_ARCH__
                 return __hfma(x, y, z);
                 #else
@@ -290,7 +291,8 @@ namespace aerobus {
         };
         template<>
         struct fma_helper<__half2> {
-            static constexpr INLINED DEVICE __half2 eval(const __half2 x, const __half2 y, const __half2 z) {
+            // not constexpr: the fp16 operators of cuda_fp16.h are not
+            static INLINED DEVICE __half2 eval(const __half2 x, const __half2 y, const __half2 z) {
                 #ifdef __CUDA_ARCH__
                 return __hfma2(x, y, z);
                 #else
@@ -356,7 +358,7 @@ namespace aerobus {
         static INLINED DEVICE consteval __half m_zero() { return     __half_raw(0b1000000000000000); }
         static INLINED DEVICE consteval __half pi_2() { return       __half_raw(0b011111001001000); }
         static INLINED DEVICE consteval __half pi_4() { return       __half_raw(0b011101001001000); }
-        static INLINED DEVICE consteval __half two_pi() { return     __half_raw(0b1000110010010000); }
+        static INLINED DEVICE consteval __half two_pi() { return     __half_raw(0x4648); }
         static INLINED DEVICE consteval __half inv_two_pi() { return __half_raw(0b011000100011000); }
         static INLINED DEVICE consteval __half half() { return       __half_raw(0b0011100000000000); }
         static INLINED DEVICE bool is_inf(__half x) {
@@ -390,15 +392,19 @@ namespace aerobus {
         }
     };
 
-    // TODO(JeWaVe) : investigate as hfloor is pure device -- should be replaced by something different and constexpr
     #ifdef WITH_CUDA_FP16
+    // hfloor and h2floor are device functions: the host goes through float
     template<>
     struct meta_libm<__half> {
-        static INLINED __device__ __half floor(const __half& f) {
+        static INLINED DEVICE __half floor(const __half& f) {
+            #ifdef __CUDA_ARCH__
             return hfloor(f);
+            #else
+            return __float2half(std::floor(__half2float(f)));
+            #endif
         }
 
-        static INLINED __device__ __half fmod(const __half& x, const __half& d) {
+        static INLINED DEVICE __half fmod(const __half& x, const __half& d) {
             __half i = meta_libm<__half>::floor(x / d);
             return x - d * i;
         }
@@ -406,11 +412,15 @@ namespace aerobus {
 
     template<>
     struct meta_libm<__half2> {
-        static INLINED __device__ __half2 floor(const __half2& f) {
+        static INLINED DEVICE __half2 floor(const __half2& f) {
+            #ifdef __CUDA_ARCH__
             return h2floor(f);
+            #else
+            return __half2(meta_libm<__half>::floor(__low2half(f)), meta_libm<__half>::floor(__high2half(f)));
+            #endif
         }
 
-        static INLINED __device__ __half2 fmod(const __half2& x, const __half2& d) {
+        static INLINED DEVICE __half2 fmod(const __half2& x, const __half2& d) {
             __half2 i = meta_libm<__half2>::floor(x / d);
             return x - d * i;
         }
