@@ -2996,13 +2996,13 @@ namespace aerobus {
         (std::is_same_v<typename X::enclosing_type, typename Y::enclosing_type>)
     using mul_t = typename X::enclosing_type::template mul_t<X, Y>;
 
-    /// @brief generic division
-    /// @tparam X a value in a a euclidean domain
-    /// @tparam Y a value in same Euclidean domain
+    /// @brief generic division (named divide_t, not div_t, which is the C type ::div_t from <cstdlib>)
+    /// @tparam X a value in a euclidean domain
+    /// @tparam Y a value in same euclidean domain
     template<typename X, typename Y>
     requires IsEuclideanDomain<typename X::enclosing_type> &&
         (std::is_same_v<typename X::enclosing_type, typename Y::enclosing_type>)
-    using div_t = typename X::enclosing_type::template div_t<X, Y>;
+    using divide_t = typename X::enclosing_type::template div_t<X, Y>;
 
     /// @brief 32 bits rationals
     /// rationals with 32 bits numerator and denominator
