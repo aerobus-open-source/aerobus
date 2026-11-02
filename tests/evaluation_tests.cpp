@@ -1,4 +1,6 @@
 #include <gtest/gtest.h>
+#include <cstdint>
+#include <type_traits>
 
 #include "aerobus.h"
 
@@ -34,4 +36,17 @@ TEST(polynomials, compensated_eval) {
 
     double vvvv = polyf::compensated_eval(-1.0);
     EXPECT_EQ(vvvv, -1.0);
+}
+
+TEST(polynomials, eval_in_integer_types) {
+    // x^2
+    using P = make_int_polynomial_t<i32, 1, 0, 0>;
+    EXPECT_EQ((P::eval<int32_t>(1000)), 1000000);
+    EXPECT_EQ((P::eval<int64_t>(100000)), 10000000000LL);
+    EXPECT_EQ((P::eval<int16_t>(100)), 10000);
+    EXPECT_EQ((P::eval<uint64_t>(3)), 9u);
+    // H4(10) = 16 * 10^4 - 48 * 10^2 + 12
+    EXPECT_EQ((known_polynomials::hermite_phys<4>::eval<int32_t>(10)), 155212);
+    EXPECT_TRUE((std::is_same_v<decltype(internal::fma_helper<int32_t>::eval(1, 1, 1)), int32_t>));
+    EXPECT_TRUE((std::is_same_v<decltype(internal::fma_helper<int16_t>::eval(1, 1, 1)), int16_t>));
 }
