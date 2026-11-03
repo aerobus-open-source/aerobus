@@ -2690,7 +2690,7 @@ namespace aerobus {
         (std::is_same_v<typename X::enclosing_type, typename Y::enclosing_type>)
     using mul_t = typename X::enclosing_type::template mul_t<X, Y>;
 
-    /// @brief generic division (named divide_t, not div_t, which is the C type ::div_t from `<cstdlib>`)
+    /// @brief generic division (named divide_t, not div_t, which is the C type `div_t` from `<cstdlib>`)
     /// @tparam X a value in a euclidean domain
     /// @tparam Y a value in same euclidean domain
     template<typename X, typename Y>

@@ -10,7 +10,7 @@ jobs:
   lint:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: install tools
         run: |
           sudo apt-get update
@@ -43,7 +43,7 @@ jobs:
     name: test (${{ matrix.name }})
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: configure
         run: cmake -S . -B build -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} -DCMAKE_BUILD_TYPE=Release
       - name: build
@@ -54,7 +54,7 @@ jobs:
   sanitizers:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: configure
         run: >
           cmake -S . -B build -DCMAKE_CXX_COMPILER=g++-14 -DCMAKE_BUILD_TYPE=Debug
@@ -68,7 +68,7 @@ jobs:
   documentation:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: install doxygen
         run: sudo apt-get update && sudo apt-get install -y doxygen graphviz
       - name: doxygen (warnings are errors)
@@ -79,6 +79,6 @@ jobs:
     container:
       image: comua/aerobus-open-source:build-1.3
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: paper
         run: make clean paper
