@@ -13,5 +13,5 @@ int main() {
     // ensure that 1+1+1+1+1+1+1+1 in Z/2Z is equal to one
     std::cout << "expected = " << 1 << std::endl;
     std::cout << "computed = " << x << std::endl;
-    return 0;
+    return x == 1 ? 0 : 1;
 }
