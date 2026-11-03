@@ -1345,6 +1345,555 @@ namespace aerobus {
     /// @brief 64 bits signed integers
     using i64 = integers<int64_t>;
 
+    /// @brief a string usable as a template parameter, such as bigint::from_string_t<"12345678901234567890">
+    /// @tparam N size of the string, terminating zero included
+    template<size_t N>
+    struct string_literal {
+        /// @brief the characters, terminating zero included
+        char value[N];
+
+        /// @brief copies a string literal
+        constexpr string_literal(const char (&str)[N]) {  // NOLINT(runtime/explicit): used as a template argument
+            for (size_t i = 0; i < N; ++i) {
+                value[i] = str[i];
+            }
+        }
+
+        /// @brief number of characters, terminating zero excluded
+        static constexpr size_t length = N - 1;
+    };
+
+    // arbitrary precision integers: digits in base 2^32, computed by constexpr functions
+    namespace internal {
+        // a signed integer as little-endian digits in base 2^32; size is the number of significant digits
+        template<size_t N>
+        struct bigint_digits {
+            uint32_t d[N == 0 ? 1 : N] = {};
+            size_t size = 0;
+            bool negative = false;
+            bool invalid = false;  // a literal with a character that is not a digit
+        };
+
+        constexpr size_t bigint_trim(const uint32_t* a, size_t n) {
+            while (n > 0 && a[n - 1] == 0) {
+                --n;
+            }
+            return n;
+        }
+
+        // compares magnitudes: -1, 0 or 1
+        constexpr int bigint_compare(const uint32_t* a, size_t na, const uint32_t* b, size_t nb) {
+            if (na != nb) {
+                return na < nb ? -1 : 1;
+            }
+            for (size_t i = na; i > 0; --i) {
+                if (a[i - 1] != b[i - 1]) {
+                    return a[i - 1] < b[i - 1] ? -1 : 1;
+                }
+            }
+            return 0;
+        }
+
+        // r = a + b, r has room for max(na, nb) + 1 digits; returns the size of r
+        constexpr size_t bigint_add(const uint32_t* a, size_t na, const uint32_t* b, size_t nb, uint32_t* r) {
+            const size_t n = na > nb ? na : nb;
+            uint64_t carry = 0;
+            for (size_t i = 0; i < n; ++i) {
+                const uint64_t s = static_cast<uint64_t>(i < na ? a[i] : 0) + (i < nb ? b[i] : 0) + carry;
+                r[i] = static_cast<uint32_t>(s);
+                carry = s >> 32;
+            }
+            r[n] = static_cast<uint32_t>(carry);
+            return bigint_trim(r, n + 1);
+        }
+
+        // r = a - b for a >= b, r has room for na digits; returns the size of r
+        constexpr size_t bigint_sub(const uint32_t* a, size_t na, const uint32_t* b, size_t nb, uint32_t* r) {
+            int64_t borrow = 0;
+            for (size_t i = 0; i < na; ++i) {
+                const int64_t t = static_cast<int64_t>(a[i]) - (i < nb ? b[i] : 0) - borrow;
+                r[i] = static_cast<uint32_t>(t);
+                borrow = t < 0 ? 1 : 0;
+            }
+            return bigint_trim(r, na);
+        }
+
+        // r = a * b, r has room for na + nb digits (schoolbook); returns the size of r
+        constexpr size_t bigint_mul(const uint32_t* a, size_t na, const uint32_t* b, size_t nb, uint32_t* r) {
+            for (size_t i = 0; i < na + nb; ++i) {
+                r[i] = 0;
+            }
+            for (size_t i = 0; i < na; ++i) {
+                uint64_t carry = 0;
+                for (size_t j = 0; j < nb; ++j) {
+                    const uint64_t t = static_cast<uint64_t>(a[i]) * b[j] + r[i + j] + carry;
+                    r[i + j] = static_cast<uint32_t>(t);
+                    carry = t >> 32;
+                }
+                r[i + nb] = static_cast<uint32_t>(carry);
+            }
+            return bigint_trim(r, na + nb);
+        }
+
+        constexpr int bigint_leading_zeros(uint32_t x) {
+            int n = 0;
+            while ((x & 0x80000000U) == 0) {
+                x <<= 1;
+                ++n;
+            }
+            return n;
+        }
+
+        // Knuth, TAOCP vol. 2, 4.3.1, algorithm D (as divmnu in Hacker's Delight): u = q v + r, magnitudes,
+        // nu >= nv >= 1, v[nv - 1] != 0; q has room for nu - nv + 1 digits, r for nv digits. Each quotient digit
+        // is estimated from the top digits of the normalized operands and corrected at most twice, then once
+        // more in the rare add-back step.
+        template<size_t NU, size_t NV>
+        constexpr void bigint_divmod(const uint32_t* u, size_t nu, const uint32_t* v, size_t nv,
+                                     uint32_t* q, size_t* nq, uint32_t* r, size_t* nr) {
+            constexpr uint64_t base = uint64_t{1} << 32;
+            if (nv == 1) {
+                uint64_t rem = 0;
+                for (size_t i = nu; i > 0; --i) {
+                    const uint64_t cur = (rem << 32) | u[i - 1];
+                    q[i - 1] = static_cast<uint32_t>(cur / v[0]);
+                    rem = cur % v[0];
+                }
+                *nq = bigint_trim(q, nu);
+                r[0] = static_cast<uint32_t>(rem);
+                *nr = bigint_trim(r, 1);
+                return;
+            }
+            // normalize: shift so that the top digit of v has its high bit set
+            const int s = bigint_leading_zeros(v[nv - 1]);
+            uint32_t vn[NV == 0 ? 1 : NV] = {};
+            uint32_t un[NU + 1] = {};
+            for (size_t i = nv - 1; i > 0; --i) {
+                vn[i] = s == 0 ? v[i] : (v[i] << s) | (v[i - 1] >> (32 - s));
+            }
+            vn[0] = v[0] << s;
+            un[nu] = s == 0 ? 0 : u[nu - 1] >> (32 - s);
+            for (size_t i = nu - 1; i > 0; --i) {
+                un[i] = s == 0 ? u[i] : (u[i] << s) | (u[i - 1] >> (32 - s));
+            }
+            un[0] = u[0] << s;
+            for (size_t j = nu - nv + 1; j > 0; --j) {
+                const size_t k = j - 1;
+                const uint64_t num = (static_cast<uint64_t>(un[k + nv]) << 32) | un[k + nv - 1];
+                uint64_t qhat = num / vn[nv - 1];
+                uint64_t rhat = num % vn[nv - 1];
+                while (qhat >= base || qhat * vn[nv - 2] > ((rhat << 32) | un[k + nv - 2])) {
+                    --qhat;
+                    rhat += vn[nv - 1];
+                    if (rhat >= base) {
+                        break;
+                    }
+                }
+                // multiply and subtract qhat * vn from un[k .. k + nv]
+                int64_t borrow = 0;
+                for (size_t i = 0; i < nv; ++i) {
+                    const uint64_t p = qhat * vn[i];
+                    const int64_t t = static_cast<int64_t>(un[i + k]) - borrow - static_cast<int64_t>(p & 0xFFFFFFFFU);
+                    un[i + k] = static_cast<uint32_t>(t);
+                    borrow = static_cast<int64_t>(p >> 32) - (t >> 32);
+                }
+                const int64_t t = static_cast<int64_t>(un[k + nv]) - borrow;
+                un[k + nv] = static_cast<uint32_t>(t);
+                q[k] = static_cast<uint32_t>(qhat);
+                if (t < 0) {
+                    // add back: qhat was one too large
+                    --q[k];
+                    uint64_t carry = 0;
+                    for (size_t i = 0; i < nv; ++i) {
+                        const uint64_t sum = static_cast<uint64_t>(un[i + k]) + vn[i] + carry;
+                        un[i + k] = static_cast<uint32_t>(sum);
+                        carry = sum >> 32;
+                    }
+                    un[k + nv] = static_cast<uint32_t>(un[k + nv] + carry);
+                }
+            }
+            *nq = bigint_trim(q, nu - nv + 1);
+            // unnormalize the remainder
+            for (size_t i = 0; i + 1 < nv; ++i) {
+                r[i] = s == 0 ? un[i] : (un[i] >> s) | (un[i + 1] << (32 - s));
+            }
+            r[nv - 1] = un[nv - 1] >> s;
+            *nr = bigint_trim(r, nv);
+        }
+
+        template<size_t N>
+        constexpr bigint_digits<N> bigint_from_magnitude(uint64_t magnitude, bool negative) {
+            bigint_digits<N> result;
+            result.d[0] = static_cast<uint32_t>(magnitude);
+            if constexpr (N > 1) {
+                result.d[1] = static_cast<uint32_t>(magnitude >> 32);
+            }
+            result.size = bigint_trim(result.d, N);
+            result.negative = negative && result.size > 0;
+            return result;
+        }
+
+        constexpr int bigint_char_value(char c) {
+            if (c >= '0' && c <= '9') {
+                return c - '0';
+            }
+            if (c >= 'a' && c <= 'f') {
+                return c - 'a' + 10;
+            }
+            if (c >= 'A' && c <= 'F') {
+                return c - 'A' + 10;
+            }
+            return -1;
+        }
+
+        // parses [-]digits in base 10 or 16
+        template<size_t N, size_t L>
+        constexpr bigint_digits<N> bigint_parse(const char (&str)[L], uint32_t radix) {
+            bigint_digits<N> result;
+            size_t i = 0;
+            const bool negative = str[0] == '-';
+            if (negative) {
+                i = 1;
+            }
+            for (; i + 1 < L; ++i) {
+                const int digit = bigint_char_value(str[i]);
+                if (digit < 0 || static_cast<uint32_t>(digit) >= radix) {
+                    result.invalid = true;
+                    return result;
+                }
+                uint64_t carry = static_cast<uint64_t>(digit);
+                for (size_t k = 0; k < N; ++k) {
+                    const uint64_t t = static_cast<uint64_t>(result.d[k]) * radix + carry;
+                    result.d[k] = static_cast<uint32_t>(t);
+                    carry = t >> 32;
+                }
+            }
+            result.size = bigint_trim(result.d, N);
+            result.negative = negative && result.size > 0;
+            return result;
+        }
+    }  // namespace internal
+
+    /// @brief arbitrary precision integers, as an euclidean domain
+    ///
+    /// Values are bigint::val<negative, digits...>, digits in base 2^32, most significant first, without
+    /// leading zero digit; zero is val<false>. Name them through inject_constant_t, from_string_t or
+    /// from_hex_t. The arithmetic runs in constexpr functions; division is Knuth's algorithm D.
+    /// As for integers, division truncates toward zero and the remainder has the sign of the dividend.
+    struct bigint {
+        /// @brief a value: sign and digits in base 2^32, most significant first
+        /// @tparam negative true when the value is negative (never for zero)
+        /// @tparam digits most significant first, the first one nonzero
+        template<bool negative, uint32_t... digits>
+        struct val {
+         private:
+            static constexpr uint32_t list[sizeof...(digits) + 1] = {digits..., 0};
+
+            static constexpr internal::bigint_digits<sizeof...(digits)> make() {
+                internal::bigint_digits<sizeof...(digits)> result;
+                for (size_t i = 0; i < sizeof...(digits); ++i) {
+                    result.d[i] = list[sizeof...(digits) - 1 - i];
+                }
+                result.size = sizeof...(digits);
+                result.negative = negative;
+                return result;
+            }
+
+         public:
+            static_assert(sizeof...(digits) == 0 ? !negative : list[0] != 0,
+                          "bigint::val needs a canonical form: no leading zero digit, zero is val<false>");
+
+            /// @brief enclosing ring type
+            using enclosing_type = bigint;
+            /// @brief true_type if zero
+            using is_zero_t = std::bool_constant<sizeof...(digits) == 0>;
+            /// @brief true if zero
+            static constexpr bool is_zero_v = sizeof...(digits) == 0;
+            /// @brief number of digits in base 2^32
+            static constexpr size_t size = sizeof...(digits);
+            /// @brief little-endian digits
+            static constexpr internal::bigint_digits<sizeof...(digits)> value = make();
+
+            /// @brief conversion to an arithmetic type: by Horner in base 2^32 for floating point types (may
+            /// overflow to infinity), through uint64_t for integral types (at most 2 digits)
+            /// @tparam valueType such as double
+            template<typename valueType>
+            static constexpr AEROBUS_INLINE AEROBUS_DEVICE valueType get() {
+                if constexpr (std::is_integral_v<valueType>) {
+                    static_assert(sizeof...(digits) <= 2, "bigint::get: the value does not fit in 64 bits");
+                    uint64_t magnitude = 0;
+                    for (size_t i = 0; i < sizeof...(digits); ++i) {
+                        magnitude = (magnitude << 32) | list[i];
+                    }
+                    return negative ? static_cast<valueType>(uint64_t{0} - magnitude)
+                                    : static_cast<valueType>(magnitude);
+                } else {
+                    valueType result = static_cast<valueType>(0);
+                    for (size_t i = 0; i < sizeof...(digits); ++i) {
+                        result = result * static_cast<valueType>(4294967296.0) + static_cast<valueType>(list[i]);
+                    }
+                    return negative ? -result : result;
+                }
+            }
+
+            /// @brief decimal representation
+            static std::string to_string() {
+                if constexpr (sizeof...(digits) == 0) {
+                    return "0";
+                } else {
+                    uint32_t work[sizeof...(digits)] = {digits...};  // most significant first
+                    std::string chunks;
+                    size_t n = sizeof...(digits);
+                    size_t first = 0;
+                    while (first < n) {
+                        uint64_t rem = 0;
+                        for (size_t i = first; i < n; ++i) {
+                            const uint64_t cur = (rem << 32) | work[i];
+                            work[i] = static_cast<uint32_t>(cur / 1000000000U);
+                            rem = cur % 1000000000U;
+                        }
+                        while (first < n && work[first] == 0) {
+                            ++first;
+                        }
+                        std::string chunk = std::to_string(rem);
+                        if (first < n) {
+                            chunk = std::string(9 - chunk.size(), '0') + chunk;
+                        }
+                        chunks = chunk + chunks;
+                    }
+                    return (negative ? "-" : "") + chunks;
+                }
+            }
+
+            /// @brief hexadecimal representation, such as -0X1F
+            static std::string to_hex() {
+                static constexpr char hex[] = "0123456789ABCDEF";
+                std::string result;
+                for (size_t i = 0; i < sizeof...(digits); ++i) {
+                    for (int shift = 28; shift >= 0; shift -= 4) {
+                        result += hex[(list[i] >> shift) & 0xFU];
+                    }
+                }
+                const size_t start = result.find_first_not_of('0');
+                result = start == std::string::npos ? "0" : result.substr(start);
+                return (negative ? "-0X" : "0X") + result;
+            }
+        };
+
+        /// @brief zero
+        using zero = val<false>;
+        /// @brief one
+        using one = val<false, 1>;
+        /// @brief bigint is not a field
+        static constexpr bool is_field = false;
+        /// @brief bigint provides the euclidean operations
+        static constexpr bool is_euclidean_domain = true;
+        /// @brief no zero divisors
+        static constexpr bool is_integral_domain = true;
+
+     private:
+        // the value computed by Op::compute()
+        template<typename Op, typename indices = std::make_index_sequence<Op::result.size>>
+        struct from_result;
+
+        template<typename Op, size_t... i>
+        struct from_result<Op, std::index_sequence<i...>> {
+            static constexpr size_t top = sizeof...(i) - 1;
+            using type = val<Op::result.negative, Op::result.d[top - i]...>;
+        };
+
+        template<typename A, typename B, bool subtract>
+        struct add_op {
+            static constexpr size_t N = (A::size > B::size ? A::size : B::size) + 1;
+            static constexpr internal::bigint_digits<N> compute() {
+                internal::bigint_digits<N> r;
+                const bool b_negative = subtract ? !B::value.negative && B::size > 0 : B::value.negative;
+                if (A::value.negative == b_negative) {
+                    r.size = internal::bigint_add(A::value.d, A::size, B::value.d, B::size, r.d);
+                    r.negative = A::value.negative;
+                } else if (internal::bigint_compare(A::value.d, A::size, B::value.d, B::size) >= 0) {
+                    r.size = internal::bigint_sub(A::value.d, A::size, B::value.d, B::size, r.d);
+                    r.negative = A::value.negative;
+                } else {
+                    r.size = internal::bigint_sub(B::value.d, B::size, A::value.d, A::size, r.d);
+                    r.negative = b_negative;
+                }
+                r.negative = r.negative && r.size > 0;
+                return r;
+            }
+            static constexpr internal::bigint_digits<N> result = compute();
+        };
+
+        template<typename A, typename B>
+        struct mul_op {
+            static constexpr size_t N = A::size + B::size;
+            static constexpr internal::bigint_digits<N> compute() {
+                internal::bigint_digits<N> r;
+                r.size = internal::bigint_mul(A::value.d, A::size, B::value.d, B::size, r.d);
+                r.negative = (A::value.negative != B::value.negative) && r.size > 0;
+                return r;
+            }
+            static constexpr internal::bigint_digits<N> result = compute();
+        };
+
+        // truncated division: quotient (remainder = false) or remainder
+        template<typename A, typename B, bool remainder>
+        struct div_op {
+            static_assert(!B::is_zero_v, "division by zero in bigint");
+            static constexpr size_t N = A::size > 0 ? A::size : 1;
+            static constexpr internal::bigint_digits<N> compute() {
+                internal::bigint_digits<N> q;
+                internal::bigint_digits<N> r;
+                if (internal::bigint_compare(A::value.d, A::size, B::value.d, B::size) < 0) {
+                    for (size_t i = 0; i < A::size; ++i) {
+                        r.d[i] = A::value.d[i];
+                    }
+                    r.size = A::size;
+                } else {
+                    internal::bigint_divmod<N, (B::size > 0 ? B::size : 1)>(
+                        A::value.d, A::size, B::value.d, B::size, q.d, &q.size, r.d, &r.size);
+                }
+                q.negative = (A::value.negative != B::value.negative) && q.size > 0;
+                r.negative = A::value.negative && r.size > 0;
+                return remainder ? r : q;
+            }
+            static constexpr internal::bigint_digits<N> result = compute();
+        };
+
+        // Euclid on magnitudes, each step a call to algorithm D
+        template<typename A, typename B>
+        struct gcd_op {
+            static constexpr size_t N = (A::size > B::size ? A::size : B::size) > 0 ?
+                                        (A::size > B::size ? A::size : B::size) : 1;
+            static constexpr internal::bigint_digits<N> compute() {
+                internal::bigint_digits<N> x;
+                internal::bigint_digits<N> y;
+                for (size_t i = 0; i < A::size; ++i) {
+                    x.d[i] = A::value.d[i];
+                }
+                for (size_t i = 0; i < B::size; ++i) {
+                    y.d[i] = B::value.d[i];
+                }
+                x.size = A::size;
+                y.size = B::size;
+                while (y.size > 0) {
+                    internal::bigint_digits<N> q;
+                    internal::bigint_digits<N> r;
+                    if (internal::bigint_compare(x.d, x.size, y.d, y.size) < 0) {
+                        r = x;
+                    } else {
+                        internal::bigint_divmod<N, N>(x.d, x.size, y.d, y.size, q.d, &q.size, r.d, &r.size);
+                    }
+                    x = y;
+                    y = r;
+                }
+                x.negative = false;
+                return x;
+            }
+            static constexpr internal::bigint_digits<N> result = compute();
+        };
+
+        template<typename A, typename B>
+        static constexpr int compare() {
+            if (A::value.negative != B::value.negative) {
+                return A::value.negative ? -1 : 1;
+            }
+            const int c = internal::bigint_compare(A::value.d, A::size, B::value.d, B::size);
+            return A::value.negative ? -c : c;
+        }
+
+        template<auto x>
+        struct constant_op {
+            static constexpr internal::bigint_digits<2> compute() {
+                const bool negative = x < 0;
+                const uint64_t magnitude = negative ? uint64_t{0} - static_cast<uint64_t>(x) : static_cast<uint64_t>(x);
+                return internal::bigint_from_magnitude<2>(magnitude, negative);
+            }
+            static constexpr internal::bigint_digits<2> result = compute();
+        };
+
+        template<string_literal S, uint32_t radix>
+        struct parse_op {
+            // 4 bits per hexadecimal character, less than 4 per decimal one
+            static constexpr size_t N = S.length / 8 + 2;
+            static constexpr internal::bigint_digits<N> result = internal::bigint_parse<N>(S.value, radix);
+            static_assert(!result.invalid, "invalid character in bigint literal");
+        };
+
+     public:
+        /// @brief the integer x (any integral type)
+        template<auto x>
+        using inject_constant_t = typename from_result<constant_op<x>>::type;
+
+        /// @brief a value of bigint is a value of bigint
+        template<typename v>
+        using inject_ring_t = v;
+
+        /// @brief from a decimal string, such as from_string_t<"-123456789012345678901234567890">
+        template<string_literal S>
+        using from_string_t = typename from_result<parse_op<S, 10>>::type;
+
+        /// @brief from a hexadecimal string without prefix, such as from_hex_t<"-1F">
+        template<string_literal S>
+        using from_hex_t = typename from_result<parse_op<S, 16>>::type;
+
+        /// @brief v1 + v2
+        template<typename v1, typename v2>
+        using add_t = typename from_result<add_op<v1, v2, false>>::type;
+
+        /// @brief v1 - v2
+        template<typename v1, typename v2>
+        using sub_t = typename from_result<add_op<v1, v2, true>>::type;
+
+        /// @brief v1 * v2
+        template<typename v1, typename v2>
+        using mul_t = typename from_result<mul_op<v1, v2>>::type;
+
+        /// @brief v1 / v2, truncated toward zero
+        template<typename v1, typename v2>
+        using div_t = typename from_result<div_op<v1, v2, false>>::type;
+
+        /// @brief remainder of v1 / v2, with the sign of v1
+        template<typename v1, typename v2>
+        using mod_t = typename from_result<div_op<v1, v2, true>>::type;
+
+        /// @brief v1 == v2 (type)
+        template<typename v1, typename v2>
+        using eq_t = std::bool_constant<std::is_same_v<v1, v2>>;
+
+        /// @brief v1 == v2
+        template<typename v1, typename v2>
+        static constexpr bool eq_v = eq_t<v1, v2>::value;
+
+        /// @brief v1 > v2 (type)
+        template<typename v1, typename v2>
+        using gt_t = std::bool_constant<(compare<v1, v2>() > 0)>;
+
+        /// @brief v1 > v2
+        template<typename v1, typename v2>
+        static constexpr bool gt_v = gt_t<v1, v2>::value;
+
+        /// @brief v1 < v2 (type)
+        template<typename v1, typename v2>
+        using lt_t = std::bool_constant<(compare<v1, v2>() < 0)>;
+
+        /// @brief v1 < v2
+        template<typename v1, typename v2>
+        static constexpr bool lt_v = lt_t<v1, v2>::value;
+
+        /// @brief v > 0 (type)
+        template<typename v>
+        using pos_t = std::bool_constant<(!v::value.negative && v::size > 0)>;
+
+        /// @brief v > 0
+        template<typename v>
+        static constexpr bool pos_v = pos_t<v>::value;
+
+        /// @brief nonnegative greatest common divisor (Euclid, in a constexpr loop)
+        template<typename v1, typename v2>
+        using gcd_t = typename from_result<gcd_op<v1, v2>>::type;
+    };
+
     namespace internal {
         template<typename Int>
         struct is_integers_ring<integers<Int>> : std::true_type {};
@@ -2363,8 +2912,14 @@ namespace aerobus {
                 template<typename valueType, int ghost = 0>
                 struct get_helper {
                     static constexpr AEROBUS_INLINE AEROBUS_DEVICE valueType get() {
-                        return internal::staticcast<valueType, typename ring_type::inner_type>::template func<x::v>() /
-                            internal::staticcast<valueType, typename ring_type::inner_type>::template func<y::v>();
+                        if constexpr (requires { typename ring_type::inner_type; }) {
+                            using inner = typename ring_type::inner_type;
+                            return internal::staticcast<valueType, inner>::template func<x::v>() /
+                                internal::staticcast<valueType, inner>::template func<y::v>();
+                        } else {
+                            // rings without a native inner type, such as bigint
+                            return x::template get<valueType>() / y::template get<valueType>();
+                        }
                     }
                 };
 
@@ -2842,15 +3397,14 @@ namespace aerobus {
         template<typename T, size_t x>
         requires(x > 0)
         struct factorial<T, x> {
-            using type = typename T::template mul_t<typename T::template val<x>, typename factorial<T, x - 1>::type>;
-            static constexpr typename T::inner_type value = type::template get<typename T::inner_type>();
+            using type = typename T::template mul_t<typename T::template inject_constant_t<x>,
+                                                    typename factorial<T, x - 1>::type>;
         };
 
         template<typename T>
         struct factorial<T, 0> {
          public:
             using type = typename T::one;
-            static constexpr typename T::inner_type value = type::template get<typename T::inner_type>();
         };
     }  // namespace internal
 
@@ -2864,7 +3418,8 @@ namespace aerobus {
     /// @tparam T (aerobus::i64 for example)
     /// @tparam i
     template<typename T, size_t i>
-    inline constexpr typename T::inner_type factorial_v = internal::factorial<T, i>::value;
+    inline constexpr typename T::inner_type factorial_v =
+        internal::factorial<T, i>::type::template get<typename T::inner_type>();
 
     namespace internal {
         template<typename T, size_t k, size_t n>
@@ -2875,7 +3430,8 @@ namespace aerobus {
         struct combination_helper<T, k, n> {
             using type = typename FractionField<T>::template mul_t<
                 typename combination_helper<T, k - 1, n - 1>::type,
-                makefraction_t<T, typename T::template val<n>, typename T::template val<k>>>;
+                makefraction_t<T, typename T::template inject_constant_t<n>,
+                               typename T::template inject_constant_t<k>>>;
         };
 
         template<typename T, size_t k, size_t n>
@@ -2899,8 +3455,6 @@ namespace aerobus {
         template<typename T, size_t k, size_t n>
         struct combination {
             using type = typename internal::combination_helper<T, k, n>::type::x;
-            static constexpr typename T::inner_type value =
-                        internal::combination_helper<T, k, n>::type::template get<typename T::inner_type>();
         };
     }  // namespace internal
 
@@ -2914,7 +3468,8 @@ namespace aerobus {
     /// @tparam k
     /// @tparam n
     template<typename T, size_t k, size_t n>
-    inline constexpr typename T::inner_type combination_v = internal::combination<T, k, n>::value;
+    inline constexpr typename T::inner_type combination_v =
+        internal::combination_helper<T, k, n>::type::template get<typename T::inner_type>();
 
     namespace internal {
         template<typename T, size_t m>
@@ -2949,8 +3504,8 @@ namespace aerobus {
             using type = typename FractionField<T>::template mul_t<
                 typename internal::bernoulli_helper<T, typename FractionField<T>::zero, 0, m>::type,
                 makefraction_t<T,
-                typename T::template val<static_cast<typename T::inner_type>(-1)>,
-                typename T::template val<static_cast<typename T::inner_type>(m + 1)>
+                typename T::template inject_constant_t<-1>,
+                typename T::template inject_constant_t<m + 1>
                 >
             >;
 
@@ -3038,14 +3593,12 @@ namespace aerobus {
         requires(k % 2 == 0)
         struct alternate<T, k> {
             using type = typename T::one;
-            static constexpr typename T::inner_type value = type::template get<typename T::inner_type>();
         };
 
         template<typename T, size_t k>
         requires(k % 2 != 0)
         struct alternate<T, k> {
             using type = typename T::template sub_t<typename T::zero, typename T::one>;
-            static constexpr typename T::inner_type value = type::template get<typename T::inner_type>();
         };
     }  // namespace internal
 
@@ -3057,7 +3610,8 @@ namespace aerobus {
     /// @brief (-1)^k as value from T
     /// @tparam T Ring type, aerobus::i64 for example, then result will be an int64_t
     template<typename T, size_t k>
-    inline constexpr typename T::inner_type alternate_v = internal::alternate<T, k>::value;
+    inline constexpr typename T::inner_type alternate_v =
+        internal::alternate<T, k>::type::template get<typename T::inner_type>();
 
     namespace internal {
         template<typename T, size_t n, size_t k>

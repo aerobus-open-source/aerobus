@@ -4,9 +4,14 @@
 
 ### Added
 
+- `bigint`: arbitrary precision integers as an euclidean domain, with `from_string_t`, `from_hex_t`, `to_string`, `to_hex` and `get`. The arithmetic runs in constexpr functions, division is Knuth's algorithm D and gcd a constexpr Euclid. Predefined families and Taylor series accept `bigint` integers, without degree limit. `string_literal` for string template arguments.
 - Finite fields and factorization: concept `IsFiniteField`, `field_order_v`, `characteristic_v`, `field_element_t`, `monic_t`, `is_irreducible_v` (Rabin), `squarefree_t` over any field, and `factorization_t` over finite fields (distinct degree factorization and a deterministic Cantor-Zassenhaus), returning a `factorization` of sorted monic `factor`s.
 - Example `examples/bch_qr_format.cpp`: the BCH(15, 5) generator of the QR format information, derived by factoring x^15 - 1 over F2, and the 32 format words of the standard. Not built with MSVC.
 - Concept `coefficients_fit<Family, deg, I>`, required by every predefined polynomial family and Taylor series. A degree whose coefficients overflow `i16`, `i32` or `i64` is now a constraint failure naming the concept, instead of an overflow error inside the header, and can be tested with a requires-expression. The limits were measured; `tests/degree_limits_tests.cpp` checks that those of the Taylor series are exact.
+
+### Changed
+
+- `factorial`, `combination`, `bernoulli` and `alternate` work for any integer ring (`inject_constant_t` instead of `val<x>`); the `value` members of their internal structs are gone, use `factorial_v`, `combination_v` and `alternate_v`.
 
 ## 2.0.0 (2026-11-03)
 
