@@ -56,8 +56,10 @@ aerobus_compile_fail_test(fraction_zero_by_zero "division by zero in FractionFie
 aerobus_compile_fail_test(fraction_one_by_zero "division by zero in FractionField")
 aerobus_compile_fail_test(fraction_field_of_zero_divisors "FractionField needs an integral domain")
 aerobus_compile_fail_test(conway_missing "no Conway polynomial for this")
-aerobus_compile_fail_test(legendre_degree_overflow "coefficients_fit")
+aerobus_compile_fail_test(legendre_degree_overflow "CoefficientsFit")
 aerobus_compile_fail_test(factorization_needs_finite_field "IsFiniteField")
+aerobus_compile_fail_test(bigint_division_by_zero "division by zero in bigint")
+aerobus_compile_fail_test(bigint_invalid_literal "invalid character in bigint literal")
 aerobus_compile_fail_test(polynomial_horner_reduction_is_private "is private within this context|is a private member|cannot access private")
 
 # install this build tree, then build a consumer through find_package(Aerobus)
@@ -96,6 +98,16 @@ find_package(Python3 COMPONENTS Interpreter)
 if(Python3_Interpreter_FOUND)
   add_test(NAME conway.table_is_generated
     COMMAND "${Python3_EXECUTABLE}" -I "${PROJECT_SOURCE_DIR}/tools/generate_conway.py" --check)
+endif()
+
+# tests/bigint_tests.cpp is the output of tools/generate_bigint_tests.py, and bigint agrees with Python's integers
+if(Python3_Interpreter_FOUND)
+  add_test(NAME bigint.tests_are_generated
+    COMMAND "${Python3_EXECUTABLE}" -I "${PROJECT_SOURCE_DIR}/tools/generate_bigint_tests.py" --check)
+endif()
+if(Python3_Interpreter_FOUND AND NOT MSVC)
+  add_test(NAME bigint.differential
+    COMMAND "${Python3_EXECUTABLE}" -I "${PROJECT_SOURCE_DIR}/tools/check_bigint.py" "${CMAKE_CXX_COMPILER}")
 endif()
 
 # every C++ block of README.md compiles

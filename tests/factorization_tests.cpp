@@ -152,6 +152,15 @@ TEST(factorization, prime_fields) {
                                                type_list<factor<P<5, 1, 0, 2>, 1>, factor<P<5, 1, 0, 3>, 1>>>>);
 }
 
+TEST(factorization, quotient_of_bigint) {
+    // x^2 + 1 = (x + 2)(x + 3) over Z/5Z, built on bigint
+    using F5 = aerobus::Quotient<aerobus::bigint, aerobus::bigint::inject_constant_t<5>>;
+    using PF5 = aerobus::polynomial<F5>;
+    using A = aerobus::factorization_t<PF5::val<F5::one, F5::zero, F5::one>>;
+    static_assert(std::is_same_v<A::factors, type_list<factor<PF5::val<F5::one, F5::inject_constant_t<2>>, 1>,
+                                                       factor<PF5::val<F5::one, F5::inject_constant_t<3>>, 1>>>);
+}
+
 TEST(factorization, product_is_the_polynomial) {
     using A = P<3, 1, 2, 0, 0, 0, 0, 1, 2>;
     static_assert(std::is_same_v<typename aerobus::factorization_t<A>::type, A>);

@@ -69,6 +69,13 @@ TEST(utilities, bell) {
 }
 
 TEST(utilities, is_prime) {
+    // 64-bit numbers, beyond trial division: Mersenne prime 2^61 - 1, the largest prime below 2^64,
+    // a strong pseudoprime to every prime base up to 31, a Carmichael number and a product of two primes
+    static_assert(is_prime_v<2305843009213693951ULL>);
+    static_assert(is_prime_v<18446744073709551557ULL>);
+    static_assert(!is_prime_v<3825123056546413051ULL>);
+    static_assert(!is_prime_v<561>);
+    static_assert(!is_prime_v<998244359987710471ULL>);
     EXPECT_TRUE(is_prime_v<2>);
     EXPECT_TRUE(is_prime_v<3>);
     EXPECT_TRUE(is_prime_v<7>);

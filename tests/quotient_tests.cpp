@@ -153,3 +153,28 @@ TEST(quotient_ring, galois_field) {
     // phi * (1 / phi) = 1
     EXPECT_TRUE((std::is_same_v<F9::mul_t<phi, F9::div_t<F9::one, phi>>, F9::one>));
 }
+
+TEST(quotient_ring, bigint_integers) {
+    // remainders of bigint have the sign of the dividend, as for i64: classes need canonical representatives
+    using Z17 = Quotient<bigint, bigint::inject_constant_t<17>>;
+    static_assert(std::is_same_v<Z17::inject_constant_t<-1>, Z17::inject_constant_t<16>>);
+    static_assert(Z17::is_field);
+    static_assert(IsFiniteField<Z17> && field_order_v<Z17> == 17);
+    static_assert(std::is_same_v<Z17::div_t<Z17::one, Z17::inject_constant_t<2>>, Z17::inject_constant_t<9>>);
+    // a negative, composite modulus
+    using Z15 = Quotient<bigint, bigint::inject_constant_t<-15>>;
+    static_assert(!Z15::is_field);
+    static_assert(std::is_same_v<Z15::inject_constant_t<-1>, Z15::inject_constant_t<14>>);
+    // beyond 64 bits primality is not tested: 2^127 - 1 is declared prime
+    using M127 = bigint::sub_t<pow_t<bigint::inject_constant_t<2>, 127>, bigint::one>;
+    using Q127 = Quotient<bigint, M127, true>;
+    static_assert(Q127::is_field);
+    static_assert(std::is_same_v<Q127::inject_constant_t<-1>, Q127::val<bigint::sub_t<M127, bigint::one>>>);
+}
+
+TEST(quotient_ring, large_prime_moduli) {
+    // 2^61 - 1 is prime, too large for trial division at compile time; 2^61 + 1 is a multiple of 3
+    static_assert(Quotient<i64, i64::val<2305843009213693951>>::is_field);
+    static_assert(!Quotient<i64, i64::val<2305843009213693953>>::is_field);
+    static_assert(Quotient<bigint, bigint::from_string_t<"2305843009213693951">>::is_field);
+}
