@@ -1,29 +1,52 @@
-# Introduction
+# aerobus
 
-`Aerobus` is a C++20 header-only library for general algebra on polynomials, discrete rings and associated structures.
+Polynomials, rings and finite fields computed by the C++ compiler.
 
-Everything in `Aerobus` is expressed as types.
-
-We say that again as it is the most fundamental characteristic of `Aerobus`:
-
-***Everything is expressed as types***
-
-The library serves two main purposes:
-
-- Express algebra structures and associated operations in type arithmetic, compile-time;
-- Provide portable and fast evaluation functions for polynomials.
-
-It is designed to be 'quite easily' extensible.
-
-Given these functions are "generated" at compile time and do not rely on inline assembly, they are platform independent, yielding the same results on processors with the same capabilities (such as Fused-Multiply-Add instructions).
+`aerobus` is a header-only C++20 library where every algebraic value is a type: an integer modulo p, a rational number, a polynomial, an element of a finite field. The compiler does the arithmetic, so results are exact and can be checked with `static_assert`. What reaches the program is constants: lookup tables, or polynomials evaluated by a fully unrolled Horner scheme on `double`, `float` or CUDA `__half`.
 
 Version 2.0 breaks the API of 1.x: see [CHANGELOG.md](CHANGELOG.md).
 
-Articles:
+## Three examples
 
-- [Reed-Solomon with a field the compiler builds and proves](articles/reed_solomon_qr.md): QR code error correction with GF(256) computed and checked at compile time, compared with zxing-cpp and Schifra.
+### Finite fields, for error-correcting codes
 
-## HOW TO
+```cpp
+using F2 = aerobus::zpz<2>;
+using GF256 = aerobus::GaloisField<2, 8>;  // F2[x] / (x^8 + x^4 + x^3 + x^2 + 1)
+using x = GF256::inject_ring_t<aerobus::polynomial<F2>::X>;
+
+// x^8 = x^4 + x^3 + x^2 + 1: the byte 0x1D of the QR code standard
+static_assert(std::is_same_v<aerobus::pow_t<x, 8>,
+                             GF256::inject_ring_t<aerobus::make_int_polynomial_t<F2, 1, 1, 1, 0, 1>>>);
+static_assert(std::is_same_v<aerobus::pow_t<x, 255>, GF256::one>);
+```
+
+`GaloisField<p, n>` is the field with pⁿ elements, built from the Conway polynomial CP(p, n). For p = 2 and n = 8 it is the field of QR codes and RAID-6. The article [Reed-Solomon with a field the compiler builds and proves](articles/reed_solomon_qr.md) builds a QR code error-correction codec on it, with tables computed and proven at compile time, and compares it with zxing-cpp and Schifra. [Run this example on Compiler Explorer](https://godbolt.org/clientstate/eyJzZXNzaW9ucyI6W3siaWQiOjEsImxhbmd1YWdlIjoiYysrIiwic291cmNlIjoiLy8gR0YoMjU2KSwgdGhlIGZpZWxkIG9mIFFSIGNvZGVzIGFuZCBSQUlELTYsIGNvbXB1dGVkIGJ5IHRoZSBjb21waWxlciB3aXRoIGFlcm9idXNcbiNpbmNsdWRlIDxjc3RkaW8%2BXG4jZGVmaW5lIEFFUk9CVVNfQ09OV0FZX0lNUE9SVFNcbiNpbmNsdWRlIDxodHRwczovL3Jhdy5naXRodWJ1c2VyY29udGVudC5jb20vYWVyb2J1cy1vcGVuLXNvdXJjZS9hZXJvYnVzL3YyLjAuMC9zcmMvYWVyb2J1cy5oPlxuXG51c2luZyBGMiA9IGFlcm9idXM6OnpwejwyPjtcbnVzaW5nIEdGMjU2ID0gYWVyb2J1czo6R2Fsb2lzRmllbGQ8MiwgOD47ICAvLyBGMlt4XSAvICh4XjggKyB4XjQgKyB4XjMgKyB4XjIgKyAxKVxudXNpbmcgeCA9IEdGMjU2OjppbmplY3RfcmluZ190PGFlcm9idXM6OnBvbHlub21pYWw8RjI%2BOjpYPjtcblxuLy8geF44ID0geF40ICsgeF4zICsgeF4yICsgMSwgdGhlIGJ5dGUgMHgxRCBvZiB0aGUgUVIgY29kZSBzdGFuZGFyZFxuc3RhdGljX2Fzc2VydChzdGQ6OmlzX3NhbWVfdjxhZXJvYnVzOjpwb3dfdDx4LCA4PixcbiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgR0YyNTY6OmluamVjdF9yaW5nX3Q8YWVyb2J1czo6bWFrZV9pbnRfcG9seW5vbWlhbF90PEYyLCAxLCAxLCAxLCAwLCAxPj4%2BKTtcbi8vIHggaGFzIG9yZGVyIDI1NTogaXQgZ2VuZXJhdGVzIHRoZSAyNTUgbm9uemVybyBlbGVtZW50c1xuc3RhdGljX2Fzc2VydChzdGQ6OmlzX3NhbWVfdjxhZXJvYnVzOjpwb3dfdDx4LCAyNTU%2BLCBHRjI1Njo6b25lPik7XG5zdGF0aWNfYXNzZXJ0KCFzdGQ6OmlzX3NhbWVfdjxhZXJvYnVzOjpwb3dfdDx4LCA4NT4sIEdGMjU2OjpvbmU%2BICYmICFzdGQ6OmlzX3NhbWVfdjxhZXJvYnVzOjpwb3dfdDx4LCA1MT4sIEdGMjU2OjpvbmU%2BXG4gICAgICAgICAgICAgICYmICFzdGQ6OmlzX3NhbWVfdjxhZXJvYnVzOjpwb3dfdDx4LCAxNT4sIEdGMjU2OjpvbmU%2BKTtcblxuaW50IG1haW4oKSB7XG4gICAgc3RkOjpwcmludGYoXCJ4XjggPSAlcyBpbiBHRigyNTYpXFxuXCIsIGFlcm9idXM6OnBvd190PHgsIDg%2BOjp0eXBlOjp0b19zdHJpbmcoKS5jX3N0cigpKTtcbn1cbiIsImNvbXBpbGVycyI6W3siaWQiOiJnMTUyIiwib3B0aW9ucyI6Ii1zdGQ9YysrMjAgLU8yIC1mdGVtcGxhdGUtZGVwdGg9MzAwMDAifV0sImV4ZWN1dG9ycyI6W3siY29tcGlsZXIiOnsiaWQiOiJnMTUyIiwib3B0aW9ucyI6Ii1zdGQ9YysrMjAgLU8yIC1mdGVtcGxhdGUtZGVwdGg9MzAwMDAiLCJsaWJzIjpbXX0sImFyZ3VtZW50cyI6IiIsInN0ZGluIjoiIn1dfV19).
+
+### Orthogonal polynomials with exact coefficients
+
+```cpp
+using P6 = aerobus::known_polynomials::legendre<6>;  // (231x^6 - 315x^4 + 105x^2 - 5) / 16
+static_assert(std::is_same_v<P6::coeff_at_t<6>, aerobus::make_q64_t<231, 16>>);
+
+double p6(double x) { return P6::eval(x); }
+```
+
+Coefficients come from the recurrence in exact rational arithmetic and are rounded once, when converted to `double`. `p6` compiles to constants and multiply-adds, with no loop. Chebyshev, Hermite, Laguerre, Bernstein, Bernoulli and others are predefined. [Run this example on Compiler Explorer](https://godbolt.org/clientstate/eyJzZXNzaW9ucyI6W3siaWQiOjEsImxhbmd1YWdlIjoiYysrIiwic291cmNlIjoiLy8gTGVnZW5kcmUgcG9seW5vbWlhbCBQNiB3aXRoIGV4YWN0IHJhdGlvbmFsIGNvZWZmaWNpZW50cywgZXZhbHVhdGVkIGFzIGFuIHVucm9sbGVkIEhvcm5lciBjaGFpblxuI2luY2x1ZGUgPGNtYXRoPlxuI2luY2x1ZGUgPGNzdGRpbz5cbiNpbmNsdWRlIDxodHRwczovL3Jhdy5naXRodWJ1c2VyY29udGVudC5jb20vYWVyb2J1cy1vcGVuLXNvdXJjZS9hZXJvYnVzL3YyLjAuMC9zcmMvYWVyb2J1cy5oPlxuXG51c2luZyBQNiA9IGFlcm9idXM6Omtub3duX3BvbHlub21pYWxzOjpsZWdlbmRyZTw2PjsgIC8vICgyMzF4XjYgLSAzMTV4XjQgKyAxMDV4XjIgLSA1KSAvIDE2XG5zdGF0aWNfYXNzZXJ0KHN0ZDo6aXNfc2FtZV92PFA2Ojpjb2VmZl9hdF90PDY%2BLCBhZXJvYnVzOjptYWtlX3E2NF90PDIzMSwgMTY%2BPik7XG5zdGF0aWNfYXNzZXJ0KHN0ZDo6aXNfc2FtZV92PFA2Ojpjb2VmZl9hdF90PDA%2BLCBhZXJvYnVzOjptYWtlX3E2NF90PC01LCAxNj4%2BKTtcblxuZG91YmxlIHA2KGRvdWJsZSB4KSB7IHJldHVybiBQNjo6ZXZhbCh4KTsgfSAgLy8gc2VlIHRoZSBhc3NlbWJseTogY29uc3RhbnRzIGFuZCBtdWx0aXBseS1hZGRzIG9ubHlcblxuaW50IG1haW4oKSB7XG4gICAgc3RkOjpwcmludGYoXCJQNigwLjMpID0gJS4xN2dcXG5zdGQ6OmxlZ2VuZHJlKDYsIDAuMykgPSAlLjE3Z1xcblwiLCBwNigwLjMpLCBzdGQ6OmxlZ2VuZHJlKDYsIDAuMykpO1xufVxuIiwiY29tcGlsZXJzIjpbeyJpZCI6ImcxNTIiLCJvcHRpb25zIjoiLXN0ZD1jKysyMCAtTzIgLWZ0ZW1wbGF0ZS1kZXB0aD0zMDAwMCJ9XSwiZXhlY3V0b3JzIjpbeyJjb21waWxlciI6eyJpZCI6ImcxNTIiLCJvcHRpb25zIjoiLXN0ZD1jKysyMCAtTzIgLWZ0ZW1wbGF0ZS1kZXB0aD0zMDAwMCIsImxpYnMiOltdfSwiYXJndW1lbnRzIjoiIiwic3RkaW4iOiIifV19XX0%3D).
+
+### Compensated evaluation in `float`
+
+```cpp
+// (x - 1)^6, expanded: catastrophic cancellation near x = 1
+using P = aerobus::make_int_polynomial_t<aerobus::i64, 1, -6, 15, -20, 15, -6, 1>;
+
+float naive(float x) { return P::eval(x); }
+float accurate(float x) { return P::compensated_eval(x); }
+```
+
+At x = 1.05F the exact value is 1.562491e-8. Horner in `float` returns -5.96e-7 with GCC and 8.56e-7 with clang; `compensated_eval` returns 1.562495e-8. The compensated Horner scheme is about as accurate as Horner in twice the working precision, which matters on GPUs whose `double` throughput is a small fraction of `float`. [Run this example on Compiler Explorer](https://godbolt.org/clientstate/eyJzZXNzaW9ucyI6W3siaWQiOjEsImxhbmd1YWdlIjoiYysrIiwic291cmNlIjoiLy8gQ29tcGVuc2F0ZWQgSG9ybmVyOiBmbG9hdCBldmFsdWF0aW9uIGFib3V0IGFzIGFjY3VyYXRlIGFzIEhvcm5lciBpbiBkb3VibGVcbiNpbmNsdWRlIDxjc3RkaW8%2BXG4jaW5jbHVkZSA8aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2Flcm9idXMtb3Blbi1zb3VyY2UvYWVyb2J1cy92Mi4wLjAvc3JjL2Flcm9idXMuaD5cblxuLy8gKHggLSAxKV42LCBleHBhbmRlZDogY2F0YXN0cm9waGljIGNhbmNlbGxhdGlvbiBuZWFyIHggPSAxXG51c2luZyBQID0gYWVyb2J1czo6bWFrZV9pbnRfcG9seW5vbWlhbF90PGFlcm9idXM6Omk2NCwgMSwgLTYsIDE1LCAtMjAsIDE1LCAtNiwgMT47XG5cbmZsb2F0IG5haXZlKGZsb2F0IHgpIHsgcmV0dXJuIFA6OmV2YWwoeCk7IH1cbmZsb2F0IGFjY3VyYXRlKGZsb2F0IHgpIHsgcmV0dXJuIFA6OmNvbXBlbnNhdGVkX2V2YWwoeCk7IH1cblxuaW50IG1haW4oKSB7XG4gICAgY29uc3QgZmxvYXQgeCA9IDEuMDVGO1xuICAgIGNvbnN0IGRvdWJsZSBkID0gc3RhdGljX2Nhc3Q8ZG91YmxlPih4KSAtIDE7ICAvLyBleGFjdDogeCAtIDEgaXMgcmVwcmVzZW50YWJsZVxuICAgIHN0ZDo6cHJpbnRmKFwiZXhhY3QgICAgICAgICUuNmVcXG5Ib3JuZXIgICAgICAgJS42ZVxcbmNvbXBlbnNhdGVkICAlLjZlXFxuXCIsIGQgKiBkICogZCAqIGQgKiBkICogZCxcbiAgICAgICAgICAgICAgICBzdGF0aWNfY2FzdDxkb3VibGU%2BKG5haXZlKHgpKSwgc3RhdGljX2Nhc3Q8ZG91YmxlPihhY2N1cmF0ZSh4KSkpO1xufVxuIiwiY29tcGlsZXJzIjpbeyJpZCI6ImcxNTIiLCJvcHRpb25zIjoiLXN0ZD1jKysyMCAtTzIgLWZ0ZW1wbGF0ZS1kZXB0aD0zMDAwMCJ9XSwiZXhlY3V0b3JzIjpbeyJjb21waWxlciI6eyJpZCI6ImcxNTIiLCJvcHRpb25zIjoiLXN0ZD1jKysyMCAtTzIgLWZ0ZW1wbGF0ZS1kZXB0aD0zMDAwMCIsImxpYnMiOltdfSwiYXJndW1lbnRzIjoiIiwic3RkaW4iOiIifV19XX0%3D).
+
+## Getting started
 
 - Clone or download the repository somewhere, or just download `src/aerobus.h`
 - In your code, add: `#include "aerobus.h"`
@@ -68,6 +91,17 @@ cmake -S . -B build -DAEROBUS_BUILD_BENCHMARKS=ON
 cmake --build build --target benchmarks
 ./build/benchmarks
 ```
+
+## Limitations
+
+- **64-bit coefficients.** Coefficients are `i64` or `q64` (fractions of `i64`). Overflow stops the compilation, it never wraps silently. The highest degrees that compile are 52 for `chebyshev_T`, 51 for `chebyshev_U`, 32 for `hermite_prob`, 25 for `hermite_phys`, 21 for `legendre`, 14 for `laguerre`, and 20 for the Taylor series of `exp`, `sin` or `tan`.
+- **Taylor series are not a libm.** They have no argument reduction: accurate near 0 only. Use them as building blocks, not as a replacement for `std::exp`.
+- **Results depend on FMA contraction.** Whether `x * y + z` becomes a fused multiply-add depends on the target and the compiler flags, so the last bits can differ between compilers and options (see the example above).
+- **Compile time.** Deep computations cost seconds and may need `-ftemplate-depth=30000`. The Reed-Solomon example compiles in about 4 s with GCC and 7 s with clang; MSVC builds the library but does not finish that example.
+- **Not constant-time.** Table lookups depend on the data and leak through the cache: fine for error correction, not for cryptography.
+- **`compensated_eval` needs a correctly rounded `std::fma`**, which is slow on processors without a fused multiply-add instruction.
+
+The rest of this page is the reference, structure by structure.
 
 ## Structures
 
@@ -216,7 +250,7 @@ using my_serie = aerobus::taylor<Integers, my_coeff_at, degree>;
 static constexpr double x = my_serie<aerobus::i64, 3>::eval(3.0);  // 1 + 3 + 9 + 27
 ```
 
-On x86-64 and CUDA platforms at least, these functions yield very performant assembly, similar or better than standard library implementation in fast math. Fused multiply-adds appear only when the target has them and the compiler may contract `x * y + z`: for example `-mfma` (or `-march=native`) with GCC, which contracts by default with `-std=gnu++20` but not with `-std=c++20` (add `-ffp-contract=fast`). For example, this code:
+On x86-64 and CUDA, the evaluation compiles to a straight chain of multiply-adds, without loop or branch. Fused multiply-adds appear only when the target has them and the compiler may contract `x * y + z`: for example `-mfma` (or `-march=native`) with GCC, which contracts by default with `-std=gnu++20` but not with `-std=c++20` (add `-ffp-contract=fast`). For example, this code:
 
 ```cpp
 inline void compute_expm1(const size_t N, double* in, double* out) {
