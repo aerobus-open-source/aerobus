@@ -43,7 +43,7 @@ aerobus_compile_fail_test(fraction_zero_by_zero "division by zero in FractionFie
 aerobus_compile_fail_test(fraction_one_by_zero "division by zero in FractionField")
 aerobus_compile_fail_test(fraction_field_of_zero_divisors "FractionField needs an integral domain")
 aerobus_compile_fail_test(conway_missing "no Conway polynomial for this")
-aerobus_compile_fail_test(polynomial_horner_reduction_is_private "is private within this context|is a private member|cannot access private member")
+aerobus_compile_fail_test(polynomial_horner_reduction_is_private "is private within this context|is a private member|cannot access private")
 
 # install this build tree, then build a consumer through find_package(Aerobus)
 add_test(NAME package.find_package

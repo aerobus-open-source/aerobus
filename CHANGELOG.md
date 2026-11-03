@@ -8,7 +8,7 @@ Version 2.0 fixes the defects found by the code review of commit `f7e0c79` (Nove
 
 | 1.x | 2.0 |
 | --- | --- |
-| `aerobus::div_t<X, Y>` (ambiguous with C's `::div_t`) | `aerobus::divide_t<X, Y>` |
+| `aerobus::div_t<X, Y>` (ambiguous with the C type `div_t`) | `aerobus::divide_t<X, Y>` |
 | `INLINED`, `DEVICE`, `ALIGNED` macros | `AEROBUS_INLINE`, `AEROBUS_DEVICE`, `AEROBUS_ALIGNED` |
 | `ZPZV`, `POLYV` defined after the include | undefined after the Conway table |
 | `pow_t<T, p, n>`, `pow_v<T, p, n>` | `pow_t<p, n>`, `pow_v<p, n>` (ring inferred from `p`) |
