@@ -8,6 +8,7 @@ set(aerobus_examples
   modular_arithmetic
   polynomials_over_finite_field
   quotient_ring
+  reed_solomon
 )
 foreach(example IN LISTS aerobus_examples)
   add_executable(example_${example} ${example}.cpp)
