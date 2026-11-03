@@ -1646,6 +1646,16 @@ namespace aerobus {
             return -1;
         }
 
+        // compares two values of bigint: -1, 0 or 1
+        template<typename A, typename B>
+        constexpr int bigint_signed_compare() {
+            if (A::value.negative != B::value.negative) {
+                return A::value.negative ? -1 : 1;
+            }
+            const int c = bigint_compare(A::value.d, A::size, B::value.d, B::size);
+            return A::value.negative ? -c : c;
+        }
+
         // parses [-]digits in base 10 or 16
         template<size_t N, size_t L>
         constexpr bigint_digits<N> bigint_parse(const char (&str)[L], uint32_t radix) {
@@ -1893,15 +1903,6 @@ namespace aerobus {
             static constexpr internal::bigint_digits<N> result = compute();
         };
 
-        template<typename A, typename B>
-        static constexpr int compare() {
-            if (A::value.negative != B::value.negative) {
-                return A::value.negative ? -1 : 1;
-            }
-            const int c = internal::bigint_compare(A::value.d, A::size, B::value.d, B::size);
-            return A::value.negative ? -c : c;
-        }
-
         template<auto x>
         struct constant_op {
             static constexpr internal::bigint_digits<2> compute() {
@@ -1967,7 +1968,7 @@ namespace aerobus {
 
         /// @brief v1 > v2 (type)
         template<typename v1, typename v2>
-        using gt_t = std::bool_constant<(compare<v1, v2>() > 0)>;
+        using gt_t = std::bool_constant<(internal::bigint_signed_compare<v1, v2>() > 0)>;
 
         /// @brief v1 > v2
         template<typename v1, typename v2>
@@ -1975,7 +1976,7 @@ namespace aerobus {
 
         /// @brief v1 < v2 (type)
         template<typename v1, typename v2>
-        using lt_t = std::bool_constant<(compare<v1, v2>() < 0)>;
+        using lt_t = std::bool_constant<(internal::bigint_signed_compare<v1, v2>() < 0)>;
 
         /// @brief v1 < v2
         template<typename v1, typename v2>
