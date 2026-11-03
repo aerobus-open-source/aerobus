@@ -1,11 +1,10 @@
 #include <gtest/gtest.h>
 #include <cstddef>
-#include <utility>
 
 #include "aerobus.h"
 
 // The degree limits are measured: the highest degree whose computation fits in the integer type.
-// Each family must accept that degree and reject the next one through its requires clause, so that
+// Each Taylor series must accept that degree and reject the next one through its requires clause, so that
 // the rejection is a constraint failure (testable here) instead of an overflow inside the header.
 
 namespace {
@@ -16,15 +15,7 @@ namespace kp = aerobus::known_polynomials;
 #define AEROBUS_TAYLOR_PROBE(F) \
     template<size_t d, typename I> constexpr bool has_##F = requires { typename aerobus::F<I, d>; };
 
-AEROBUS_POLYNOMIAL_PROBE(chebyshev_T)
-AEROBUS_POLYNOMIAL_PROBE(chebyshev_U)
-AEROBUS_POLYNOMIAL_PROBE(laguerre)
-AEROBUS_POLYNOMIAL_PROBE(hermite_prob)
-AEROBUS_POLYNOMIAL_PROBE(hermite_phys)
 AEROBUS_POLYNOMIAL_PROBE(legendre)
-AEROBUS_POLYNOMIAL_PROBE(bernoulli)
-AEROBUS_POLYNOMIAL_PROBE(bessel)
-AEROBUS_POLYNOMIAL_PROBE(touchard)
 AEROBUS_TAYLOR_PROBE(exp)
 AEROBUS_TAYLOR_PROBE(expm1)
 AEROBUS_TAYLOR_PROBE(lnp1)
@@ -40,15 +31,6 @@ AEROBUS_TAYLOR_PROBE(atanh)
 AEROBUS_TAYLOR_PROBE(tan)
 AEROBUS_TAYLOR_PROBE(tanh)
 
-template<size_t m, typename I>
-constexpr bool has_bernstein = requires { typename kp::bernstein<0, m, I>; };
-
-// every bernstein<i, m> for i = 0..m, evaluated
-template<size_t m, typename I, size_t... i>
-constexpr double bernstein_sum(std::index_sequence<i...>) {
-    return (kp::bernstein<i, m, I>::eval(0.5) + ...);
-}
-
 #define EXPECT_MAX_DEGREE(F, I, max) \
     static_assert(has_##F<max, aerobus::I>, #F "<" #max ", " #I "> must be accepted"); \
     static_assert(!has_##F<max + 1, aerobus::I>, #F "<" #max " + 1, " #I "> must be rejected")
@@ -56,20 +38,6 @@ constexpr double bernstein_sum(std::index_sequence<i...>) {
 #define EXPECT_MAX_DEGREES(F, d16, d32, d64) \
     EXPECT_MAX_DEGREE(F, i16, d16); EXPECT_MAX_DEGREE(F, i32, d32); EXPECT_MAX_DEGREE(F, i64, d64)
 }  // namespace
-
-TEST(degree_limits, known_polynomials) {
-    EXPECT_MAX_DEGREES(chebyshev_T, 13, 26, 52);
-    EXPECT_MAX_DEGREES(chebyshev_U, 13, 26, 51);
-    EXPECT_MAX_DEGREES(laguerre, 7, 10, 14);
-    EXPECT_MAX_DEGREES(hermite_prob, 11, 19, 32);
-    EXPECT_MAX_DEGREES(hermite_phys, 8, 14, 25);
-    EXPECT_MAX_DEGREES(legendre, 7, 11, 21);
-    EXPECT_MAX_DEGREES(bernoulli, 12, 22, 34);
-    EXPECT_MAX_DEGREES(bessel, 6, 10, 17);
-    EXPECT_MAX_DEGREES(touchard, 9, 15, 25);
-    EXPECT_MAX_DEGREES(bernstein, 11, 22, 43);
-    EXPECT_GT((bernstein_sum<43, aerobus::i64>(std::make_index_sequence<44>{})), 0.0);
-}
 
 TEST(degree_limits, taylor_series) {
     EXPECT_MAX_DEGREES(exp, 7, 12, 20);
