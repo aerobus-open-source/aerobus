@@ -42,5 +42,5 @@ using A2_3 = AbelPolynomials<3, 2>;
 int main() {
     std::cout << "expected = x^3 - 12 x^2 + 36 x" << std::endl;
     std::cout << "aerobus  = " << A2_3::to_string() << std::endl;
-    return 0;
+    return A2_3::to_string() == "x^3 - 12 x^2 + 36 x" ? 0 : 1;
 }

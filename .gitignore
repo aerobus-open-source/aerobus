@@ -11,3 +11,6 @@ documentation/
 documentation/html/*
 /tooling/conwayimport
 docs/
+
+# editor settings stay local
+.vscode/

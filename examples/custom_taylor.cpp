@@ -21,4 +21,5 @@ int main() {
     constexpr double x = F<15>::eval(0.1);
     double xx = std::exp(std::exp(0.1) - 1);
     std::cout << std::setprecision(18) << x << " == " << xx << std::endl;
+    return std::abs(x - xx) < 1e-14 ? 0 : 1;
 }
