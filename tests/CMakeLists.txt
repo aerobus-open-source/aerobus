@@ -3,7 +3,6 @@ include(GoogleTest)
 add_executable(lib_tests
   api_tests.cpp
   concepts_tests.cpp
-  degree_limits_tests.cpp
   embedding_tests.cpp
   evaluation_tests.cpp
   fraction_field_tests.cpp
@@ -22,6 +21,13 @@ add_executable(lib_tests
 target_link_libraries(lib_tests PRIVATE aerobus aerobus_dev_flags GTest::gtest_main)
 target_compile_definitions(lib_tests PRIVATE AEROBUS_CMAKE_PROJECT_VERSION="${PROJECT_VERSION}")
 gtest_discover_tests(lib_tests)
+
+# degree limits of the Taylor series, checked at compile time; MSVC does not finish compiling them
+if(NOT MSVC)
+  add_executable(degree_limits_tests degree_limits_tests.cpp)
+  target_link_libraries(degree_limits_tests PRIVATE aerobus aerobus_dev_flags GTest::gtest_main)
+  gtest_discover_tests(degree_limits_tests)
+endif()
 
 # compile_fail/<name>.cpp must not compile, and the compiler output must match <regex>
 # (the message of the static_assert that rejects it)
