@@ -3244,6 +3244,525 @@ namespace aerobus {
         return internal::pow_scalar<T>::template func<p>(x);
     }
 
+    // finite fields
+    namespace internal {
+        // p^n, or 0 when it does not fit in size_t
+        constexpr size_t checked_power(size_t p, size_t n) {
+            size_t result = 1;
+            for (size_t i = 0; i < n; ++i) {
+                if (result > static_cast<size_t>(-1) / p) {
+                    return 0;
+                }
+                result *= p;
+            }
+            return result;
+        }
+
+        template<typename F>
+        struct finite_field_traits {
+            static constexpr bool is_finite_field = false;
+        };
+
+        template<int32_t p>
+        requires(is_prime<static_cast<size_t>(p)>::value)
+        struct finite_field_traits<zpz<p>> {
+            static constexpr bool is_finite_field = true;
+            static constexpr size_t characteristic = static_cast<size_t>(p);
+            static constexpr size_t degree = 1;
+            static constexpr size_t order = characteristic;
+            template<size_t i>
+            using element = typename zpz<p>::template val<static_cast<int32_t>(i % characteristic)>;
+        };
+
+        // integers modulo a prime, as a quotient ring
+        template<typename Ring, typename X, bool declared_field>
+        requires(is_integers_ring<Ring>::value && (X::v > 1 || X::v < -1) &&
+                 is_prime<static_cast<size_t>(X::v > 0 ? X::v : -X::v)>::value)
+        struct finite_field_traits<Quotient<Ring, X, declared_field>> {
+            static constexpr bool is_finite_field = true;
+            static constexpr size_t characteristic = static_cast<size_t>(X::v > 0 ? X::v : -X::v);
+            static constexpr size_t degree = 1;
+            static constexpr size_t order = characteristic;
+            template<size_t i>
+            using element = typename Quotient<Ring, X, declared_field>::template inject_constant_t<
+                i % characteristic>;
+        };
+
+        // the element of F_p[x]/(X) whose representative has the base-p digits of i as coefficients
+        template<int32_t p, typename X, size_t i, size_t... k>
+        using field_element_from_digits = typename Quotient<polynomial<zpz<p>>, X, true>::template val<
+            typename polynomial<zpz<p>>::template val<
+                typename zpz<p>::template val<static_cast<int32_t>(
+                    (i / checked_power(static_cast<size_t>(p), sizeof...(k) - 1 - k)) % static_cast<size_t>(p))>...>>;
+
+        template<int32_t p, typename X, size_t i, typename indices>
+        struct field_element_helper;
+
+        template<int32_t p, typename X, size_t i, size_t... k>
+        struct field_element_helper<p, X, i, std::index_sequence<k...>> {
+            using type = field_element_from_digits<p, X, i, k...>;
+        };
+
+        // F_p[x]/(X) with X irreducible of degree n: the field with p^n elements
+        template<int32_t p, typename X>
+        requires(is_prime<static_cast<size_t>(p)>::value && (X::degree >= 1))
+        struct finite_field_traits<Quotient<polynomial<zpz<p>>, X, true>> {
+            static constexpr bool is_finite_field = true;
+            static constexpr size_t characteristic = static_cast<size_t>(p);
+            static constexpr size_t degree = X::degree;
+            static constexpr size_t order = checked_power(characteristic, degree);
+            template<size_t i>
+            using element = typename field_element_helper<p, X, i, std::make_index_sequence<X::degree>>::type;
+        };
+    }  // namespace internal
+
+    /// @brief F is a finite field: zpz<p> with p prime, Quotient of integers by a prime, or
+    /// Quotient<polynomial<zpz<p>>, X, true> (such as GaloisField<p, n>)
+    template<typename F>
+    concept IsFiniteField = internal::finite_field_traits<F>::is_finite_field;
+
+    /// @brief characteristic p of the finite field F
+    template<typename F>
+    requires IsFiniteField<F>
+    inline constexpr size_t characteristic_v = internal::finite_field_traits<F>::characteristic;
+
+    /// @brief number of elements q = p^n of the finite field F (0 when it does not fit in size_t)
+    template<typename F>
+    requires IsFiniteField<F>
+    inline constexpr size_t field_order_v = internal::finite_field_traits<F>::order;
+
+    /// @brief the i-th element of the finite field F, for 0 <= i < q
+    ///
+    /// For F_p[x]/(X), the base-p digits of i, lowest first, are the coefficients of the representative.
+    template<typename F, size_t i>
+    requires IsFiniteField<F>
+    using field_element_t = typename internal::finite_field_traits<F>::template element<i>;
+
+    /// @brief P divided by its leading coefficient (P a nonzero polynomial over a field)
+    template<typename P>
+    using monic_t = typename P::enclosing_type::template div_t<
+        P, typename P::enclosing_type::template val<typename P::aN>>;
+
+    /// @brief an irreducible (or squarefree) factor and its multiplicity
+    /// @tparam P monic polynomial
+    /// @tparam e multiplicity
+    template<typename P, size_t e>
+    struct factor {
+        /// @brief the factor
+        using type = P;
+        /// @brief its multiplicity
+        static constexpr size_t multiplicity = e;
+    };
+
+    namespace internal {
+        template<typename Unit, typename Factors>
+        struct expand_factorization;
+
+        template<typename Unit, typename... Fs>
+        struct expand_factorization<Unit, type_list<Fs...>> {
+            using PF = polynomial<typename Unit::enclosing_type>;
+            using type = typename vmul<typename PF::template val<Unit>,
+                                       pow_t<typename Fs::type, Fs::multiplicity>...>::type;
+        };
+
+        template<typename Unit>
+        struct expand_factorization<Unit, type_list<>> {
+            using type = typename polynomial<typename Unit::enclosing_type>::template val<Unit>;
+        };
+    }  // namespace internal
+
+    /// @brief a polynomial as unit * product of factors^multiplicity
+    /// @tparam Unit leading coefficient of the polynomial, a value of the coefficient ring
+    /// @tparam Factors type_list of aerobus::factor, monic, sorted by the order of polynomials
+    template<typename Unit, typename Factors>
+    struct factorization {
+        /// @brief leading coefficient
+        using unit = Unit;
+        /// @brief type_list of aerobus::factor
+        using factors = Factors;
+        /// @brief the product, which is the factored polynomial
+        using type = typename internal::expand_factorization<Unit, Factors>::type;
+    };
+
+    // squarefree decomposition, irreducibility test and factorization over finite fields
+    namespace internal {
+        template<typename F>
+        constexpr size_t field_characteristic() {
+            if constexpr (IsFiniteField<F>) {
+                return finite_field_traits<F>::characteristic;
+            } else {
+                return 0;
+            }
+        }
+
+        // a^(q^k), for a value of any ring
+        template<typename a, size_t q, size_t k>
+        struct iterated_power {
+            using type = pow_t<typename iterated_power<a, q, k - 1>::type, q>;
+        };
+
+        template<typename a, size_t q>
+        struct iterated_power<a, q, 0> {
+            using type = a;
+        };
+
+        // sorting factors: by polynomial, then by multiplicity
+        template<typename A, typename B>
+        constexpr bool factor_less() {
+            using PF = typename A::type::enclosing_type;
+            if constexpr (PF::template eq_v<typename A::type, typename B::type>) {
+                return A::multiplicity < B::multiplicity;
+            } else {
+                return PF::template lt_t<typename A::type, typename B::type>::value;
+            }
+        }
+
+        template<typename T, typename List>
+        struct insert_sorted;
+
+        template<typename T>
+        struct insert_sorted<T, type_list<>> {
+            using type = type_list<T>;
+        };
+
+        template<typename T, typename H, typename... Ts>
+        struct insert_sorted<T, type_list<H, Ts...>> {
+            using type = std::conditional_t<factor_less<T, H>(),
+                type_list<T, H, Ts...>,
+                typename insert_sorted<T, type_list<Ts...>>::type::template push_front<H>>;
+        };
+
+        template<typename List>
+        struct sort_factors;
+
+        template<>
+        struct sort_factors<type_list<>> {
+            using type = type_list<>;
+        };
+
+        template<typename H, typename... Ts>
+        struct sort_factors<type_list<H, Ts...>> {
+            using type = typename insert_sorted<H, typename sort_factors<type_list<Ts...>>::type>::type;
+        };
+
+        template<typename... Lists>
+        struct concat_lists {
+            using type = type_list<>;
+        };
+
+        template<typename L, typename... Lists>
+        struct concat_lists<L, Lists...> {
+            using type = typename L::template concat<typename concat_lists<Lists...>::type>;
+        };
+
+        template<typename List, size_t times>
+        struct scale_multiplicities;
+
+        template<typename... Fs, size_t times>
+        struct scale_multiplicities<type_list<Fs...>, times> {
+            using type = type_list<factor<typename Fs::type, Fs::multiplicity * times>...>;
+        };
+
+        // g(x) such that g(x)^p = c(x), when c' = 0 in characteristic p: c has only powers x^(i p), and
+        // a^(1/p) = a^(p^(n-1)) in F_(p^n)
+        template<typename c, size_t p, typename indices>
+        struct pth_root_helper;
+
+        template<typename c, size_t p, size_t... j>
+        struct pth_root_helper<c, p, std::index_sequence<j...>> {
+            using F = typename c::ring_type;
+            static constexpr size_t n = finite_field_traits<F>::degree;
+            static constexpr size_t root_power = checked_power(p, n - 1);
+            static constexpr size_t top = sizeof...(j) - 1;
+            using type = typename polynomial<F>::template val<
+                pow_t<typename c::template coeff_at_t<(top - j) * p>, root_power>...>;
+        };
+
+        template<typename c, size_t p>
+        using pth_root_t = typename pth_root_helper<c, p, std::make_index_sequence<c::degree / p + 1>>::type;
+
+        // Musser's squarefree loop: w is the product of the factors of multiplicity >= i
+        template<bool done, typename w, typename c, size_t i, typename acc>
+        struct squarefree_loop;
+
+        template<typename w, typename c, size_t i, typename acc>
+        struct squarefree_loop<true, w, c, i, acc> {
+            using factors = acc;
+            using rest = c;
+        };
+
+        template<typename w, typename c, size_t i, typename acc>
+        struct squarefree_loop<false, w, c, i, acc> {
+         private:
+            using PF = typename w::enclosing_type;
+            using y = typename PF::template gcd_t<w, c>;
+            using z = typename PF::template div_t<w, y>;
+            using next_acc = std::conditional_t<std::is_same_v<z, typename PF::one>,
+                                                acc, typename acc::template push_back<factor<z, i>>>;
+            using next = squarefree_loop<std::is_same_v<y, typename PF::one>, y,
+                                         typename PF::template div_t<c, y>, i + 1, next_acc>;
+
+         public:
+            using factors = typename next::factors;
+            using rest = typename next::rest;
+        };
+
+        // squarefree factors of a monic f, unsorted
+        template<typename f, bool constant = (f::degree == 0)>
+        struct squarefree_monic {
+            using factors = type_list<>;
+        };
+
+        template<typename f>
+        struct squarefree_monic<f, false> {
+         private:
+            using PF = typename f::enclosing_type;
+            using c = typename PF::template gcd_t<f, typename PF::template derive_t<f>>;
+            using w = typename PF::template div_t<f, c>;
+            using loop = squarefree_loop<std::is_same_v<w, typename PF::one>, w, c, 1, type_list<>>;
+            using rest = typename loop::rest;
+            static constexpr size_t p = field_characteristic<typename f::ring_type>();
+
+            template<typename r, bool one = std::is_same_v<r, typename PF::one>>
+            struct from_rest {
+                using type = type_list<>;
+            };
+
+            template<typename r>
+            struct from_rest<r, false> {
+                static_assert(p > 0, "squarefree decomposition: f' = 0 for a nonconstant f in characteristic 0");
+                using type = typename scale_multiplicities<
+                    typename squarefree_monic<pth_root_t<r, p>>::factors, p>::type;
+            };
+
+         public:
+            using factors = typename concat_lists<typename loop::factors,
+                                                  typename from_rest<rest>::type>::type;
+        };
+
+        template<typename P>
+        struct squarefree {
+            static_assert(!P::is_zero_v, "the zero polynomial has no factorization");
+            using type = factorization<typename P::aN,
+                typename sort_factors<typename squarefree_monic<monic_t<P>>::factors>::type>;
+        };
+
+        // Rabin: f of degree d is irreducible iff x^(q^d) = x mod f and gcd(x^(q^(d/r)) - x, f) = 1
+        // for every prime r dividing d
+        template<typename f, size_t d, size_t r>
+        constexpr bool rabin_gcd_is_one() {
+            if constexpr (r < 2 || d % r != 0 || !is_prime<r>::value) {
+                return true;
+            } else {
+                using PF = typename f::enclosing_type;
+                using x = typename Quotient<PF, f>::template inject_ring_t<typename PF::X>;
+                constexpr size_t q = finite_field_traits<typename f::ring_type>::order;
+                using h = typename iterated_power<x, q, d / r>::type::type;
+                using g = typename PF::template gcd_t<f, typename PF::template sub_t<h, typename PF::X>>;
+                return std::is_same_v<g, typename PF::one>;
+            }
+        }
+
+        template<typename f, size_t... r>
+        constexpr bool rabin_gcds_are_one(std::index_sequence<r...>) {
+            return (rabin_gcd_is_one<f, f::degree, r>() && ...);
+        }
+
+        template<typename f>
+        constexpr bool is_irreducible() {
+            constexpr size_t d = f::degree;
+            if constexpr (d == 0) {
+                return false;
+            } else if constexpr (d == 1) {
+                return true;
+            } else {
+                using F = typename f::ring_type;
+                using PF = typename f::enclosing_type;
+                constexpr size_t q = finite_field_traits<F>::order;
+                static_assert(q > 0, "the order of the field does not fit in size_t");
+                using x = typename Quotient<PF, f>::template inject_ring_t<typename PF::X>;
+                if constexpr (!std::is_same_v<typename iterated_power<x, q, d>::type, x>) {
+                    return false;
+                } else {
+                    return rabin_gcds_are_one<f>(std::make_index_sequence<d + 1>{});
+                }
+            }
+        }
+
+        // distinct degree factorization of a monic squarefree g: parts factor<h, d>, h being the product of
+        // the irreducible factors of degree d; xq = x^(q^(i-1)) mod g
+        template<typename g, size_t i, typename xq, typename acc, bool stop = (g::degree < 2 * i)>
+        struct distinct_degree {
+            using type = std::conditional_t<(g::degree > 0),
+                                            typename acc::template push_back<factor<g, g::degree>>, acc>;
+        };
+
+        template<typename g, size_t i, typename xq, typename acc>
+        struct distinct_degree<g, i, xq, acc, false> {
+         private:
+            using PF = typename g::enclosing_type;
+            static constexpr size_t q = finite_field_traits<typename g::ring_type>::order;
+            using next_xq = typename pow_t<typename Quotient<PF, g>::template val<xq>, q>::type;
+            using G = typename PF::template gcd_t<g, typename PF::template sub_t<next_xq, typename PF::X>>;
+            static constexpr bool found = !std::is_same_v<G, typename PF::one>;
+            using next_acc = std::conditional_t<found, typename acc::template push_back<factor<G, i>>, acc>;
+            using next_g = typename PF::template div_t<g, G>;
+
+         public:
+            using type = typename distinct_degree<next_g, i + 1, typename PF::template mod_t<next_xq, next_g>,
+                                                  next_acc>::type;
+        };
+
+        // the k-th polynomial over F: the base-q digits of k, lowest first, are the indices of its coefficients
+        template<typename F, size_t k, typename indices>
+        struct indexed_polynomial_helper;
+
+        template<typename F, size_t k, size_t... j>
+        struct indexed_polynomial_helper<F, k, std::index_sequence<j...>> {
+            static constexpr size_t q = finite_field_traits<F>::order;
+            using type = typename polynomial<F>::template val<
+                field_element_t<F, (k / checked_power(q, sizeof...(j) - 1 - j)) % q>...>;
+        };
+
+        constexpr size_t digit_count(size_t k, size_t q) {
+            size_t n = 1;
+            while (k >= q) {
+                k /= q;
+                ++n;
+            }
+            return n;
+        }
+
+        template<typename F, size_t k>
+        using indexed_polynomial_t = typename indexed_polynomial_helper<
+            F, k, std::make_index_sequence<digit_count(k, finite_field_traits<F>::order)>>::type;
+
+        // a^(1 + q + ... + q^(d-1)) and the trace a + a^2 + ... + a^(2^(m-1)), in a quotient ring
+        template<typename a, size_t q, size_t d, typename indices = std::make_index_sequence<d>>
+        struct norm_like;
+
+        template<typename a, size_t q, size_t d, size_t... i>
+        struct norm_like<a, q, d, std::index_sequence<i...>> {
+            using type = typename vmul<typename iterated_power<a, q, i>::type...>::type;
+        };
+
+        template<typename a, size_t m, typename indices = std::make_index_sequence<m>>
+        struct binary_trace;
+
+        template<typename a, size_t m, size_t... i>
+        struct binary_trace<a, m, std::index_sequence<i...>> {
+            using type = typename vadd<typename iterated_power<a, 2, i>::type...>::type;
+        };
+
+        // equal degree factorization (Cantor-Zassenhaus) of a monic h whose irreducible factors all have
+        // degree d; the candidates are the polynomials of index k = q, q + 1, ... instead of random ones
+        template<typename h, size_t d, size_t k = finite_field_traits<typename h::ring_type>::order,
+                 bool irreducible = (h::degree == d)>
+        struct equal_degree {
+            using type = type_list<h>;
+        };
+
+        template<typename h, size_t d, size_t k>
+        struct equal_degree<h, d, k, false> {
+         private:
+            using F = typename h::ring_type;
+            using PF = typename h::enclosing_type;
+            using Q = Quotient<PF, h>;
+            static constexpr size_t q = finite_field_traits<F>::order;
+            static constexpr size_t n = finite_field_traits<F>::degree;
+            using a = typename Q::template val<indexed_polynomial_t<F, k>>;
+
+            template<bool odd, typename dummy = void>
+            struct splitter {
+                using b = typename norm_like<a, q, d>::type;
+                using type = typename PF::template sub_t<typename pow_t<b, (q - 1) / 2>::type, typename PF::one>;
+            };
+
+            template<typename dummy>
+            struct splitter<false, dummy> {
+                using type = typename binary_trace<a, n * d>::type::type;
+            };
+
+            using s = typename splitter<(q % 2 == 1)>::type;
+            using G = std::conditional_t<s::is_zero_v, h, typename PF::template gcd_t<h, s>>;
+            static constexpr bool splits = G::degree > 0 && G::degree < h::degree;
+
+            template<bool split, typename dummy = void>
+            struct result {
+                using type = typename concat_lists<typename equal_degree<G, d>::type,
+                    typename equal_degree<typename PF::template div_t<h, G>, d>::type>::type;
+            };
+
+            template<typename dummy>
+            struct result<false, dummy> {
+                static_assert(k < static_cast<size_t>(-1) / 2, "no splitting polynomial found");
+                using type = typename equal_degree<h, d, k + 1>::type;
+            };
+
+         public:
+            using type = typename result<splits>::type;
+        };
+
+        template<typename List, size_t e>
+        struct with_multiplicity;
+
+        template<typename... Ps, size_t e>
+        struct with_multiplicity<type_list<Ps...>, e> {
+            using type = type_list<factor<Ps, e>...>;
+        };
+
+        template<typename Parts, size_t e>
+        struct split_parts;
+
+        template<typename... Parts, size_t e>
+        struct split_parts<type_list<Parts...>, e> {
+            using type = typename concat_lists<typename with_multiplicity<
+                typename equal_degree<typename Parts::type, Parts::multiplicity>::type, e>::type...>::type;
+        };
+
+        template<typename Squarefree>
+        struct factor_squarefree_parts;
+
+        template<typename... Fs>
+        struct factor_squarefree_parts<type_list<Fs...>> {
+            using type = typename concat_lists<typename split_parts<
+                typename distinct_degree<typename Fs::type, 1, typename Fs::type::enclosing_type::X,
+                                         type_list<>>::type,
+                Fs::multiplicity>::type...>::type;
+        };
+
+        template<typename P>
+        struct factorize {
+            static_assert(!P::is_zero_v, "the zero polynomial has no factorization");
+            using type = factorization<typename P::aN, typename sort_factors<typename factor_squarefree_parts<
+                typename squarefree_monic<monic_t<P>>::factors>::type>::type>;
+        };
+    }  // namespace internal
+
+    /// @brief squarefree decomposition of a nonzero polynomial over a field
+    ///
+    /// P = unit * product of g_i^i, with g_i monic, squarefree and pairwise coprime (Musser's algorithm,
+    /// with p-th roots in characteristic p). Over q64 the coefficients may overflow (a compile error).
+    /// @tparam P a value of polynomial<F>, F a field
+    template<typename P>
+    requires IsField<typename P::ring_type>
+    using squarefree_t = typename internal::squarefree<P>::type;
+
+    /// @brief true iff P is irreducible over its finite field of coefficients (Rabin's test)
+    /// @tparam P a value of polynomial<F>, F a finite field
+    template<typename P>
+    requires IsFiniteField<typename P::ring_type>
+    inline constexpr bool is_irreducible_v = internal::is_irreducible<P>();
+
+    /// @brief factorization of a nonzero polynomial over a finite field into monic irreducible factors
+    ///
+    /// Squarefree decomposition, distinct degree factorization, then Cantor-Zassenhaus with a deterministic
+    /// sequence of candidates. Factors are sorted, so that equal factorizations are the same type.
+    /// @tparam P a value of polynomial<F>, F a finite field
+    template<typename P>
+    requires IsFiniteField<typename P::ring_type>
+    using factorization_t = typename internal::factorize<P>::type;
+
     namespace internal {
         template<typename, template<typename, size_t> typename, class>
         struct make_taylor_impl;
