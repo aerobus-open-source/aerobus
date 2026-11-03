@@ -3288,19 +3288,21 @@ namespace aerobus {
                 i % characteristic>;
         };
 
-        // the element of F_p[x]/(X) whose representative has the base-p digits of i as coefficients
-        template<int32_t p, typename X, size_t i, size_t... k>
-        using field_element_from_digits = typename Quotient<polynomial<zpz<p>>, X, true>::template val<
-            typename polynomial<zpz<p>>::template val<
-                typename zpz<p>::template val<static_cast<int32_t>(
-                    (i / checked_power(static_cast<size_t>(p), sizeof...(k) - 1 - k)) % static_cast<size_t>(p))>...>>;
+        // digit of index position of i in base b
+        constexpr size_t base_digit(size_t i, size_t b, size_t position) {
+            return (i / checked_power(b, position)) % b;
+        }
 
+        // the element of F_p[x]/(X) whose representative has the base-p digits of i as coefficients
         template<int32_t p, typename X, size_t i, typename indices>
         struct field_element_helper;
 
         template<int32_t p, typename X, size_t i, size_t... k>
         struct field_element_helper<p, X, i, std::index_sequence<k...>> {
-            using type = field_element_from_digits<p, X, i, k...>;
+            static constexpr size_t top = sizeof...(k) - 1;
+            using representative = typename polynomial<zpz<p>>::template val<
+                typename zpz<p>::template val<static_cast<int32_t>(base_digit(i, static_cast<size_t>(p), top - k))>...>;
+            using type = typename Quotient<polynomial<zpz<p>>, X, true>::template val<representative>;
         };
 
         // F_p[x]/(X) with X irreducible of degree n: the field with p^n elements
@@ -3620,8 +3622,8 @@ namespace aerobus {
         template<typename F, size_t k, size_t... j>
         struct indexed_polynomial_helper<F, k, std::index_sequence<j...>> {
             static constexpr size_t q = finite_field_traits<F>::order;
-            using type = typename polynomial<F>::template val<
-                field_element_t<F, (k / checked_power(q, sizeof...(j) - 1 - j)) % q>...>;
+            static constexpr size_t top = sizeof...(j) - 1;
+            using type = typename polynomial<F>::template val<field_element_t<F, base_digit(k, q, top - j)>...>;
         };
 
         constexpr size_t digit_count(size_t k, size_t q) {
