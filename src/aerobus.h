@@ -93,31 +93,39 @@ namespace aerobus {
 namespace aerobus {
     /// Concept to express R is a Ring
     ///
-    /// The ring contract: R is a type (the structure) with `zero`, `one` and the operations `add_t`, `sub_t`,
-    /// `mul_t` taking two values and returning a value. Values are types too, with `enclosing_type` (R),
-    /// `is_zero_t` and `to_string()`. Built-in rings keep one type per value, so `std::is_same` is equality;
-    /// user rings may not, and should provide `eq_t`. IsEuclideanDomain adds `div_t`, `mod_t` (with
-    /// `a = div_t<a, b> * b + mod_t<a, b>`), `gcd_t`, `eq_t`, `pos_t` and `is_euclidean_domain`; IsField adds
-    /// `is_field`. A ring without zero divisors may declare `is_integral_domain` (assumed true when absent),
+    /// The ring contract: R is a type (the structure) with `zero`, `one`, the operations `add_t`, `sub_t`,
+    /// `mul_t` taking two values and returning a value, and the equality `eq_t` (a std::bool_constant).
+    /// Values are types too, with `enclosing_type` (R) and `is_zero_t`, and should provide `to_string()`.
+    /// Built-in rings keep one type per value, so `std::is_same` agrees with `eq_t`; user rings need not.
+    /// IsEuclideanDomain adds `div_t`, `mod_t` (with `a = div_t<a, b> * b + mod_t<a, b>`), `gcd_t`, `pos_t`
+    /// and `is_euclidean_domain`; IsField adds `is_field`. A ring without zero divisors may declare `is_integral_domain` (assumed true when absent),
     /// which FractionField requires.
     template <typename R>
     concept IsRing = requires {
-        typename R::one;
+        // elements
         typename R::zero;
+        typename R::one;
+        // operations
         typename R::template add_t<typename R::one, typename R::one>;
         typename R::template sub_t<typename R::one, typename R::one>;
         typename R::template mul_t<typename R::one, typename R::one>;
+        // equality
+        typename R::template eq_t<typename R::one, typename R::one>;
+        requires R::template eq_t<typename R::one, typename R::one>::value;
+        // values know their ring and whether they are zero
+        requires std::is_same_v<typename R::zero::enclosing_type, R>;
+        requires std::is_same_v<typename R::one::enclosing_type, R>;
+        requires R::zero::is_zero_t::value;
     };
 
     /// Concept to express R is an euclidean domain:
-    /// it provides div_t, mod_t, gcd_t, eq_t and pos_t, declares is_euclidean_domain = true,
+    /// a ring which provides div_t, mod_t, gcd_t and pos_t, declares is_euclidean_domain = true,
     /// and one is positive
     template <typename R>
     concept IsEuclideanDomain = IsRing<R> && requires {
         typename R::template div_t<typename R::one, typename R::one>;
         typename R::template mod_t<typename R::one, typename R::one>;
         typename R::template gcd_t<typename R::one, typename R::one>;
-        typename R::template eq_t<typename R::one, typename R::one>;
         typename R::template pos_t<typename R::one>;
 
         requires R::template pos_v<typename R::one>;

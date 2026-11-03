@@ -34,6 +34,7 @@ struct flagged_ring {
     template<int x>
     struct val {
         using enclosing_type = flagged_ring;
+        using is_zero_t = std::bool_constant<x == 0>;
     };
     using zero = val<0>;
     using one = val<1>;
@@ -94,4 +95,37 @@ TEST(concepts, built_in_rings_share_one_interface) {
 
 TEST(concepts, zpz_injects_integers) {
     EXPECT_TRUE((std::is_same_v<zpz<7>::inject_ring_t<i32::val<9>>, zpz<7>::val<2>>));
+}
+
+namespace {
+// ring-like types, each missing one piece of the ring contract
+template<bool has_eq, bool values_complete>
+struct partial_ring {
+    template<int x>
+    struct val {
+        using enclosing_type = partial_ring;
+    };
+    template<int x>
+    requires values_complete
+    struct val<x> {
+        using enclosing_type = partial_ring;
+        using is_zero_t = std::bool_constant<x == 0>;
+    };
+    using zero = val<0>;
+    using one = val<1>;
+    template<typename, typename> using add_t = one;
+    template<typename, typename> using sub_t = one;
+    template<typename, typename> using mul_t = one;
+    template<typename, typename>
+    requires has_eq
+    using eq_t = std::true_type;
+};
+}  // namespace
+
+TEST(concepts, is_ring_checks_equality_and_values) {
+    EXPECT_TRUE((IsRing<partial_ring<true, true>>));
+    // no eq_t
+    EXPECT_FALSE((IsRing<partial_ring<false, true>>));
+    // values without is_zero_t
+    EXPECT_FALSE((IsRing<partial_ring<true, false>>));
 }
