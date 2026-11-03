@@ -94,7 +94,7 @@ cmake --build build --target benchmarks
 
 ## Limitations
 
-- **64-bit coefficients.** Coefficients are computed exactly in `i64` (or `i32`, `i16`), so degrees are bounded. Each predefined family requires `aerobus::coefficients_fit`: a degree above the measured limit is a constraint failure that names it, and `requires { typename legendre<22>; }` is false. The limits in `i64` are 52 for `chebyshev_T`, 51 for `chebyshev_U`, 43 for `bernstein`, 34 for `bernoulli`, 32 for `hermite_prob`, 25 for `hermite_phys` and `touchard`, 21 for `legendre`, 17 for `bessel`, 14 for `laguerre`, 21 for the Taylor series of `cos` and `cosh` and 20 for the other Taylor series; `lnp1`, `atan`, `atanh` and `geometric_sum` have no limit. The limits in `i32` and `i16` are in the `max_degree` table of `src/aerobus.h`.
+- **64-bit coefficients.** Coefficients are computed exactly in `i64` (or `i32`, `i16`), so degrees are bounded, unless the integers are `bigint`, at a compile time cost of about 2 to 4 times. Each predefined family requires `aerobus::coefficients_fit`: a degree above the measured limit is a constraint failure that names it, and `requires { typename legendre<22>; }` is false. The limits in `i64` are 52 for `chebyshev_T`, 51 for `chebyshev_U`, 43 for `bernstein`, 34 for `bernoulli`, 32 for `hermite_prob`, 25 for `hermite_phys` and `touchard`, 21 for `legendre`, 17 for `bessel`, 14 for `laguerre`, 21 for the Taylor series of `cos` and `cosh` and 20 for the other Taylor series; `lnp1`, `atan`, `atanh` and `geometric_sum` have no limit. The limits in `i32` and `i16` are in the `max_degree` table of `src/aerobus.h`.
 - **Taylor series are not a libm.** They have no argument reduction: accurate near 0 only. Use them as building blocks, not as a replacement for `std::exp`.
 - **Results depend on FMA contraction.** Whether `x * y + z` becomes a fused multiply-add depends on the target and the compiler flags, so the last bits can differ between compilers and options (see the example above).
 - **Compile time.** Deep computations cost seconds and may need `-ftemplate-depth=30000`. The Reed-Solomon example compiles in about 4 s with GCC and 7 s with clang; MSVC builds the library but does not finish that example.
@@ -136,6 +136,21 @@ static_assert(std::is_same_v<divide_t<Z7::one, Z7::val<2>>, Z7::val<4>>);  // 2 
 static_assert(gcd_t<i32::val<12>, i32::val<18>>::v == 6);
 static_assert(pow_t<i64::val<2>, 10>::v == 1024);
 ```
+
+### Arbitrary precision integers
+
+`aerobus::bigint` is an euclidean domain of integers without bound, usable wherever `i64` is: as polynomial coefficients, in `FractionField<bigint>`, as the integers of the predefined families and Taylor series, which are then not limited in degree:
+
+```cpp
+using aerobus::bigint;
+using N = bigint::from_string_t<"-123456789012345678901234567890">;
+using M = bigint::mul_t<N, bigint::from_hex_t<"FFFFFFFFFFFFFFFF">>;
+static_assert(bigint::eq_v<bigint::div_t<M, N>, bigint::from_hex_t<"FFFFFFFFFFFFFFFF">>);
+static_assert(bigint::mod_t<bigint::inject_constant_t<-7>, bigint::inject_constant_t<2>>::get<int>() == -1);
+using P30 = aerobus::known_polynomials::legendre<30, bigint>;  // exact coefficients, beyond the i64 limit of 21
+```
+
+Values are `bigint::val<negative, digits...>`, digits in base 2^32, most significant first. The arithmetic runs in `constexpr` functions on arrays of digits rather than through recursive templates, and division is Knuth's algorithm D, so dividing a 40-digit number by a 20-digit one adds about 0.04 s to the compilation. As for `i64`, division truncates toward zero and the remainder has the sign of the dividend. `to_string()` and `to_hex()` print values, `get<T>()` converts them.
 
 ### Polynomials
 
