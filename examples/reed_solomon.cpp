@@ -110,14 +110,58 @@ constexpr bool alpha_is_primitive() {
 static_assert(alpha_is_primitive(), "alpha must generate the multiplicative group of GF(256)");
 static_assert(EXP[8] == 0x1D, "alpha^8 = x^4 + x^3 + x^2 + 1, the Conway polynomial 0x11D");
 
+// full multiplication table (64 KiB in .rodata), derived from the proven exp/log tables.
+// One constant per row keeps each compile-time evaluation short (clang and MSVC limit their steps).
+using byte_row = std::array<uint8_t, 256>;
+
+constexpr byte_row mul_row(size_t a) {
+    byte_row row{};
+    for (int b = 1; a != 0 && b < 256; ++b) {
+        row[b] = EXP[(LOG[a] + LOG[b]) % 255];
+    }
+    return row;
+}
+
+template<size_t a>
+inline constexpr byte_row MUL_ROW = mul_row(a);
+
+template<size_t... a>
+constexpr std::array<const byte_row*, 256> mul_rows(std::index_sequence<a...>) {
+    return {&MUL_ROW<a>...};
+}
+
+// MUL[a] points to the row a * b, b = 0..255
+constexpr std::array<const byte_row*, 256> MUL = mul_rows(std::make_index_sequence<256>{});
+
+// inverses: INV[a] * a = 1 (INV[0] is unused)
+constexpr byte_row inverse_table() {
+    byte_row inv{};
+    for (int a = 1; a < 256; ++a) {
+        inv[a] = EXP[(255 - LOG[a]) % 255];
+    }
+    return inv;
+}
+
+constexpr auto INV = inverse_table();
+
+constexpr bool inverses_are_correct() {
+    for (int a = 1; a < 256; ++a) {
+        if ((*MUL[a])[INV[a]] != 1) {
+            return false;
+        }
+    }
+    return true;
+}
+static_assert(inverses_are_correct(), "INV[a] * a must be 1");
+
 // ---------------------------------------------------------------- run time: codec
 
 static uint8_t gf_mul(uint8_t a, uint8_t b) {
-    return (a == 0 || b == 0) ? 0 : EXP[(LOG[a] + LOG[b]) % 255];
+    return (*MUL[a])[b];
 }
 
 static uint8_t gf_div(uint8_t a, uint8_t b) {
-    return a == 0 ? 0 : EXP[(LOG[a] + 255 - LOG[b]) % 255];
+    return (*MUL[a])[INV[b]];
 }
 
 static uint8_t gf_pow_alpha(int e) {
@@ -139,11 +183,11 @@ std::vector<uint8_t> rs_encode(const std::vector<uint8_t>& data) {
     constexpr auto g = generator_bytes<parity>();
     std::vector<uint8_t> remainder(parity, 0);
     for (uint8_t byte : data) {
-        const uint8_t factor = byte ^ remainder[0];
+        const byte_row& times_factor = *MUL[byte ^ remainder[0]];
         remainder.erase(remainder.begin());
         remainder.push_back(0);
         for (size_t j = 0; j < parity; ++j) {
-            remainder[j] ^= gf_mul(g[j + 1], factor);
+            remainder[j] ^= times_factor[g[j + 1]];
         }
     }
     std::vector<uint8_t> codeword = data;
@@ -161,9 +205,10 @@ bool rs_decode(std::vector<uint8_t>* codeword) {
     std::vector<uint8_t> syndromes(parity);
     bool clean = true;
     for (size_t j = 0; j < parity; ++j) {
+        const byte_row& times_alpha_j = *MUL[EXP[j % 255]];
         uint8_t s = 0;
         for (int k = 0; k < n; ++k) {
-            s = gf_mul(s, gf_pow_alpha(static_cast<int>(j))) ^ c[k];
+            s = times_alpha_j[s] ^ c[k];
         }
         syndromes[j] = s;
         clean = clean && s == 0;
@@ -294,6 +339,16 @@ int main() {
         mul_ok = mul_ok && exp[i + 1] == reference_mul(exp[i], 2);
     }
     check(mul_ok, "exp table matches carry-less multiplication modulo 0x11D");
+
+    // the full multiplication table, for every pair of bytes
+    bool table_ok = true;
+    for (int a = 0; a < 256; ++a) {
+        for (int b = 0; b < 256; ++b) {
+            const uint8_t x = static_cast<uint8_t>(a), y = static_cast<uint8_t>(b);
+            table_ok = table_ok && gf_mul(x, y) == reference_mul(x, y);
+        }
+    }
+    check(table_ok, "multiplication table matches carry-less multiplication for the 65536 pairs");
 
     // generator polynomial for 10 error correction codewords (QR version 1-M)
     constexpr auto g = generator_bytes<10>();
