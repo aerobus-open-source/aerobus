@@ -203,12 +203,12 @@ namespace aerobus {
         static constexpr __half convert_int16_to_half = my_float2half_rn(static_cast<float>(i));
 
 
-        template <typename Out, int16_t x, typename E = void>
+        template <typename Out, int16_t x>
         struct int16_convert_helper;
 
         template <typename Out, int16_t x>
-        struct int16_convert_helper<Out, x,
-            std::enable_if_t<!std::is_same_v<Out, __half> && !std::is_same_v<Out, __half2>>> {
+        requires(!std::is_same_v<Out, __half> && !std::is_same_v<Out, __half2>)
+        struct int16_convert_helper<Out, x> {
             static constexpr Out value() {
                 return static_cast<Out>(x);
             }
@@ -643,42 +643,40 @@ namespace aerobus {
          * exposes it in gcd<A, B>::type
          * as long as Ring type is an integral domain
         */
-        template<typename Ring, typename E = void>
+        template<typename Ring>
         struct gcd;
 
         template<typename Ring>
-        struct gcd<Ring, std::enable_if_t<Ring::is_euclidean_domain>> {
-            template<typename A, typename B, typename E = void>
+        requires(Ring::is_euclidean_domain)
+        struct gcd<Ring> {
+            template<typename A, typename B>
             struct gcd_helper {};
 
             // B = 0, A > 0
             template<typename A, typename B>
-            struct gcd_helper<A, B, std::enable_if_t<
-                ((B::is_zero_t::value) &&
-                    (Ring::template gt_t<A, typename Ring::zero>::value))>> {
+            requires((B::is_zero_t::value) && (Ring::template gt_t<A, typename Ring::zero>::value))
+            struct gcd_helper<A, B> {
                 using type = A;
             };
 
             // B = 0, A < 0
             template<typename A, typename B>
-            struct gcd_helper<A, B, std::enable_if_t<
-                ((B::is_zero_t::value) &&
-                    !(Ring::template gt_t<A, typename Ring::zero>::value))>> {
+            requires((B::is_zero_t::value) && !(Ring::template gt_t<A, typename Ring::zero>::value))
+            struct gcd_helper<A, B> {
                 using type = typename Ring::template sub_t<typename Ring::zero, A>;
             };
 
             // B != 0
             template<typename A, typename B>
-            struct gcd_helper<A, B, std::enable_if_t<
-                (!B::is_zero_t::value)
-                >> {
+            requires(!B::is_zero_t::value)
+            struct gcd_helper<A, B> {
             private: // NOLINT
                 // A / B
                 using k = typename Ring::template div_t<A, B>;
                 // A - (A/B)*B = A % B
                 using m = typename Ring::template sub_t<A, typename Ring::template mul_t<k, B>>;
 
-            public:
+             public:
                 using type = typename gcd_helper<B, m>::type;
             };
 
@@ -762,13 +760,14 @@ namespace aerobus {
         struct is_integers_ring : std::false_type {};
 
         // representative of V modulo X: the remainder, moved into [0, |X|) for integer rings
-        template<typename Ring, typename X, typename V, typename E = void>
+        template<typename Ring, typename X, typename V>
         struct quotient_representative {
             using type = typename Ring::template mod_t<V, X>;
         };
 
         template<typename Ring, typename X, typename V>
-        struct quotient_representative<Ring, X, V, std::enable_if_t<is_integers_ring<Ring>::value>> {
+        requires(is_integers_ring<Ring>::value)
+        struct quotient_representative<Ring, X, V> {
          private:
             using r = typename Ring::template mod_t<V, X>;
             using abs_x = std::conditional_t<(X::v < 0), typename Ring::template sub_t<typename Ring::zero, X>, X>;
@@ -778,18 +777,20 @@ namespace aerobus {
         };
 
         /// @brief extended Euclid algorithm in an euclidean domain: gcd = s * A + t * B
-        template<typename Ring, typename A, typename B, typename E = void>
+        template<typename Ring, typename A, typename B>
         struct extended_gcd;
 
         template<typename Ring, typename A, typename B>
-        struct extended_gcd<Ring, A, B, std::enable_if_t<B::is_zero_t::value>> {
+        requires(B::is_zero_t::value)
+        struct extended_gcd<Ring, A, B> {
             using gcd = A;
             using s = typename Ring::one;
             using t = typename Ring::zero;
         };
 
         template<typename Ring, typename A, typename B>
-        struct extended_gcd<Ring, A, B, std::enable_if_t<!B::is_zero_t::value>> {
+        requires(!B::is_zero_t::value)
+        struct extended_gcd<Ring, A, B> {
          private:
             using q = typename Ring::template div_t<A, B>;
             using r = typename Ring::template sub_t<A, typename Ring::template mul_t<q, B>>;
@@ -1713,16 +1714,18 @@ namespace aerobus {
             static constexpr bool is_zero_v = is_zero_t::value;
 
          private:
-            template<size_t index, typename E = void>
+            template<size_t index>
             struct coeff_at {};
 
             template<size_t index>
-            struct coeff_at<index, std::enable_if_t<(index <= sizeof...(coeffs))>> {
+            requires(index <= sizeof...(coeffs))
+            struct coeff_at<index> {
                 using type = internal::type_at_t<sizeof...(coeffs) - index, coeffN, coeffs...>;
             };
 
             template<size_t index>
-            struct coeff_at<index, std::enable_if_t<(index > sizeof...(coeffs))>> {
+            requires(index > sizeof...(coeffs))
+            struct coeff_at<index> {
                 using type = typename Ring::zero;
             };
 
@@ -1794,16 +1797,18 @@ namespace aerobus {
             /// @brief true if zero
             static constexpr bool is_zero_v = is_zero_t::value;
 
-            template<size_t index, typename E = void>
+            template<size_t index>
             struct coeff_at {};
 
             template<size_t index>
-            struct coeff_at<index, std::enable_if_t<(index == 0)>> {
+            requires(index == 0)
+            struct coeff_at<index> {
                 using type = aN;
             };
 
             template<size_t index>
-            struct coeff_at<index, std::enable_if_t<(index > 0)>> {
+            requires(index > 0)
+            struct coeff_at<index> {
                 using type = typename Ring::zero;
             };
 
@@ -1870,16 +1875,18 @@ namespace aerobus {
         template<typename coeff, size_t deg>
         struct monomial;
 
-        template<typename v, typename E = void>
+        template<typename v>
         struct derive_helper {};
 
         template<typename v>
-        struct derive_helper<v, std::enable_if_t<v::degree == 0>> {
+        requires(v::degree == 0)
+        struct derive_helper<v> {
             using type = zero;
         };
 
         template<typename v>
-        struct derive_helper<v, std::enable_if_t<v::degree != 0>> {
+        requires(v::degree != 0)
+        struct derive_helper<v> {
             using type = typename add<
                 typename derive_helper<typename v::strip>::type,
                 typename monomial<
@@ -1991,16 +1998,18 @@ namespace aerobus {
                 typename v2::template coeff_at_t<0>>;
         };
 
-        template <typename v1, typename v2, size_t k, typename E = void>
+        template <typename v1, typename v2, size_t k>
         struct mul_at {};
 
         template<typename v1, typename v2, size_t k>
-        struct mul_at<v1, v2, k, std::enable_if_t<(k > v1::degree + v2::degree)>> {
+        requires(k > v1::degree + v2::degree)
+        struct mul_at<v1, v2, k> {
             using type = typename Ring::zero;
         };
 
         template<typename v1, typename v2, size_t k>
-        struct mul_at<v1, v2, k, std::enable_if_t<(k <= v1::degree + v2::degree)>> {
+        requires(k <= v1::degree + v2::degree)
+        struct mul_at<v1, v2, k> {
             using type = typename mul_at_loop_helper<v1, v2, k, 0, k>::type;
         };
 
@@ -2013,20 +2022,20 @@ namespace aerobus {
         };
 
         // division helper
-        template< typename A, typename B, typename Q, typename R, typename E = void>
+        template< typename A, typename B, typename Q, typename R>
         struct div_helper {};
 
         template<typename A, typename B, typename Q, typename R>
-        struct div_helper<A, B, Q, R, std::enable_if_t<
-            (R::degree < B::degree) || R::is_zero_t::value>> {
+        requires((R::degree < B::degree) || R::is_zero_t::value)
+        struct div_helper<A, B, Q, R> {
             using q_type = Q;
             using mod_type = R;
             using gcd_type = B;
         };
 
         template<typename A, typename B, typename Q, typename R>
-        struct div_helper<A, B, Q, R, std::enable_if_t<
-            (R::degree >= B::degree) && !R::is_zero_t::value>> {
+        requires((R::degree >= B::degree) && !R::is_zero_t::value)
+        struct div_helper<A, B, Q, R> {
          private: // NOLINT
             using rN = typename R::aN;
             using bN = typename B::aN;
@@ -2282,13 +2291,13 @@ namespace aerobus {
 // fraction field
 namespace aerobus {
     namespace internal {
-        template<typename Ring, typename E = void>
+        template<typename Ring>
         requires IsEuclideanDomain<Ring>
         struct fraction_field_impl {};
 
         template<typename Ring>
-        requires IsEuclideanDomain<Ring>
-        struct fraction_field_impl<Ring, std::enable_if_t<Ring::is_euclidean_domain>> {
+        requires IsEuclideanDomain<Ring> && (Ring::is_euclidean_domain)
+        struct fraction_field_impl<Ring> {
             static_assert(is_integral_domain_v<Ring>,
                 "FractionField needs an integral domain (a ring without zero divisors)");
 
@@ -2298,16 +2307,12 @@ namespace aerobus {
             static constexpr bool is_integral_domain = true;
 
          private:
-            template<typename val1, typename val2, typename E = void>
+            template<typename val1, typename val2>
             struct to_string_helper {};
 
             template<typename val1, typename val2>
-            struct to_string_helper <val1, val2,
-                std::enable_if_t<
-                Ring::template eq_t<
-                val2, typename Ring::one
-                >::value
-                >
+            requires(Ring::template eq_t< val2, typename Ring::one >::value)
+            struct to_string_helper<val1, val2
             > {
                 static std::string func() {
                     return val1::to_string();
@@ -2315,13 +2320,8 @@ namespace aerobus {
             };
 
             template<typename val1, typename val2>
-            struct to_string_helper<val1, val2,
-                std::enable_if_t<
-                !Ring::template eq_t<
-                val2,
-                typename Ring::one
-                >::value
-                >
+            requires(!Ring::template eq_t< val2, typename Ring::one >::value)
+            struct to_string_helper<val1, val2
             > {
                 static std::string func() {
                     return "(" + val1::to_string() + ") / (" + val2::to_string() + ")";
@@ -2428,18 +2428,20 @@ namespace aerobus {
             using ring_type = Ring;
 
          private:
-            template<typename v, typename E = void>
+            template<typename v>
             struct simplify {};
 
             // x = 0
             template<typename v>
-            struct simplify<v, std::enable_if_t<v::x::is_zero_t::value>> {
+            requires(v::x::is_zero_t::value)
+            struct simplify<v> {
                 using type = typename fraction_field_impl<Ring>::zero;
             };
 
             // x != 0
             template<typename v>
-            struct simplify<v, std::enable_if_t<!v::x::is_zero_t::value>> {
+            requires(!v::x::is_zero_t::value)
+            struct simplify<v> {
              private:
                 using _gcd = typename Ring::template gcd_t<typename v::x, typename v::y>;
                 using newx = typename Ring::template div_t<typename v::x, _gcd>;
@@ -2625,21 +2627,21 @@ namespace aerobus {
             static constexpr bool pos_v = pos_t<v>::value;
         };
 
-        template<typename Ring, typename E = void>
+        template<typename Ring>
         requires IsEuclideanDomain<Ring>
         struct FractionFieldImpl {};
 
         // fraction field of a field is the field itself
         template<typename Field>
-        requires IsEuclideanDomain<Field>
-        struct FractionFieldImpl<Field, std::enable_if_t<Field::is_field>> {
+        requires IsEuclideanDomain<Field> && (Field::is_field)
+        struct FractionFieldImpl<Field> {
             using type = Field;
         };
 
         // fraction field of a ring is the actual fraction field
         template<typename Ring>
-        requires IsEuclideanDomain<Ring>
-        struct FractionFieldImpl<Ring, std::enable_if_t<!Ring::is_field>> {
+        requires IsEuclideanDomain<Ring> && (!Ring::is_field)
+        struct FractionFieldImpl<Ring> {
             using type = fraction_field_impl<Ring>;
         };
     }  // namespace internal
@@ -2825,15 +2827,12 @@ namespace aerobus {
 // taylor series and common integers (factorial, bernoulli...) appearing in taylor coefficients
 namespace aerobus {
     namespace internal {
-        template<typename T, size_t x, typename E = void>
+        template<typename T, size_t x>
         struct factorial {};
 
         template<typename T, size_t x>
-        struct factorial<T, x, std::enable_if_t<(x > 0)>> {
-        private:
-            template<typename, size_t, typename>
-            friend struct factorial;
-        public:
+        requires(x > 0)
+        struct factorial<T, x> {
             using type = typename T::template mul_t<typename T::template val<x>, typename factorial<T, x - 1>::type>;
             static constexpr typename T::inner_type value = type::template get<typename T::inner_type>();
         };
@@ -2859,24 +2858,27 @@ namespace aerobus {
     inline constexpr typename T::inner_type factorial_v = internal::factorial<T, i>::value;
 
     namespace internal {
-        template<typename T, size_t k, size_t n, typename E = void>
+        template<typename T, size_t k, size_t n>
         struct combination_helper {};
 
         template<typename T, size_t k, size_t n>
-        struct combination_helper<T, k, n, std::enable_if_t<(k <= (n / 2) && k > 0)>> {
+        requires(k <= (n / 2) && k > 0)
+        struct combination_helper<T, k, n> {
             using type = typename FractionField<T>::template mul_t<
                 typename combination_helper<T, k - 1, n - 1>::type,
                 makefraction_t<T, typename T::template val<n>, typename T::template val<k>>>;
         };
 
         template<typename T, size_t k, size_t n>
-        struct combination_helper<T, k, n, std::enable_if_t<(k > (n / 2) && k > 0 && k <= n)>> {
+        requires(k > (n / 2) && k > 0 && k <= n)
+        struct combination_helper<T, k, n> {
             using type = typename combination_helper<T, n - k, n>::type;
         };
 
         // no way to choose more than n elements among n
         template<typename T, size_t k, size_t n>
-        struct combination_helper<T, k, n, std::enable_if_t<(k > n)>> {
+        requires(k > n)
+        struct combination_helper<T, k, n> {
             using type = typename FractionField<T>::zero;
         };
 
@@ -2971,11 +2973,12 @@ namespace aerobus {
 
     // bell numbers
     namespace internal {
-        template<typename T, size_t n, typename E = void>
+        template<typename T, size_t n>
         struct bell_helper;
 
         template <typename T, size_t n>
-        struct bell_helper<T, n, std::enable_if_t<(n > 1)>> {
+        requires(n > 1)
+        struct bell_helper<T, n> {
             template<typename accum, size_t i, size_t stop>
             struct sum_helper {
              private:
@@ -3019,17 +3022,19 @@ namespace aerobus {
     inline constexpr typename T::inner_type bell_v = bell_t<T, n>::v;
 
     namespace internal {
-        template<typename T, size_t k, typename E = void>
+        template<typename T, size_t k>
         struct alternate {};
 
         template<typename T, size_t k>
-        struct alternate<T, k, std::enable_if_t<k % 2 == 0>> {
+        requires(k % 2 == 0)
+        struct alternate<T, k> {
             using type = typename T::one;
             static constexpr typename T::inner_type value = type::template get<typename T::inner_type>();
         };
 
         template<typename T, size_t k>
-        struct alternate<T, k, std::enable_if_t<k % 2 != 0>> {
+        requires(k % 2 != 0)
+        struct alternate<T, k> {
             using type = typename T::template sub_t<typename T::zero, typename T::one>;
             static constexpr typename T::inner_type value = type::template get<typename T::inner_type>();
         };
@@ -3046,7 +3051,7 @@ namespace aerobus {
     inline constexpr typename T::inner_type alternate_v = internal::alternate<T, k>::value;
 
     namespace internal {
-        template<typename T, size_t n, size_t k, typename E = void>
+        template<typename T, size_t n, size_t k>
         struct stirling_1_helper {};
 
         template<typename T>
@@ -3055,17 +3060,20 @@ namespace aerobus {
         };
 
         template<typename T, size_t n>
-        struct stirling_1_helper<T, n, 0, std::enable_if_t<(n > 0)>> {
+        requires(n > 0)
+        struct stirling_1_helper<T, n, 0> {
             using type = typename T::zero;
         };
 
         template<typename T, size_t n>
-        struct stirling_1_helper<T, 0, n, std::enable_if_t<(n > 0)>> {
+        requires(n > 0)
+        struct stirling_1_helper<T, 0, n> {
             using type = typename T::zero;
         };
 
         template<typename T, size_t n, size_t k>
-        struct stirling_1_helper<T, n, k, std::enable_if_t<(k > 0) && (n > 0)>> {
+        requires((k > 0) && (n > 0))
+        struct stirling_1_helper<T, n, k> {
             using type = typename T::template sub_t<
                             typename stirling_1_helper<T, n-1, k-1>::type,
                             typename T::template mul_t<
@@ -3104,7 +3112,7 @@ namespace aerobus {
     inline constexpr typename T::inner_type stirling_1_signed_v = stirling_1_signed_t<T, n, k>::v;
 
     namespace internal {
-        template<typename T, size_t n, size_t k, typename E = void>
+        template<typename T, size_t n, size_t k>
         struct stirling_2_helper {};
 
         template<typename T, size_t n>
@@ -3113,22 +3121,26 @@ namespace aerobus {
         };
 
         template<typename T, size_t n>
-        struct stirling_2_helper<T, n, 0, std::enable_if_t<(n > 0)>> {
+        requires(n > 0)
+        struct stirling_2_helper<T, n, 0> {
             using type = typename T::zero;
         };
 
         template<typename T, size_t n>
-        struct stirling_2_helper<T, 0, n, std::enable_if_t<(n > 0)>> {
+        requires(n > 0)
+        struct stirling_2_helper<T, 0, n> {
             using type = typename T::zero;
         };
 
         template<typename T, size_t n, size_t k>
-        struct stirling_2_helper<T, n, k, std::enable_if_t<(n > 0) && (k > n)>> {
+        requires((n > 0) && (k > n))
+        struct stirling_2_helper<T, n, k> {
             using type = typename T::zero;
         };
 
         template<typename T, size_t n, size_t k>
-        struct stirling_2_helper<T, n, k, std::enable_if_t<(k > 0) && (n > 0) && (k < n)>> {
+        requires((k > 0) && (n > 0) && (k < n))
+        struct stirling_2_helper<T, n, k> {
             using type = typename T::template add_t<
                             typename stirling_2_helper<T, n-1, k-1>::type,
                             typename T::template mul_t<
@@ -3170,12 +3182,13 @@ namespace aerobus {
             }
         };
 
-        template<typename T, typename p, size_t n, typename E = void>
+        template<typename T, typename p, size_t n>
         requires IsEuclideanDomain<T>
         struct pow;
 
         template<typename T, typename p, size_t n>
-        struct pow<T, p, n, std::enable_if_t<(n > 0 && n % 2 == 0)>> {
+        requires IsEuclideanDomain<T> && ((n > 0 && n % 2 == 0))
+        struct pow<T, p, n> {
             using type = typename T::template mul_t<
                 typename pow<T, p, n/2>::type,
                 typename pow<T, p, n/2>::type
@@ -3183,7 +3196,8 @@ namespace aerobus {
         };
 
         template<typename T, typename p, size_t n>
-        struct pow<T, p, n, std::enable_if_t<(n % 2 == 1)>> {
+        requires IsEuclideanDomain<T> && ((n % 2 == 1))
+        struct pow<T, p, n> {
             using type = typename T::template mul_t<
                 p,
                 typename T::template mul_t<
@@ -3194,7 +3208,8 @@ namespace aerobus {
         };
 
         template<typename T, typename p, size_t n>
-        struct pow<T, p, n, std::enable_if_t<n == 0>> { using type = typename T::one; };
+        requires IsEuclideanDomain<T> && (n == 0)
+        struct pow<T, p, n> { using type = typename T::one; };
     }  // namespace internal
 
     /// @brief p^n (as 'val' type in T)
@@ -3248,16 +3263,18 @@ namespace aerobus {
             using type = makefraction_t<T, typename T::one, factorial_t<T, i>>;
         };
 
-        template<typename T, size_t i, typename E = void>
+        template<typename T, size_t i>
         struct sin_coeff_helper {};
 
         template<typename T, size_t i>
-        struct sin_coeff_helper<T, i, std::enable_if_t<(i & 1) == 0>> {
+        requires((i & 1) == 0)
+        struct sin_coeff_helper<T, i> {
             using type = typename FractionField<T>::zero;
         };
 
         template<typename T, size_t i>
-        struct sin_coeff_helper<T, i, std::enable_if_t<(i & 1) == 1>> {
+        requires((i & 1) == 1)
+        struct sin_coeff_helper<T, i> {
             using type = makefraction_t<T, alternate_t<T, i / 2>, factorial_t<T, i>>;
         };
 
@@ -3266,16 +3283,18 @@ namespace aerobus {
             using type = typename sin_coeff_helper<T, i>::type;
         };
 
-        template<typename T, size_t i, typename E = void>
+        template<typename T, size_t i>
         struct sh_coeff_helper {};
 
         template<typename T, size_t i>
-        struct sh_coeff_helper<T, i, std::enable_if_t<(i & 1) == 0>> {
+        requires((i & 1) == 0)
+        struct sh_coeff_helper<T, i> {
             using type = typename FractionField<T>::zero;
         };
 
         template<typename T, size_t i>
-        struct sh_coeff_helper<T, i, std::enable_if_t<(i & 1) == 1>> {
+        requires((i & 1) == 1)
+        struct sh_coeff_helper<T, i> {
             using type = makefraction_t<T, typename T::one, factorial_t<T, i>>;
         };
 
@@ -3284,16 +3303,18 @@ namespace aerobus {
             using type = typename sh_coeff_helper<T, i>::type;
         };
 
-        template<typename T, size_t i, typename E = void>
+        template<typename T, size_t i>
         struct cos_coeff_helper {};
 
         template<typename T, size_t i>
-        struct cos_coeff_helper<T, i, std::enable_if_t<(i & 1) == 1>> {
+        requires((i & 1) == 1)
+        struct cos_coeff_helper<T, i> {
             using type = typename FractionField<T>::zero;
         };
 
         template<typename T, size_t i>
-        struct cos_coeff_helper<T, i, std::enable_if_t<(i & 1) == 0>> {
+        requires((i & 1) == 0)
+        struct cos_coeff_helper<T, i> {
             using type = makefraction_t<T, alternate_t<T, i / 2>, factorial_t<T, i>>;
         };
 
@@ -3302,16 +3323,18 @@ namespace aerobus {
             using type = typename cos_coeff_helper<T, i>::type;
         };
 
-        template<typename T, size_t i, typename E = void>
+        template<typename T, size_t i>
         struct cosh_coeff_helper {};
 
         template<typename T, size_t i>
-        struct cosh_coeff_helper<T, i, std::enable_if_t<(i & 1) == 1>> {
+        requires((i & 1) == 1)
+        struct cosh_coeff_helper<T, i> {
             using type = typename FractionField<T>::zero;
         };
 
         template<typename T, size_t i>
-        struct cosh_coeff_helper<T, i, std::enable_if_t<(i & 1) == 0>> {
+        requires((i & 1) == 0)
+        struct cosh_coeff_helper<T, i> {
             using type = makefraction_t<T, typename T::one, factorial_t<T, i>>;
         };
 
@@ -3324,27 +3347,30 @@ namespace aerobus {
         struct geom_coeff { using type = typename FractionField<T>::one; };
 
 
-        template<typename T, size_t i, typename E = void>
+        template<typename T, size_t i>
         struct atan_coeff_helper;
 
         template<typename T, size_t i>
-        struct atan_coeff_helper<T, i, std::enable_if_t<(i & 1) == 1>> {
+        requires((i & 1) == 1)
+        struct atan_coeff_helper<T, i> {
             using type = makefraction_t<T, alternate_t<T, i / 2>, typename T::template val<i>>;
         };
 
         template<typename T, size_t i>
-        struct atan_coeff_helper<T, i, std::enable_if_t<(i & 1) == 0>> {
+        requires((i & 1) == 0)
+        struct atan_coeff_helper<T, i> {
             using type = typename FractionField<T>::zero;
         };
 
         template<typename T, size_t i>
         struct atan_coeff { using type = typename atan_coeff_helper<T, i>::type; };
 
-        template<typename T, size_t i, typename E = void>
+        template<typename T, size_t i>
         struct asin_coeff_helper;
 
         template<typename T, size_t i>
-        struct asin_coeff_helper<T, i, std::enable_if_t<(i & 1) == 1>> {
+        requires((i & 1) == 1)
+        struct asin_coeff_helper<T, i> {
             using type = makefraction_t<T,
                 factorial_t<T, i - 1>,
                 typename T::template mul_t<
@@ -3355,7 +3381,8 @@ namespace aerobus {
         };
 
         template<typename T, size_t i>
-        struct asin_coeff_helper<T, i, std::enable_if_t<(i & 1) == 0>> {
+        requires((i & 1) == 0)
+        struct asin_coeff_helper<T, i> {
             using type = typename FractionField<T>::zero;
         };
 
@@ -3374,11 +3401,12 @@ namespace aerobus {
         template<typename T>
         struct lnp1_coeff<T, 0> { using type = typename FractionField<T>::zero; };
 
-        template<typename T, size_t i, typename E = void>
+        template<typename T, size_t i>
         struct asinh_coeff_helper;
 
         template<typename T, size_t i>
-        struct asinh_coeff_helper<T, i, std::enable_if_t<(i & 1) == 1>> {
+        requires((i & 1) == 1)
+        struct asinh_coeff_helper<T, i> {
             using type = makefraction_t<T,
                 typename T::template mul_t<
                     alternate_t<T, i / 2>,
@@ -3395,7 +3423,8 @@ namespace aerobus {
         };
 
         template<typename T, size_t i>
-        struct asinh_coeff_helper<T, i, std::enable_if_t<(i & 1) == 0>> {
+        requires((i & 1) == 0)
+        struct asinh_coeff_helper<T, i> {
             using type = typename FractionField<T>::zero;
         };
 
@@ -3404,11 +3433,12 @@ namespace aerobus {
             using type = typename asinh_coeff_helper<T, i>::type;
         };
 
-        template<typename T, size_t i, typename E = void>
+        template<typename T, size_t i>
         struct atanh_coeff_helper;
 
         template<typename T, size_t i>
-        struct atanh_coeff_helper<T, i, std::enable_if_t<(i & 1) == 1>> {
+        requires((i & 1) == 1)
+        struct atanh_coeff_helper<T, i> {
             // 1/i
             using type = typename FractionField<T>:: template val<
                 typename T::one,
@@ -3416,7 +3446,8 @@ namespace aerobus {
         };
 
         template<typename T, size_t i>
-        struct atanh_coeff_helper<T, i, std::enable_if_t<(i & 1) == 0>> {
+        requires((i & 1) == 0)
+        struct atanh_coeff_helper<T, i> {
             using type = typename FractionField<T>::zero;
         };
 
@@ -3425,17 +3456,19 @@ namespace aerobus {
             using type = typename atanh_coeff_helper<T, i>::type;
         };
 
-        template<typename T, size_t i, typename E = void>
+        template<typename T, size_t i>
         struct tan_coeff_helper;
 
         template<typename T, size_t i>
-        struct tan_coeff_helper<T, i, std::enable_if_t<(i % 2) == 0>> {
+        requires((i % 2) == 0)
+        struct tan_coeff_helper<T, i> {
             using type = typename FractionField<T>::zero;
         };
 
         template<typename T, size_t i>
-        struct tan_coeff_helper<T, i, std::enable_if_t<(i % 2) != 0>> {
-        private:
+        requires((i % 2) != 0)
+        struct tan_coeff_helper<T, i> {
+         private:
             // 4^((i+1)/2)
             using _4p = typename FractionField<T>::template inject_t<
                 pow_t<typename T::template inject_constant_t<4>, (i + 1) / 2>>;
@@ -3453,7 +3486,7 @@ namespace aerobus {
                 >
                 >
             >;
-        public:
+         public:
             using type = typename FractionField<T>::template div_t<dividend,
                 typename FractionField<T>::template inject_t<factorial_t<T, i + 1>>>;
         };
@@ -3463,17 +3496,19 @@ namespace aerobus {
             using type = typename tan_coeff_helper<T, i>::type;
         };
 
-        template<typename T, size_t i, typename E = void>
+        template<typename T, size_t i>
         struct tanh_coeff_helper;
 
         template<typename T, size_t i>
-        struct tanh_coeff_helper<T, i, std::enable_if_t<(i % 2) == 0>> {
+        requires((i % 2) == 0)
+        struct tanh_coeff_helper<T, i> {
             using type = typename FractionField<T>::zero;
         };
 
         template<typename T, size_t i>
-        struct tanh_coeff_helper<T, i, std::enable_if_t<(i % 2) != 0>> {
-        private:
+        requires((i % 2) != 0)
+        struct tanh_coeff_helper<T, i> {
+         private:
             using _4p = typename FractionField<T>::template inject_t<
                 pow_t<typename T::template inject_constant_t<4>, (i + 1) / 2>>;
             using _4pm1 = typename FractionField<T>::template sub_t<_4p, typename FractionField<T>::one>;
@@ -3483,7 +3518,7 @@ namespace aerobus {
                     typename FractionField<T>::template mul_t<
                         _4pm1,
                         bernoulli_t<T, (i + 1)>>>;
-        public:
+         public:
             using type = typename FractionField<T>::template div_t<dividend,
                 typename FractionField<T>::template inject_t<factorial_t<T, i + 1>>>;
         };
@@ -3740,7 +3775,7 @@ namespace aerobus {
 
     // Bernstein
     namespace internal {
-        template<size_t i, size_t m, typename I, typename E = void>
+        template<size_t i, size_t m, typename I>
         struct bernstein_helper {};
 
         template<typename I>
@@ -3749,8 +3784,8 @@ namespace aerobus {
         };
 
         template<size_t i, size_t m, typename I>
-        struct bernstein_helper<i, m, I, std::enable_if_t<
-                    (m > 0) && (i == 0)>> {
+        requires((m > 0) && (i == 0))
+        struct bernstein_helper<i, m, I> {
          private:
             using P = polynomial<I>;
          public:
@@ -3760,8 +3795,8 @@ namespace aerobus {
         };
 
         template<size_t i, size_t m, typename I>
-        struct bernstein_helper<i, m, I, std::enable_if_t<
-                    (m > 0) && (i == m)>> {
+        requires((m > 0) && (i == m))
+        struct bernstein_helper<i, m, I> {
          private:
             using P = polynomial<I>;
          public:
@@ -3771,8 +3806,8 @@ namespace aerobus {
         };
 
         template<size_t i, size_t m, typename I>
-        struct bernstein_helper<i, m, I, std::enable_if_t<
-                    (m > 0) && (i > 0) && (i < m)>> {
+        requires((m > 0) && (i > 0) && (i < m))
+        struct bernstein_helper<i, m, I> {
          private:
             using P = polynomial<I>;
          public:
