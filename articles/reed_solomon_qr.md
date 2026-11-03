@@ -138,6 +138,7 @@ What the numbers say:
 ## Limits
 
 - **Compile time.** The example compiles in about 4 s with GCC and 7 s with clang; the 254 field products, the degree-10 generator and the 64 KiB product table are the cost. A generator with 32 parity bytes takes longer.
+- **Not with MSVC.** GCC and clang compile the example; MSVC did not finish within 13 minutes in CI, so the example is not built with MSVC.
 - **Template depth.** The recursion over 255 powers needs `-ftemplate-depth=30000` with GCC and clang, as set by the example's CMake target.
 - **Not for cryptography.** Table lookups are not constant-time. Use this for error correction, not for AES or secret sharing in production.
 - **Speed is the decoder's.** Aerobus builds and checks the field; the run-time throughput is whatever decoder you write on top. Schifra's decoder is still faster on 255-byte blocks.
