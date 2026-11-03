@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.0.0 (unreleased)
+## 2.0.0 (2026-11-03)
 
 Version 2.0 fixes the defects found by the code review of commit `f7e0c79` (November 2026). It breaks the API of 1.x.
 
@@ -52,6 +52,11 @@ After `using namespace aerobus`, the Taylor series `exp`, `sin`, `cos`, `tan`, `
 - CMake: `aerobus::aerobus` target, install rules and `find_package(Aerobus)`, options `AEROBUS_BUILD_TESTS`, `AEROBUS_BUILD_EXAMPLES`, `AEROBUS_BUILD_BENCHMARKS`; OpenMP only for the benchmarks.
 - Tests split by topic; compile-fail tests for every static assertion; ring axiom tests; examples, README blocks, the generated Conway table and the CUDA fp16 host code checked by CTest.
 - `tools/generate_conway.py`, which regenerates the Conway table.
+- Example `examples/reed_solomon.cpp`: a Reed-Solomon codec over `GaloisField<2, 8>` (the QR code field) whose tables and generator are computed and checked at compile time, with the article [Reed-Solomon with a field the compiler builds and proves](articles/reed_solomon_qr.md), whose code blocks are compiled by CTest. Not built with MSVC, which does not finish compiling it.
+
+### Changed
+
+- CI: GCC 14, clang 18, macOS and MSVC test jobs, sanitizers, lint (cpplint, cppcheck, Conway table check) and a documentation job whose Doxygen warnings are errors; pushes are built on `main` only, pull requests once. The paper build is removed.
 
 ## 1.5.2 and earlier
 
