@@ -10,10 +10,13 @@ int main() {
     using R = polynomial<F3>::val<F3::one, F3::val<2>>;
     using D = pi64::derive_t<P>;
     using Z17 = Quotient<i64, i64::val<17>>;
+    using X7 = polynomial<zpz<2>>::sub_t<polynomial<zpz<2>>::monomial_t<zpz<2>::one, 7>, polynomial<zpz<2>>::one>;
+    using G = factorization_t<X7>;
     double x = P::eval(0.5) + P::compensated_eval(0.5) + Q::eval(0.25) + D::eval(1.0)
         + aerobus::sin<i64, 7>::eval(0.1) + aerobus::tan<i64, 5>::compensated_eval(0.1);
     constexpr auto c = P::coeff_at_t<5>::v + R::coeff_at_t<3>::v + pi64::zero::coeff_at_t<2>::v;
     return static_cast<int>(x) + static_cast<int>(c)
         + Z17::div_t<Z17::one, Z17::inject_constant_t<2>>::type::v
-        + static_cast<int>(pi64::mul_t<P, P>::degree);
+        + static_cast<int>(pi64::mul_t<P, P>::degree) + static_cast<int>(G::factors::length)
+        + static_cast<int>(is_irreducible_v<R>) + static_cast<int>(squarefree_t<R>::factors::length);
 }

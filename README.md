@@ -199,6 +199,27 @@ using F9 = aerobus::GaloisField<3, 2>;  // the same construction, for p = 3 and 
 static_assert(F4::is_field && F9::is_field);
 ```
 
+### Factorization over finite fields
+
+Polynomials with coefficients in a finite field can be tested for irreducibility and factored, at compile time. The finite fields are `zpz<p>` with `p` prime, the quotients of integers by a prime, and `Quotient<polynomial<zpz<p>>, X, true>`, which includes `GaloisField<p, n>` (concept `IsFiniteField`):
+
+```cpp
+using F2 = aerobus::zpz<2>;
+using P = aerobus::make_int_polynomial_t<F2, 1, 0, 0, 0, 0, 0, 0, 1>;  // x^7 + 1
+using F = aerobus::factorization_t<P>;  // (x + 1)(x^3 + x + 1)(x^3 + x^2 + 1)
+static_assert(F::factors::length == 3);
+static_assert(std::is_same_v<F::type, P>);  // the product of the factors
+static_assert(aerobus::is_irreducible_v<aerobus::ConwayPolynomial<2, 8>::type>);
+```
+
+- `is_irreducible_v<P>`: Rabin's test.
+- `squarefree_t<P>`: squarefree decomposition over any field, including `q64` (Musser's algorithm, with p-th roots in characteristic p).
+- `factorization_t<P>`: squarefree decomposition, distinct degree factorization, then Cantor-Zassenhaus with a deterministic sequence of candidates instead of random ones.
+
+The result is a `factorization<unit, type_list<factor<F, e>...>>`. `unit` is the leading coefficient, the factors are monic and sorted, so that equal factorizations are the same type, and the member `type` is their product. `field_order_v`, `characteristic_v` and `field_element_t<F, i>` describe and enumerate the field. Exponents such as x^(q^d) are reached by repeated q-th powers, never computed as integers. The cost is compile time: factoring x^15 - 1 over GF(4) takes a few seconds and about 1 GB of compiler memory.
+
+The example [`examples/bch_qr_format.cpp`](examples/bch_qr_format.cpp) factors x^15 - 1 over F2, multiplies the minimal polynomials of alpha .. alpha^6 into the generator of the BCH(15, 5) code that protects the format information of QR codes (0x537), and rebuilds the 32 format words of the standard.
+
 ### Taylor series
 
 `Aerobus` provides Taylor expansions of known functions. They are all templates in two parameters: the integers (`typename`) and the degree of expansion (`size_t`). Coefficients live in `FractionField<Integers>`.
