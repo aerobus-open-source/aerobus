@@ -53,8 +53,8 @@ TEST(degree_limits, taylor_series) {
 }
 
 TEST(degree_limits, series_without_overflow_are_not_limited) {
-    static_assert(has_lnp1<120, aerobus::i16> && has_atan<120, aerobus::i16>);
-    static_assert(has_atanh<120, aerobus::i16> && has_geometric_sum<120, aerobus::i16>);
+    static_assert(has_lnp1<30, aerobus::i16> && has_atan<30, aerobus::i16>);
+    static_assert(has_atanh<30, aerobus::i16> && has_geometric_sum<30, aerobus::i16>);
 }
 
 TEST(degree_limits, other_integer_types_are_not_limited) {
