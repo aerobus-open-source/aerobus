@@ -106,7 +106,7 @@ endif()
 
 # the C++ blocks of each article compile, as one program
 if(Python3_Interpreter_FOUND AND NOT MSVC)
-  foreach(article reed_solomon_qr)
+  foreach(article reed_solomon_qr bch_qr_format)
     add_test(NAME article.${article}
       COMMAND "${Python3_EXECUTABLE}" -I "${PROJECT_SOURCE_DIR}/tools/check_article.py"
               "${PROJECT_SOURCE_DIR}/articles/${article}.md" "${CMAKE_CXX_COMPILER}")
