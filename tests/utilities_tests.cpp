@@ -123,11 +123,11 @@ TEST(utilities, is_prime_matches_trial_division_below_1000) {
 }
 
 TEST(utilities, alternate) {
-    constexpr int a0 = internal::alternate<i32, 0>::value;
+    constexpr int a0 = alternate_v<i32, 0>;
     EXPECT_EQ(a0, 1);
-    constexpr int a1 = internal::alternate<i32, 1>::value;
+    constexpr int a1 = alternate_v<i32, 1>;
     EXPECT_EQ(a1, -1);
-    constexpr int a2 = internal::alternate<i32, 2>::value;
+    constexpr int a2 = alternate_v<i32, 2>;
     EXPECT_EQ(a2, 1);
 }
 
