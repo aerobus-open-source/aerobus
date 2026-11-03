@@ -218,7 +218,7 @@ static_assert(aerobus::is_irreducible_v<aerobus::ConwayPolynomial<2, 8>::type>);
 
 The result is a `factorization<unit, type_list<factor<F, e>...>>`. `unit` is the leading coefficient, the factors are monic and sorted, so that equal factorizations are the same type, and the member `type` is their product. `field_order_v`, `characteristic_v` and `field_element_t<F, i>` describe and enumerate the field. Exponents such as x^(q^d) are reached by repeated q-th powers, never computed as integers. The cost is compile time: factoring x^15 - 1 over GF(4) takes a few seconds and about 1 GB of compiler memory.
 
-The example [`examples/bch_qr_format.cpp`](examples/bch_qr_format.cpp) factors x^15 - 1 over F2, multiplies the minimal polynomials of alpha .. alpha^6 into the generator of the BCH(15, 5) code that protects the format information of QR codes (0x537), and rebuilds the 32 format words of the standard.
+The example [`examples/bch_qr_format.cpp`](examples/bch_qr_format.cpp) factors x^15 - 1 over F2, multiplies the minimal polynomials of alpha .. alpha^6 into the generator of the BCH(15, 5) code that protects the format information of QR codes (0x537), and rebuilds the 32 format words of the standard. The article [The QR format code is a factor of x¹⁵ − 1](articles/bch_qr_format.md) walks through it.
 
 ### Taylor series
 
