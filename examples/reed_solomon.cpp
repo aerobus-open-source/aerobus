@@ -5,6 +5,8 @@
 // The compiler computes the powers of alpha (the class of x), hence the exp/log tables, and the
 // generator polynomial (x - alpha^0)(x - alpha^1)...(x - alpha^9) as a value of polynomial<GF(256)>.
 // At run time, encoding and decoding only read the tables.
+//
+// Builds with GCC and clang. MSVC does not finish compiling it in reasonable time (stopped after 13 minutes).
 #include <array>
 #include <cstdint>
 #include <cstdio>
