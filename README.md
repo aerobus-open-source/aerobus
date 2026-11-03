@@ -19,6 +19,10 @@ Given these functions are "generated" at compile time and do not rely on inline 
 
 Version 2.0 breaks the API of 1.x: see [CHANGELOG.md](CHANGELOG.md).
 
+Articles:
+
+- [Reed-Solomon with a field the compiler builds and proves](articles/reed_solomon_qr.md): QR code error correction with GF(256) computed and checked at compile time, compared with zxing-cpp and Schifra.
+
 ## HOW TO
 
 - Clone or download the repository somewhere, or just download `src/aerobus.h`

@@ -1,8 +1,9 @@
 name: C/C++ CI
 
 on:
+  # branches with a pull request are tested through the pull_request event only
   push:
-    branches: ["**"]
+    branches: [main]
   pull_request:
     branches: ["**"]
 
@@ -73,12 +74,3 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y doxygen graphviz
       - name: doxygen (warnings are errors)
         run: make doc
-
-  paper:
-    runs-on: ubuntu-latest
-    container:
-      image: comua/aerobus-open-source:build-1.3
-    steps:
-      - uses: actions/checkout@v5
-      - name: paper
-        run: make clean paper
