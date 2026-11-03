@@ -61,3 +61,19 @@ TEST(degree_limits, other_integer_types_are_not_limited) {
     // no measured limit for a user-defined integer ring: the alias is not constrained
     static_assert(has_legendre<3, aerobus::integers<int8_t>>);
 }
+
+template<aerobus::string_literal S>
+using BS = aerobus::bigint::from_string_t<S>;
+
+TEST(degree_limits, bigint_lifts_the_limits) {
+    // legendre<21> is the limit in i64; with bigint the exact coefficients of degree 30 are reachable
+    using P30 = kp::legendre<30, aerobus::bigint>;
+    using QB = aerobus::FractionField<aerobus::bigint>;
+    static_assert(QB::eq_v<P30::coeff_at_t<30>,
+                           QB::val<BS<"7391536347803839">, BS<"67108864">>>);
+    static_assert(QB::eq_v<P30::coeff_at_t<0>,
+                           QB::val<BS<"-9694845">, BS<"67108864">>>);
+    // exp<i64, 20> is the limit; 1/30! needs 108 bits
+    static_assert(QB::eq_v<aerobus::exp<aerobus::bigint, 30>::coeff_at_t<30>,
+                           QB::val<BS<"1">, BS<"265252859812191058636308480000000">>>);
+}
