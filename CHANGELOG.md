@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Concept `coefficients_fit<Family, deg, I>`, required by every predefined polynomial family and Taylor series. A degree whose coefficients overflow `i16`, `i32` or `i64` is now a constraint failure naming the concept, instead of an overflow error inside the header, and can be tested with a requires-expression. The limits were measured; `tests/degree_limits_tests.cpp` checks that those of the Taylor series are exact.
+
 ## 2.0.0 (2026-11-03)
 
 Version 2.0 fixes the defects found by the code review of commit `f7e0c79` (November 2026). It breaks the API of 1.x.
