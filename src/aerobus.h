@@ -98,7 +98,8 @@ namespace aerobus {
     /// Values are types too, with `enclosing_type` (R) and `is_zero_t`, and should provide `to_string()`.
     /// Built-in rings keep one type per value, so `std::is_same` agrees with `eq_t`; user rings need not.
     /// IsEuclideanDomain adds `div_t`, `mod_t` (with `a = div_t<a, b> * b + mod_t<a, b>`), `gcd_t`, `pos_t`
-    /// and `is_euclidean_domain`; IsField adds `is_field`. A ring without zero divisors may declare `is_integral_domain` (assumed true when absent),
+    /// and `is_euclidean_domain`; IsField adds `is_field`.
+    /// A ring without zero divisors may declare `is_integral_domain` (assumed true when absent),
     /// which FractionField requires.
     template <typename R>
     concept IsRing = requires {
