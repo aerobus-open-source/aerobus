@@ -22,6 +22,13 @@ target_link_libraries(lib_tests PRIVATE aerobus aerobus_dev_flags GTest::gtest_m
 target_compile_definitions(lib_tests PRIVATE AEROBUS_CMAKE_PROJECT_VERSION="${PROJECT_VERSION}")
 gtest_discover_tests(lib_tests)
 
+# degree limits of the Taylor series, checked at compile time; MSVC does not finish compiling them
+if(NOT MSVC)
+  add_executable(degree_limits_tests degree_limits_tests.cpp)
+  target_link_libraries(degree_limits_tests PRIVATE aerobus aerobus_dev_flags GTest::gtest_main)
+  gtest_discover_tests(degree_limits_tests)
+endif()
+
 # compile_fail/<name>.cpp must not compile, and the compiler output must match <regex>
 # (the message of the static_assert that rejects it)
 function(aerobus_compile_fail_test name regex)
@@ -43,6 +50,7 @@ aerobus_compile_fail_test(fraction_zero_by_zero "division by zero in FractionFie
 aerobus_compile_fail_test(fraction_one_by_zero "division by zero in FractionField")
 aerobus_compile_fail_test(fraction_field_of_zero_divisors "FractionField needs an integral domain")
 aerobus_compile_fail_test(conway_missing "no Conway polynomial for this")
+aerobus_compile_fail_test(legendre_degree_overflow "coefficients_fit")
 aerobus_compile_fail_test(polynomial_horner_reduction_is_private "is private within this context|is a private member|cannot access private")
 
 # install this build tree, then build a consumer through find_package(Aerobus)
