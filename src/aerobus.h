@@ -3254,6 +3254,51 @@ namespace aerobus {
         };
     }
 
+    namespace internal {
+        /// highest degree whose coefficients fit in I, by family; no limit for other integer types
+        template<typename Family, typename I>
+        inline constexpr size_t max_degree = static_cast<size_t>(-1);
+
+#define AEROBUS_MAX_DEGREE(family, d16, d32, d64) \
+        struct family##_family {}; \
+        template<> inline constexpr size_t max_degree<family##_family, i16> = d16; \
+        template<> inline constexpr size_t max_degree<family##_family, i32> = d32; \
+        template<> inline constexpr size_t max_degree<family##_family, i64> = d64;
+        AEROBUS_MAX_DEGREE(chebyshev_T, 13, 26, 52)
+        AEROBUS_MAX_DEGREE(chebyshev_U, 13, 26, 51)
+        AEROBUS_MAX_DEGREE(laguerre, 7, 10, 14)
+        AEROBUS_MAX_DEGREE(hermite_prob, 11, 19, 32)
+        AEROBUS_MAX_DEGREE(hermite_phys, 8, 14, 25)
+        AEROBUS_MAX_DEGREE(legendre, 7, 11, 21)
+        AEROBUS_MAX_DEGREE(bernoulli, 12, 22, 34)
+        AEROBUS_MAX_DEGREE(bessel, 6, 10, 17)
+        AEROBUS_MAX_DEGREE(touchard, 9, 15, 25)
+        AEROBUS_MAX_DEGREE(bernstein, 11, 22, 43)
+        AEROBUS_MAX_DEGREE(exp, 7, 12, 20)
+        AEROBUS_MAX_DEGREE(expm1, 7, 12, 20)
+        AEROBUS_MAX_DEGREE(sin, 8, 12, 20)
+        AEROBUS_MAX_DEGREE(sinh, 8, 12, 20)
+        AEROBUS_MAX_DEGREE(cos, 7, 13, 21)
+        AEROBUS_MAX_DEGREE(cosh, 7, 13, 21)
+        AEROBUS_MAX_DEGREE(asin, 8, 12, 20)
+        AEROBUS_MAX_DEGREE(asinh, 8, 12, 20)
+        AEROBUS_MAX_DEGREE(tan, 6, 12, 20)
+        AEROBUS_MAX_DEGREE(tanh, 6, 12, 20)
+#undef AEROBUS_MAX_DEGREE
+    }  // namespace internal
+
+    /// @brief the coefficients of the member of degree deg of Family fit in the integers I
+    ///
+    /// The limits are measured: the highest degree whose exact computation does not overflow i16, i32 or i64.
+    /// Predefined polynomial families and Taylor series require it, so that a too high degree is a constraint
+    /// failure naming this concept instead of an overflow deep inside the header.
+    /// Integer types other than i16, i32 and i64 are not limited.
+    /// @tparam Family internal tag of the family
+    /// @tparam deg degree
+    /// @tparam I integers in which the coefficients are computed
+    template<typename Family, size_t deg, typename I>
+    concept coefficients_fit = deg <= internal::max_degree<Family, I>;
+
     /// @brief Taylor polynomial of degree deg: sum of coeff_at<T, i>::type x^i for i = 0..deg
     ///
     /// coeff_at must be a template in (Integers, size_t index) exposing `type`, a value of FractionField<T>
@@ -3542,12 +3587,14 @@ namespace aerobus {
     /// @tparam Integers Ring type (for example i64)
     /// @tparam deg taylor approximation degree
     template<typename Integers, size_t deg>
+    requires coefficients_fit<internal::exp_family, deg, Integers>
     using exp = taylor<Integers, internal::exp_coeff, deg>;
 
     /// @brief \f$e^x - 1\f$
     /// @tparam T Ring type (for example i64)
     /// @tparam deg taylor approximation degree
     template<typename Integers, size_t deg>
+    requires coefficients_fit<internal::expm1_family, deg, Integers>
     using expm1 = typename polynomial<FractionField<Integers>>::template sub_t<
         exp<Integers, deg>,
         typename polynomial<FractionField<Integers>>::one>;
@@ -3568,12 +3615,14 @@ namespace aerobus {
     /// @tparam Integers Ring type (for example i64)
     /// @tparam deg taylor approximation degree
     template<typename Integers, size_t deg>
+    requires coefficients_fit<internal::sin_family, deg, Integers>
     using sin = taylor<Integers, internal::sin_coeff, deg>;
 
     /// @brief \f$\sinh(x)\f$
     /// @tparam Integers Ring type (for example i64)
     /// @tparam deg taylor approximation degree
     template<typename Integers, size_t deg>
+    requires coefficients_fit<internal::sinh_family, deg, Integers>
     using sinh = taylor<Integers, internal::sh_coeff, deg>;
 
     /// @brief \f$\cosh(x)\f$
@@ -3581,6 +3630,7 @@ namespace aerobus {
     /// @tparam Integers Ring type (for example i64)
     /// @tparam deg taylor approximation degree
     template<typename Integers, size_t deg>
+    requires coefficients_fit<internal::cosh_family, deg, Integers>
     using cosh = taylor<Integers, internal::cosh_coeff, deg>;
 
     /// @brief \f$\cos(x)\f$
@@ -3588,6 +3638,7 @@ namespace aerobus {
     /// @tparam Integers Ring type (for example i64)
     /// @tparam deg taylor approximation degree
     template<typename Integers, size_t deg>
+    requires coefficients_fit<internal::cos_family, deg, Integers>
     using cos = taylor<Integers, internal::cos_coeff, deg>;
 
     /// @brief \f$\frac{1}{1-x}\f$
@@ -3602,6 +3653,7 @@ namespace aerobus {
     /// @tparam Integers Ring type (for example i64)
     /// @tparam deg taylor approximation degree
     template<typename Integers, size_t deg>
+    requires coefficients_fit<internal::asin_family, deg, Integers>
     using asin = taylor<Integers, internal::asin_coeff, deg>;
 
     /// @brief \f$\mathrm{arcsinh}(x)\f$
@@ -3609,6 +3661,7 @@ namespace aerobus {
     /// @tparam Integers Ring type (for example i64)
     /// @tparam deg taylor approximation degree
     template<typename Integers, size_t deg>
+    requires coefficients_fit<internal::asinh_family, deg, Integers>
     using asinh = taylor<Integers, internal::asinh_coeff, deg>;
 
     /// @brief \f$\mathrm{arctanh}(x)\f$
@@ -3623,6 +3676,7 @@ namespace aerobus {
     /// @tparam Integers Ring type (for example i64)
     /// @tparam deg taylor approximation degree
     template<typename Integers, size_t deg>
+    requires coefficients_fit<internal::tan_family, deg, Integers>
     using tan = taylor<Integers, internal::tan_coeff, deg>;
 
     /// @brief \f$\tanh(x)\f$
@@ -3630,6 +3684,7 @@ namespace aerobus {
     /// @tparam Integers Ring type (for example i64)
     /// @tparam deg taylor approximation degree
     template<typename Integers, size_t deg>
+    requires coefficients_fit<internal::tanh_family, deg, Integers>
     using tanh = taylor<Integers, internal::tanh_coeff, deg>;
 }  // namespace aerobus
 
@@ -4085,6 +4140,7 @@ namespace aerobus {
          * @tparam integer rings (defaults to aerobus::i64)
          */
         template <size_t deg, typename I = aerobus::i64>
+        requires coefficients_fit<internal::chebyshev_T_family, deg, I>
         using chebyshev_T = typename internal::chebyshev_helper<1, deg, I>::type;
 
         /** @brief Chebyshev polynomials of second kind
@@ -4097,6 +4153,7 @@ namespace aerobus {
          * @tparam integer rings (defaults to aerobus::i64)
          */
         template <size_t deg, typename I = aerobus::i64>
+        requires coefficients_fit<internal::chebyshev_U_family, deg, I>
         using chebyshev_U = typename internal::chebyshev_helper<2, deg, I>::type;
 
         /** @brief Laguerre polynomials
@@ -4109,6 +4166,7 @@ namespace aerobus {
          * @tparam I Integers ring (defaults to aerobus::i64)
          */
         template <size_t deg, typename I = aerobus::i64>
+        requires coefficients_fit<internal::laguerre_family, deg, I>
         using laguerre = typename internal::laguerre_helper<deg, I>::type;
 
         /** @brief Hermite polynomials - probabilist form
@@ -4118,6 +4176,7 @@ namespace aerobus {
          * @tparam deg degree of polynomial
          */
         template <size_t deg, typename I = aerobus::i64>
+        requires coefficients_fit<internal::hermite_prob_family, deg, I>
         using hermite_prob = typename internal::hermite_helper<deg, hermite_kind::probabilist, I>::type;
 
         /** @brief Hermite polynomials - physicist form
@@ -4127,6 +4186,7 @@ namespace aerobus {
          * @tparam deg degree of polynomial
          */
         template <size_t deg, typename I = aerobus::i64>
+        requires coefficients_fit<internal::hermite_phys_family, deg, I>
         using hermite_phys = typename internal::hermite_helper<deg, hermite_kind::physicist, I>::type;
 
         /** @brief Bernstein polynomials
@@ -4140,6 +4200,7 @@ namespace aerobus {
          * @tparam I Integers ring (defaults to aerobus::i64)
          */
         template<size_t i, size_t m, typename I = aerobus::i64>
+        requires coefficients_fit<internal::bernstein_family, m, I>
         using bernstein = typename internal::bernstein_helper<i, m, I>::type;
 
         /** @brief Legendre polynomials
@@ -4152,6 +4213,7 @@ namespace aerobus {
          * @tparam I Integers Ring (defaults to aerobus::i64)
          */
         template<size_t deg, typename I = aerobus::i64>
+        requires coefficients_fit<internal::legendre_family, deg, I>
         using legendre = typename internal::legendre_helper<deg, I>::type;
 
         /** @brief Bernoulli polynomials
@@ -4164,6 +4226,7 @@ namespace aerobus {
          * @tparam I Integers ring (defaults to aerobus::i64)
          */
         template<size_t deg, typename I = aerobus::i64>
+        requires coefficients_fit<internal::bernoulli_family, deg, I>
         using bernoulli = taylor<I, internal::bernoulli_coeff<deg>::template inner, deg>;
 
         /// @brief All One polynomials
@@ -4183,6 +4246,7 @@ namespace aerobus {
         /// @tparam I ring for coefficients, defaults to aerobus::i64
         /// @tparam deg degree of polynomial
         template<size_t deg, typename I = aerobus::i64>
+        requires coefficients_fit<internal::bessel_family, deg, I>
         using bessel = typename internal::BesselHelper<deg, I>::type;
 
         /// @brief Touchard polynomials
@@ -4193,6 +4257,7 @@ namespace aerobus {
         /// @tparam I ring for coefficients, defaults to aerobus::i64
         /// @tparam deg degree of polynomial
         template<size_t deg, typename I = aerobus::i64>
+        requires coefficients_fit<internal::touchard_family, deg, I>
         using touchard = typename internal::touchard_helper<I, deg>::type;
     }  // namespace known_polynomials
 }  // namespace aerobus

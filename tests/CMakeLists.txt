@@ -3,6 +3,7 @@ include(GoogleTest)
 add_executable(lib_tests
   api_tests.cpp
   concepts_tests.cpp
+  degree_limits_tests.cpp
   embedding_tests.cpp
   evaluation_tests.cpp
   fraction_field_tests.cpp
@@ -43,6 +44,7 @@ aerobus_compile_fail_test(fraction_zero_by_zero "division by zero in FractionFie
 aerobus_compile_fail_test(fraction_one_by_zero "division by zero in FractionField")
 aerobus_compile_fail_test(fraction_field_of_zero_divisors "FractionField needs an integral domain")
 aerobus_compile_fail_test(conway_missing "no Conway polynomial for this")
+aerobus_compile_fail_test(legendre_degree_overflow "coefficients_fit")
 aerobus_compile_fail_test(polynomial_horner_reduction_is_private "is private within this context|is a private member|cannot access private")
 
 # install this build tree, then build a consumer through find_package(Aerobus)
