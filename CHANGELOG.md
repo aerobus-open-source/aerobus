@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 2.1.0 (2026-11-04)
+
+Version 2.1 adds factorization over finite fields and arbitrary precision integers. It is compatible with 2.0, except for the internal `value` members listed under Changed.
 
 ### Added
 
