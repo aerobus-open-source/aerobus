@@ -5,7 +5,7 @@
 /// @brief major version of aerobus (also read by CMakeLists.txt)
 #define AEROBUS_VERSION_MAJOR 2
 /// @brief minor version of aerobus
-#define AEROBUS_VERSION_MINOR 0
+#define AEROBUS_VERSION_MINOR 1
 /// @brief patch version of aerobus
 #define AEROBUS_VERSION_PATCH 0
 
