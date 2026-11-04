@@ -52,3 +52,9 @@ TEST(embedding, quotient_embeds_its_canonical_representative) {
     using sum = Z17::add_t<Z17::inject_constant_t<16>, Z17::inject_constant_t<16>>;
     EXPECT_TRUE((std::is_same_v<Embed<Z17, i64>::type<sum>, i64::val<15>>));
 }
+
+TEST(embedding, integers_into_bigint) {
+    static_assert(std::is_same_v<Embed<i64, bigint>::type<i64::val<-5>>, bigint::inject_constant_t<-5>>);
+    static_assert(std::is_same_v<Embed<i32, bigint>::type<i32::val<7>>, bigint::inject_constant_t<7>>);
+    static_assert(std::is_same_v<Embed<i64, bigint>::type<i64::val<INT64_MIN>>, bigint::inject_constant_t<INT64_MIN>>);
+}
