@@ -601,10 +601,41 @@ namespace aerobus {
         using type_at_t = typename type_at<i, Ts...>::type;
 
 
-        /// @brief trial division by 2, 3 and the numbers 6k +- 1
+        // a * b mod m without overflow: direct below 2^32, by doubling above
+        constexpr uint64_t mul_mod(uint64_t a, uint64_t b, uint64_t m) {
+            if (m <= (uint64_t{1} << 32)) {
+                return (a % m) * (b % m) % m;
+            }
+            uint64_t result = 0;
+            a %= m;
+            while (b > 0) {
+                if (b & 1U) {
+                    result = result >= m - a ? result - (m - a) : result + a;
+                }
+                a = a >= m - a ? a - (m - a) : a + a;
+                b >>= 1;
+            }
+            return result;
+        }
+
+        constexpr uint64_t pow_mod(uint64_t base, uint64_t exponent, uint64_t m) {
+            uint64_t result = 1 % m;
+            base %= m;
+            while (exponent > 0) {
+                if (exponent & 1U) {
+                    result = mul_mod(result, base, m);
+                }
+                base = mul_mod(base, base, m);
+                exponent >>= 1;
+            }
+            return result;
+        }
+
+        /// @brief primality: trial division by 2, 3 and the numbers 6k +- 1 below 2^32; above, Miller-Rabin
+        /// with the first 12 primes as bases, which is exact for every n < 2^64
         /// @param n number to test
         /// @return true iff n is prime
-        constexpr bool is_prime_impl(size_t n) {
+        constexpr bool is_prime_impl(uint64_t n) {
             if (n < 2) {
                 return false;
             }
@@ -614,8 +645,34 @@ namespace aerobus {
             if (n % 2 == 0 || n % 3 == 0) {
                 return false;
             }
-            for (size_t i = 5; i <= n / i; i += 6) {
-                if (n % i == 0 || n % (i + 2) == 0) {
+            if (n < (uint64_t{1} << 32)) {
+                for (uint64_t i = 5; i <= n / i; i += 6) {
+                    if (n % i == 0 || n % (i + 2) == 0) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            uint64_t d = n - 1;
+            int r = 0;
+            while (d % 2 == 0) {
+                d /= 2;
+                ++r;
+            }
+            for (uint64_t a : {2U, 3U, 5U, 7U, 11U, 13U, 17U, 19U, 23U, 29U, 31U, 37U}) {
+                uint64_t x = pow_mod(a, d, n);
+                if (x == 1 || x == n - 1) {
+                    continue;
+                }
+                bool composite = true;
+                for (int i = 1; i < r; ++i) {
+                    x = mul_mod(x, x, n);
+                    if (x == n - 1) {
+                        composite = false;
+                        break;
+                    }
+                }
+                if (composite) {
                     return false;
                 }
             }
@@ -764,9 +821,33 @@ namespace aerobus {
 // quotient rings
 namespace aerobus {
     namespace internal {
-        /// @brief true for the integer rings (i16, i32, i64), whose remainder has the sign of the dividend
+        /// @brief true for the integer rings (i16, i32, i64, bigint), whose remainder has the sign of the dividend
         template<typename Ring>
         struct is_integers_ring : std::false_type {};
+
+        // |X| fits in 64 bits, for values of integers<Int> (always) and bigint (at most 2 digits)
+        template<typename X>
+        constexpr bool integer_fits_64_bits() {
+            if constexpr (requires { X::v; }) {
+                return true;
+            } else {
+                return X::size <= 2;
+            }
+        }
+
+        // |X|, when it fits in 64 bits
+        template<typename X>
+        constexpr uint64_t integer_magnitude() {
+            if constexpr (requires { X::v; }) {
+                return X::v < 0 ? uint64_t{0} - static_cast<uint64_t>(X::v) : static_cast<uint64_t>(X::v);
+            } else {
+                uint64_t magnitude = 0;
+                for (size_t i = X::size; i > 0; --i) {
+                    magnitude = (magnitude << 32) | X::value.d[i - 1];
+                }
+                return magnitude;
+            }
+        }
 
         // representative of V modulo X: the remainder, moved into [0, |X|) for integer rings
         template<typename Ring, typename X, typename V>
@@ -779,10 +860,12 @@ namespace aerobus {
         struct quotient_representative<Ring, X, V> {
          private:
             using r = typename Ring::template mod_t<V, X>;
-            using abs_x = std::conditional_t<(X::v < 0), typename Ring::template sub_t<typename Ring::zero, X>, X>;
+            using abs_x = std::conditional_t<Ring::template lt_t<X, typename Ring::zero>::value,
+                                             typename Ring::template sub_t<typename Ring::zero, X>, X>;
 
          public:
-            using type = std::conditional_t<(r::v < 0), typename Ring::template add_t<r, abs_x>, r>;
+            using type = std::conditional_t<Ring::template lt_t<r, typename Ring::zero>::value,
+                                            typename Ring::template add_t<r, abs_x>, r>;
         };
 
         /// @brief extended Euclid algorithm in an euclidean domain: gcd = s * A + t * B
@@ -813,13 +896,31 @@ namespace aerobus {
                 typename Ring::template mul_t<q, typename next::t>>;
         };
 
-        // Z/XZ is a field iff |X| is prime
+        // Z/XZ is a field iff |X| is prime; tested when |X| fits in 64 bits
         template<typename Ring, typename X>
         constexpr bool quotient_of_integers_is_field() {
             if constexpr (is_integers_ring<Ring>::value) {
-                return is_prime_impl(static_cast<size_t>(X::v < 0 ? -X::v : X::v));
+                if constexpr (integer_fits_64_bits<X>()) {
+                    return is_prime_impl(integer_magnitude<X>());
+                } else {
+                    return false;
+                }
             } else {
                 return false;
+            }
+        }
+
+        // a quotient of integers declared a field must have a prime modulus, when it can be tested
+        template<typename Ring, typename X>
+        constexpr bool quotient_of_integers_declaration_holds() {
+            if constexpr (is_integers_ring<Ring>::value) {
+                if constexpr (integer_fits_64_bits<X>()) {
+                    return quotient_of_integers_is_field<Ring, X>();
+                } else {
+                    return true;
+                }
+            } else {
+                return true;
             }
         }
     }  // namespace internal
@@ -840,8 +941,7 @@ namespace aerobus {
     requires IsEuclideanDomain<Ring>
     struct Quotient {
         static_assert(!X::is_zero_t::value, "Quotient<Ring, X> needs a nonzero X");
-        static_assert(!declared_field || !internal::is_integers_ring<Ring>::value ||
-                      internal::quotient_of_integers_is_field<Ring, X>(),
+        static_assert(!declared_field || internal::quotient_of_integers_declaration_holds<Ring, X>(),
                       "Quotient declared a field but X is not prime");
 
         /// @brief a residue class, given by its canonical representative V
@@ -1546,6 +1646,16 @@ namespace aerobus {
             return -1;
         }
 
+        // compares two values of bigint: -1, 0 or 1
+        template<typename A, typename B>
+        constexpr int bigint_signed_compare() {
+            if (A::value.negative != B::value.negative) {
+                return A::value.negative ? -1 : 1;
+            }
+            const int c = bigint_compare(A::value.d, A::size, B::value.d, B::size);
+            return A::value.negative ? -c : c;
+        }
+
         // parses [-]digits in base 10 or 16
         template<size_t N, size_t L>
         constexpr bigint_digits<N> bigint_parse(const char (&str)[L], uint32_t radix) {
@@ -1793,15 +1903,6 @@ namespace aerobus {
             static constexpr internal::bigint_digits<N> result = compute();
         };
 
-        template<typename A, typename B>
-        static constexpr int compare() {
-            if (A::value.negative != B::value.negative) {
-                return A::value.negative ? -1 : 1;
-            }
-            const int c = internal::bigint_compare(A::value.d, A::size, B::value.d, B::size);
-            return A::value.negative ? -c : c;
-        }
-
         template<auto x>
         struct constant_op {
             static constexpr internal::bigint_digits<2> compute() {
@@ -1867,7 +1968,7 @@ namespace aerobus {
 
         /// @brief v1 > v2 (type)
         template<typename v1, typename v2>
-        using gt_t = std::bool_constant<(compare<v1, v2>() > 0)>;
+        using gt_t = std::bool_constant<(internal::bigint_signed_compare<v1, v2>() > 0)>;
 
         /// @brief v1 > v2
         template<typename v1, typename v2>
@@ -1875,7 +1976,7 @@ namespace aerobus {
 
         /// @brief v1 < v2 (type)
         template<typename v1, typename v2>
-        using lt_t = std::bool_constant<(compare<v1, v2>() < 0)>;
+        using lt_t = std::bool_constant<(internal::bigint_signed_compare<v1, v2>() < 0)>;
 
         /// @brief v1 < v2
         template<typename v1, typename v2>
@@ -1892,6 +1993,20 @@ namespace aerobus {
         /// @brief nonnegative greatest common divisor (Euclid, in a constexpr loop)
         template<typename v1, typename v2>
         using gcd_t = typename from_result<gcd_op<v1, v2>>::type;
+    };
+
+    namespace internal {
+        template<>
+        struct is_integers_ring<bigint> : std::true_type {};
+    }  // namespace internal
+
+    /// @brief embeds i16, i32 or i64 into bigint
+    template<typename Int>
+    struct Embed<integers<Int>, bigint> {
+        /// @brief the bigint representation of val
+        /// @tparam val a value in integers<Int>
+        template<typename val>
+        using type = bigint::inject_constant_t<val::v>;
     };
 
     namespace internal {
@@ -3830,11 +3945,11 @@ namespace aerobus {
 
         // integers modulo a prime, as a quotient ring
         template<typename Ring, typename X, bool declared_field>
-        requires(is_integers_ring<Ring>::value && (X::v > 1 || X::v < -1) &&
-                 is_prime<static_cast<size_t>(X::v > 0 ? X::v : -X::v)>::value)
+        requires(is_integers_ring<Ring>::value && integer_fits_64_bits<X>() &&
+                 is_prime_impl(integer_magnitude<X>()))
         struct finite_field_traits<Quotient<Ring, X, declared_field>> {
             static constexpr bool is_finite_field = true;
-            static constexpr size_t characteristic = static_cast<size_t>(X::v > 0 ? X::v : -X::v);
+            static constexpr size_t characteristic = static_cast<size_t>(integer_magnitude<X>());
             static constexpr size_t degree = 1;
             static constexpr size_t order = characteristic;
             template<size_t i>
@@ -4372,7 +4487,7 @@ namespace aerobus {
     /// @tparam deg degree
     /// @tparam I integers in which the coefficients are computed
     template<typename Family, size_t deg, typename I>
-    concept coefficients_fit = deg <= internal::max_degree<Family, I>;
+    concept CoefficientsFit = deg <= internal::max_degree<Family, I>;
 
     /// @brief Taylor polynomial of degree deg: sum of coeff_at<T, i>::type x^i for i = 0..deg
     ///
@@ -4662,14 +4777,14 @@ namespace aerobus {
     /// @tparam Integers Ring type (for example i64)
     /// @tparam deg taylor approximation degree
     template<typename Integers, size_t deg>
-    requires coefficients_fit<internal::exp_family, deg, Integers>
+    requires CoefficientsFit<internal::exp_family, deg, Integers>
     using exp = taylor<Integers, internal::exp_coeff, deg>;
 
     /// @brief \f$e^x - 1\f$
     /// @tparam T Ring type (for example i64)
     /// @tparam deg taylor approximation degree
     template<typename Integers, size_t deg>
-    requires coefficients_fit<internal::expm1_family, deg, Integers>
+    requires CoefficientsFit<internal::expm1_family, deg, Integers>
     using expm1 = typename polynomial<FractionField<Integers>>::template sub_t<
         exp<Integers, deg>,
         typename polynomial<FractionField<Integers>>::one>;
@@ -4690,14 +4805,14 @@ namespace aerobus {
     /// @tparam Integers Ring type (for example i64)
     /// @tparam deg taylor approximation degree
     template<typename Integers, size_t deg>
-    requires coefficients_fit<internal::sin_family, deg, Integers>
+    requires CoefficientsFit<internal::sin_family, deg, Integers>
     using sin = taylor<Integers, internal::sin_coeff, deg>;
 
     /// @brief \f$\sinh(x)\f$
     /// @tparam Integers Ring type (for example i64)
     /// @tparam deg taylor approximation degree
     template<typename Integers, size_t deg>
-    requires coefficients_fit<internal::sinh_family, deg, Integers>
+    requires CoefficientsFit<internal::sinh_family, deg, Integers>
     using sinh = taylor<Integers, internal::sh_coeff, deg>;
 
     /// @brief \f$\cosh(x)\f$
@@ -4705,7 +4820,7 @@ namespace aerobus {
     /// @tparam Integers Ring type (for example i64)
     /// @tparam deg taylor approximation degree
     template<typename Integers, size_t deg>
-    requires coefficients_fit<internal::cosh_family, deg, Integers>
+    requires CoefficientsFit<internal::cosh_family, deg, Integers>
     using cosh = taylor<Integers, internal::cosh_coeff, deg>;
 
     /// @brief \f$\cos(x)\f$
@@ -4713,7 +4828,7 @@ namespace aerobus {
     /// @tparam Integers Ring type (for example i64)
     /// @tparam deg taylor approximation degree
     template<typename Integers, size_t deg>
-    requires coefficients_fit<internal::cos_family, deg, Integers>
+    requires CoefficientsFit<internal::cos_family, deg, Integers>
     using cos = taylor<Integers, internal::cos_coeff, deg>;
 
     /// @brief \f$\frac{1}{1-x}\f$
@@ -4728,7 +4843,7 @@ namespace aerobus {
     /// @tparam Integers Ring type (for example i64)
     /// @tparam deg taylor approximation degree
     template<typename Integers, size_t deg>
-    requires coefficients_fit<internal::asin_family, deg, Integers>
+    requires CoefficientsFit<internal::asin_family, deg, Integers>
     using asin = taylor<Integers, internal::asin_coeff, deg>;
 
     /// @brief \f$\mathrm{arcsinh}(x)\f$
@@ -4736,7 +4851,7 @@ namespace aerobus {
     /// @tparam Integers Ring type (for example i64)
     /// @tparam deg taylor approximation degree
     template<typename Integers, size_t deg>
-    requires coefficients_fit<internal::asinh_family, deg, Integers>
+    requires CoefficientsFit<internal::asinh_family, deg, Integers>
     using asinh = taylor<Integers, internal::asinh_coeff, deg>;
 
     /// @brief \f$\mathrm{arctanh}(x)\f$
@@ -4751,7 +4866,7 @@ namespace aerobus {
     /// @tparam Integers Ring type (for example i64)
     /// @tparam deg taylor approximation degree
     template<typename Integers, size_t deg>
-    requires coefficients_fit<internal::tan_family, deg, Integers>
+    requires CoefficientsFit<internal::tan_family, deg, Integers>
     using tan = taylor<Integers, internal::tan_coeff, deg>;
 
     /// @brief \f$\tanh(x)\f$
@@ -4759,7 +4874,7 @@ namespace aerobus {
     /// @tparam Integers Ring type (for example i64)
     /// @tparam deg taylor approximation degree
     template<typename Integers, size_t deg>
-    requires coefficients_fit<internal::tanh_family, deg, Integers>
+    requires CoefficientsFit<internal::tanh_family, deg, Integers>
     using tanh = taylor<Integers, internal::tanh_coeff, deg>;
 }  // namespace aerobus
 
@@ -5215,7 +5330,7 @@ namespace aerobus {
          * @tparam integer rings (defaults to aerobus::i64)
          */
         template <size_t deg, typename I = aerobus::i64>
-        requires coefficients_fit<internal::chebyshev_T_family, deg, I>
+        requires CoefficientsFit<internal::chebyshev_T_family, deg, I>
         using chebyshev_T = typename internal::chebyshev_helper<1, deg, I>::type;
 
         /** @brief Chebyshev polynomials of second kind
@@ -5228,7 +5343,7 @@ namespace aerobus {
          * @tparam integer rings (defaults to aerobus::i64)
          */
         template <size_t deg, typename I = aerobus::i64>
-        requires coefficients_fit<internal::chebyshev_U_family, deg, I>
+        requires CoefficientsFit<internal::chebyshev_U_family, deg, I>
         using chebyshev_U = typename internal::chebyshev_helper<2, deg, I>::type;
 
         /** @brief Laguerre polynomials
@@ -5241,7 +5356,7 @@ namespace aerobus {
          * @tparam I Integers ring (defaults to aerobus::i64)
          */
         template <size_t deg, typename I = aerobus::i64>
-        requires coefficients_fit<internal::laguerre_family, deg, I>
+        requires CoefficientsFit<internal::laguerre_family, deg, I>
         using laguerre = typename internal::laguerre_helper<deg, I>::type;
 
         /** @brief Hermite polynomials - probabilist form
@@ -5251,7 +5366,7 @@ namespace aerobus {
          * @tparam deg degree of polynomial
          */
         template <size_t deg, typename I = aerobus::i64>
-        requires coefficients_fit<internal::hermite_prob_family, deg, I>
+        requires CoefficientsFit<internal::hermite_prob_family, deg, I>
         using hermite_prob = typename internal::hermite_helper<deg, hermite_kind::probabilist, I>::type;
 
         /** @brief Hermite polynomials - physicist form
@@ -5261,7 +5376,7 @@ namespace aerobus {
          * @tparam deg degree of polynomial
          */
         template <size_t deg, typename I = aerobus::i64>
-        requires coefficients_fit<internal::hermite_phys_family, deg, I>
+        requires CoefficientsFit<internal::hermite_phys_family, deg, I>
         using hermite_phys = typename internal::hermite_helper<deg, hermite_kind::physicist, I>::type;
 
         /** @brief Bernstein polynomials
@@ -5275,7 +5390,7 @@ namespace aerobus {
          * @tparam I Integers ring (defaults to aerobus::i64)
          */
         template<size_t i, size_t m, typename I = aerobus::i64>
-        requires coefficients_fit<internal::bernstein_family, m, I>
+        requires CoefficientsFit<internal::bernstein_family, m, I>
         using bernstein = typename internal::bernstein_helper<i, m, I>::type;
 
         /** @brief Legendre polynomials
@@ -5288,7 +5403,7 @@ namespace aerobus {
          * @tparam I Integers Ring (defaults to aerobus::i64)
          */
         template<size_t deg, typename I = aerobus::i64>
-        requires coefficients_fit<internal::legendre_family, deg, I>
+        requires CoefficientsFit<internal::legendre_family, deg, I>
         using legendre = typename internal::legendre_helper<deg, I>::type;
 
         /** @brief Bernoulli polynomials
@@ -5301,7 +5416,7 @@ namespace aerobus {
          * @tparam I Integers ring (defaults to aerobus::i64)
          */
         template<size_t deg, typename I = aerobus::i64>
-        requires coefficients_fit<internal::bernoulli_family, deg, I>
+        requires CoefficientsFit<internal::bernoulli_family, deg, I>
         using bernoulli = taylor<I, internal::bernoulli_coeff<deg>::template inner, deg>;
 
         /// @brief All One polynomials
@@ -5321,7 +5436,7 @@ namespace aerobus {
         /// @tparam I ring for coefficients, defaults to aerobus::i64
         /// @tparam deg degree of polynomial
         template<size_t deg, typename I = aerobus::i64>
-        requires coefficients_fit<internal::bessel_family, deg, I>
+        requires CoefficientsFit<internal::bessel_family, deg, I>
         using bessel = typename internal::BesselHelper<deg, I>::type;
 
         /// @brief Touchard polynomials
@@ -5332,7 +5447,7 @@ namespace aerobus {
         /// @tparam I ring for coefficients, defaults to aerobus::i64
         /// @tparam deg degree of polynomial
         template<size_t deg, typename I = aerobus::i64>
-        requires coefficients_fit<internal::touchard_family, deg, I>
+        requires CoefficientsFit<internal::touchard_family, deg, I>
         using touchard = typename internal::touchard_helper<I, deg>::type;
     }  // namespace known_polynomials
 }  // namespace aerobus
