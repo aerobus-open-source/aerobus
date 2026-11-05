@@ -7,7 +7,7 @@
 /// @brief minor version of aerobus
 #define AEROBUS_VERSION_MINOR 1
 /// @brief patch version of aerobus
-#define AEROBUS_VERSION_PATCH 0
+#define AEROBUS_VERSION_PATCH 1
 
 #include <cstdint>
 #include <cstddef>
