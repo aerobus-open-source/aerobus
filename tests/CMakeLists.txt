@@ -127,6 +127,13 @@ if(Python3_Interpreter_FOUND AND NOT MSVC)
     COMMAND "${Python3_EXECUTABLE}" -I "${PROJECT_SOURCE_DIR}/tools/check_bigint.py" "${CMAKE_CXX_COMPILER}")
 endif()
 
+# the output of tools/polynomial.sollya compiles and holds the coefficients Sollya printed
+if(Python3_Interpreter_FOUND AND NOT MSVC)
+  add_test(NAME sollya.polynomial
+    COMMAND "${Python3_EXECUTABLE}" -I "${PROJECT_SOURCE_DIR}/tools/check_polynomial_sollya.py" "${CMAKE_CXX_COMPILER}")
+  set_tests_properties(sollya.polynomial PROPERTIES SKIP_RETURN_CODE 77)
+endif()
+
 # every C++ block of README.md compiles
 if(Python3_Interpreter_FOUND AND NOT MSVC)
   add_test(NAME readme.cpp_blocks_compile

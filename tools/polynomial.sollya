@@ -1,0 +1,79 @@
+// Prints the fpminimax polynomial of a function as an aerobus type, with coefficients in FractionField<bigint>.
+// The coefficients are written as hexadecimal literals: aerobus holds the very numbers Sollya computed, so the
+// error printed above the type is the error of the type, whatever the format.
+//
+// Usage: sollya --nocolor --warnonstderr tools/polynomial.sollya --args FUNCTION INTERVAL MONOMIALS FORMAT
+//   FUNCTION   any expression of x supported by Sollya, such as "sin(x)/x"
+//   INTERVAL   the interval of the approximation, such as "[-pi/4, pi/4]"
+//   MONOMIALS  a degree, such as "9", or a list of monomials, such as "[|0, 2, 4|]";
+//              when empty, the degree is guessed from the precision of FORMAT
+//   FORMAT     the format of the coefficients: HP, SG, D, DD, TD or QD
+// Without arguments, it uses the values below.
+
+FUNCTION_TEXT = "sin(x)/x";
+INTERVAL_TEXT = "[-pi/4, pi/4]";
+MONOMIALS_TEXT = "[|0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24|]";
+FORMAT_TEXT = "SG";
+
+if (length(__argv) == 4) then {
+    FUNCTION_TEXT = __argv[0];
+    INTERVAL_TEXT = __argv[1];
+    MONOMIALS_TEXT = __argv[2];
+    FORMAT_TEXT = __argv[3];
+} else if (length(__argv) != 0) then {
+    print("#error expected FUNCTION INTERVAL MONOMIALS FORMAT");
+    quit;
+};
+
+PRECISION = -1;
+if (FORMAT_TEXT == "HP") then PRECISION = 11;
+if (FORMAT_TEXT == "SG") then PRECISION = 24;
+if (FORMAT_TEXT == "D") then PRECISION = 53;
+if (FORMAT_TEXT == "DD") then PRECISION = 107;
+if (FORMAT_TEXT == "QD") then PRECISION = 113;
+if (FORMAT_TEXT == "TD") then PRECISION = 161;
+if (PRECISION == -1) then {
+    print("#error FORMAT must be HP, SG, D, DD, QD or TD");
+    quit;
+};
+
+FUNCTION = parse(FUNCTION_TEXT);
+INTERVAL = parse(INTERVAL_TEXT);
+if (MONOMIALS_TEXT == "") then {
+    MONOMIALS = sup(guessdegree(FUNCTION, INTERVAL, 2^(1 - PRECISION))) + 1;
+} else {
+    MONOMIALS = parse(MONOMIALS_TEXT);
+};
+
+P = fpminimax(FUNCTION, MONOMIALS, parse("[|" @ FORMAT_TEXT @ "...|]"), INTERVAL);
+// the error object compares to nothing: only match recognizes it
+if (match P with error : (true) default : (false)) then {
+    print("#error fpminimax found no polynomial for", FUNCTION_TEXT);
+    quit;
+};
+ERROR_BOUND = dirtyinfnorm(P - FUNCTION, INTERVAL);
+
+// a coefficient of a double-double or a triple-double spans thousands of bits at most: printing must not round it
+prec = 4400!;
+display = hexadecimal!;
+
+RATIONALS = "aerobus::FractionField<aerobus::bigint>";
+POLYNOMIALS = "aerobus::polynomial<" @ RATIONALS @ ">";
+
+print("// fpminimax of", FUNCTION_TEXT, "on", INTERVAL_TEXT, "with", MONOMIALS_TEXT, "in", FORMAT_TEXT);
+print("// error:", round(ERROR_BOUND, 16, RU));
+print("using type =", POLYNOMIALS @ "::simplify_t<");
+print("    " @ POLYNOMIALS @ "::val<");
+for i from degree(P) to 0 by -1 do {
+    if (coeff(P, i) == 0) then {
+        write("        ", RATIONALS, "::zero");
+    } else {
+        write("        aerobus::from_hex_float_t<\"", coeff(P, i), "\">");
+    };
+    if (i > 0) then {
+        print(",");
+    } else {
+        print(">>;");
+    };
+};
+quit;
