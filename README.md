@@ -153,6 +153,20 @@ using P30 = aerobus::known_polynomials::legendre<30, bigint>;  // exact coeffici
 
 Values are `bigint::val<negative, digits...>`, digits in base 2^32, most significant first. The arithmetic runs in `constexpr` functions on arrays of digits rather than through recursive templates, and division is Knuth's algorithm D, so dividing a 40-digit number by a 20-digit one adds about 0.04 s to the compilation. As for `i64`, division truncates toward zero and the remainder has the sign of the dividend. `to_string()` and `to_hex()` print values, `get<T>()` converts them. The primality of a `Quotient` modulus is tested when it fits in 64 bits (Miller-Rabin above 2^32); a larger modulus is a field only when declared so.
 
+### Binary numbers of arbitrary precision
+
+`aerobus::dyadic` holds exact numbers m 2^e, m being a `bigint`. It is what a floating point number is, without a limit on the size of m: sums, differences and products are exact, and every number has a single type, so `is_same` is equality. Literals are hexadecimal, as Sollya and `%a` print them, and conversions to `float` and `double` are correctly rounded:
+
+```cpp
+using aerobus::dyadic;
+using c = dyadic::from_hex_float_t<"0x1.23456789abcdfp-40">;  // m / 2^92: the denominator does not fit in q64
+using square = dyadic::mul_t<c, c>;                           // exact, 106 significant bits
+static_assert(square::get<double>() == 0x1.23456789abcdfp-40 * 0x1.23456789abcdfp-40);
+using P = aerobus::polynomial<dyadic>::val<c, dyadic::one>;   // c x + 1
+```
+
+Powers of two are units, so `dyadic` is an euclidean domain whose norm is the odd part: `div_t` truncates the quotient of the odd parts, and is exact when the odd part of the divisor divides the one of the dividend. Rounded division, square roots and constants such as pi are not provided. `FractionField<dyadic>` is not supported: use `FractionField<bigint>`.
+
 ### Polynomials
 
 `Aerobus` defines polynomials as a variadic template structure, with coefficients in an arbitrary discrete euclidean domain. As `i32` or `i64`, they are given the same operations and elements, which make them a euclidean domain by themselves. Similarly, `aerobus::polynomial<Ring>` represents the algebraic structure, actual values are in `aerobus::polynomial<Ring>::val`, which takes the coefficients highest degree first and removes leading zeros.

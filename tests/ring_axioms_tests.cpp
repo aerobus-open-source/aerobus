@@ -76,7 +76,11 @@ using all_samples = ::testing::Types<
     samples<pi64, make_int_polynomial_t<i64, 1, -1>, make_int_polynomial_t<i64, 2, 0, 3>, pi64::one>,
     samples<pq64, make_frac_polynomial_t<i64, 1, 2>, pq64::val<make_q64_t<1, 3>>, pq64::X>,
     samples<Z17, Z17::inject_constant_t<-1>, Z17::inject_constant_t<5>, Z17::inject_constant_t<9>>,
-    samples<F9, phi, F9::mul_t<phi, phi>, F9::inject_constant_t<2>>>;
+    samples<F9, phi, F9::mul_t<phi, phi>, F9::inject_constant_t<2>>,
+    samples<dyadic, dyadic::from_hex_float_t<"-0x3p-2">, dyadic::from_hex_float_t<"0x5p+40">,
+            dyadic::from_hex_float_t<"0x1p-90">>,
+    samples<polynomial<dyadic>, polynomial<dyadic>::val<dyadic::one, dyadic::from_hex_float_t<"0x1p-3">>,
+            polynomial<dyadic>::X, polynomial<dyadic>::one>>;
 }  // namespace
 
 TYPED_TEST_SUITE(ring_axioms_test, all_samples);

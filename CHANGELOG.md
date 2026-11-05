@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- `dyadic`: exact numbers m 2^e with a `bigint` m, as an euclidean domain, with `make_t`, `from_hex_float_t` (the format of Sollya and `%a`), correctly rounded `get`, `Embed` from the integer rings, and a usable `polynomial<dyadic>`. It holds coefficients such as double values whose denominators do not fit in `q64`.
+
 ### Fixed
 
 - Conversions of `bigint` values and of fractions (`q32`, `q64`, `FractionField<bigint>`) to `float`, `double` and `long double` are correctly rounded (to nearest, ties to even, subnormals and overflow to infinity included). They rounded the numerator and the denominator, then the quotient: 6 of the 37 coefficients 1/n! for n up to 38 were wrong in `FractionField<bigint>`, and large `bigint` values overflowed in the middle of a constant evaluation. Coefficients that were off by one ulp change, hence some last bits of `eval`. `__half` conversions are unchanged.
