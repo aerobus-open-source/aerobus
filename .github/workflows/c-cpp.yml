@@ -55,6 +55,30 @@ jobs:
       - name: test
         run: ctest --test-dir build -C Release --output-on-failure --parallel 4
 
+  cuda:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: install the compiler of the latest CUDA
+        run: |
+          # this package adds NVIDIA's key and repository to apt
+          curl -fsSLO https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb
+          sudo dpkg -i cuda-keyring_1.1-1_all.deb
+          sudo apt-get update
+          version=$(apt-cache policy cuda-toolkit | awk '/Candidate/ {print $2}' | cut -d. -f1,2)
+          sudo apt-get install -y --no-install-recommends "cuda-nvcc-${version/./-}"
+          echo "/usr/local/cuda-$version/bin" >> "$GITHUB_PATH"
+      - name: configure
+        run: >
+          cmake -S . -B build -DCMAKE_CXX_COMPILER=g++-14 -DCMAKE_CUDA_HOST_COMPILER=g++-14
+          -DCMAKE_BUILD_TYPE=Release
+      - name: build
+        run: cmake --build build --target cuda_fp16_host_tests --parallel 4
+      - name: test
+        run: |
+          nvcc --version
+          ctest --test-dir build -R '^cuda\.' --no-tests=error --output-on-failure
+
   sanitizers:
     runs-on: ubuntu-24.04
     steps:
