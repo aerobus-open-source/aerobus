@@ -265,3 +265,22 @@ TEST(fraction_field, integral_domains) {
     EXPECT_FALSE((internal::is_integral_domain_v<polynomial<zpz<8>>>));
     EXPECT_TRUE((IsField<FractionField<polynomial<zpz<7>>>>));
 }
+
+TEST(fraction_field, every_value_has_one_type) {
+    // written in any form, a fraction is the same type; equality is is_same
+    using half = q32::val<i32::val<2>, i32::val<4>>;
+    static_assert(std::is_same_v<half, q32::val<i32::val<-1>, i32::val<-2>>>);
+    static_assert(half::x::v == 1 && half::y::v == 2);
+    static_assert(std::is_same_v<q32::val<i32::zero, i32::val<-5>>, q32::zero>);
+    static_assert(std::is_same_v<makefraction_t<i32, i32::val<6>, i32::val<3>>, q32::inject_constant_t<2>>);
+    // simplify_t is the identity now
+    static_assert(std::is_same_v<q32::simplify_t<half>, half>);
+    // rational functions: the common factor x + 1 goes away, the denominator is monic
+    using PQ = polynomial<q32>;
+    using x_plus_1 = PQ::val<q32::one, q32::one>;
+    using two_x_plus_2 = PQ::val<q32::inject_constant_t<2>, q32::inject_constant_t<2>>;
+    using F = FractionField<PQ>;
+    static_assert(std::is_same_v<F::val<x_plus_1, two_x_plus_2>,
+                                 F::val<PQ::val<makefraction_t<i32, i32::one, i32::val<2>>>, PQ::one>>);
+    static_assert(F::val<x_plus_1, two_x_plus_2>::y::degree == 0);
+}

@@ -3,6 +3,7 @@ include(GoogleTest)
 add_executable(lib_tests
   api_tests.cpp
   bigint_tests.cpp
+  canonical_fraction_tests.cpp
   concepts_tests.cpp
   embedding_tests.cpp
   evaluation_tests.cpp
@@ -61,6 +62,9 @@ aerobus_compile_fail_test(legendre_degree_overflow "CoefficientsFit")
 aerobus_compile_fail_test(factorization_needs_finite_field "IsFiniteField")
 aerobus_compile_fail_test(bigint_division_by_zero "division by zero in bigint")
 aerobus_compile_fail_test(bigint_invalid_literal "invalid character in bigint literal")
+aerobus_compile_fail_test(fraction_zero_denominator "zero denominator in FractionField")
+aerobus_compile_fail_test(hex_float_invalid_literal "invalid hexadecimal floating point literal")
+aerobus_compile_fail_test(hex_float_does_not_fit "does not fit in these integers")
 aerobus_compile_fail_test(polynomial_horner_reduction_is_private "is private within this context|is a private member|cannot access private")
 
 # install this build tree, then build a consumer through find_package(Aerobus)
@@ -105,6 +109,12 @@ endif()
 if(Python3_Interpreter_FOUND)
   add_test(NAME float_conversion.tests_are_generated
     COMMAND "${Python3_EXECUTABLE}" -I "${PROJECT_SOURCE_DIR}/tools/generate_float_conversion_tests.py" --check)
+endif()
+
+# tests/canonical_fraction_tests.cpp is the output of tools/generate_canonical_fraction_tests.py
+if(Python3_Interpreter_FOUND)
+  add_test(NAME canonical_fractions.tests_are_generated
+    COMMAND "${Python3_EXECUTABLE}" -I "${PROJECT_SOURCE_DIR}/tools/generate_canonical_fraction_tests.py" --check)
 endif()
 
 # tests/bigint_tests.cpp is the output of tools/generate_bigint_tests.py, and bigint agrees with Python's integers
