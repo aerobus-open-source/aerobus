@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.2.1 (2026-11-05)
+
+### Added
+
+- `tools/polynomial.sollya`, moved from `attic/` and rewritten: it prints the `fpminimax` polynomial of a function in `polynomial<FractionField<bigint>>`, with coefficients as hexadecimal literals instead of rational approximations, so the type has exactly the error Sollya reports. The formats are `HP`, `SG`, `D`, `DD`, `QD` and `TD`, given on the command line.
+
 ## 2.2.0 (2026-11-05)
 
 ### Changed

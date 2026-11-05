@@ -10,4 +10,3 @@ They target `aerobus::libm` (sin, cos and friends evaluated with Sollya-generate
 | `libm_benchmarks.cpp` | `src/benchmarks.cpp` | Google Benchmark cases for `libm::sin`, `libm::fast_sin`, `libm::cos` |
 | `libm.cu` | `examples/libm.cu` | CUDA `__half` sine kernel |
 | `libm_hip.cpp` | `examples/libm_hip.cpp` | HIP sine kernel |
-| `sollya/script.sollya` | `src/sollya/script.sollya` | Sollya script emitting aerobus rational polynomials |

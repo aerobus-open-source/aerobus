@@ -45,6 +45,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v5
+      - name: install sollya
+        if: matrix.name == 'gcc'
+        run: sudo apt-get update && sudo apt-get install -y sollya
       - name: configure
         run: cmake -S . -B build -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} -DCMAKE_BUILD_TYPE=Release
       - name: build
