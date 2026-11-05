@@ -6,6 +6,7 @@ add_executable(lib_tests
   concepts_tests.cpp
   embedding_tests.cpp
   evaluation_tests.cpp
+  float_conversion_tests.cpp
   fraction_field_tests.cpp
   integers_tests.cpp
   known_polynomials_tests.cpp
@@ -98,6 +99,12 @@ find_package(Python3 COMPONENTS Interpreter)
 if(Python3_Interpreter_FOUND)
   add_test(NAME conway.table_is_generated
     COMMAND "${Python3_EXECUTABLE}" -I "${PROJECT_SOURCE_DIR}/tools/generate_conway.py" --check)
+endif()
+
+# tests/float_conversion_tests.cpp is the output of tools/generate_float_conversion_tests.py
+if(Python3_Interpreter_FOUND)
+  add_test(NAME float_conversion.tests_are_generated
+    COMMAND "${Python3_EXECUTABLE}" -I "${PROJECT_SOURCE_DIR}/tools/generate_float_conversion_tests.py" --check)
 endif()
 
 # tests/bigint_tests.cpp is the output of tools/generate_bigint_tests.py, and bigint agrees with Python's integers

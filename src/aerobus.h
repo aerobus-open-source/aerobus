@@ -22,6 +22,7 @@
 #include <string>
 #include <concepts> // NOLINT
 #include <cmath>
+#include <limits>
 #ifdef WITH_CUDA_FP16
 #include <bit>
 #include <cuda_fp16.h>  // NOLINT(build/include_order): CUDA header
@@ -1656,6 +1657,110 @@ namespace aerobus {
             return A::value.negative ? -c : c;
         }
 
+        // number of significant bits
+        constexpr size_t bigint_bit_length(const uint32_t* a, size_t n) {
+            return n == 0 ? 0 : 32 * n - static_cast<size_t>(bigint_leading_zeros(a[n - 1]));
+        }
+
+        constexpr bool bigint_bit(const uint32_t* a, size_t n, size_t i) {
+            return i / 32 < n && ((a[i / 32] >> (i % 32)) & 1U) != 0;
+        }
+
+        // r = a 2^s, r has room for n + s / 32 + 1 digits; returns the size of r
+        constexpr size_t bigint_shift_left(const uint32_t* a, size_t n, size_t s, uint32_t* r) {
+            const size_t words = s / 32;
+            const unsigned bits = static_cast<unsigned>(s % 32);
+            for (size_t i = 0; i < n + words + 1; ++i) {
+                r[i] = 0;
+            }
+            for (size_t i = 0; i < n; ++i) {
+                r[i + words] |= a[i] << bits;
+                if (bits != 0) {
+                    r[i + words + 1] = a[i] >> (32 - bits);
+                }
+            }
+            return bigint_trim(r, n + words + 1);
+        }
+
+        // num / den, with the sign given by negative, correctly rounded to T (to nearest, ties to even), subnormals
+        // and overflow to infinity included. The quotient is computed on precision + 2 or + 3 bits by algorithm D;
+        // the remainder tells whether the bits below are all zero.
+        template<typename T, size_t NN, size_t ND>
+        constexpr T bigint_ratio_to_float(const uint32_t* num, size_t nn, const uint32_t* den, size_t nd,
+                                          bool negative) {
+            using limits = std::numeric_limits<T>;
+            const auto signed_value = [negative](T v) { return negative ? -v : v; };
+            if (nd == 0) {
+                return signed_value(limits::infinity());
+            }
+            if (nn == 0) {
+                return static_cast<T>(0);
+            }
+            constexpr int precision = limits::digits;
+            constexpr int64_t emin = limits::min_exponent - 1;
+            constexpr int64_t emax = limits::max_exponent - 1;
+            constexpr size_t N = NN + ND + static_cast<size_t>(precision) / 32 + 3;
+            uint32_t a[N] = {};
+            uint32_t b[N] = {};
+            uint32_t q[N] = {};
+            uint32_t r[N] = {};
+            // num / den = (a / b) 2^-shift, with a / b on precision + 2 or + 3 bits
+            const int64_t shift = int64_t{precision} + 2 + static_cast<int64_t>(bigint_bit_length(den, nd)) -
+                                  static_cast<int64_t>(bigint_bit_length(num, nn));
+            const size_t na = bigint_shift_left(num, nn, shift > 0 ? static_cast<size_t>(shift) : 0, a);
+            const size_t nb = bigint_shift_left(den, nd, shift < 0 ? static_cast<size_t>(-shift) : 0, b);
+            size_t nq = 0;
+            size_t nr = 0;
+            bigint_divmod<N, N>(a, na, b, nb, q, &nq, r, &nr);
+            const int64_t bits = static_cast<int64_t>(bigint_bit_length(q, nq));
+            const int64_t exponent = bits - 1 - shift;  // floor(log2(num / den))
+            if (exponent > emax) {
+                return signed_value(limits::infinity());
+            }
+            // the result is m 2^k: d low bits of the quotient are dropped, more for a subnormal
+            const int64_t k = (exponent > emin ? exponent : emin) - precision + 1;
+            const int64_t d = k + shift;
+            T m = static_cast<T>(0);
+            for (int64_t i = bits - 1; i >= d; --i) {
+                m = m * static_cast<T>(2) + static_cast<T>(bigint_bit(q, nq, static_cast<size_t>(i)) ? 1 : 0);
+            }
+            const bool half = bigint_bit(q, nq, static_cast<size_t>(d - 1));
+            bool below = nr != 0;
+            for (int64_t i = 0; i < d - 1 && i < bits && !below; ++i) {
+                below = bigint_bit(q, nq, static_cast<size_t>(i));
+            }
+            const bool odd = bigint_bit(q, nq, static_cast<size_t>(d));
+            if (half && (below || odd)) {
+                m = m + static_cast<T>(1);
+            }
+            if (m == static_cast<T>(0)) {
+                return signed_value(static_cast<T>(0));
+            }
+            // rounding up may reach 2^precision, and the next binade may overflow
+            T top = static_cast<T>(1);
+            for (int i = 0; i < precision; ++i) {
+                top = top * static_cast<T>(2);
+            }
+            if (m == top && k + precision > emax) {
+                return signed_value(limits::infinity());
+            }
+            // m 2^k is representable, and so is every step towards it
+            int64_t e = k;
+            for (; e >= 32; e -= 32) {
+                m = m * static_cast<T>(4294967296.0);
+            }
+            for (; e > 0; --e) {
+                m = m * static_cast<T>(2);
+            }
+            for (; e <= -32; e += 32) {
+                m = m / static_cast<T>(4294967296.0);
+            }
+            for (; e < 0; ++e) {
+                m = m / static_cast<T>(2);
+            }
+            return signed_value(m);
+        }
+
         // parses [-]digits in base 10 or 16
         template<size_t N, size_t L>
         constexpr bigint_digits<N> bigint_parse(const char (&str)[L], uint32_t radix) {
@@ -1709,6 +1814,13 @@ namespace aerobus {
                 return result;
             }
 
+            template<typename valueType>
+            static constexpr valueType to_floating_point() {
+                const uint32_t one[1] = {1};
+                return internal::bigint_ratio_to_float<valueType, sizeof...(digits), 1>(
+                    value.d, sizeof...(digits), one, 1, negative);
+            }
+
          public:
             static_assert(sizeof...(digits) == 0 ? !negative : list[0] != 0,
                           "bigint::val needs a canonical form: no leading zero digit, zero is val<false>");
@@ -1724,12 +1836,15 @@ namespace aerobus {
             /// @brief little-endian digits
             static constexpr internal::bigint_digits<sizeof...(digits)> value = make();
 
-            /// @brief conversion to an arithmetic type: by Horner in base 2^32 for floating point types (may
-            /// overflow to infinity), through uint64_t for integral types (at most 2 digits)
+            /// @brief conversion to an arithmetic type: correctly rounded for floating point types (to nearest, ties
+            /// to even, overflow to infinity), through uint64_t for integral types (at most 2 digits)
             /// @tparam valueType such as double
             template<typename valueType>
             static constexpr AEROBUS_INLINE AEROBUS_DEVICE valueType get() {
-                if constexpr (std::is_integral_v<valueType>) {
+                if constexpr (std::is_floating_point_v<valueType>) {
+                    constexpr valueType result = to_floating_point<valueType>();
+                    return result;
+                } else if constexpr (std::is_integral_v<valueType>) {
                     static_assert(sizeof...(digits) <= 2, "bigint::get: the value does not fit in 64 bits");
                     uint64_t magnitude = 0;
                     for (size_t i = 0; i < sizeof...(digits); ++i) {
@@ -2964,6 +3079,34 @@ namespace aerobus {
 // fraction field
 namespace aerobus {
     namespace internal {
+        // a value of integers<Int>, zpz<p> or bigint: a numerator or denominator as digits in base 2^32
+        template<typename V>
+        inline constexpr bool has_native_value = requires { V::v; };
+
+        template<typename V>
+        inline constexpr bool has_bigint_digits = requires { V::value.d; };
+
+        template<typename V>
+        inline constexpr bool is_integer_value = has_native_value<V> || has_bigint_digits<V>;
+
+        template<typename V>
+        constexpr auto integer_value_digits() {
+            if constexpr (has_native_value<V>) {
+                return bigint_from_magnitude<2>(integer_magnitude<V>(), V::v < 0);
+            } else {
+                return V::value;
+            }
+        }
+
+        // X / Y, values of an integer ring, correctly rounded to the floating point type T
+        template<typename T, typename X, typename Y>
+        constexpr T fraction_to_float() {
+            const auto num = integer_value_digits<X>();
+            const auto den = integer_value_digits<Y>();
+            return bigint_ratio_to_float<T, sizeof(num.d) / sizeof(uint32_t), sizeof(den.d) / sizeof(uint32_t)>(
+                num.d, num.size, den.d, den.size, num.negative != den.negative);
+        }
+
         template<typename Ring>
         requires IsEuclideanDomain<Ring>
         struct fraction_field_impl {};
@@ -3027,7 +3170,11 @@ namespace aerobus {
                 template<typename valueType, int ghost = 0>
                 struct get_helper {
                     static constexpr AEROBUS_INLINE AEROBUS_DEVICE valueType get() {
-                        if constexpr (requires { typename ring_type::inner_type; }) {
+                        if constexpr (std::is_floating_point_v<valueType> && internal::is_integer_value<x>) {
+                            // correctly rounded: the quotient is exact before the only rounding
+                            constexpr valueType result = internal::fraction_to_float<valueType, x, y>();
+                            return result;
+                        } else if constexpr (requires { typename ring_type::inner_type; }) {
                             using inner = typename ring_type::inner_type;
                             return internal::staticcast<valueType, inner>::template func<x::v>() /
                                 internal::staticcast<valueType, inner>::template func<y::v>();
