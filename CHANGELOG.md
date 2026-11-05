@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Conversions of `bigint` values and of fractions (`q32`, `q64`, `FractionField<bigint>`) to `float`, `double` and `long double` are correctly rounded (to nearest, ties to even, subnormals and overflow to infinity included). They rounded the numerator and the denominator, then the quotient: 6 of the 37 coefficients 1/n! for n up to 38 were wrong in `FractionField<bigint>`, and large `bigint` values overflowed in the middle of a constant evaluation. Coefficients that were off by one ulp change, hence some last bits of `eval`. `__half` conversions are unchanged.
+
 ## 2.1.0 (2026-11-04)
 
 Version 2.1 adds factorization over finite fields and arbitrary precision integers. It is compatible with 2.0, except for the internal `value` members listed under Changed.
