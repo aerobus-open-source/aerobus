@@ -1,6 +1,14 @@
 # Changelog
 
-## Unreleased
+## 2.2.0 (2026-11-05)
+
+### Changed
+
+- Every value of `FractionField` is in lowest terms with a denominator in normal form (positive integer, monic polynomial): `FractionField::val` normalizes, as `polynomial::val` does, so `is_same` is equality. `val<2, 4>` and `val<1, 2>` are the same type, a zero denominator stops with a `static_assert`, `simplify_t` is the identity. Unsimplified fractions no longer exist: `to_string` and the numerator and denominator of a rational function written with a non-monic denominator change, as (x + 1) / (2 x + 1) becomes ((1) / (2) x + (1) / (2)) / (x + (1) / (2)).
+
+### Added
+
+- `from_hex_float_t<"0x1.8p-3">`: the exact value of a hexadecimal floating point literal in `FractionField<bigint>`, or in `FractionField<Integers>` with a second parameter.
 
 ### Fixed
 
