@@ -5,7 +5,7 @@
 /// @brief major version of aerobus (also read by CMakeLists.txt)
 #define AEROBUS_VERSION_MAJOR 2
 /// @brief minor version of aerobus
-#define AEROBUS_VERSION_MINOR 1
+#define AEROBUS_VERSION_MINOR 2
 /// @brief patch version of aerobus
 #define AEROBUS_VERSION_PATCH 0
 
@@ -2037,6 +2037,10 @@ namespace aerobus {
         };
 
      public:
+        /// @brief the value computed by Op, a type with a static constexpr internal::bigint_digits named result
+        template<typename Op>
+        using from_digits_t = typename from_result<Op>::type;
+
         /// @brief the integer x (any integral type)
         template<auto x>
         using inject_constant_t = typename from_result<constant_op<x>>::type;
@@ -3145,11 +3149,11 @@ namespace aerobus {
             };
 
          public:
-            /// @brief represents elements of field of fractions, often noted \f$\frac{val1}{val2}\f$
+            /// @brief a fraction in canonical form: name fractions through val, which puts them in this form
             /// @tparam val1 numerator
             /// @tparam val2 denominator
             template<typename val1, typename val2>
-            struct val {
+            struct val_impl {
                 /// @brief 'numerator'
                 using x = val1;
                 /// @brief 'denominator'
@@ -3231,9 +3235,56 @@ namespace aerobus {
             };
 
             /// @brief constant zero
-            using zero = val<typename Ring::zero, typename Ring::one>;
+            using zero = val_impl<typename Ring::zero, typename Ring::one>;
             /// @brief constant one
-            using one = val<typename Ring::one, typename Ring::one>;
+            using one = val_impl<typename Ring::one, typename Ring::one>;
+
+         private:
+            // canonical form of a / b: the gcd removed, then the unit that puts the denominator in normal form
+            // (positive integer, monic polynomial)
+            template<typename a, typename b>
+            struct canonical {};
+
+            template<typename a, typename b>
+            requires(a::is_zero_t::value)
+            struct canonical<a, b> {
+                static_assert(!b::is_zero_t::value, "zero denominator in FractionField");
+                using type = zero;
+            };
+
+            // nothing to simplify
+            template<typename a, typename b>
+            requires(!a::is_zero_t::value && std::is_same_v<b, typename Ring::one>)
+            struct canonical<a, b> {
+                using type = val_impl<a, b>;
+            };
+
+            template<typename a, typename b>
+            requires(!a::is_zero_t::value && !std::is_same_v<b, typename Ring::one>)
+            struct canonical<a, b> {
+                static_assert(!b::is_zero_t::value, "zero denominator in FractionField");
+
+             private:
+                using _gcd = typename Ring::template gcd_t<a, b>;
+                using newx = typename Ring::template div_t<a, _gcd>;
+                using newy = typename Ring::template div_t<b, _gcd>;
+                // normal form of the denominator, gcd(newy, newy): |newy| for integers,
+                // newy made monic for polynomials over a field; the numerator is divided by the same unit
+                using normal_y = typename Ring::template gcd_t<newy, newy>;
+                using unit = typename Ring::template div_t<newy, normal_y>;
+
+             public:
+                using type = val_impl<typename Ring::template div_t<newx, unit>, normal_y>;
+            };
+
+         public:
+            /// @brief the fraction val1 / val2, often noted \f$\frac{val1}{val2}\f$, in lowest terms with a denominator
+            /// in normal form (positive integer, monic polynomial): each value has a single type, and is_same is
+            /// equality. A zero denominator stops with a static_assert.
+            /// @tparam val1 numerator
+            /// @tparam val2 denominator
+            template<typename val1, typename val2>
+            using val = typename canonical<val1, val2>::type;
 
             /// @brief injects from Ring to field of fractions
             /// @tparam v : will be the numerator of v / 1
@@ -3253,43 +3304,10 @@ namespace aerobus {
             /// @brief underlying ring type
             using ring_type = Ring;
 
-         private:
-            template<typename v>
-            struct simplify {};
-
-            // x = 0
-            template<typename v>
-            requires(v::x::is_zero_t::value)
-            struct simplify<v> {
-                using type = typename fraction_field_impl<Ring>::zero;
-            };
-
-            // x != 0
-            template<typename v>
-            requires(!v::x::is_zero_t::value)
-            struct simplify<v> {
-             private:
-                using _gcd = typename Ring::template gcd_t<typename v::x, typename v::y>;
-                using newx = typename Ring::template div_t<typename v::x, _gcd>;
-                using newy = typename Ring::template div_t<typename v::y, _gcd>;
-                // normal form of the denominator, gcd(newy, newy): |newy| for integers,
-                // newy made monic for polynomials over a field; the numerator is divided by the same unit
-                using normal_y = typename Ring::template gcd_t<newy, newy>;
-                using unit = typename Ring::template div_t<newy, normal_y>;
-
-             public:
-                using type = typename fraction_field_impl<Ring>::template val<
-                    typename Ring::template div_t<newx, unit>, normal_y>;
-            };
-
-         public:
-            /// @brief simplifies fraction: divides numerator and denominator by their gcd,
-            /// then by the unit that puts the denominator in normal form (positive integer, monic polynomial)
-            ///
-            /// two values are equal iff their simplified forms are the same type
+            /// @brief a value itself: every value is in lowest terms
             /// @tparam v (a type of val)
             template<typename v>
-            using simplify_t = typename simplify<v>::type;
+            using simplify_t = v;
 
          private:
             template<typename v1, typename v2>
@@ -3307,7 +3325,7 @@ namespace aerobus {
             // the simplified denominator is positive, so the sign is the numerator's
             template<typename v>
             struct pos {
-                using type = std::bool_constant<Ring::template pos_v<typename simplify_t<v>::x>>;
+                using type = std::bool_constant<Ring::template pos_v<typename v::x>>;
             };
 
             template<typename v1, typename v2>
@@ -3346,24 +3364,15 @@ namespace aerobus {
 
             template<typename v1, typename v2>
             struct eq {
-                using type = std::conditional_t<
-                        std::is_same<typename simplify_t<v1>::x, typename simplify_t<v2>::x>::value &&
-                        std::is_same<typename simplify_t<v1>::y, typename simplify_t<v2>::y>::value,
-                    std::true_type,
-                    std::false_type>;
+                using type = std::bool_constant<std::is_same_v<v1, v2>>;
             };
 
-            // a/b > c/d iff a*d > c*b, with b and d positive as they are after simplify
+            // a/b > c/d iff a*d > c*b, with b and d positive as they are in canonical form
             template<typename v1, typename v2>
             struct gt {
-             private:
-                using s1 = simplify_t<v1>;
-                using s2 = simplify_t<v2>;
-
-             public:
                 using type = typename Ring::template gt_t<
-                    typename Ring::template mul_t<typename s1::x, typename s2::y>,
-                    typename Ring::template mul_t<typename s2::x, typename s1::y>>;
+                    typename Ring::template mul_t<typename v1::x, typename v2::y>,
+                    typename Ring::template mul_t<typename v2::x, typename v1::y>>;
             };
 
          public:
@@ -3586,6 +3595,139 @@ namespace aerobus {
     template<int16_t p, int16_t q>
     using make_q16_t = typename q16::template simplify_t<
                 typename q16::val<i16::inject_constant_t<p>, i16::inject_constant_t<q>>>;
+
+    namespace internal {
+        // m 2^e parsed from [-]0x<hexadecimal digits>[.<hexadecimal digits>]p[+-]<decimal digits>
+        template<size_t N>
+        struct parsed_hex_float {
+            bigint_digits<N> mantissa;
+            int64_t exponent = 0;
+            bool invalid = false;
+        };
+
+        template<size_t N, size_t L>
+        constexpr parsed_hex_float<N> parse_hex_float(const char (&str)[L]) {
+            parsed_hex_float<N> out;
+            size_t i = 0;
+            const bool negative = str[0] == '-';
+            if (negative || str[0] == '+') {
+                i = 1;
+            }
+            if (i + 2 >= L || str[i] != '0' || (str[i + 1] != 'x' && str[i + 1] != 'X')) {
+                out.invalid = true;
+                return out;
+            }
+            i += 2;
+            bool point = false;
+            bool any_digit = false;
+            int64_t fraction_digits = 0;
+            for (; i + 1 < L && str[i] != 'p' && str[i] != 'P'; ++i) {
+                if (str[i] == '.' && !point) {
+                    point = true;
+                    continue;
+                }
+                const int digit = bigint_char_value(str[i]);
+                if (digit < 0) {
+                    out.invalid = true;
+                    return out;
+                }
+                any_digit = true;
+                fraction_digits += point ? 1 : 0;
+                uint64_t carry = static_cast<uint64_t>(digit);
+                for (size_t k = 0; k < N; ++k) {
+                    const uint64_t t = (static_cast<uint64_t>(out.mantissa.d[k]) << 4) + carry;
+                    out.mantissa.d[k] = static_cast<uint32_t>(t);
+                    carry = t >> 32;
+                }
+            }
+            if (!any_digit || i + 1 >= L) {  // no digit, or no binary exponent
+                out.invalid = true;
+                return out;
+            }
+            ++i;  // the p
+            const bool negative_exponent = str[i] == '-';
+            if (str[i] == '-' || str[i] == '+') {
+                ++i;
+            }
+            if (i + 1 >= L) {
+                out.invalid = true;
+                return out;
+            }
+            int64_t e = 0;
+            for (; i + 1 < L; ++i) {
+                if (str[i] < '0' || str[i] > '9' || e > (int64_t{1} << 40)) {
+                    out.invalid = true;
+                    return out;
+                }
+                e = 10 * e + (str[i] - '0');
+            }
+            out.mantissa.size = bigint_trim(out.mantissa.d, N);
+            out.mantissa.negative = negative && out.mantissa.size > 0;
+            out.exponent = out.mantissa.size == 0 ? 0 : (negative_exponent ? -e : e) - 4 * fraction_digits;
+            return out;
+        }
+
+        template<string_literal S>
+        struct hex_float_value {
+            static constexpr size_t N = S.length / 8 + 2;
+            static constexpr parsed_hex_float<N> parsed = parse_hex_float<N>(S.value);
+            static_assert(!parsed.invalid, "invalid hexadecimal floating point literal: [-]0x1.8p-3 is expected");
+            static_assert(parsed.exponent < (int64_t{1} << 20) && parsed.exponent > -(int64_t{1} << 20),
+                          "the exponent of this hexadecimal floating point literal is too large for exact fractions");
+            static constexpr size_t up = parsed.exponent > 0 ? static_cast<size_t>(parsed.exponent) : 0;
+            static constexpr size_t down = parsed.exponent < 0 ? static_cast<size_t>(-parsed.exponent) : 0;
+
+            // the numerator, m 2^up
+            struct numerator {
+                static constexpr size_t M = N + up / 32 + 1;
+                static constexpr bigint_digits<M> compute() {
+                    bigint_digits<M> r;
+                    r.size = bigint_shift_left(parsed.mantissa.d, parsed.mantissa.size, up, r.d);
+                    r.negative = parsed.mantissa.negative;
+                    return r;
+                }
+                static constexpr bigint_digits<M> result = compute();
+            };
+
+            // the denominator, 2^down
+            struct denominator {
+                static constexpr size_t M = down / 32 + 2;
+                static constexpr bigint_digits<M> compute() {
+                    const uint32_t one[1] = {1};
+                    bigint_digits<M> r;
+                    r.size = bigint_shift_left(one, 1, down, r.d);
+                    return r;
+                }
+                static constexpr bigint_digits<M> result = compute();
+            };
+        };
+
+        // a bigint value as a value of the integers I
+        template<typename I, typename V>
+        struct hex_float_term {
+            using inner = typename I::inner_type;
+            static_assert(bigint_bit_length(V::value.d, V::size) <= std::numeric_limits<inner>::digits,
+                          "this hexadecimal floating point literal does not fit in these integers: use bigint");
+            using type = typename I::template inject_constant_t<V::template get<inner>()>;
+        };
+
+        template<typename V>
+        struct hex_float_term<bigint, V> {
+            using type = V;
+        };
+    }  // namespace internal
+
+    /// @brief the exact value of a hexadecimal floating point literal, as printed by Sollya and `%a`, in
+    /// FractionField<Integers>: from_hex_float_t<"-0x1.55554cp-3"> by default in FractionField<bigint>.
+    /// With native integers, a value that does not fit stops with a static_assert.
+    /// @tparam S the literal: optional sign, 0x, hexadecimal digits with an optional point, p, binary exponent
+    /// @tparam Integers the integers of the fraction, bigint by default
+    template<string_literal S, typename Integers = bigint>
+    using from_hex_float_t = typename FractionField<Integers>::template val<
+        typename internal::hex_float_term<
+            Integers, bigint::from_digits_t<typename internal::hex_float_value<S>::numerator>>::type,
+        typename internal::hex_float_term<
+            Integers, bigint::from_digits_t<typename internal::hex_float_value<S>::denominator>>::type>;
 
     /// @brief helper type : adds two fractions
     /// @tparam Ring

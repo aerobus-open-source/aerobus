@@ -350,7 +350,7 @@ TEST(polynomials, to_string) {
     using P32 = polynomial<q32>;
     using A = fpq32::val<P32::val<q32::one, q32::one>, P32::val<q32::val<i32::val<2>, i32::val<1>>, q32::one>>;
     auto rep = A::to_string();
-    const char* expected = "(x + 1) / (2 x + 1)";
+    const char* expected = "((1) / (2) x + (1) / (2)) / (x + (1) / (2))";
     EXPECT_STREQ(rep.c_str(), expected);
 }
 
