@@ -2037,6 +2037,10 @@ namespace aerobus {
         };
 
      public:
+        /// @brief the value computed by Op, a type with a static constexpr internal::bigint_digits named result
+        template<typename Op>
+        using from_digits_t = typename from_result<Op>::type;
+
         /// @brief the integer x (any integral type)
         template<auto x>
         using inject_constant_t = typename from_result<constant_op<x>>::type;
@@ -2122,6 +2126,352 @@ namespace aerobus {
         /// @tparam val a value in integers<Int>
         template<typename val>
         using type = bigint::inject_constant_t<val::v>;
+    };
+
+    namespace internal {
+        // number of trailing zero bits of a nonzero magnitude
+        constexpr size_t bigint_trailing_zeros(const uint32_t* a, size_t n) {
+            for (size_t i = 0; i < n; ++i) {
+                if (a[i] != 0) {
+                    size_t bits = 32 * i;
+                    for (uint32_t d = a[i]; (d & 1U) == 0; d >>= 1) {
+                        ++bits;
+                    }
+                    return bits;
+                }
+            }
+            return 0;
+        }
+
+        // r = a 2^-s for a multiple of 2^s, r has room for n digits; returns the size of r
+        constexpr size_t bigint_shift_right(const uint32_t* a, size_t n, size_t s, uint32_t* r) {
+            const size_t words = s / 32;
+            const unsigned bits = static_cast<unsigned>(s % 32);
+            for (size_t i = 0; i < n; ++i) {
+                const uint32_t low = i + words < n ? a[i + words] >> bits : 0;
+                const uint32_t high = bits != 0 && i + words + 1 < n ? a[i + words + 1] << (32 - bits) : 0;
+                r[i] = low | high;
+            }
+            return bigint_trim(r, n);
+        }
+
+        // M 2^s, for a bigint value M
+        template<typename M, size_t s>
+        struct bigint_shifted_left {
+            static constexpr size_t N = M::size + s / 32 + 1;
+            static constexpr bigint_digits<N> compute() {
+                bigint_digits<N> r;
+                r.size = bigint_shift_left(M::value.d, M::size, s, r.d);
+                r.negative = M::value.negative && r.size > 0;
+                return r;
+            }
+            static constexpr bigint_digits<N> result = compute();
+        };
+
+        // the odd part of a bigint value M, and the power of two removed
+        template<typename M>
+        struct bigint_odd_part {
+            static constexpr size_t shift = M::size > 0 ? bigint_trailing_zeros(M::value.d, M::size) : 0;
+            static constexpr size_t N = M::size > 0 ? M::size : 1;
+            static constexpr bigint_digits<N> compute() {
+                bigint_digits<N> r;
+                r.size = bigint_shift_right(M::value.d, M::size, shift, r.d);
+                r.negative = M::value.negative;
+                return r;
+            }
+            static constexpr bigint_digits<N> result = compute();
+        };
+
+        // parses [-]0x<hexadecimal digits>[.<hexadecimal digits>]p[+-]<decimal digits>
+        template<size_t N>
+        struct parsed_hex_float {
+            bigint_digits<N> mantissa;
+            int64_t exponent = 0;
+            bool invalid = false;
+        };
+
+        template<size_t N, size_t L>
+        constexpr parsed_hex_float<N> parse_hex_float(const char (&str)[L]) {
+            parsed_hex_float<N> out;
+            size_t i = 0;
+            const bool negative = str[0] == '-';
+            if (negative || str[0] == '+') {
+                i = 1;
+            }
+            if (i + 2 >= L || str[i] != '0' || (str[i + 1] != 'x' && str[i + 1] != 'X')) {
+                out.invalid = true;
+                return out;
+            }
+            i += 2;
+            bool point = false;
+            bool any_digit = false;
+            int64_t fraction_digits = 0;
+            for (; i + 1 < L && str[i] != 'p' && str[i] != 'P'; ++i) {
+                if (str[i] == '.' && !point) {
+                    point = true;
+                    continue;
+                }
+                const int digit = bigint_char_value(str[i]);
+                if (digit < 0) {
+                    out.invalid = true;
+                    return out;
+                }
+                any_digit = true;
+                fraction_digits += point ? 1 : 0;
+                uint64_t carry = static_cast<uint64_t>(digit);
+                for (size_t k = 0; k < N; ++k) {
+                    const uint64_t t = (static_cast<uint64_t>(out.mantissa.d[k]) << 4) + carry;
+                    out.mantissa.d[k] = static_cast<uint32_t>(t);
+                    carry = t >> 32;
+                }
+            }
+            if (!any_digit || i + 1 >= L) {  // no digit, or no binary exponent
+                out.invalid = true;
+                return out;
+            }
+            ++i;  // the p
+            const bool negative_exponent = str[i] == '-';
+            if (str[i] == '-' || str[i] == '+') {
+                ++i;
+            }
+            if (i + 1 >= L) {
+                out.invalid = true;
+                return out;
+            }
+            int64_t e = 0;
+            for (; i + 1 < L; ++i) {
+                if (str[i] < '0' || str[i] > '9') {
+                    out.invalid = true;
+                    return out;
+                }
+                e = 10 * e + (str[i] - '0');
+            }
+            out.exponent = (negative_exponent ? -e : e) - 4 * fraction_digits;
+            out.mantissa.size = bigint_trim(out.mantissa.d, N);
+            out.mantissa.negative = negative && out.mantissa.size > 0;
+            return out;
+        }
+    }  // namespace internal
+
+    /// @brief dyadic rationals m 2^e: an exact ring of arbitrary precision binary numbers, as an euclidean domain
+    ///
+    /// Values are dyadic::val<M, e>, M an odd bigint value (or zero with e = 0), so that each number has a single
+    /// type: name them through make_t, inject_constant_t or from_hex_float_t, which prints as Sollya and
+    /// `%a` do. Sums, differences and products are exact. Powers of two are units: the euclidean norm is the odd part,
+    /// a / b truncates the quotient of the odd parts. Conversions to floating point types are correctly rounded.
+    /// FractionField<dyadic> is not supported, use FractionField<bigint>.
+    struct dyadic {
+        /// @brief the number M 2^e
+        /// @tparam M a bigint value, odd, or zero when e = 0
+        /// @tparam e binary exponent
+        template<typename M, int64_t e>
+        struct val {
+            static_assert(M::size == 0 ? e == 0 : (M::value.d[0] & 1U) == 1U,
+                          "dyadic::val needs a canonical form, an odd mantissa (or zero with exponent 0): use make_t");
+
+            /// @brief enclosing ring type
+            using enclosing_type = dyadic;
+            /// @brief the odd mantissa, a bigint value
+            using mantissa = M;
+            /// @brief the binary exponent
+            static constexpr int64_t exponent = e;
+            /// @brief true_type if zero
+            using is_zero_t = typename M::is_zero_t;
+            /// @brief true if zero
+            static constexpr bool is_zero_v = M::is_zero_v;
+
+         private:
+            // m 2^e in a floating point type: exact bigints only when the result is neither zero nor infinite
+            template<typename T>
+            static constexpr T to_floating_point() {
+                using limits = std::numeric_limits<T>;
+                constexpr int64_t top = static_cast<int64_t>(internal::bigint_bit_length(M::value.d, M::size)) - 1 + e;
+                constexpr int64_t half_smallest = limits::min_exponent - 1 - limits::digits;
+                if constexpr (M::size == 0) {
+                    return static_cast<T>(0);
+                } else if constexpr (top >= limits::max_exponent) {
+                    return M::value.negative ? -limits::infinity() : limits::infinity();
+                } else if constexpr (top + 1 <= half_smallest) {
+                    return M::value.negative ? -static_cast<T>(0) : static_cast<T>(0);
+                } else if constexpr (e >= 0) {
+                    const auto& num = internal::bigint_shifted_left<M, static_cast<size_t>(e)>::result;
+                    const uint32_t one[1] = {1};
+                    return internal::bigint_ratio_to_float<T, sizeof(num.d) / sizeof(uint32_t), 1>(
+                        num.d, num.size, one, 1, num.negative);
+                } else {
+                    const auto& den = internal::bigint_shifted_left<bigint::one, static_cast<size_t>(-e)>::result;
+                    return internal::bigint_ratio_to_float<T, M::size, sizeof(den.d) / sizeof(uint32_t)>(
+                        M::value.d, M::size, den.d, den.size, M::value.negative);
+                }
+            }
+
+         public:
+            /// @brief conversion to a floating point type, correctly rounded (to nearest, ties to even)
+            /// @tparam valueType such as double
+            template<typename valueType>
+            static constexpr AEROBUS_INLINE AEROBUS_DEVICE valueType get() {
+                constexpr valueType result = to_floating_point<valueType>();
+                return result;
+            }
+
+            /// @brief representation such as 3 * 2^-2
+            static std::string to_string() {
+                return e == 0 ? M::to_string() : M::to_string() + " * 2^" + std::to_string(e);
+            }
+        };
+
+     private:
+        // exact sums need all the bits between the two exponents
+        static constexpr int64_t max_alignment = int64_t{1} << 20;
+
+        template<typename M, int64_t e, bool zero = M::is_zero_v>
+        struct make {
+            using odd = internal::bigint_odd_part<M>;
+            using type = val<bigint::from_digits_t<odd>, e + static_cast<int64_t>(odd::shift)>;
+        };
+
+        template<typename M, int64_t e>
+        struct make<M, e, true> {
+            using type = val<bigint::zero, 0>;
+        };
+
+     public:
+        /// @brief the number M 2^e in canonical form, for any bigint value M
+        template<typename M, int64_t e>
+        using make_t = typename make<M, e>::type;
+
+        /// @brief zero
+        using zero = val<bigint::zero, 0>;
+        /// @brief one
+        using one = val<bigint::one, 0>;
+        /// @brief dyadic is not a field: 3 has no inverse
+        static constexpr bool is_field = false;
+        /// @brief dyadic provides the euclidean operations
+        static constexpr bool is_euclidean_domain = true;
+        /// @brief no zero divisors
+        static constexpr bool is_integral_domain = true;
+
+     private:
+        template<typename A, typename B, bool subtract, bool a_zero = A::is_zero_v, bool b_zero = B::is_zero_v>
+        struct add_op {
+            static constexpr int64_t low = A::exponent < B::exponent ? A::exponent : B::exponent;
+            static_assert(A::exponent - low <= max_alignment && B::exponent - low <= max_alignment,
+                          "the exact sum of these dyadic numbers needs more than 2^20 bits");
+            using a = bigint::from_digits_t<internal::bigint_shifted_left<typename A::mantissa,
+                                                                         static_cast<size_t>(A::exponent - low)>>;
+            using b = bigint::from_digits_t<internal::bigint_shifted_left<typename B::mantissa,
+                                                                         static_cast<size_t>(B::exponent - low)>>;
+            using type = make_t<std::conditional_t<subtract, bigint::sub_t<a, b>, bigint::add_t<a, b>>, low>;
+        };
+
+        // one operand is zero
+        template<typename A, typename B, bool subtract, bool b_zero>
+        struct add_op<A, B, subtract, true, b_zero> {
+            using type = make_t<std::conditional_t<subtract, bigint::sub_t<bigint::zero, typename B::mantissa>,
+                                                   typename B::mantissa>, B::exponent>;
+        };
+
+        template<typename A, typename B, bool subtract>
+        struct add_op<A, B, subtract, false, true> {
+            using type = A;
+        };
+
+        template<string_literal S>
+        struct hex_float_holder {
+            static constexpr size_t N = S.length / 8 + 2;
+            static constexpr internal::parsed_hex_float<N> parsed = internal::parse_hex_float<N>(S.value);
+            static_assert(!parsed.invalid, "invalid hexadecimal floating point literal: [-]0x1.8p-3 is expected");
+            static constexpr internal::bigint_digits<N> result = parsed.mantissa;
+        };
+
+     public:
+        /// @brief the integer x (any integral type)
+        template<auto x>
+        using inject_constant_t = make_t<bigint::inject_constant_t<x>, 0>;
+
+        /// @brief a value of dyadic is a value of dyadic
+        template<typename v>
+        using inject_ring_t = v;
+
+        /// @brief from a hexadecimal floating point string, such as from_hex_float_t<"-0x1.55554cp-3">
+        template<string_literal S>
+        using from_hex_float_t = make_t<bigint::from_digits_t<hex_float_holder<S>>,
+                                        hex_float_holder<S>::parsed.exponent>;
+
+        /// @brief v1 + v2, exact
+        template<typename v1, typename v2>
+        using add_t = typename add_op<v1, v2, false>::type;
+
+        /// @brief v1 - v2, exact
+        template<typename v1, typename v2>
+        using sub_t = typename add_op<v1, v2, true>::type;
+
+        /// @brief v1 * v2, exact
+        template<typename v1, typename v2>
+        using mul_t = make_t<bigint::mul_t<typename v1::mantissa, typename v2::mantissa>, v1::exponent + v2::exponent>;
+
+        /// @brief euclidean quotient: the truncated quotient of the odd parts, times 2^(e1 - e2); exact when the
+        /// odd part of v2 divides the one of v1
+        template<typename v1, typename v2>
+        using div_t = make_t<bigint::div_t<typename v1::mantissa, typename v2::mantissa>, v1::exponent - v2::exponent>;
+
+        /// @brief euclidean remainder v1 - div_t<v1, v2> * v2
+        template<typename v1, typename v2>
+        using mod_t = sub_t<v1, mul_t<div_t<v1, v2>, v2>>;
+
+        /// @brief nonnegative odd greatest common divisor, up to the units 2^k
+        template<typename v1, typename v2>
+        using gcd_t = make_t<bigint::gcd_t<typename v1::mantissa, typename v2::mantissa>, 0>;
+
+        /// @brief v1 == v2 (type)
+        template<typename v1, typename v2>
+        using eq_t = std::bool_constant<std::is_same_v<v1, v2>>;
+
+        /// @brief v1 == v2
+        template<typename v1, typename v2>
+        static constexpr bool eq_v = eq_t<v1, v2>::value;
+
+        /// @brief v > 0 (type)
+        template<typename v>
+        using pos_t = typename bigint::template pos_t<typename v::mantissa>;
+
+        /// @brief v > 0
+        template<typename v>
+        static constexpr bool pos_v = pos_t<v>::value;
+
+        /// @brief v1 > v2 (type)
+        template<typename v1, typename v2>
+        using gt_t = pos_t<sub_t<v1, v2>>;
+
+        /// @brief v1 > v2
+        template<typename v1, typename v2>
+        static constexpr bool gt_v = gt_t<v1, v2>::value;
+
+        /// @brief v1 < v2 (type)
+        template<typename v1, typename v2>
+        using lt_t = pos_t<sub_t<v2, v1>>;
+
+        /// @brief v1 < v2
+        template<typename v1, typename v2>
+        static constexpr bool lt_v = lt_t<v1, v2>::value;
+    };
+
+    /// @brief embeds i16, i32 or i64 into dyadic
+    template<typename Int>
+    struct Embed<integers<Int>, dyadic> {
+        /// @brief the dyadic representation of val
+        /// @tparam val a value in integers<Int>
+        template<typename val>
+        using type = dyadic::inject_constant_t<val::v>;
+    };
+
+    /// @brief embeds bigint into dyadic
+    template<>
+    struct Embed<bigint, dyadic> {
+        /// @brief the dyadic representation of val
+        /// @tparam val a value in bigint
+        template<typename val>
+        using type = dyadic::make_t<val, 0>;
     };
 
     namespace internal {
@@ -3116,6 +3466,9 @@ namespace aerobus {
         struct fraction_field_impl<Ring> {
             static_assert(is_integral_domain_v<Ring>,
                 "FractionField needs an integral domain (a ring without zero divisors)");
+            static_assert(!std::is_same_v<Ring, dyadic>,
+                          "FractionField<dyadic> is not supported: 1/2 would have two forms, "
+                          "use FractionField<bigint>");
 
             /// @brief true because field of fraction is a field
             static constexpr bool is_field = true;
