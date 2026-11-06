@@ -60,6 +60,7 @@ aerobus_compile_fail_test(fraction_field_of_zero_divisors "FractionField needs a
 aerobus_compile_fail_test(conway_missing "no Conway polynomial for this")
 aerobus_compile_fail_test(legendre_degree_overflow "CoefficientsFit")
 aerobus_compile_fail_test(factorization_needs_finite_field "IsFiniteField")
+aerobus_compile_fail_test(fp16_cuda_and_hip "WITH_CUDA_FP16 and WITH_HIP_FP16 are mutually exclusive")
 aerobus_compile_fail_test(bigint_division_by_zero "division by zero in bigint")
 aerobus_compile_fail_test(bigint_invalid_literal "invalid character in bigint literal")
 aerobus_compile_fail_test(fraction_zero_denominator "zero denominator in FractionField")
@@ -83,7 +84,7 @@ if(NOT MSVC)
   target_compile_options(hygiene PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()
 
-# host-side checks of the CUDA fp16 code (WITH_CUDA_FP16), when nvcc is available; no GPU needed
+# host-side checks of the CUDA fp16 code, when nvcc is available; no GPU needed
 include(CheckLanguage)
 check_language(CUDA)
 if(CMAKE_CUDA_COMPILER)
@@ -94,8 +95,33 @@ if(CMAKE_CUDA_COMPILER)
   add_executable(cuda_fp16_host_tests cuda/fp16_host_tests.cu)
   target_link_libraries(cuda_fp16_host_tests PRIVATE aerobus)
   set_target_properties(cuda_fp16_host_tests PROPERTIES CUDA_STANDARD 20 CUDA_STANDARD_REQUIRED ON)
+  target_compile_definitions(cuda_fp16_host_tests PRIVATE WITH_CUDA_FP16)
   target_compile_options(cuda_fp16_host_tests PRIVATE --expt-relaxed-constexpr)
   add_test(NAME cuda.fp16_host COMMAND cuda_fp16_host_tests)
+
+  # conversions to __half and __half2: generated, see tools/generate_float_conversion_tests.py
+  add_executable(cuda_half_conversion_tests cuda/half_conversion_tests.cu)
+  target_link_libraries(cuda_half_conversion_tests PRIVATE aerobus)
+  set_target_properties(cuda_half_conversion_tests PROPERTIES CUDA_STANDARD 20 CUDA_STANDARD_REQUIRED ON)
+  target_compile_definitions(cuda_half_conversion_tests PRIVATE WITH_CUDA_FP16)
+  target_compile_options(cuda_half_conversion_tests PRIVATE --expt-relaxed-constexpr)
+  add_test(NAME cuda.half_conversion COMMAND cuda_half_conversion_tests)
+endif()
+
+# the same tests with hipcc, when it is available; no GPU needed
+check_language(HIP)
+if(CMAKE_HIP_COMPILER)
+  if(NOT DEFINED CMAKE_HIP_ARCHITECTURES)
+    set(CMAKE_HIP_ARCHITECTURES gfx90a)
+  endif()
+  enable_language(HIP)
+  foreach(name fp16_host half_conversion)
+    add_executable(hip_${name}_tests hip/${name}_tests.hip)
+    target_link_libraries(hip_${name}_tests PRIVATE aerobus)
+    target_compile_definitions(hip_${name}_tests PRIVATE WITH_HIP_FP16)
+    set_target_properties(hip_${name}_tests PROPERTIES HIP_STANDARD 20 HIP_STANDARD_REQUIRED ON)
+    add_test(NAME hip.${name} COMMAND hip_${name}_tests)
+  endforeach()
 endif()
 
 # the Conway table of aerobus.h is the output of tools/generate_conway.py

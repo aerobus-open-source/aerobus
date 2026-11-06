@@ -69,15 +69,35 @@ jobs:
           sudo apt-get install -y --no-install-recommends "cuda-nvcc-${version/./-}"
           echo "/usr/local/cuda-$version/bin" >> "$GITHUB_PATH"
       - name: configure
-        run: >
-          cmake -S . -B build -DCMAKE_CXX_COMPILER=g++-14 -DCMAKE_CUDA_HOST_COMPILER=g++-14
-          -DCMAKE_BUILD_TYPE=Release
+        run: cmake -S . -B build -DCMAKE_CXX_COMPILER=g++-14 -DCMAKE_BUILD_TYPE=Release
       - name: build
-        run: cmake --build build --target cuda_fp16_host_tests --parallel 4
+        run: cmake --build build --target cuda_fp16_host_tests cuda_half_conversion_tests --parallel 4
       - name: test
         run: |
           nvcc --version
           ctest --test-dir build -R '^cuda\.' --no-tests=error --output-on-failure
+
+  hip:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: install hipcc from the latest ROCm
+        run: |
+          curl -fsSL https://repo.radeon.com/rocm/rocm.gpg.key | sudo gpg --dearmor -o /usr/share/keyrings/rocm.gpg
+          echo "deb [arch=amd64 signed-by=/usr/share/keyrings/rocm.gpg] https://repo.radeon.com/rocm/apt/latest noble main" | sudo tee /etc/apt/sources.list.d/rocm.list
+          # Ubuntu's older hipcc has a higher version number
+          printf 'Package: *\nPin: origin repo.radeon.com\nPin-Priority: 600\n' | sudo tee /etc/apt/preferences.d/rocm
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends hipcc hip-dev rocm-device-libs
+          echo /opt/rocm/bin >> "$GITHUB_PATH"
+      - name: configure
+        run: cmake -S . -B build -DCMAKE_CXX_COMPILER=g++-14 -DCMAKE_BUILD_TYPE=Release
+      - name: build
+        run: cmake --build build --target hip_fp16_host_tests hip_half_conversion_tests --parallel 4
+      - name: test
+        run: |
+          hipcc --version
+          ctest --test-dir build -R '^hip\.' --no-tests=error --output-on-failure
 
   sanitizers:
     runs-on: ubuntu-24.04
