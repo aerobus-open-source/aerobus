@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.3.0 (2026-11-06)
+
+### Added
+
+- `WITH_HIP_FP16` does for `hipcc` what `WITH_CUDA_FP16` does for `nvcc`, and defining both is an error: `__half` and `__half2` are those of `hip_fp16.h`, and the constants, `get`, `eval`, `fma` and `floor` work on host and device. A CI job builds and runs the tests with the latest ROCm, without a GPU.
+
+### Fixed
+
+- `FractionField<bigint>` converts to `__half` and `__half2` with `WITH_CUDA_FP16`: it did not compile before, so the output of `tools/polynomial.sollya` could not be evaluated in `__half`. `bigint::val::get` converts to them as well.
+- Conversions of fractions to `__half` and `__half2` are correctly rounded (to nearest, ties to even, subnormals and overflow included). Those of native integers went through `float` before, with two roundings: `make_q32_t<16785409, 16777216>` gave 1 instead of `0x1.004p0`.
+
 ## 2.2.1 (2026-11-05)
 
 ### Added

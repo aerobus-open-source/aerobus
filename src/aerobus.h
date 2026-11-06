@@ -5,9 +5,9 @@
 /// @brief major version of aerobus (also read by CMakeLists.txt)
 #define AEROBUS_VERSION_MAJOR 2
 /// @brief minor version of aerobus
-#define AEROBUS_VERSION_MINOR 2
+#define AEROBUS_VERSION_MINOR 3
 /// @brief patch version of aerobus
-#define AEROBUS_VERSION_PATCH 1
+#define AEROBUS_VERSION_PATCH 0
 
 #include <cstdint>
 #include <cstddef>
@@ -23,9 +23,18 @@
 #include <concepts> // NOLINT
 #include <cmath>
 #include <limits>
-#ifdef WITH_CUDA_FP16
+
+// WITH_CUDA_FP16 enables __half and __half2 of cuda_fp16.h, WITH_HIP_FP16 those of hip_fp16.h; AEROBUS_FP16 is either
+#if defined(WITH_CUDA_FP16) && defined(WITH_HIP_FP16)
+#error "WITH_CUDA_FP16 and WITH_HIP_FP16 are mutually exclusive"
+#elif defined(WITH_CUDA_FP16)
 #include <bit>
 #include <cuda_fp16.h>  // NOLINT(build/include_order): CUDA header
+#define AEROBUS_FP16
+#elif defined(WITH_HIP_FP16)
+#include <bit>
+#include <hip/hip_fp16.h>  // NOLINT(build/include_order): HIP header
+#define AEROBUS_FP16
 #endif
 
 /** @file */
@@ -49,6 +58,11 @@
 #define AEROBUS_DEVICE __host__ __device__
 #else
 #define AEROBUS_DEVICE
+#endif
+
+// defined during the device pass of nvcc or hipcc
+#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+#define AEROBUS_DEVICE_PASS
 #endif
 
 //! \namespace aerobus main namespace for all publicly exposed types or functions
@@ -156,11 +170,29 @@ namespace aerobus {
     }  // namespace internal
 }  // namespace aerobus
 
-#ifdef WITH_CUDA_FP16
+#ifdef AEROBUS_FP16
 // constexpr conversion from int16_t to __half: static_cast is not constexpr in cuda_fp16.h
 // (NVIDIA bug https://developer.nvidia.com/bugs/4863696)
 namespace aerobus {
     namespace internal {
+        // HIP: the constexpr constructor of __half reads x or data, depending on the version, and a constant
+        // expression can only read the active member of the union of __half_raw
+        template<typename Raw>
+        concept half_constructor_reads_x = requires {
+            typename std::bool_constant<(static_cast<void>(__half(Raw{.x = 1})), true)>;
+        };
+
+        // the __half with this encoding, in a constant expression: HIP's __half holds a union, which rules out
+        // std::bit_cast
+        template<typename Raw = __half_raw>
+        static constexpr AEROBUS_DEVICE __half half_from_bits(const uint16_t bits) {
+            if constexpr (half_constructor_reads_x<Raw>) {
+                return __half(Raw{.x = bits});
+            } else {
+                return __half(Raw{.data = std::bit_cast<decltype(Raw::data)>(bits)});
+            }
+        }
+
         static constexpr AEROBUS_DEVICE uint16_t my_internal_float2half(
             const float f, uint32_t &sign, uint32_t &remainder) {
             uint32_t x;
@@ -196,17 +228,13 @@ namespace aerobus {
         }
 
         static constexpr AEROBUS_DEVICE __half my_float2half_rn(const float a) {
-            __half val;
-            __half_raw r;
             uint32_t sign = 0U;
             uint32_t remainder = 0U;
-            r.x = my_internal_float2half(a, sign, remainder);
-            if ((remainder > 0x80000000U) || ((remainder == 0x80000000U) && ((r.x & 0x1U) != 0U))) {
-                r.x++;
+            uint16_t bits = my_internal_float2half(a, sign, remainder);
+            if ((remainder > 0x80000000U) || ((remainder == 0x80000000U) && ((bits & 0x1U) != 0U))) {
+                bits++;
             }
-
-            val = std::bit_cast<__half>(r);
-            return val;
+            return half_from_bits(bits);
         }
 
         template <int16_t i>
@@ -257,7 +285,7 @@ namespace aerobus {
             }
         };
 
-        #ifdef WITH_CUDA_FP16
+        #ifdef AEROBUS_FP16
         template<>
         struct staticcast<__half, int16_t> {
             template<int16_t x>
@@ -316,12 +344,12 @@ namespace aerobus {
             }
         };
 
-        #ifdef WITH_CUDA_FP16
+        #ifdef AEROBUS_FP16
         template<>
         struct fma_helper<__half> {
             // not constexpr: the fp16 operators of cuda_fp16.h are not
             static AEROBUS_INLINE AEROBUS_DEVICE __half eval(const __half x, const __half y, const __half z) {
-                #ifdef __CUDA_ARCH__
+                #ifdef AEROBUS_DEVICE_PASS
                 return __hfma(x, y, z);
                 #else
                 return x * y + z;
@@ -332,7 +360,7 @@ namespace aerobus {
         struct fma_helper<__half2> {
             // not constexpr: the fp16 operators of cuda_fp16.h are not
             static AEROBUS_INLINE AEROBUS_DEVICE __half2 eval(const __half2 x, const __half2 y, const __half2 z) {
-                #ifdef __CUDA_ARCH__
+                #ifdef AEROBUS_DEVICE_PASS
                 return __hfma2(x, y, z);
                 #else
                 return x * y + z;
@@ -348,7 +376,7 @@ namespace aerobus {
     /// @brief placeholder for a double-double type, the upper type of double in arithmetic_helpers
     struct double_double {};
 
-    /// @brief constants and properties of a floating point type (float, double, __half with WITH_CUDA_FP16)
+    /// @brief constants and properties of a floating point type (float, double, __half with AEROBUS_FP16)
     /// @tparam T floating point type
     template<typename T>
     struct arithmetic_helpers;
@@ -415,7 +443,7 @@ namespace aerobus {
         }
     };
 
-    #ifdef WITH_CUDA_FP16
+    #ifdef AEROBUS_FP16
     /// @brief constants of this floating point type
     template<>
     struct arithmetic_helpers<__half> {
@@ -424,23 +452,41 @@ namespace aerobus {
         /// @brief type with twice the precision
         using upper_type = float;
         /// @brief 1
-        static AEROBUS_INLINE AEROBUS_DEVICE consteval __half one() { return        __half_raw(0b0011110000000000); }
+        static AEROBUS_INLINE AEROBUS_DEVICE consteval __half one() {
+            return internal::half_from_bits(0b0011110000000000);
+        }
         /// @brief 0
-        static AEROBUS_INLINE AEROBUS_DEVICE consteval __half zero() { return       __half_raw(0b0000000000000000); }
+        static AEROBUS_INLINE AEROBUS_DEVICE consteval __half zero() {
+            return internal::half_from_bits(0b0000000000000000);
+        }
         /// @brief pi, rounded to nearest
-        static AEROBUS_INLINE AEROBUS_DEVICE consteval __half pi() { return __half_raw(0b0100001001001000); }
+        static AEROBUS_INLINE AEROBUS_DEVICE consteval __half pi() {
+            return internal::half_from_bits(0b0100001001001000);
+        }
         /// @brief -0
-        static AEROBUS_INLINE AEROBUS_DEVICE consteval __half m_zero() { return     __half_raw(0b1000000000000000); }
+        static AEROBUS_INLINE AEROBUS_DEVICE consteval __half m_zero() {
+            return internal::half_from_bits(0b1000000000000000);
+        }
         /// @brief pi / 2, rounded to nearest
-        static AEROBUS_INLINE AEROBUS_DEVICE consteval __half pi_2() { return       __half_raw(0b011111001001000); }
+        static AEROBUS_INLINE AEROBUS_DEVICE consteval __half pi_2() {
+            return internal::half_from_bits(0b011111001001000);
+        }
         /// @brief pi / 4, rounded to nearest
-        static AEROBUS_INLINE AEROBUS_DEVICE consteval __half pi_4() { return       __half_raw(0b011101001001000); }
+        static AEROBUS_INLINE AEROBUS_DEVICE consteval __half pi_4() {
+            return internal::half_from_bits(0b011101001001000);
+        }
         /// @brief 2 pi, rounded to nearest
-        static AEROBUS_INLINE AEROBUS_DEVICE consteval __half two_pi() { return     __half_raw(0x4648); }
+        static AEROBUS_INLINE AEROBUS_DEVICE consteval __half two_pi() {
+            return internal::half_from_bits(0x4648);
+        }
         /// @brief 1 / (2 pi), rounded to nearest
-        static AEROBUS_INLINE AEROBUS_DEVICE consteval __half inv_two_pi() { return __half_raw(0b011000100011000); }
+        static AEROBUS_INLINE AEROBUS_DEVICE consteval __half inv_two_pi() {
+            return internal::half_from_bits(0b011000100011000);
+        }
         /// @brief 1 / 2
-        static AEROBUS_INLINE AEROBUS_DEVICE consteval __half half() { return       __half_raw(0b0011100000000000); }
+        static AEROBUS_INLINE AEROBUS_DEVICE consteval __half half() {
+            return internal::half_from_bits(0b0011100000000000);
+        }
         /// @brief true if x is infinite
         static AEROBUS_INLINE AEROBUS_DEVICE bool is_inf(__half x) {
             return __hisinf(x) != 0;
@@ -449,7 +495,7 @@ namespace aerobus {
 
     #endif
 
-    /// @brief floor and fmod, also for __half and __half2 on host and device (WITH_CUDA_FP16)
+    /// @brief floor and fmod, also for __half and __half2 on host and device (AEROBUS_FP16)
     /// @tparam T floating point type
     template<typename T>
     struct meta_libm {
@@ -463,12 +509,12 @@ namespace aerobus {
         }
     };
 
-    #ifdef WITH_CUDA_FP16
+    #ifdef AEROBUS_FP16
     // hfloor and h2floor are device functions: the host goes through float
     template<>
     struct meta_libm<__half> {
         static AEROBUS_INLINE AEROBUS_DEVICE __half floor(const __half& f) {
-            #ifdef __CUDA_ARCH__
+            #ifdef AEROBUS_DEVICE_PASS
             return hfloor(f);
             #else
             return __float2half(std::floor(__half2float(f)));
@@ -484,7 +530,7 @@ namespace aerobus {
     template<>
     struct meta_libm<__half2> {
         static AEROBUS_INLINE AEROBUS_DEVICE __half2 floor(const __half2& f) {
-            #ifdef __CUDA_ARCH__
+            #ifdef AEROBUS_DEVICE_PASS
             return h2floor(f);
             #else
             return __half2(meta_libm<__half>::floor(__low2half(f)), meta_libm<__half>::floor(__high2half(f)));
@@ -506,7 +552,7 @@ namespace aerobus {
         template<typename T>
         struct exact_fma {
             static AEROBUS_INLINE AEROBUS_DEVICE T eval(const T a, const T b, const T c) {
-                #ifdef __CUDA_ARCH__
+                #ifdef AEROBUS_DEVICE_PASS
                 return ::fma(a, b, c);
                 #else
                 return std::fma(a, b, c);
@@ -514,12 +560,12 @@ namespace aerobus {
             }
         };
 
-        #ifdef WITH_CUDA_FP16
+        #ifdef AEROBUS_FP16
         // the product of two halves is exact in float; for c = -round(a * b) so is the sum
         template<>
         struct exact_fma<__half> {
             static AEROBUS_INLINE AEROBUS_DEVICE __half eval(const __half a, const __half b, const __half c) {
-                #ifdef __CUDA_ARCH__
+                #ifdef AEROBUS_DEVICE_PASS
                 return __hfma(a, b, c);
                 #else
                 return __float2half(__half2float(a) * __half2float(b) + __half2float(c));
@@ -530,7 +576,7 @@ namespace aerobus {
         template<>
         struct exact_fma<__half2> {
             static AEROBUS_INLINE AEROBUS_DEVICE __half2 eval(const __half2 a, const __half2 b, const __half2 c) {
-                #ifdef __CUDA_ARCH__
+                #ifdef AEROBUS_DEVICE_PASS
                 return __hfma2(a, b, c);
                 #else
                 return __half2(
@@ -1311,7 +1357,7 @@ namespace aerobus {
             /// @tparam valueType double for example
             template<typename valueType>
             static constexpr AEROBUS_INLINE AEROBUS_DEVICE valueType get() {
-                #ifdef WITH_CUDA_FP16
+                #ifdef AEROBUS_FP16
                 if constexpr (std::is_same_v<Int, int16_t>) {
                     // static_cast to __half is not constexpr in cuda_fp16.h
                     return internal::template int16_convert_helper<valueType, x>::value();
@@ -1682,9 +1728,47 @@ namespace aerobus {
             return bigint_trim(r, n + words + 1);
         }
 
+        // num / den = (q + rest) 2^-shift, with 0 <= rest < 1 and q on precision + 2 or + 3 bits, by algorithm D
+        template<size_t N>
+        struct bigint_scaled_ratio {
+            uint32_t q[N] = {};
+            size_t nq = 0;
+            bool rest = false;
+            int64_t shift = 0;
+            int64_t bits = 0;
+        };
+
+        template<size_t N>
+        constexpr bigint_scaled_ratio<N> bigint_scale_ratio(const uint32_t* num, size_t nn, const uint32_t* den,
+                                                            size_t nd, int precision) {
+            bigint_scaled_ratio<N> result;
+            uint32_t a[N] = {};
+            uint32_t b[N] = {};
+            uint32_t r[N] = {};
+            result.shift = int64_t{precision} + 2 + static_cast<int64_t>(bigint_bit_length(den, nd)) -
+                           static_cast<int64_t>(bigint_bit_length(num, nn));
+            const size_t na = bigint_shift_left(num, nn, result.shift > 0 ? static_cast<size_t>(result.shift) : 0, a);
+            const size_t nb = bigint_shift_left(den, nd, result.shift < 0 ? static_cast<size_t>(-result.shift) : 0, b);
+            size_t nr = 0;
+            bigint_divmod<N, N>(a, na, b, nb, result.q, &result.nq, r, &nr);
+            result.rest = nr != 0;
+            result.bits = static_cast<int64_t>(bigint_bit_length(result.q, result.nq));
+            return result;
+        }
+
+        // to nearest, ties to even: does dropping the d low bits of the quotient round it up?
+        template<size_t N>
+        constexpr bool bigint_rounds_up(const bigint_scaled_ratio<N>& ratio, int64_t d) {
+            const bool half = bigint_bit(ratio.q, ratio.nq, static_cast<size_t>(d - 1));
+            bool below = ratio.rest;
+            for (int64_t i = 0; i < d - 1 && i < ratio.bits && !below; ++i) {
+                below = bigint_bit(ratio.q, ratio.nq, static_cast<size_t>(i));
+            }
+            return half && (below || bigint_bit(ratio.q, ratio.nq, static_cast<size_t>(d)));
+        }
+
         // num / den, with the sign given by negative, correctly rounded to T (to nearest, ties to even), subnormals
-        // and overflow to infinity included. The quotient is computed on precision + 2 or + 3 bits by algorithm D;
-        // the remainder tells whether the bits below are all zero.
+        // and overflow to infinity included.
         template<typename T, size_t NN, size_t ND>
         constexpr T bigint_ratio_to_float(const uint32_t* num, size_t nn, const uint32_t* den, size_t nd,
                                           bool negative) {
@@ -1700,37 +1784,20 @@ namespace aerobus {
             constexpr int64_t emin = limits::min_exponent - 1;
             constexpr int64_t emax = limits::max_exponent - 1;
             constexpr size_t N = NN + ND + static_cast<size_t>(precision) / 32 + 3;
-            uint32_t a[N] = {};
-            uint32_t b[N] = {};
-            uint32_t q[N] = {};
-            uint32_t r[N] = {};
-            // num / den = (a / b) 2^-shift, with a / b on precision + 2 or + 3 bits
-            const int64_t shift = int64_t{precision} + 2 + static_cast<int64_t>(bigint_bit_length(den, nd)) -
-                                  static_cast<int64_t>(bigint_bit_length(num, nn));
-            const size_t na = bigint_shift_left(num, nn, shift > 0 ? static_cast<size_t>(shift) : 0, a);
-            const size_t nb = bigint_shift_left(den, nd, shift < 0 ? static_cast<size_t>(-shift) : 0, b);
-            size_t nq = 0;
-            size_t nr = 0;
-            bigint_divmod<N, N>(a, na, b, nb, q, &nq, r, &nr);
-            const int64_t bits = static_cast<int64_t>(bigint_bit_length(q, nq));
-            const int64_t exponent = bits - 1 - shift;  // floor(log2(num / den))
+            const auto ratio = bigint_scale_ratio<N>(num, nn, den, nd, precision);
+            const int64_t exponent = ratio.bits - 1 - ratio.shift;  // floor(log2(num / den))
             if (exponent > emax) {
                 return signed_value(limits::infinity());
             }
             // the result is m 2^k: d low bits of the quotient are dropped, more for a subnormal
             const int64_t k = (exponent > emin ? exponent : emin) - precision + 1;
-            const int64_t d = k + shift;
+            const int64_t d = k + ratio.shift;
             T m = static_cast<T>(0);
-            for (int64_t i = bits - 1; i >= d; --i) {
-                m = m * static_cast<T>(2) + static_cast<T>(bigint_bit(q, nq, static_cast<size_t>(i)) ? 1 : 0);
+            for (int64_t i = ratio.bits - 1; i >= d; --i) {
+                const bool bit = bigint_bit(ratio.q, ratio.nq, static_cast<size_t>(i));
+                m = m * static_cast<T>(2) + static_cast<T>(bit ? 1 : 0);
             }
-            const bool half = bigint_bit(q, nq, static_cast<size_t>(d - 1));
-            bool below = nr != 0;
-            for (int64_t i = 0; i < d - 1 && i < bits && !below; ++i) {
-                below = bigint_bit(q, nq, static_cast<size_t>(i));
-            }
-            const bool odd = bigint_bit(q, nq, static_cast<size_t>(d));
-            if (half && (below || odd)) {
+            if (bigint_rounds_up(ratio, d)) {
                 m = m + static_cast<T>(1);
             }
             if (m == static_cast<T>(0)) {
@@ -1760,6 +1827,41 @@ namespace aerobus {
             }
             return signed_value(m);
         }
+
+        #ifdef AEROBUS_FP16
+        // the same, for __half, which is not an arithmetic type in a constant expression: the result is m 2^k, whose
+        // encoding is ((k + 24) << 10) + m, for a normal value (m holds the implicit bit) as for a subnormal one
+        template<size_t NN, size_t ND>
+        constexpr __half bigint_ratio_to_half(const uint32_t* num, size_t nn, const uint32_t* den, size_t nd,
+                                              bool negative) {
+            constexpr int precision = 11;
+            constexpr int64_t emin = -14;
+            constexpr int64_t emax = 15;
+            constexpr uint32_t infinity = 0x7C00U;
+            uint32_t magnitude = infinity;
+            if (nd != 0 && nn == 0) {
+                magnitude = 0;
+            } else if (nd != 0) {
+                constexpr size_t N = NN + ND + 3;
+                const auto ratio = bigint_scale_ratio<N>(num, nn, den, nd, precision);
+                const int64_t exponent = ratio.bits - 1 - ratio.shift;  // floor(log2(num / den))
+                if (exponent <= emax) {
+                    const int64_t k = (exponent > emin ? exponent : emin) - precision + 1;
+                    const int64_t d = k + ratio.shift;
+                    uint32_t m = 0;
+                    for (int64_t i = ratio.bits - 1; i >= d; --i) {
+                        m = 2 * m + (bigint_bit(ratio.q, ratio.nq, static_cast<size_t>(i)) ? 1U : 0U);
+                    }
+                    if (bigint_rounds_up(ratio, d)) {
+                        ++m;
+                    }
+                    // rounding up may reach 2^11, and the next binade may overflow: the encoding carries into both
+                    magnitude = (static_cast<uint32_t>(k + 24) << 10) + m;
+                }
+            }
+            return half_from_bits(static_cast<uint16_t>(magnitude | (negative ? 0x8000U : 0U)));
+        }
+        #endif
 
         // parses [-]digits in base 10 or 16
         template<size_t N, size_t L>
@@ -1821,6 +1923,54 @@ namespace aerobus {
                     value.d, sizeof...(digits), one, 1, negative);
             }
 
+            template<typename valueType, int ghost = 0>
+            struct get_helper {
+                static constexpr AEROBUS_INLINE AEROBUS_DEVICE valueType get() {
+                    if constexpr (std::is_floating_point_v<valueType>) {
+                        constexpr valueType result = to_floating_point<valueType>();
+                        return result;
+                    } else if constexpr (std::is_integral_v<valueType>) {
+                        static_assert(sizeof...(digits) <= 2, "bigint::get: the value does not fit in 64 bits");
+                        uint64_t magnitude = 0;
+                        for (size_t i = 0; i < sizeof...(digits); ++i) {
+                            magnitude = (magnitude << 32) | list[i];
+                        }
+                        return negative ? static_cast<valueType>(uint64_t{0} - magnitude)
+                                        : static_cast<valueType>(magnitude);
+                    } else {
+                        valueType result = static_cast<valueType>(0);
+                        for (size_t i = 0; i < sizeof...(digits); ++i) {
+                            result = result * static_cast<valueType>(4294967296.0) + static_cast<valueType>(list[i]);
+                        }
+                        return negative ? -result : result;
+                    }
+                }
+            };
+
+            #ifdef AEROBUS_FP16
+            static constexpr __half to_half() {
+                const uint32_t one[1] = {1};
+                return internal::bigint_ratio_to_half<sizeof...(digits), 1>(
+                    value.d, sizeof...(digits), one, 1, negative);
+            }
+
+            template<int ghost>
+            struct get_helper<__half, ghost> {
+                static constexpr AEROBUS_INLINE AEROBUS_DEVICE __half get() {
+                    constexpr __half result = to_half();
+                    return result;
+                }
+            };
+
+            template<int ghost>
+            struct get_helper<__half2, ghost> {
+                static constexpr AEROBUS_INLINE AEROBUS_DEVICE __half2 get() {
+                    constexpr __half result = to_half();
+                    return __half2(result, result);
+                }
+            };
+            #endif
+
          public:
             static_assert(sizeof...(digits) == 0 ? !negative : list[0] != 0,
                           "bigint::val needs a canonical form: no leading zero digit, zero is val<false>");
@@ -1841,24 +1991,7 @@ namespace aerobus {
             /// @tparam valueType such as double
             template<typename valueType>
             static constexpr AEROBUS_INLINE AEROBUS_DEVICE valueType get() {
-                if constexpr (std::is_floating_point_v<valueType>) {
-                    constexpr valueType result = to_floating_point<valueType>();
-                    return result;
-                } else if constexpr (std::is_integral_v<valueType>) {
-                    static_assert(sizeof...(digits) <= 2, "bigint::get: the value does not fit in 64 bits");
-                    uint64_t magnitude = 0;
-                    for (size_t i = 0; i < sizeof...(digits); ++i) {
-                        magnitude = (magnitude << 32) | list[i];
-                    }
-                    return negative ? static_cast<valueType>(uint64_t{0} - magnitude)
-                                    : static_cast<valueType>(magnitude);
-                } else {
-                    valueType result = static_cast<valueType>(0);
-                    for (size_t i = 0; i < sizeof...(digits); ++i) {
-                        result = result * static_cast<valueType>(4294967296.0) + static_cast<valueType>(list[i]);
-                    }
-                    return negative ? -result : result;
-                }
+                return get_helper<valueType, 0>::get();
             }
 
             /// @brief decimal representation
@@ -2913,7 +3046,7 @@ namespace aerobus {
                 eft_horner<static_cast<int64_t>(P::degree) - 1>(x, pi, sigma, &r);
                 if constexpr (std::is_floating_point_v<arithmeticType>) {
                     // on overflow the error terms are not finite: keep the Horner result
-                    #ifdef __CUDA_ARCH__
+                    #ifdef AEROBUS_DEVICE_PASS
                     const bool finite = ::isfinite(r);
                     #else
                     const bool finite = std::isfinite(r);
@@ -3111,6 +3244,17 @@ namespace aerobus {
                 num.d, num.size, den.d, den.size, num.negative != den.negative);
         }
 
+        #ifdef AEROBUS_FP16
+        // X / Y, values of an integer ring, correctly rounded to __half
+        template<typename X, typename Y>
+        constexpr __half fraction_to_half() {
+            const auto num = integer_value_digits<X>();
+            const auto den = integer_value_digits<Y>();
+            return bigint_ratio_to_half<sizeof(num.d) / sizeof(uint32_t), sizeof(den.d) / sizeof(uint32_t)>(
+                num.d, num.size, den.d, den.size, num.negative != den.negative);
+        }
+        #endif
+
         template<typename Ring>
         requires IsEuclideanDomain<Ring>
         struct fraction_field_impl {};
@@ -3189,23 +3333,20 @@ namespace aerobus {
                     }
                 };
 
-                #ifdef WITH_CUDA_FP16
+                #ifdef AEROBUS_FP16
                 template<int ghost>
                 struct get_helper<__half, ghost> {
                     static constexpr AEROBUS_INLINE AEROBUS_DEVICE __half get() {
-                        return internal::my_float2half_rn(
-                            internal::staticcast<float, typename ring_type::inner_type>::template func<x::v>() /
-                            internal::staticcast<float, typename ring_type::inner_type>::template func<y::v>());
+                        constexpr __half result = internal::fraction_to_half<x, y>();
+                        return result;
                     }
                 };
 
                 template<int ghost>
                 struct get_helper<__half2, ghost> {
                     static constexpr AEROBUS_INLINE AEROBUS_DEVICE __half2 get() {
-                        constexpr __half tmp = internal::my_float2half_rn(
-                            internal::staticcast<float, typename ring_type::inner_type>::template func<x::v>() /
-                            internal::staticcast<float, typename ring_type::inner_type>::template func<y::v>());
-                        return __half2(tmp, tmp);
+                        constexpr __half result = internal::fraction_to_half<x, y>();
+                        return __half2(result, result);
                     }
                 };
                 #endif

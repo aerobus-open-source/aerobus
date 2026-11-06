@@ -1,5 +1,5 @@
-// Host-side checks of the WITH_CUDA_FP16 code paths: built by nvcc, runs without a GPU.
-#define WITH_CUDA_FP16
+// Host-side checks of the fp16 code paths: built by nvcc with WITH_CUDA_FP16 and by hipcc with WITH_HIP_FP16, runs
+// without a GPU.
 #include <cmath>
 #include <cstdio>
 #include <random>
