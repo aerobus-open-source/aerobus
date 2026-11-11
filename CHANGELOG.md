@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- `Complex<Ring>`, the complex numbers $x + y i$ over a commutative ring ([#42](https://github.com/aerobus-open-source/aerobus/issues/42)): addition, multiplication, `conj_t`, `norm_t`, and `div_t` when `Ring` is a field in which -1 is known not to be a square (ordered fields such as `q64`, `zpz<p>` and `GaloisField<p, n>` with q = 3 mod 4). `is_integral_domain` and `is_field` follow the same rule, so `Complex<zpz<5>>`, where (2 + i)(2 - i) = 0, is a ring without division. `get<std::complex<T>>()` converts a value, so that `polynomial<Complex<Ring>>::eval` evaluates on `std::complex<T>`.
+- `examples/complex_fir_response.cpp`: the frequency response of a complex FIR filter, the binomial lowpass shifted by fs/4, with exact taps in `Complex<q32>` and its gain at plus and minus fs/4 proven by `static_assert`.
+
 ## 2.3.0 (2026-11-06)
 
 ### Added

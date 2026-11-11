@@ -76,7 +76,14 @@ using all_samples = ::testing::Types<
     samples<pi64, make_int_polynomial_t<i64, 1, -1>, make_int_polynomial_t<i64, 2, 0, 3>, pi64::one>,
     samples<pq64, make_frac_polynomial_t<i64, 1, 2>, pq64::val<make_q64_t<1, 3>>, pq64::X>,
     samples<Z17, Z17::inject_constant_t<-1>, Z17::inject_constant_t<5>, Z17::inject_constant_t<9>>,
-    samples<F9, phi, F9::mul_t<phi, phi>, F9::inject_constant_t<2>>>;
+    samples<F9, phi, F9::mul_t<phi, phi>, F9::inject_constant_t<2>>,
+    samples<Complex<i32>, Complex<i32>::val<i32::val<1>, i32::val<-2>>, Complex<i32>::i,
+            Complex<i32>::inject_constant_t<3>>,
+    samples<Complex<q32>, Complex<q32>::val<make_q32_t<1, 2>, make_q32_t<-2, 3>>, Complex<q32>::i, Complex<q32>::zero>,
+    samples<Complex<zpz<3>>, Complex<zpz<3>>::val<zpz<3>::one, zpz<3>::val<2>>, Complex<zpz<3>>::i,
+            Complex<zpz<3>>::inject_constant_t<2>>,
+    samples<Complex<zpz<5>>, Complex<zpz<5>>::val<zpz<5>::val<2>, zpz<5>::one>, Complex<zpz<5>>::i,
+            Complex<zpz<5>>::val<zpz<5>::val<2>, zpz<5>::val<4>>>>;
 }  // namespace
 
 TYPED_TEST_SUITE(ring_axioms_test, all_samples);

@@ -409,6 +409,22 @@ Each class has a single type, its canonical representative being the remainder m
 
 This is mainly used to define finite fields of order $p^n$ using Conway polynomials but may have other applications.
 
+### Complex numbers
+
+`Complex<Ring>` is $R[i] = R[x]/(x^2 + 1)$, the numbers $x + y i$ with $i^2 = -1$, for any commutative ring `R`: the Gaussian integers with `Complex<i64>`, $\mathbb{Q}[i]$ with `Complex<q64>`. It is a field, with `div_t`, when `R` is a field in which $-1$ is known not to be a square: an ordered field such as `q64`, or $\mathbb{F}_q$ with $q \equiv 3 \pmod 4$. Elsewhere $x^2 + 1$ may factor, as in $\mathbb{F}_5$ where $(2 + i)(2 - i) = 0$, and there is no division.
+
+```cpp
+using Qi = aerobus::Complex<aerobus::q64>;
+using a = Qi::val<aerobus::make_q64_t<1, 1>, aerobus::make_q64_t<2, 1>>;  // 1 + 2i
+using b = Qi::val<aerobus::make_q64_t<3, 1>, aerobus::make_q64_t<4, 1>>;  // 3 + 4i
+static_assert(std::is_same_v<Qi::mul_t<Qi::i, Qi::i>, Qi::inject_constant_t<-1>>);
+// (1 + 2i) / (3 + 4i) = (11 + 2i) / 25
+static_assert(std::is_same_v<Qi::div_t<a, b>, Qi::val<aerobus::make_q64_t<11, 25>, aerobus::make_q64_t<2, 25>>>);
+static_assert(aerobus::Complex<aerobus::zpz<3>>::is_field && !aerobus::Complex<aerobus::zpz<5>>::is_field);
+```
+
+`conj_t` and `norm_t` give the conjugate and $x^2 + y^2$. Over a field, `polynomial<Complex<R>>` has the euclidean division of polynomials. `get<std::complex<double>>()` converts a value, part by part, so that `eval` evaluates a polynomial with complex coefficients on `std::complex<double>` or `std::complex<float>` (at run time: the multiplication of `std::complex` is not a constant expression everywhere).
+
 ## Misc
 
 ### Continued Fractions
