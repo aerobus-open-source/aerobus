@@ -48,7 +48,8 @@ At x = 1.05F the exact value is 1.562491e-8. Horner in `float` returns -5.96e-7 
 
 ## Getting started
 
-- Clone or download the repository somewhere, or just download `src/aerobus.h`
+- `Aerobus` is a single header: downloading [`src/aerobus.h`](src/aerobus.h) is enough, there is nothing to build
+- To clone it, `git clone --depth 1` is enough as well, and avoids downloading the history
 - In your code, add: `#include "aerobus.h"`
 - Compile with `-std=c++20` (at least) and `-I<install_location>`
 - Deep compile-time computations (high degree Taylor series, large Conway polynomials) may need a larger template depth than the compiler default: `-ftemplate-depth=30000` with GCC and clang.
