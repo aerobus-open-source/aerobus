@@ -48,7 +48,8 @@ At x = 1.05F the exact value is 1.562491e-8. Horner in `float` returns -5.96e-7 
 
 ## Getting started
 
-- Clone or download the repository somewhere, or just download `src/aerobus.h`
+- `Aerobus` is a single header: downloading [`src/aerobus.h`](src/aerobus.h) is enough, there is nothing to build
+- To clone it, `git clone --depth 1` is enough as well, and avoids downloading the history
 - In your code, add: `#include "aerobus.h"`
 - Compile with `-std=c++20` (at least) and `-I<install_location>`
 - Deep compile-time computations (high degree Taylor series, large Conway polynomials) may need a larger template depth than the compiler default: `-ftemplate-depth=30000` with GCC and clang.
@@ -140,7 +141,7 @@ static_assert(pow_t<i64::val<2>, 10>::v == 1024);
 
 ### Arbitrary precision integers
 
-`aerobus::bigint` is an euclidean domain of integers without bound. It can replace `i64` as polynomial coefficients, in `FractionField<bigint>`, in `Quotient<bigint, X>` (Z/XZ, a field when X is prime) and as the integers of the predefined families and Taylor series, which are then not limited in degree. `Embed<i64, bigint>` converts integers. What needs a native type does not apply: `factorial_v`, `combination_v` and the other `_v` constants need `inner_type`, use the `_t` types and `get<T>()`:
+`aerobus::bigint` is an euclidean domain of integers without bound. It can replace `i64` as polynomial coefficients, in `FractionField<bigint>`, in `Quotient<bigint, X>` (Z/XZ, a field when X is prime) and as the integers of the predefined families and Taylor series, which are then not limited in degree. `Embed<i64, bigint>` converts integers. The combinatorial numbers work over it as well: `factorial_t<bigint, 100>` is exact, and the `_v` constants, which yield a native value, take the type of the result since `bigint` has none (`factorial_v<bigint, 30, double>`):
 
 ```cpp
 using aerobus::bigint;
@@ -149,6 +150,13 @@ using M = bigint::mul_t<N, bigint::from_hex_t<"FFFFFFFFFFFFFFFF">>;
 static_assert(bigint::eq_v<bigint::div_t<M, N>, bigint::from_hex_t<"FFFFFFFFFFFFFFFF">>);
 static_assert(bigint::mod_t<bigint::inject_constant_t<-7>, bigint::inject_constant_t<2>>::get<int>() == -1);
 using P30 = aerobus::known_polynomials::legendre<30, bigint>;  // exact coefficients, beyond the i64 limit of 21
+
+// 21! does not fit in an int64_t, C(50, 100) does not fit in 96 bits
+using namespace aerobus;
+static_assert(std::is_same_v<factorial_t<bigint, 21>, bigint::from_string_t<"51090942171709440000">>);
+static_assert(std::is_same_v<combination_t<bigint, 50, 100>,
+                             bigint::from_string_t<"100891344545564193334812497256">>);
+static_assert(factorial_v<bigint, 30, double> == 265252859812191058636308480000000.0);
 ```
 
 Values are `bigint::val<negative, digits...>`, digits in base 2^32, most significant first. The arithmetic runs in `constexpr` functions on arrays of digits rather than through recursive templates, and division is Knuth's algorithm D, so dividing a 40-digit number by a 20-digit one adds about 0.04 s to the compilation. As for `i64`, division truncates toward zero and the remainder has the sign of the dividend. `to_string()` and `to_hex()` print values, `get<T>()` converts them. The primality of a `Quotient` modulus is tested when it fits in 64 bits (Miller-Rabin above 2^32); a larger modulus is a field only when declared so.

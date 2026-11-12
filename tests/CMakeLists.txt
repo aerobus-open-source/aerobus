@@ -36,6 +36,11 @@ if(NOT MSVC)
   add_executable(factorization_tests factorization_tests.cpp)
   target_link_libraries(factorization_tests PRIVATE aerobus aerobus_dev_flags GTest::gtest_main)
   gtest_discover_tests(factorization_tests)
+
+  # factorials and binomial coefficients over bigint, beyond what native integers hold
+  add_executable(bigint_combinatorics_tests bigint_combinatorics_tests.cpp)
+  target_link_libraries(bigint_combinatorics_tests PRIVATE aerobus aerobus_dev_flags GTest::gtest_main)
+  gtest_discover_tests(bigint_combinatorics_tests)
 endif()
 
 # compile_fail/<name>.cpp must not compile, and the compiler output must match <regex>
@@ -65,6 +70,7 @@ aerobus_compile_fail_test(complex_division_by_zero "division by zero in Complex"
 aerobus_compile_fail_test(fp16_cuda_and_hip "WITH_CUDA_FP16 and WITH_HIP_FP16 are mutually exclusive")
 aerobus_compile_fail_test(bigint_division_by_zero "division by zero in bigint")
 aerobus_compile_fail_test(bigint_invalid_literal "invalid character in bigint literal")
+aerobus_compile_fail_test(bigint_value_needs_a_type "this ring has no native value type")
 aerobus_compile_fail_test(fraction_zero_denominator "zero denominator in FractionField")
 aerobus_compile_fail_test(hex_float_invalid_literal "invalid hexadecimal floating point literal")
 aerobus_compile_fail_test(hex_float_does_not_fit "does not fit in these integers")

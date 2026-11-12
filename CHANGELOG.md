@@ -6,6 +6,12 @@
 
 - `Complex<Ring>`, the complex numbers $x + y i$ over a commutative ring ([#42](https://github.com/aerobus-open-source/aerobus/issues/42)): addition, multiplication, `conj_t`, `norm_t`, and `div_t` when `Ring` is a field in which -1 is known not to be a square (ordered fields such as `q64`, `zpz<p>` and `GaloisField<p, n>` with q = 3 mod 4). `is_integral_domain` and `is_field` follow the same rule, so `Complex<zpz<5>>`, where (2 + i)(2 - i) = 0, is a ring without division. `get<std::complex<T>>()` converts a value, so that `polynomial<Complex<Ring>>::eval` evaluates on `std::complex<T>`.
 - `examples/complex_fir_response.cpp`: the frequency response of a complex FIR filter, the binomial lowpass shifted by fs/4, with exact taps in `Complex<q32>` and its gain at plus and minus fs/4 proven by `static_assert`.
+- The `_v` combinatorial constants take the type of their result: `factorial_v<T, i, valueType>`, `combination_v<T, k, n, valueType>`, `bell_v`, `alternate_v`, `stirling_1_signed_v`, `stirling_1_unsigned_v`, `stirling_2_v` and `pow_v`. It defaults to the native value type of the ring, so existing uses are unchanged, and it makes those constants available over `bigint`, which has no native value type: `factorial_v<bigint, 30, double>`. Without it, the error names what to do instead of reporting a missing `inner_type`.
+- `tests/bigint_combinatorics_tests.cpp`: the combinatorial numbers over `bigint`, checked against Python's integers beyond what 64 bits hold, up to `factorial_t<bigint, 100>`, with the identities (Pascal's rule, `C(k, n) = n! / (k!(n - k)!)` as an exact division) proven by `static_assert`.
+
+### Fixed
+
+- `bell_v`, `stirling_1_signed_v`, `stirling_1_unsigned_v`, `stirling_2_v` and `pow_v` read the value through `get<valueType>()` as the other constants do, instead of the `v` member, which only the native integers have.
 
 ## 2.3.0 (2026-11-06)
 
