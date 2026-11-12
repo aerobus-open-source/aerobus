@@ -625,6 +625,25 @@ namespace aerobus {
         template<auto...>
         inline constexpr bool dependent_false = false;
 
+        /// @brief the type a '_v' form yields when the caller does not name one: the native value type of
+        /// the ring. A ring whose values do not fit in a fixed width, such as bigint, has none.
+        template<typename T, typename = void>
+        struct natural_value_type {
+            static_assert(dependent_false<sizeof(T)>,
+                "this ring has no native value type, bigint for example: name the type of the result, "
+                "as in factorial_v<bigint, 20, double>, or stay with types, as in factorial_t<bigint, 20>");
+            using type = void;
+        };
+
+        template<typename T>
+        struct natural_value_type<T, std::void_t<typename T::inner_type>> {
+            using type = typename T::inner_type;
+        };
+
+        /// @brief T::inner_type when T has one
+        template<typename T>
+        using natural_value_type_t = typename natural_value_type<T>::type;
+
         template<template<typename...> typename TT, typename T>
         struct is_instantiation_of : std::false_type { };
 
@@ -3959,12 +3978,13 @@ namespace aerobus {
     template<typename T, size_t i>
     using factorial_t = typename internal::factorial<T, i>::type;
 
-    /// @brief computes factorial(i) as value in T
+    /// @brief computes factorial(i) as value
     /// @tparam T (aerobus::i64 for example)
     /// @tparam i
-    template<typename T, size_t i>
-    inline constexpr typename T::inner_type factorial_v =
-        internal::factorial<T, i>::type::template get<typename T::inner_type>();
+    /// @tparam valueType type of the result, the native value type of T by default, which bigint has not:
+    /// name one, as in factorial_v<bigint, 30, double>, or use factorial_t
+    template<typename T, size_t i, typename valueType = internal::natural_value_type_t<T>>
+    inline constexpr valueType factorial_v = factorial_t<T, i>::template get<valueType>();
 
     namespace internal {
         template<typename T, size_t k, size_t n>
@@ -4012,9 +4032,10 @@ namespace aerobus {
     /// @tparam T (aerobus::i32 for example)
     /// @tparam k
     /// @tparam n
-    template<typename T, size_t k, size_t n>
-    inline constexpr typename T::inner_type combination_v =
-        internal::combination_helper<T, k, n>::type::template get<typename T::inner_type>();
+    /// @tparam valueType type of the result, the native value type of T by default, which bigint has not:
+    /// name one, as in combination_v<bigint, 50, 100, double>, or use combination_t
+    template<typename T, size_t k, size_t n, typename valueType = internal::natural_value_type_t<T>>
+    inline constexpr valueType combination_v = combination_t<T, k, n>::template get<valueType>();
 
     namespace internal {
         template<typename T, size_t m>
@@ -4127,8 +4148,10 @@ namespace aerobus {
     /// @brief Bell number as value (int64_t for example)
     /// @tparam T ring type for calculation (aerobus::i64 for example)
     /// @tparam n
-    template<typename T, size_t n>
-    inline constexpr typename T::inner_type bell_v = bell_t<T, n>::v;
+    /// @tparam valueType type of the result, the native value type of T by default, which bigint has not:
+    /// name one, as in bell_v<bigint, 40, double>, or use bell_t
+    template<typename T, size_t n, typename valueType = internal::natural_value_type_t<T>>
+    inline constexpr valueType bell_v = bell_t<T, n>::template get<valueType>();
 
     namespace internal {
         template<typename T, size_t k>
@@ -4154,9 +4177,10 @@ namespace aerobus {
 
     /// @brief (-1)^k as value from T
     /// @tparam T Ring type, aerobus::i64 for example, then result will be an int64_t
-    template<typename T, size_t k>
-    inline constexpr typename T::inner_type alternate_v =
-        internal::alternate<T, k>::type::template get<typename T::inner_type>();
+    /// @tparam k
+    /// @tparam valueType type of the result, the native value type of T by default, which bigint has not
+    template<typename T, size_t k, typename valueType = internal::natural_value_type_t<T>>
+    inline constexpr valueType alternate_v = alternate_t<T, k>::template get<valueType>();
 
     namespace internal {
         template<typename T, size_t n, size_t k>
@@ -4209,15 +4233,18 @@ namespace aerobus {
     /// @tparam T (ring type, such as aerobus::i64)
     /// @tparam n (integer)
     /// @tparam k (integer)
-    template<typename T, size_t n, size_t k>
-    inline constexpr typename T::inner_type stirling_1_unsigned_v = stirling_1_unsigned_t<T, n, k>::v;
+    /// @tparam valueType type of the result, the native value type of T by default, which bigint has not
+    template<typename T, size_t n, size_t k, typename valueType = internal::natural_value_type_t<T>>
+    inline constexpr valueType stirling_1_unsigned_v =
+        stirling_1_unsigned_t<T, n, k>::template get<valueType>();
 
     /// @brief Stirling number of the first kind (signed) -- as value
     /// @tparam T (ring type, such as aerobus::i64)
     /// @tparam n (integer)
     /// @tparam k (integer)
-    template<typename T, size_t n, size_t k>
-    inline constexpr typename T::inner_type stirling_1_signed_v = stirling_1_signed_t<T, n, k>::v;
+    /// @tparam valueType type of the result, the native value type of T by default, which bigint has not
+    template<typename T, size_t n, size_t k, typename valueType = internal::natural_value_type_t<T>>
+    inline constexpr valueType stirling_1_signed_v = stirling_1_signed_t<T, n, k>::template get<valueType>();
 
     namespace internal {
         template<typename T, size_t n, size_t k>
@@ -4269,8 +4296,9 @@ namespace aerobus {
     /// @tparam T (ring type, such as aerobus::i64)
     /// @tparam n (integer)
     /// @tparam k (integer)
-    template<typename T, size_t n, size_t k>
-    inline constexpr typename T::inner_type stirling_2_v = stirling_2_t<T, n, k>::v;
+    /// @tparam valueType type of the result, the native value type of T by default, which bigint has not
+    template<typename T, size_t n, size_t k, typename valueType = internal::natural_value_type_t<T>>
+    inline constexpr valueType stirling_2_v = stirling_2_t<T, n, k>::template get<valueType>();
 
     namespace internal {
         template<typename T>
@@ -4327,12 +4355,14 @@ namespace aerobus {
     template<typename p, size_t n>
     using pow_t = typename internal::pow<typename p::enclosing_type, p, n>::type;
 
-    /// @brief p^n (as 'val' type in T) as value in T::inner_type
-    /// @tparam T (some ring type, such as aerobus::i64)
+    /// @brief p^n as a value
     /// @tparam p a value, such as i64::val<2>
     /// @tparam n power
-    template<typename p, size_t n>
-    inline constexpr auto pow_v = pow_t<p, n>::v;
+    /// @tparam valueType type of the result, the native value type of the ring of p by default, which
+    /// bigint has not: name one, as in pow_v<bigint::inject_constant_t<2>, 100, double>, or use pow_t
+    template<typename p, size_t n,
+             typename valueType = internal::natural_value_type_t<typename p::enclosing_type>>
+    inline constexpr valueType pow_v = pow_t<p, n>::template get<valueType>();
 
     /// @brief x^p for a native arithmetic value x, by squaring
     /// @tparam T arithmetic type
