@@ -5308,6 +5308,242 @@ namespace aerobus {
     using tanh = taylor<Integers, internal::tanh_coeff, deg>;
 }  // namespace aerobus
 
+// complex numbers
+namespace aerobus {
+    namespace internal {
+        // true when -1 is known not to be a square in Ring: x² + 1 is then irreducible, Ring[i] has no zero
+        // divisors, and it is a field when Ring is one. False when it is not known.
+        template<typename Ring>
+        struct minus_one_is_not_square : std::false_type {};
+
+        // ordered rings: a square is never negative
+        template<typename Ring>
+        requires(is_integers_ring<Ring>::value)
+        struct minus_one_is_not_square<Ring> : std::true_type {};
+
+        template<typename Ring>
+        requires IsEuclideanDomain<Ring>
+        struct minus_one_is_not_square<fraction_field_impl<Ring>> : minus_one_is_not_square<Ring> {};
+
+        // F_q, q odd: the squares of the cyclic group of order q - 1 are its elements of order dividing
+        // (q - 1) / 2, and -1, of order 2, is one of them if and only if q = 1 mod 4. In characteristic 2,
+        // -1 = 1 is a square.
+        template<typename F>
+        requires IsFiniteField<F>
+        struct minus_one_is_not_square<F>
+            : std::bool_constant<finite_field_traits<F>::characteristic != 2 &&
+                                 finite_field_traits<F>::order % 4 == 3> {};
+
+        // value in Ring is negative, for rings which have a sign
+        template<typename Ring, typename v>
+        constexpr bool has_minus_sign() {
+            if constexpr (requires { Ring::template pos_v<v>; }) {
+                return !v::is_zero_t::value && !Ring::template pos_v<v>;
+            } else {
+                return false;
+            }
+        }
+    }  // namespace internal
+
+    /// @brief complex numbers over Ring: Ring[i] = Ring[x] / (x² + 1), the pairs x + y i with i² = -1
+    ///
+    /// Complex<i32> holds the Gaussian integers, Complex<q32> the field Q[i], Complex<zpz<3>> the field with 9
+    /// elements. Complex<Ring> is a ring for any commutative Ring. It is a field, with div_t, when Ring is a field
+    /// in which -1 is known not to be a square: an ordered field such as FractionField<i64>, or F_q with
+    /// q = 3 mod 4. Otherwise x² + 1 may factor, as in F_5 where (2 + i)(2 - i) = 0, and there is no division.
+    /// Values are pairs of canonical values of Ring, so that equal values are the same type.
+    /// @tparam Ring a commutative ring, such as i64, q64 or zpz<p>
+    template<typename Ring>
+    requires IsRing<Ring>
+    struct Complex {
+        /// @brief the complex number x + y i
+        /// @tparam v1 real part, a value in Ring
+        /// @tparam v2 imaginary part, a value in Ring
+        template<typename v1, typename v2>
+        struct val {
+            static_assert(std::is_same_v<typename v1::enclosing_type, Ring> &&
+                          std::is_same_v<typename v2::enclosing_type, Ring>,
+                          "the parts of Complex<Ring>::val must be values of Ring");
+            /// @brief enclosing ring type
+            using enclosing_type = Complex<Ring>;
+            /// @brief real part
+            using x = v1;
+            /// @brief imaginary part
+            using y = v2;
+            /// @brief true_type if zero
+            using is_zero_t = std::bool_constant<v1::is_zero_t::value && v2::is_zero_t::value>;
+            /// @brief true if zero
+            static constexpr bool is_zero_v = is_zero_t::value;
+
+            /// @brief value as a complex type, such as std::complex<double>, built from its two parts converted to
+            /// valueType::value_type; this is how polynomial<Complex<Ring>>::eval evaluates on such a type
+            /// @tparam valueType a type with a member value_type and a constructor from (real, imaginary)
+            template<typename valueType>
+            requires requires {
+                typename valueType::value_type;
+                v1::template get<typename valueType::value_type>();
+                v2::template get<typename valueType::value_type>();
+            } && std::is_constructible_v<valueType, typename valueType::value_type, typename valueType::value_type>
+            static constexpr AEROBUS_INLINE AEROBUS_DEVICE valueType get() {
+                using part = typename valueType::value_type;
+                return valueType(v1::template get<part>(), v2::template get<part>());
+            }
+
+            /// @brief string representation, such as "3 - 2 i"
+            static std::string to_string() {
+                if constexpr (v2::is_zero_t::value) {
+                    return v1::to_string();
+                } else {
+                    constexpr bool minus = internal::has_minus_sign<Ring, v2>();
+                    using magnitude = std::conditional_t<minus,
+                        typename Ring::template sub_t<typename Ring::zero, v2>, v2>;
+                    const std::string imaginary = Ring::template eq_v<magnitude, typename Ring::one>
+                        ? std::string("i") : magnitude::to_string() + " i";
+                    if constexpr (v1::is_zero_t::value) {
+                        return (minus ? "-" : "") + imaginary;
+                    } else {
+                        return v1::to_string() + (minus ? " - " : " + ") + imaginary;
+                    }
+                }
+            }
+        };
+
+        /// @brief zero value
+        using zero = val<typename Ring::zero, typename Ring::zero>;
+        /// @brief one
+        using one = val<typename Ring::one, typename Ring::zero>;
+        /// @brief the imaginary unit, i² = -1
+        using i = val<typename Ring::zero, typename Ring::one>;
+
+        /// @brief true when -1 is known not to be a square in Ring, and Ring has no zero divisors
+        static constexpr bool is_integral_domain =
+            internal::is_integral_domain_v<Ring> && internal::minus_one_is_not_square<Ring>::value;
+        /// @brief true when Ring is a field in which -1 is known not to be a square
+        static constexpr bool is_field = [] {
+            if constexpr (requires { Ring::is_field; }) {
+                return Ring::is_field && internal::minus_one_is_not_square<Ring>::value;
+            } else {
+                return false;
+            }
+        }();
+        /// @brief true for fields only: the Gaussian integers are euclidean, but their division is not provided
+        static constexpr bool is_euclidean_domain = is_field;
+
+        /// @brief injects a constant of Ring, such as an integer, as a real number
+        /// @tparam c a constant for Ring::inject_constant_t
+        template<auto c>
+        using inject_constant_t = val<typename Ring::template inject_constant_t<c>, typename Ring::zero>;
+
+        /// @brief injects a value of Ring as a real number
+        /// @tparam v a value in Ring
+        template<typename v>
+        using inject_ring_t = val<v, typename Ring::zero>;
+
+        /// @brief addition operator
+        /// @tparam v1 a value in Complex<Ring>
+        /// @tparam v2 a value in Complex<Ring>
+        template<typename v1, typename v2>
+        using add_t = val<typename Ring::template add_t<typename v1::x, typename v2::x>,
+                          typename Ring::template add_t<typename v1::y, typename v2::y>>;
+
+        /// @brief subtraction operator
+        /// @tparam v1 a value in Complex<Ring>
+        /// @tparam v2 a value in Complex<Ring>
+        template<typename v1, typename v2>
+        using sub_t = val<typename Ring::template sub_t<typename v1::x, typename v2::x>,
+                          typename Ring::template sub_t<typename v1::y, typename v2::y>>;
+
+        /// @brief multiplication operator: (a + b i)(c + d i) = (ac - bd) + (ad + bc) i
+        /// @tparam v1 a value in Complex<Ring>
+        /// @tparam v2 a value in Complex<Ring>
+        template<typename v1, typename v2>
+        using mul_t = val<
+            typename Ring::template sub_t<typename Ring::template mul_t<typename v1::x, typename v2::x>,
+                                          typename Ring::template mul_t<typename v1::y, typename v2::y>>,
+            typename Ring::template add_t<typename Ring::template mul_t<typename v1::x, typename v2::y>,
+                                          typename Ring::template mul_t<typename v1::y, typename v2::x>>>;
+
+        /// @brief conjugate: x - y i
+        /// @tparam v a value in Complex<Ring>
+        template<typename v>
+        using conj_t = val<typename v::x, typename Ring::template sub_t<typename Ring::zero, typename v::y>>;
+
+        /// @brief norm x² + y², a value in Ring: v times its conjugate
+        /// @tparam v a value in Complex<Ring>
+        template<typename v>
+        using norm_t = typename Ring::template add_t<typename Ring::template mul_t<typename v::x, typename v::x>,
+                                                     typename Ring::template mul_t<typename v::y, typename v::y>>;
+
+        /// @brief equality operator (type)
+        /// @tparam v1 a value in Complex<Ring>
+        /// @tparam v2 a value in Complex<Ring>
+        template<typename v1, typename v2>
+        using eq_t = std::bool_constant<Ring::template eq_v<typename v1::x, typename v2::x> &&
+                                        Ring::template eq_v<typename v1::y, typename v2::y>>;
+
+        /// @brief equality operator (boolean value)
+        /// @tparam v1 a value in Complex<Ring>
+        /// @tparam v2 a value in Complex<Ring>
+        template<typename v1, typename v2>
+        static constexpr bool eq_v = eq_t<v1, v2>::value;
+
+     private:
+        // v1 / v2 = v1 conj(v2) / |v2|², where |v2|² is nonzero when v2 is, since x² + 1 has no root
+        template<typename v1, typename v2>
+        struct division {
+            static_assert(!v2::is_zero_t::value, "division by zero in Complex");
+            using product = mul_t<v1, conj_t<v2>>;
+            using norm = norm_t<v2>;
+            using type = val<typename Ring::template div_t<typename product::x, norm>,
+                             typename Ring::template div_t<typename product::y, norm>>;
+        };
+
+     public:
+        /// @brief division operator, when Complex<Ring> is a field
+        /// @tparam v1 a value in Complex<Ring>
+        /// @tparam v2 a nonzero value in Complex<Ring>
+        template<typename v1, typename v2>
+        requires(is_field)
+        using div_t = typename division<v1, v2>::type;
+
+        /// @brief modulus operator: zero, since div_t is exact
+        /// @tparam v1 a value in Complex<Ring>
+        /// @tparam v2 a nonzero value in Complex<Ring>
+        template<typename v1, typename v2>
+        requires(is_field)
+        using mod_t = std::conditional_t<v2::is_zero_t::value, v1, zero>;
+
+        /// @brief greatest common divisor in a field: zero if both are zero, one otherwise
+        /// @tparam v1 a value in Complex<Ring>
+        /// @tparam v2 a value in Complex<Ring>
+        template<typename v1, typename v2>
+        requires(is_field)
+        using gcd_t = std::conditional_t<v1::is_zero_t::value && v2::is_zero_t::value, zero, one>;
+
+        /// @brief positivity operator, as in other fields: true for every nonzero value
+        /// @tparam v a value in Complex<Ring>
+        template<typename v>
+        requires(is_field)
+        using pos_t = std::bool_constant<!v::is_zero_t::value>;
+
+        /// @brief positivity operator (boolean value)
+        /// @tparam v a value in Complex<Ring>
+        template<typename v>
+        requires(is_field)
+        static constexpr bool pos_v = pos_t<v>::value;
+    };
+
+    /// @brief embeds Ring into Complex<Ring>, as the real numbers
+    /// @tparam Ring a commutative ring
+    template<typename Ring>
+    struct Embed<Ring, Complex<Ring>> {
+        /// @brief Complex<Ring> representation of v
+        /// @tparam v a value in Ring
+        template<typename v>
+        using type = typename Complex<Ring>::template val<v, typename Ring::zero>;
+    };
+}  // namespace aerobus
+
 // continued fractions
 namespace aerobus {
     /// @brief represents a continued fraction a0 + \f$\frac{1}{a_1+\frac{1}{a_2 + \ldots}}\f$

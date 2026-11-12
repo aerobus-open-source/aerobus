@@ -1,6 +1,7 @@
 # every example is built and run as a test: it returns non-zero when its result is wrong
 set(aerobus_examples
   compensated_horner
+  complex_fir_response
   continued_fractions
   custom_taylor
   hermite
