@@ -4,6 +4,7 @@ add_executable(lib_tests
   api_tests.cpp
   bigint_tests.cpp
   canonical_fraction_tests.cpp
+  complex_tests.cpp
   concepts_tests.cpp
   embedding_tests.cpp
   evaluation_tests.cpp
@@ -60,6 +61,7 @@ aerobus_compile_fail_test(fraction_field_of_zero_divisors "FractionField needs a
 aerobus_compile_fail_test(conway_missing "no Conway polynomial for this")
 aerobus_compile_fail_test(legendre_degree_overflow "CoefficientsFit")
 aerobus_compile_fail_test(factorization_needs_finite_field "IsFiniteField")
+aerobus_compile_fail_test(complex_division_by_zero "division by zero in Complex")
 aerobus_compile_fail_test(fp16_cuda_and_hip "WITH_CUDA_FP16 and WITH_HIP_FP16 are mutually exclusive")
 aerobus_compile_fail_test(bigint_division_by_zero "division by zero in bigint")
 aerobus_compile_fail_test(bigint_invalid_literal "invalid character in bigint literal")
