@@ -368,6 +368,56 @@ namespace aerobus {
             }
         };
         #endif
+
+        // x^n for n >= 1, by squaring, fully unrolled
+        template<typename T, size_t n>
+        struct pow_helper {
+            static_assert(n >= 1, "pow_helper needs a positive exponent");
+            static constexpr AEROBUS_INLINE AEROBUS_DEVICE T eval(const T x) {
+                if constexpr (n == 1) {
+                    return x;
+                } else {
+                    const T half = pow_helper<T, n / 2>::eval(x);
+                    const T square = static_cast<T>(half * half);
+                    if constexpr (n % 2 == 0) {
+                        return square;
+                    } else {
+                        return static_cast<T>(square * x);
+                    }
+                }
+            }
+        };
+
+        // where the nonzero coefficients of a polynomial are, given highest degree first:
+        // P(x) = x^valuation Q(x^stride)
+        template<bool... nonzero>
+        struct sparsity {
+            static constexpr size_t N = sizeof...(nonzero);
+
+            // lowest degree with a nonzero coefficient, 0 for the zero polynomial
+            static consteval size_t valuation() {
+                constexpr bool nz[] = {nonzero...};
+                for (size_t i = 0; i < N; ++i) {
+                    if (nz[N - 1 - i]) {
+                        return i;
+                    }
+                }
+                return 0;
+            }
+
+            // gcd of the gaps between nonzero degrees and the valuation, 1 when there is no gap
+            static consteval size_t stride() {
+                constexpr bool nz[] = {nonzero...};
+                const size_t k = valuation();
+                size_t g = 0;
+                for (size_t i = k + 1; i < N; ++i) {
+                    if (nz[N - 1 - i]) {
+                        g = std::gcd(g, i - k);
+                    }
+                }
+                return g == 0 ? 1 : g;
+            }
+        };
     }  // namespace internal
 }  // namespace aerobus
 
@@ -2719,6 +2769,50 @@ namespace aerobus {
             using value_at_t = horner_reduction_t<val_impl>
                 ::template inner<0, degree + 1>
                 ::template type<typename Ring::zero, x>;
+
+         private:
+            using sparsity_t = internal::sparsity<!coeffN::is_zero_t::value, !coeffs::is_zero_t::value...>;
+
+         public:
+            /// @brief lowest degree with a nonzero coefficient (1 for sin, 0 for cos)
+            static constexpr size_t valuation = sparsity_t::valuation();
+
+            /// @brief largest n such that the polynomial is x^valuation Q(x^n) (2 for sin and cos, 1 if dense)
+            static constexpr size_t stride = sparsity_t::stride();
+
+         private:
+            template<typename J>
+            struct stride_reduce;
+
+            // Q's coefficient of degree j is P's coefficient of degree valuation + j * stride
+            template<size_t... J>
+            struct stride_reduce<std::index_sequence<J...>> {
+                using type = val<internal::type_at_t<degree - valuation - J * stride, coeffN, coeffs...>...>;
+            };
+
+         public:
+            /// @brief the polynomial Q such that this polynomial is x^valuation Q(x^stride)
+            using stride_reduced_t = typename stride_reduce<
+                internal::make_index_sequence_reverse<(degree - valuation) / stride + 1>>::type;
+
+            /// @brief evaluates the polynomial as x^valuation Q(x^stride), see stride_reduced_t
+            ///
+            /// Horner on Q skips the zero coefficients: (degree - valuation) / stride multiply-adds instead of
+            /// degree, plus the powers of x by squaring. sin and cos of degree 2m take about half the operations.
+            /// Results may differ from eval in the last bits; on a dense polynomial this is eval.
+            /// @tparam arithmeticType usually float or double
+            /// @param x value
+            /// @return P(x)
+            template<typename arithmeticType>
+            static constexpr AEROBUS_DEVICE AEROBUS_INLINE arithmeticType sparse_eval(const arithmeticType& x) {
+                const arithmeticType q = stride_reduced_t::template eval<arithmeticType>(
+                    internal::pow_helper<arithmeticType, stride>::eval(x));
+                if constexpr (valuation == 0) {
+                    return q;
+                } else {
+                    return static_cast<arithmeticType>(internal::pow_helper<arithmeticType, valuation>::eval(x) * q);
+                }
+            }
         };
 
         /// @brief specialization for constants
@@ -2779,6 +2873,19 @@ namespace aerobus {
             /// @brief the constant
             template<typename x>
             using value_at_t = coeffN;
+
+            /// @brief 0
+            static constexpr size_t valuation = 0;
+            /// @brief 1
+            static constexpr size_t stride = 1;
+            /// @brief itself
+            using stride_reduced_t = val_impl<coeffN>;
+
+            /// @brief the constant, as arithmeticType
+            template<typename arithmeticType>
+            static constexpr AEROBUS_DEVICE AEROBUS_INLINE arithmeticType sparse_eval(const arithmeticType& /* x */) {
+                return coeffN::template get<arithmeticType>();
+            }
         };
 
         /// @brief constant zero

@@ -54,6 +54,14 @@ int main() {
     using P = aerobus::make_int_polynomial_t<aerobus::i16, 1, 1>;
     check(__half2float(P::eval(__float2half(2.0f))) == 3.0f, "eval<__half>");
 
+    // x^4 + x^2 + 1 = Q(x^2) and x^5 + x = x Q(x^4): exact in binary16 at 2
+    using Even = aerobus::make_int_polynomial_t<aerobus::i16, 1, 0, 1, 0, 1>;
+    using Odd = aerobus::make_int_polynomial_t<aerobus::i16, 1, 0, 0, 0, 1, 0>;
+    check(__half2float(Even::sparse_eval(__float2half(2.0f))) == 21.0f, "sparse_eval<__half>, even");
+    check(__half2float(Odd::sparse_eval(__float2half(2.0f))) == 34.0f, "sparse_eval<__half>, odd");
+    const __half2 v = Odd::sparse_eval(__floats2half2_rn(2.0f, -1.0f));
+    check(__low2float(v) == 34.0f && __high2float(v) == -2.0f, "sparse_eval<__half2>");
+
     std::printf("%d failure(s)\n", failures);
     return failures == 0 ? 0 : 1;
 }
