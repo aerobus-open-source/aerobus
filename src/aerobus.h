@@ -5208,7 +5208,7 @@ namespace aerobus {
         template<typename T, size_t i>
         requires((i & 1) == 1)
         struct atan_coeff_helper<T, i> {
-            using type = makefraction_t<T, alternate_t<T, i / 2>, typename T::template val<i>>;
+            using type = makefraction_t<T, alternate_t<T, i / 2>, typename T::template inject_constant_t<i>>;
         };
 
         template<typename T, size_t i>
@@ -5229,7 +5229,7 @@ namespace aerobus {
             using type = makefraction_t<T,
                 factorial_t<T, i - 1>,
                 typename T::template mul_t<
-                    typename T::template val<i>,
+                    typename T::template inject_constant_t<i>,
                     typename T::template mul_t<
                         pow_t<typename T::template inject_constant_t<4>, i / 2>,
                         pow_t<factorial_t<T, i / 2>, 2>>>>;
@@ -5250,7 +5250,7 @@ namespace aerobus {
         struct lnp1_coeff {
             using type = makefraction_t<T,
                 alternate_t<T, i + 1>,
-                typename T::template val<i>>;
+                typename T::template inject_constant_t<i>>;
         };
 
         template<typename T>
@@ -5269,7 +5269,7 @@ namespace aerobus {
                 >,
                 typename T::template mul_t<
                     typename T::template mul_t<
-                        typename T::template val<i>,
+                        typename T::template inject_constant_t<i>,
                         pow_t<factorial_t<T, i / 2>, 2>
                     >,
                     pow_t<typename T::template inject_constant_t<4>, i / 2>
