@@ -167,3 +167,31 @@ TEST(complex, to_string) {
     EXPECT_EQ((z<0, 0>::to_string()), "0");
     EXPECT_EQ((f<5, 2, 4>::to_string()), "2 + 4 i");
 }
+
+TEST(complex, polynomials_over_a_field_have_a_gcd) {
+    // gcd_t normalizes the sign with pos_v, not with an order that Complex does not have (#54)
+    using PQi = polynomial<Qi>;
+    static_assert(IsEuclideanDomain<PQi>);
+    using X = PQi::X;
+    using i = PQi::val<Qi::i>;
+    using X1 = PQi::add_t<X, PQi::one>;
+    static_assert(std::is_same_v<PQi::gcd_t<X, X1>, PQi::one>);
+    // gcd((x + i)(x + 1), (x + i)(x - 1)) = x + i
+    using Xi = PQi::add_t<X, i>;
+    using Xm1 = PQi::sub_t<X, PQi::one>;
+    static_assert(std::is_same_v<PQi::gcd_t<PQi::mul_t<Xi, X1>, PQi::mul_t<Xi, Xm1>>, Xi>);
+    // and so the squarefree decomposition works: (x + i)^2 (x + 1), sorted with i < 1 (lexicographic)
+    using Sq = squarefree_t<PQi::mul_t<PQi::mul_t<Xi, Xi>, X1>>;
+    static_assert(std::is_same_v<Sq::factors, type_list<factor<Xi, 2>, factor<X1, 1>>>);
+    // rational fractions over Q[i] are canonical: (x + i)(x + 1) / ((x + i)(x - 1)) = (x + 1) / (x - 1)
+    using RQi = FractionField<PQi>;
+    static_assert(std::is_same_v<RQi::val<PQi::mul_t<Xi, X1>, PQi::mul_t<Xi, Xm1>>, RQi::val<X1, Xm1>>);
+    // over F_3[i] = F_9 as well
+    using PF = polynomial<Ci<3>>;
+    static_assert(std::is_same_v<PF::gcd_t<PF::X, PF::add_t<PF::X, PF::one>>, PF::one>);
+}
+
+TEST(complex, lexicographic_order) {
+    static_assert(Qi::lt_v<Qi::i, Qi::one> && Qi::gt_v<Qi::one, Qi::i>);
+    static_assert(Zi::lt_v<z<1, -2>, z<1, 3>> && !Zi::lt_v<z<1, 3>, z<1, 3>> && Zi::lt_v<z<-5, 9>, z<0, 0>>);
+}

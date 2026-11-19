@@ -837,16 +837,17 @@ namespace aerobus {
             template<typename A, typename B>
             struct gcd_helper {};
 
-            // B = 0, A > 0
+            // B = 0, A positive. The sign is pos_v, which IsEuclideanDomain requires, and not an order,
+            // which a field such as Complex<q64> does not have
             template<typename A, typename B>
-            requires((B::is_zero_t::value) && (Ring::template gt_t<A, typename Ring::zero>::value))
+            requires((B::is_zero_t::value) && (Ring::template pos_v<A>))
             struct gcd_helper<A, B> {
                 using type = A;
             };
 
-            // B = 0, A < 0
+            // B = 0, A not positive
             template<typename A, typename B>
-            requires((B::is_zero_t::value) && !(Ring::template gt_t<A, typename Ring::zero>::value))
+            requires((B::is_zero_t::value) && !(Ring::template pos_v<A>))
             struct gcd_helper<A, B> {
                 using type = typename Ring::template sub_t<typename Ring::zero, A>;
             };
@@ -5667,6 +5668,35 @@ namespace aerobus {
         /// @tparam v2 a value in Complex<Ring>
         template<typename v1, typename v2>
         static constexpr bool eq_v = eq_t<v1, v2>::value;
+
+        /// @brief strictly smaller operator (type): the lexicographic order on (real part, imaginary part)
+        ///
+        /// Not compatible with the arithmetic (no order on a ring with i is), like the order of zpz on
+        /// representatives: it sorts values, for instance the factors of a polynomial.
+        /// @tparam v1 a value in Complex<Ring>
+        /// @tparam v2 a value in Complex<Ring>
+        template<typename v1, typename v2>
+        using lt_t = std::bool_constant<Ring::template lt_v<typename v1::x, typename v2::x> ||
+                                        (Ring::template eq_v<typename v1::x, typename v2::x> &&
+                                         Ring::template lt_v<typename v1::y, typename v2::y>)>;
+
+        /// @brief strictly smaller operator (boolean value)
+        /// @tparam v1 a value in Complex<Ring>
+        /// @tparam v2 a value in Complex<Ring>
+        template<typename v1, typename v2>
+        static constexpr bool lt_v = lt_t<v1, v2>::value;
+
+        /// @brief strictly greater operator (type), the lexicographic order of lt_t
+        /// @tparam v1 a value in Complex<Ring>
+        /// @tparam v2 a value in Complex<Ring>
+        template<typename v1, typename v2>
+        using gt_t = lt_t<v2, v1>;
+
+        /// @brief strictly greater operator (boolean value)
+        /// @tparam v1 a value in Complex<Ring>
+        /// @tparam v2 a value in Complex<Ring>
+        template<typename v1, typename v2>
+        static constexpr bool gt_v = gt_t<v1, v2>::value;
 
      private:
         // v1 / v2 = v1 conj(v2) / |v2|², where |v2|² is nonzero when v2 is, since x² + 1 has no root
