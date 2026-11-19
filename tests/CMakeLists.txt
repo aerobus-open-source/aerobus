@@ -71,6 +71,7 @@ aerobus_compile_fail_test(complex_division_by_zero "division by zero in Complex"
 aerobus_compile_fail_test(fp16_cuda_and_hip "WITH_CUDA_FP16 and WITH_HIP_FP16 are mutually exclusive")
 aerobus_compile_fail_test(bigint_division_by_zero "division by zero in bigint")
 aerobus_compile_fail_test(bigint_invalid_literal "invalid character in bigint literal")
+aerobus_compile_fail_test(bigint_get_does_not_fit "bigint::get: the value does not fit in this type")
 aerobus_compile_fail_test(bigint_value_needs_a_type "this ring has no native value type")
 aerobus_compile_fail_test(fraction_zero_denominator "zero denominator in FractionField")
 aerobus_compile_fail_test(hex_float_invalid_literal "invalid hexadecimal floating point literal")

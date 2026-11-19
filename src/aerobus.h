@@ -2025,10 +2025,19 @@ namespace aerobus {
                         return result;
                     } else if constexpr (std::is_integral_v<valueType>) {
                         static_assert(sizeof...(digits) <= 2, "bigint::get: the value does not fit in 64 bits");
-                        uint64_t magnitude = 0;
-                        for (size_t i = 0; i < sizeof...(digits); ++i) {
-                            magnitude = (magnitude << 32) | list[i];
-                        }
+                        constexpr uint64_t magnitude = [] {
+                            uint64_t m = 0;
+                            for (size_t i = 0; i < sizeof...(digits); ++i) {
+                                m = (m << 32) | list[i];
+                            }
+                            return m;
+                        }();
+                        // largest magnitude valueType holds with this sign (-min of a signed type is max + 1)
+                        constexpr uint64_t limit = !negative ? static_cast<uint64_t>(std::numeric_limits<valueType>::max())
+                                                 : std::is_signed_v<valueType>
+                                                     ? static_cast<uint64_t>(std::numeric_limits<valueType>::max()) + 1
+                                                     : 0;
+                        static_assert(magnitude <= limit, "bigint::get: the value does not fit in this type");
                         return negative ? static_cast<valueType>(uint64_t{0} - magnitude)
                                         : static_cast<valueType>(magnitude);
                     } else {
