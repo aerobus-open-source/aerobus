@@ -75,6 +75,8 @@ aerobus_compile_fail_test(bigint_value_needs_a_type "this ring has no native val
 aerobus_compile_fail_test(fraction_zero_denominator "zero denominator in FractionField")
 aerobus_compile_fail_test(hex_float_invalid_literal "invalid hexadecimal floating point literal")
 aerobus_compile_fail_test(hex_float_does_not_fit "does not fit in these integers")
+aerobus_compile_fail_test(integers_constant_overflow "inject_constant_t: the constant does not fit in these integers")
+aerobus_compile_fail_test(int_polynomial_constant_overflow "inject_constant_t: the constant does not fit in these integers")
 aerobus_compile_fail_test(polynomial_horner_reduction_is_private "is private within this context|is a private member|cannot access private")
 
 # install this build tree, then build a consumer through find_package(Aerobus)

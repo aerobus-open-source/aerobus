@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <cstdint>
 #include <type_traits>
 #include <utility>
 
@@ -123,4 +124,12 @@ TEST(zpz, is_field_for_odd_composite_moduli) {
     EXPECT_FALSE(zpz<35>::is_field);
     EXPECT_FALSE(zpz<121>::is_field);
     EXPECT_TRUE(zpz<997>::is_field);
+}
+
+TEST(zpz, inject_unsigned_constant) {
+    // 2^64 - 1 = 0 mod 3 and = 1 mod 7: reduced as an unsigned value, not as -1 (#50)
+    EXPECT_TRUE((std::is_same_v<zpz<3>::inject_constant_t<UINT64_MAX>, zpz<3>::zero>));
+    EXPECT_TRUE((std::is_same_v<zpz<7>::inject_constant_t<UINT64_MAX>, zpz<7>::one>));
+    EXPECT_TRUE((std::is_same_v<zpz<7>::inject_constant_t<uint64_t{1} << 63>, zpz<7>::one>));  // 2^63 = 8^21
+    EXPECT_TRUE((std::is_same_v<zpz<7>::inject_constant_t<int64_t{-1}>, zpz<7>::val<6>>));
 }

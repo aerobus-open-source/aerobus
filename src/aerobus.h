@@ -1403,6 +1403,28 @@ namespace aerobus {
 
 // integers: i16, i32, i64
 namespace aerobus {
+    namespace internal {
+        // true when the native constant x is an integer that Int represents exactly
+        template<typename Int, auto x>
+        constexpr bool constant_fits() {
+            using X = decltype(x);
+            if constexpr (std::is_same_v<X, bool>) {
+                return true;
+            } else if constexpr (std::is_integral_v<X>) {
+                return std::in_range<Int>(x);
+            } else {
+                return false;
+            }
+        }
+
+        // x converted to Int, a compile error when it does not fit (a cast would wrap it silently)
+        template<typename Int, auto x>
+        struct checked_constant {
+            static_assert(constant_fits<Int, x>(), "inject_constant_t: the constant does not fit in these integers");
+            static constexpr Int value = static_cast<Int>(x);
+        };
+    }  // namespace internal
+
     /// @brief signed integers of type Int, seen as an algebraic ring (euclidean domain)
     ///
     /// Arithmetic happens at compile time: an overflow is a compile error.
@@ -1465,9 +1487,9 @@ namespace aerobus {
         static constexpr bool is_integral_domain = true;
 
         /// @brief inject a native constant
-        /// @tparam x
+        /// @tparam x an integer which fits in Int (a compile error otherwise)
         template<auto x>
-        using inject_constant_t = val<static_cast<Int>(x)>;
+        using inject_constant_t = val<internal::checked_constant<Int, x>::value>;
 
         /// @brief injects a value: identity, used for consistency with quotient rings
         /// @tparam v a value in this ring
@@ -2359,6 +2381,16 @@ namespace aerobus {
             return static_cast<int32_t>(r < 0 ? r + p : r);
         }
 
+        /// @brief representative modulo p of a native integer constant, signed or unsigned
+        template<auto x>
+        constexpr int32_t constant_representative(int32_t p) {
+            if constexpr (std::is_unsigned_v<decltype(x)>) {
+                return static_cast<int32_t>(static_cast<uint64_t>(x) % static_cast<uint64_t>(p));
+            } else {
+                return mod_representative(static_cast<int64_t>(x), p);
+            }
+        }
+
         /// @brief inverse of a modulo m (extended Euclid)
         /// @param a an integer in [0, m)
         /// @param m a modulus, at least 2
@@ -2438,7 +2470,7 @@ namespace aerobus {
         /// @brief injects a constant integer into zpz
         /// @tparam x an integer
         template<auto x>
-        using inject_constant_t = residue<internal::mod_representative(static_cast<int64_t>(x), p)>;
+        using inject_constant_t = residue<internal::constant_representative<x>(p)>;
 
         /// @brief projects an integer value (such as i32::val<9>) onto zpz
         /// @tparam v a value with an integer member v
