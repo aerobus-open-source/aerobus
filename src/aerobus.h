@@ -4692,6 +4692,14 @@ namespace aerobus {
             using type = a;
         };
 
+        // a^(q^m), q = p^n the order of F. When q does not fit in size_t (its order is then the sentinel 0),
+        // a^(q^m) is a^(p^(n m)): the Frobenius x -> x^p applied n m times
+        template<typename a, typename F, size_t m>
+        using q_power_t = std::conditional_t<
+            (finite_field_traits<F>::order != 0),
+            iterated_power<a, finite_field_traits<F>::order, m>,
+            iterated_power<a, finite_field_traits<F>::characteristic, finite_field_traits<F>::degree * m>>;
+
         // sorting factors: by polynomial, then by multiplicity
         template<typename A, typename B>
         constexpr bool factor_less() {
@@ -4758,10 +4766,11 @@ namespace aerobus {
         struct pth_root_helper<c, p, std::index_sequence<j...>> {
             using F = typename c::ring_type;
             static constexpr size_t n = finite_field_traits<F>::degree;
-            static constexpr size_t root_power = checked_power(p, n - 1);
             static constexpr size_t top = sizeof...(j) - 1;
+            // the p-th root of a coefficient a is a^(p^(n-1)), computed as n - 1 p-th powers: p^(n-1) may
+            // not fit in size_t
             using type = typename polynomial<F>::template val<
-                pow_t<typename c::template coeff_at_t<(top - j) * p>, root_power>...>;
+                typename iterated_power<typename c::template coeff_at_t<(top - j) * p>, p, n - 1>::type...>;
         };
 
         template<typename c, size_t p>
@@ -4842,8 +4851,7 @@ namespace aerobus {
             } else {
                 using PF = typename f::enclosing_type;
                 using x = typename Quotient<PF, f>::template inject_ring_t<typename PF::X>;
-                constexpr size_t q = finite_field_traits<typename f::ring_type>::order;
-                using h = typename iterated_power<x, q, d / r>::type::type;
+                using h = typename q_power_t<x, typename f::ring_type, d / r>::type::type;
                 using g = typename PF::template gcd_t<f, typename PF::template sub_t<h, typename PF::X>>;
                 return std::is_same_v<g, typename PF::one>;
             }
@@ -4864,10 +4872,8 @@ namespace aerobus {
             } else {
                 using F = typename f::ring_type;
                 using PF = typename f::enclosing_type;
-                constexpr size_t q = finite_field_traits<F>::order;
-                static_assert(q > 0, "the order of the field does not fit in size_t");
                 using x = typename Quotient<PF, f>::template inject_ring_t<typename PF::X>;
-                if constexpr (!std::is_same_v<typename iterated_power<x, q, d>::type, x>) {
+                if constexpr (!std::is_same_v<typename q_power_t<x, F, d>::type, x>) {
                     return false;
                 } else {
                     return rabin_gcds_are_one<f>(std::make_index_sequence<d + 1>{});
@@ -4887,8 +4893,8 @@ namespace aerobus {
         struct distinct_degree<g, i, xq, acc, false> {
          private:
             using PF = typename g::enclosing_type;
-            static constexpr size_t q = finite_field_traits<typename g::ring_type>::order;
-            using next_xq = typename pow_t<typename Quotient<PF, g>::template val<xq>, q>::type;
+            using next_xq = typename q_power_t<typename Quotient<PF, g>::template val<xq>,
+                                               typename g::ring_type, 1>::type::type;
             using G = typename PF::template gcd_t<g, typename PF::template sub_t<next_xq, typename PF::X>>;
             static constexpr bool found = !std::is_same_v<G, typename PF::one>;
             using next_acc = std::conditional_t<found, typename acc::template push_back<factor<G, i>>, acc>;
@@ -4899,15 +4905,33 @@ namespace aerobus {
                                                   next_acc>::type;
         };
 
-        // the k-th polynomial over F: the base-q digits of k, lowest first, are the indices of its coefficients
+        // base in which candidate polynomials are enumerated: q, or the largest power of p which fits in
+        // size_t when q does not (the coefficients are then the elements of index below it)
+        template<typename F>
+        constexpr size_t enumeration_base() {
+            constexpr size_t q = finite_field_traits<F>::order;
+            if constexpr (q != 0) {
+                return q;
+            } else {
+                constexpr size_t p = finite_field_traits<F>::characteristic;
+                size_t b = p;
+                while (b <= static_cast<size_t>(-1) / p) {
+                    b *= p;
+                }
+                return b;
+            }
+        }
+
+        // the k-th polynomial over F: the base-B digits of k, lowest first, are the indices of its
+        // coefficients, B = enumeration_base<F>()
         template<typename F, size_t k, typename indices>
         struct indexed_polynomial_helper;
 
         template<typename F, size_t k, size_t... j>
         struct indexed_polynomial_helper<F, k, std::index_sequence<j...>> {
-            static constexpr size_t q = finite_field_traits<F>::order;
+            static constexpr size_t B = enumeration_base<F>();
             static constexpr size_t top = sizeof...(j) - 1;
-            using type = typename polynomial<F>::template val<field_element_t<F, base_digit(k, q, top - j)>...>;
+            using type = typename polynomial<F>::template val<field_element_t<F, base_digit(k, B, top - j)>...>;
         };
 
         constexpr size_t digit_count(size_t k, size_t q) {
@@ -4921,15 +4945,43 @@ namespace aerobus {
 
         template<typename F, size_t k>
         using indexed_polynomial_t = typename indexed_polynomial_helper<
-            F, k, std::make_index_sequence<digit_count(k, finite_field_traits<F>::order)>>::type;
+            F, k, std::make_index_sequence<digit_count(k, enumeration_base<F>())>>::type;
 
-        // a^(1 + q + ... + q^(d-1)) and the trace a + a^2 + ... + a^(2^(m-1)), in a quotient ring
-        template<typename a, size_t q, size_t d, typename indices = std::make_index_sequence<d>>
+        // a^(1 + q + ... + q^(d-1)) and the trace a + a^2 + ... + a^(2^(m-1)), in a quotient ring; q is the
+        // order of F
+        template<typename a, typename F, size_t d, typename indices = std::make_index_sequence<d>>
         struct norm_like;
 
-        template<typename a, size_t q, size_t d, size_t... i>
-        struct norm_like<a, q, d, std::index_sequence<i...>> {
-            using type = typename vmul<typename iterated_power<a, q, i>::type...>::type;
+        template<typename a, typename F, size_t d, size_t... i>
+        struct norm_like<a, F, d, std::index_sequence<i...>> {
+            using type = typename vmul<typename q_power_t<a, F, i>::type...>::type;
+        };
+
+        // a^(1 + p + ... + p^(n-1))
+        template<typename a, size_t p, size_t n, typename indices = std::make_index_sequence<n>>
+        struct frobenius_norm;
+
+        template<typename a, size_t p, size_t n, size_t... i>
+        struct frobenius_norm<a, p, n, std::index_sequence<i...>> {
+            using type = typename vmul<typename iterated_power<a, p, i>::type...>::type;
+        };
+
+        // b^((q - 1) / 2), q = p^n odd. When q does not fit in size_t, (q - 1) / 2 = (p - 1) / 2 *
+        // (1 + p + ... + p^(n-1))
+        template<typename b, typename F>
+        struct half_order_power {
+            using type = pow_t<b, (finite_field_traits<F>::order - 1) / 2>;
+        };
+
+        template<typename b, typename F>
+        requires(finite_field_traits<F>::order == 0)
+        struct half_order_power<b, F> {
+         private:
+            static constexpr size_t p = finite_field_traits<F>::characteristic;
+            using c = typename frobenius_norm<b, p, finite_field_traits<F>::degree>::type;
+
+         public:
+            using type = pow_t<c, (p - 1) / 2>;
         };
 
         template<typename a, size_t m, typename indices = std::make_index_sequence<m>>
@@ -4942,7 +4994,7 @@ namespace aerobus {
 
         // equal degree factorization (Cantor-Zassenhaus) of a monic h whose irreducible factors all have
         // degree d; the candidates are the polynomials of index k = q, q + 1, ... instead of random ones
-        template<typename h, size_t d, size_t k = finite_field_traits<typename h::ring_type>::order,
+        template<typename h, size_t d, size_t k = enumeration_base<typename h::ring_type>(),
                  bool irreducible = (h::degree == d)>
         struct equal_degree {
             using type = type_list<h>;
@@ -4954,14 +5006,15 @@ namespace aerobus {
             using F = typename h::ring_type;
             using PF = typename h::enclosing_type;
             using Q = Quotient<PF, h>;
-            static constexpr size_t q = finite_field_traits<F>::order;
+            static constexpr size_t p = finite_field_traits<F>::characteristic;
             static constexpr size_t n = finite_field_traits<F>::degree;
             using a = typename Q::template val<indexed_polynomial_t<F, k>>;
 
             template<bool odd, typename dummy = void>
             struct splitter {
-                using b = typename norm_like<a, q, d>::type;
-                using type = typename PF::template sub_t<typename pow_t<b, (q - 1) / 2>::type, typename PF::one>;
+                using b = typename norm_like<a, F, d>::type;
+                using type = typename PF::template sub_t<typename half_order_power<b, F>::type::type,
+                                                         typename PF::one>;
             };
 
             template<typename dummy>
@@ -4969,7 +5022,7 @@ namespace aerobus {
                 using type = typename binary_trace<a, n * d>::type::type;
             };
 
-            using s = typename splitter<(q % 2 == 1)>::type;
+            using s = typename splitter<(p % 2 == 1)>::type;
             using G = std::conditional_t<s::is_zero_v, h, typename PF::template gcd_t<h, s>>;
             static constexpr bool splits = G::degree > 0 && G::degree < h::degree;
 
