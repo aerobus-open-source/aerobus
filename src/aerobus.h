@@ -2034,10 +2034,8 @@ namespace aerobus {
                             return m;
                         }();
                         // largest magnitude valueType holds with this sign (-min of a signed type is max + 1)
-                        constexpr uint64_t limit = !negative ? static_cast<uint64_t>(std::numeric_limits<valueType>::max())
-                                                 : std::is_signed_v<valueType>
-                                                     ? static_cast<uint64_t>(std::numeric_limits<valueType>::max()) + 1
-                                                     : 0;
+                        constexpr uint64_t max = static_cast<uint64_t>(std::numeric_limits<valueType>::max());
+                        constexpr uint64_t limit = !negative ? max : std::is_signed_v<valueType> ? max + 1 : 0;
                         static_assert(magnitude <= limit, "bigint::get: the value does not fit in this type");
                         return negative ? static_cast<valueType>(uint64_t{0} - magnitude)
                                         : static_cast<valueType>(magnitude);
