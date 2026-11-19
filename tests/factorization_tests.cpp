@@ -66,6 +66,21 @@ TEST(finite_fields, elements_are_enumerated) {
     static_assert(std::is_same_v<aerobus::field_element_t<aerobus::zpz<7>, 4>, aerobus::zpz<7>::val<4>>);
 }
 
+TEST(finite_fields, elements_of_fields_whose_order_overflows) {
+    // 23^15 does not fit in size_t: the digits of i at the positions beyond size_t are 0 (#47)
+    using F = aerobus::GaloisField<23, 16>;
+    using PF = aerobus::polynomial<aerobus::zpz<23>>;
+    static_assert(aerobus::field_order_v<F> == 0);
+    static_assert(std::is_same_v<aerobus::field_element_t<F, 0>, F::zero>);
+    static_assert(std::is_same_v<aerobus::field_element_t<F, 1>, F::one>);
+    static_assert(std::is_same_v<aerobus::field_element_t<F, 23 * 23 + 2>, F::inject_ring_t<P<23, 1, 0, 2>>>);
+    // 23^14 < 2^64: the representative x^14
+    constexpr size_t p14 = aerobus::internal::checked_power(23, 14);
+    static_assert(p14 != 0);
+    static_assert(std::is_same_v<aerobus::field_element_t<F, p14>,
+                                 F::inject_ring_t<PF::monomial_t<aerobus::zpz<23>::one, 14>>>);
+}
+
 TEST(polynomials, monic) {
     static_assert(std::is_same_v<aerobus::monic_t<P<5, 3, 0, 3>>, P<5, 1, 0, 1>>);
     static_assert(std::is_same_v<aerobus::monic_t<PQ<2, 1>>, aerobus::pq64::val<aerobus::q64::one,
@@ -180,4 +195,49 @@ TEST(factorization, extension_fields) {
     static_assert(count_of_degree<B, 1>() == 3 && count_of_degree<B, 2>() == 6 && B::factors::length == 9);
     static_assert(all_factors_irreducible<B>());
     static_assert(std::is_same_v<typename B::type, xn_minus_one<F4, 15>>);
+}
+
+// GF(23^16) and GF(991^7) are in the Conway table, but 23^15 and 991^7 do not fit in size_t: the field
+// order is the sentinel 0, and the algorithms must not use it as an exponent (#46). The polynomials have
+// their coefficients in F_p, which keeps the arithmetic in these large fields cheap to compile.
+namespace {
+using G23 = aerobus::GaloisField<23, 16>;
+using PG23 = aerobus::polynomial<G23>;
+using G991 = aerobus::GaloisField<991, 7>;
+using PG991 = aerobus::polynomial<G991>;
+using X1_991 = PG991::val<G991::one, G991::one>;
+// x^2 + 1 is irreducible over F_991 (991 = 3 mod 4), and stays so over GF(991^7) since 7 is odd
+using X2_plus_1_991 = PG991::val<G991::one, G991::zero, G991::one>;
+}  // namespace
+
+TEST(squarefree, fields_whose_order_overflows) {
+    static_assert(aerobus::field_order_v<G23> == 0);
+    // x^23 is the 23rd power of x, not of x + 1
+    using x23 = PG23::monomial_t<G23::one, 23>;
+    static_assert(std::is_same_v<aerobus::squarefree_t<x23>,
+                                 factorization<G23::one, type_list<factor<PG23::X, 23>>>>);
+}
+
+TEST(squarefree, pth_roots_in_extension_fields) {
+    // (x + a)^2 over GF(2^4): the square root of a^2 is (a^2)^(2^3), three successive squares
+    using F16 = aerobus::GaloisField<2, 4>;
+    using PF16 = aerobus::polynomial<F16>;
+    using a = F16::inject_ring_t<aerobus::polynomial<aerobus::zpz<2>>::X>;
+    using L = PF16::val<F16::one, a>;
+    static_assert(std::is_same_v<aerobus::squarefree_t<PF16::mul_t<L, L>>,
+                                 factorization<F16::one, type_list<factor<L, 2>>>>);
+}
+
+TEST(irreducibility, fields_whose_order_overflows) {
+    static_assert(aerobus::field_order_v<G991> == 0);
+    static_assert(aerobus::is_irreducible_v<X2_plus_1_991>);
+    static_assert(!aerobus::is_irreducible_v<PG991::mul_t<PG991::X, X1_991>>);
+}
+
+TEST(factorization, fields_whose_order_overflows) {
+    // x (x + 1) (x^2 + 1): two linear factors, split by Cantor-Zassenhaus, and an irreducible quadratic
+    using P = PG991::mul_t<PG991::mul_t<PG991::X, X1_991>, X2_plus_1_991>;
+    using A = aerobus::factorization_t<P>;
+    static_assert(std::is_same_v<typename A::factors,
+                                 type_list<factor<PG991::X, 1>, factor<X1_991, 1>, factor<X2_plus_1_991, 1>>>);
 }

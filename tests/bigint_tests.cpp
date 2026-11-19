@@ -564,6 +564,12 @@ TEST(bigint, get) {
     static_assert(B<false, 0x10, 0x0, 0x0, 0x0>::get<double>() == 0x1p100);
     static_assert(B<true, 0x1, 0x1>::get<double>() == -4294967297.0);
     static_assert(B<true, 0xc>::get<int64_t>() == -12);
+    // the bounds of the native types still convert (#51)
+    static_assert(B<true, 0x80000000, 0x0>::get<int64_t>() == INT64_MIN);
+    static_assert(B<false, 0x7fffffff, 0xffffffff>::get<int64_t>() == INT64_MAX);
+    static_assert(B<false, 0xffffffff, 0xffffffff>::get<uint64_t>() == UINT64_MAX);
+    static_assert(B<true, 0x80000000>::get<int32_t>() == INT32_MIN);
+    static_assert(B<false, 0xff>::get<uint8_t>() == 255);
 }
 
 TEST(bigint, is_an_euclidean_domain) {

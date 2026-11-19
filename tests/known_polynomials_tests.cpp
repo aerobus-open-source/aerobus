@@ -178,6 +178,14 @@ TEST(known_polynomials, abel) {
     EXPECT_TRUE((std::is_same_v<A32::template coeff_at_t<3>, i64::val<1>>));
 }
 
+TEST(known_polynomials, abel_with_negative_a) {
+    // abel(3, -1) = x (x + 3)^2 = x^3 + 6x^2 + 9x: a * n is computed in the integers, not in size_t (#53)
+    using A = known_polynomials::abel<3, -1>;
+    EXPECT_TRUE((std::is_same_v<A, make_int_polynomial_t<i64, 1, 6, 9, 0>>));
+    using B = known_polynomials::abel<2, int64_t{-5}, i32>;  // x (x + 10)
+    EXPECT_TRUE((std::is_same_v<B, make_int_polynomial_t<i32, 1, 10, 0>>));
+}
+
 TEST(known_polynomials, live_in_their_documented_ring) {
     using T3 = known_polynomials::touchard<3>;
     using T2 = known_polynomials::touchard<2>;

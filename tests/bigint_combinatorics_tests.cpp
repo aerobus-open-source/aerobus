@@ -1,6 +1,7 @@
 // factorials, binomial coefficients and the other combinatorial numbers over bigint: exact beyond 64 bits.
 // Expected values come from Python's integers (math.factorial, math.comb, fractions.Fraction).
 #include <gtest/gtest.h>
+#include <cmath>
 #include <cstdint>
 #include <string>
 #include <type_traits>
@@ -181,4 +182,18 @@ TEST(bigint_combinatorics, taylor_coefficients_over_bigint) {
     using C21 = E::coeff_at_t<21>;
     static_assert(std::is_same_v<C21::x, bigint::one>);
     static_assert(std::is_same_v<C21::y, N<"51090942171709440000">>);
+}
+
+TEST(bigint_combinatorics, inverse_functions_over_bigint) {
+    using namespace aerobus;  // NOLINT(build/namespaces)
+    // atan, asin, lnp1 and asinh build their coefficients from the integer i, as for the native rings (#52)
+    EXPECT_NEAR((aerobus::atan<bigint, 11>::eval(0.1)), std::atan(0.1), 1e-14);
+    EXPECT_NEAR((aerobus::asin<bigint, 11>::eval(0.1)), std::asin(0.1), 1e-14);
+    EXPECT_NEAR((aerobus::lnp1<bigint, 11>::eval(0.1)), std::log1p(0.1), 1e-12);
+    EXPECT_NEAR((aerobus::asinh<bigint, 11>::eval(0.1)), std::asinh(0.1), 1e-14);
+    // and agree with i64 where both exist
+    static_assert(aerobus::atan<bigint, 7>::coeff_at_t<7>::get<double>() ==
+                  aerobus::atan<i64, 7>::coeff_at_t<7>::get<double>());
+    static_assert(aerobus::asin<bigint, 9>::coeff_at_t<9>::get<double>() ==
+                  aerobus::asin<i64, 9>::coeff_at_t<9>::get<double>());
 }

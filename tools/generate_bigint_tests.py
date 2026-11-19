@@ -92,6 +92,12 @@ w('TEST(bigint, get) {')
 w(f'    static_assert({T(1 << 100)}::get<double>() == 0x1p100);')
 w(f'    static_assert({T(-(B + 1))}::get<double>() == -4294967297.0);')
 w(f'    static_assert({T(-12)}::get<int64_t>() == -12);')
+w('    // the bounds of the native types still convert (#51)')
+w(f'    static_assert({T(-(1 << 63))}::get<int64_t>() == INT64_MIN);')
+w(f'    static_assert({T((1 << 63) - 1)}::get<int64_t>() == INT64_MAX);')
+w(f'    static_assert({T((1 << 64) - 1)}::get<uint64_t>() == UINT64_MAX);')
+w(f'    static_assert({T(-(1 << 31))}::get<int32_t>() == INT32_MIN);')
+w(f'    static_assert({T(255)}::get<uint8_t>() == 255);')
 w('}\n')
 w('''TEST(bigint, is_an_euclidean_domain) {
     static_assert(aerobus::IsEuclideanDomain<bigint>);
