@@ -5509,12 +5509,14 @@ namespace aerobus {
 
         // F_q, q odd: the squares of the cyclic group of order q - 1 are its elements of order dividing
         // (q - 1) / 2, and -1, of order 2, is one of them if and only if q = 1 mod 4. In characteristic 2,
-        // -1 = 1 is a square.
+        // -1 = 1 is a square. q = p^n = 3 mod 4 if and only if p = 3 mod 4 and n is odd: computed from p and n,
+        // since q may not fit in size_t.
         template<typename F>
         requires IsFiniteField<F>
         struct minus_one_is_not_square<F>
             : std::bool_constant<finite_field_traits<F>::characteristic != 2 &&
-                                 finite_field_traits<F>::order % 4 == 3> {};
+                                 finite_field_traits<F>::characteristic % 4 == 3 &&
+                                 finite_field_traits<F>::degree % 2 == 1> {};
 
         // value in Ring is negative, for rings which have a sign
         template<typename Ring, typename v>

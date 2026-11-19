@@ -90,6 +90,11 @@ TEST(complex, finite_fields) {
     // the same rule over F_q: q = 27 = 3 mod 4, q = 9 = 1 mod 4
     static_assert(Complex<GaloisField<3, 3>>::is_field);
     static_assert(!Complex<GaloisField<3, 2>>::is_field);
+    // q = p^n = 3 mod 4 iff p = 3 mod 4 and n odd, even when q does not fit in size_t (#48)
+    static_assert(field_order_v<GaloisField<991, 7>> == 0);
+    static_assert(Complex<GaloisField<991, 7>>::is_field && IsField<Complex<GaloisField<991, 7>>>);
+    static_assert(!Complex<GaloisField<991, 8>>::is_field);
+    static_assert(!Complex<GaloisField<997, 7>>::is_field);  // 997 = 1 mod 4
     // -1 = i² is a square in Q[i]
     static_assert(!Complex<Qi>::is_integral_domain && !Complex<Qi>::is_field);
 }
