@@ -6165,9 +6165,11 @@ namespace aerobus {
         ///
         /// @tparam I integers ring (defaults to aerobus::i64)
         /// @tparam n degree
-        /// @tparam a element of I
+        /// @tparam a element of I, a native integer which may be negative
         template<size_t n, auto a, typename I = aerobus::i64>
-        using abel = typename internal::AbelHelper<I>::template Inner<n, a*n>::type;
+        using abel = typename internal::AbelHelper<I>::template Inner<
+            n, internal::checked_constant<typename I::inner_type, a>::value *
+               internal::checked_constant<typename I::inner_type, n>::value>::type;
 
         /** @brief Chebyshev polynomials of first kind
          * 
