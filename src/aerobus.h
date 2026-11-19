@@ -79,10 +79,13 @@ namespace aerobus {
      * @tparam T the type of elements to store
      * @param count the number of elements
      * @param alignment boundary, a power of two
-     * @return the allocated memory, or nullptr on failure
+     * @return the allocated memory, or nullptr on failure, including when the size does not fit in size_t
     */
     template<typename T>
     T* aligned_malloc(size_t count, size_t alignment) {
+        if (alignment == 0 || count > (static_cast<size_t>(-1) - (alignment - 1)) / sizeof(T)) {
+            return nullptr;
+        }
         // std::aligned_alloc needs a size that is a multiple of the alignment
         const size_t size = ((count * sizeof(T) + alignment - 1) / alignment) * alignment;
         #ifdef _MSC_VER
