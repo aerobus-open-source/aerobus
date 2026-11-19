@@ -66,6 +66,21 @@ TEST(finite_fields, elements_are_enumerated) {
     static_assert(std::is_same_v<aerobus::field_element_t<aerobus::zpz<7>, 4>, aerobus::zpz<7>::val<4>>);
 }
 
+TEST(finite_fields, elements_of_fields_whose_order_overflows) {
+    // 23^15 does not fit in size_t: the digits of i at the positions beyond size_t are 0 (#47)
+    using F = aerobus::GaloisField<23, 16>;
+    using PF = aerobus::polynomial<aerobus::zpz<23>>;
+    static_assert(aerobus::field_order_v<F> == 0);
+    static_assert(std::is_same_v<aerobus::field_element_t<F, 0>, F::zero>);
+    static_assert(std::is_same_v<aerobus::field_element_t<F, 1>, F::one>);
+    static_assert(std::is_same_v<aerobus::field_element_t<F, 23 * 23 + 2>, F::inject_ring_t<P<23, 1, 0, 2>>>);
+    // 23^14 < 2^64: the representative x^14
+    constexpr size_t p14 = aerobus::internal::checked_power(23, 14);
+    static_assert(p14 != 0);
+    static_assert(std::is_same_v<aerobus::field_element_t<F, p14>,
+                                 F::inject_ring_t<PF::monomial_t<aerobus::zpz<23>::one, 14>>>);
+}
+
 TEST(polynomials, monic) {
     static_assert(std::is_same_v<aerobus::monic_t<P<5, 3, 0, 3>>, P<5, 1, 0, 1>>);
     static_assert(std::is_same_v<aerobus::monic_t<PQ<2, 1>>, aerobus::pq64::val<aerobus::q64::one,

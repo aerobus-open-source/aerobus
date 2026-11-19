@@ -4569,9 +4569,12 @@ namespace aerobus {
                 i % characteristic>;
         };
 
-        // digit of index position of i in base b
+        // digit of index position of i in base b, without computing b^position, which may not fit in size_t
         constexpr size_t base_digit(size_t i, size_t b, size_t position) {
-            return (i / checked_power(b, position)) % b;
+            for (size_t k = 0; k < position && i != 0; ++k) {
+                i /= b;
+            }
+            return i % b;
         }
 
         // the element of F_p[x]/(X) whose representative has the base-p digits of i as coefficients
